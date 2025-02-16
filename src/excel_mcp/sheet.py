@@ -1,13 +1,14 @@
 import logging
 from typing import Any
+from copy import copy
 
 from openpyxl import load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
-from openpyxl.utils import get_column_letter
+from openpyxl.utils import get_column_letter, column_index_from_string
 from openpyxl.styles import Font, Border, PatternFill, Side
 
-from .cell_utils import parse_cell_range, validate_cell_reference
-from .exceptions import SheetError
+from .cell_utils import parse_cell_range
+from .exceptions import SheetError, ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -246,56 +247,62 @@ def copy_range_operation(
     filepath: str,
     sheet_name: str,
     source_start: str,
-    source_end: str | None,
+    source_end: str,
     target_start: str,
-    target_sheet: str | None = None,
-) -> dict[str, Any]:
+    target_sheet: str = None
+) -> dict:
     """Copy a range of cells to another location."""
     try:
         wb = load_workbook(filepath)
         if sheet_name not in wb.sheetnames:
-            raise SheetError(f"Sheet '{sheet_name}' not found")
-            
+            logger.error(f"Sheet '{sheet_name}' not found")
+            raise ValidationError(f"Sheet '{sheet_name}' not found")
+
         source_ws = wb[sheet_name]
         target_ws = wb[target_sheet] if target_sheet else source_ws
-        
-        if target_sheet and target_sheet not in wb.sheetnames:
-            raise SheetError(f"Target sheet '{target_sheet}' not found")
-            
-        source_range = f"{source_start}:{source_end}" if source_end else source_start
-        
-        # Validate source range
+
+        # Parse source range
         try:
-            end_row, end_col = parse_cell_range(source_start, source_end)
-            if end_row and end_row > source_ws.max_row:
-                raise SheetError(f"End row {end_row} out of bounds (1-{source_ws.max_row})")
-            if end_col and end_col > source_ws.max_column:
-                raise SheetError(f"End column {end_col} out of bounds (1-{source_ws.max_column})")
+            start_row, start_col, end_row, end_col = parse_cell_range(source_start, source_end)
         except ValueError as e:
-            raise SheetError(f"Invalid range: {str(e)}")
-            
-        # Validate target cell
+            logger.error(f"Invalid source range: {e}")
+            raise ValidationError(f"Invalid source range: {str(e)}")
+
+        # Parse target starting point
         try:
-            validate_cell_reference(target_start)
+            target_row = int(''.join(filter(str.isdigit, target_start)))
+            target_col = column_index_from_string(''.join(filter(str.isalpha, target_start)))
         except ValueError as e:
-            raise SheetError(f"Invalid target cell: {str(e)}")
-            
-        copy_range(source_ws, target_ws, source_range, target_start)
+            logger.error(f"Invalid target cell: {e}")
+            raise ValidationError(f"Invalid target cell: {str(e)}")
+
+        # Copy the range
+        row_offset = target_row - start_row
+        col_offset = target_col - start_col
+
+        for i in range(start_row, end_row + 1):
+            for j in range(start_col, end_col + 1):
+                source_cell = source_ws.cell(row=i, column=j)
+                target_cell = target_ws.cell(row=i + row_offset, column=j + col_offset)
+                target_cell.value = source_cell.value
+                if source_cell.has_style:
+                    target_cell._style = copy(source_cell._style)
+
         wb.save(filepath)
-        
         return {"message": f"Range copied successfully"}
-    except SheetError as e:
-        logger.error(str(e))
+
+    except (ValidationError, SheetError):
         raise
     except Exception as e:
         logger.error(f"Failed to copy range: {e}")
-        raise SheetError(str(e))
+        raise SheetError(f"Failed to copy range: {str(e)}")
 
 def delete_range_operation(
     filepath: str,
     sheet_name: str,
     start_cell: str,
     end_cell: str | None = None,
+    shift_direction: str = "up"
 ) -> dict[str, Any]:
     """Delete a range of cells and shift remaining cells."""
     try:
@@ -307,7 +314,7 @@ def delete_range_operation(
         
         # Validate range
         try:
-            end_row, end_col = parse_cell_range(start_cell, end_cell)
+            start_row, start_col, end_row, end_col = parse_cell_range(start_cell, end_cell)
             if end_row and end_row > worksheet.max_row:
                 raise SheetError(f"End row {end_row} out of bounds (1-{worksheet.max_row})")
             if end_col and end_col > worksheet.max_column:
@@ -315,11 +322,29 @@ def delete_range_operation(
         except ValueError as e:
             raise SheetError(f"Invalid range: {str(e)}")
             
+        # Validate shift direction
+        if shift_direction not in ["up", "left"]:
+            raise ValidationError(f"Invalid shift direction: {shift_direction}. Must be 'up' or 'left'")
+            
+        range_string = format_range_string(
+            start_row, start_col,
+            end_row or start_row,
+            end_col or start_col
+        )
+        
+        # Delete range contents
         delete_range(worksheet, start_cell, end_cell)
+        
+        # Shift cells if needed
+        if shift_direction == "up":
+            worksheet.delete_rows(start_row, (end_row or start_row) - start_row + 1)
+        elif shift_direction == "left":
+            worksheet.delete_cols(start_col, (end_col or start_col) - start_col + 1)
+            
         wb.save(filepath)
         
-        return {"message": f"Range deleted successfully"}
-    except SheetError as e:
+        return {"message": f"Range {range_string} deleted successfully"}
+    except (ValidationError, SheetError) as e:
         logger.error(str(e))
         raise
     except Exception as e:

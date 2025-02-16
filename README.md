@@ -97,8 +97,18 @@ uv run excel-mcp-server
 
 The server will start in SSE mode and wait for connections from MCP clients.
 
+### Connecting in Cursor IDE
+
+After starting the server, connect to the SSE endpoint in Cursor IDE:
+
+```
+http://localhost:8000/sse
+```
+
+The Excel MCP tools will be available through the agent.
+
 For available tools and their usage, please refer to [TOOLS.md](TOOLS.md).
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
