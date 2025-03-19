@@ -208,12 +208,18 @@ def write_data_to_excel(
     sheet_name: str,
     data: List[Dict],
     start_cell: str = "A1",
-    write_headers: bool = True,
 ) -> str:
-    """Write data to Excel worksheet."""
+    """Write data to Excel worksheet.
+    
+    The function automatically detects the context and handles headers intelligently:
+    - Headers are added when writing to a new area
+    - Headers are not duplicated when writing below existing headers
+    - Title areas (rows 1-4) are treated specially
+    - If the first row of data appears to be headers, it will be used accordingly
+    """
     try:
         full_path = get_excel_path(filepath)
-        result = write_data(full_path, sheet_name, data, start_cell, write_headers)
+        result = write_data(full_path, sheet_name, data, start_cell)
         return result["message"]
     except (ValidationError, DataError) as e:
         return f"Error: {str(e)}"

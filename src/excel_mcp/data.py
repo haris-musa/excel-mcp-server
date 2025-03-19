@@ -102,9 +102,11 @@ def write_data(
     sheet_name: str | None,
     data: list[dict[str, Any]] | None,
     start_cell: str = "A1",
-    write_headers: bool = True,
 ) -> dict[str, str]:
-    """Write data to Excel sheet with workbook handling"""
+    """Write data to Excel sheet with workbook handling
+    
+    Headers are handled intelligently based on context.
+    """
     try:
         if not data:
             raise DataError("No data provided to write")
@@ -128,18 +130,7 @@ def write_data(
             raise DataError(f"Invalid start cell format: {str(e)}")
 
         if len(data) > 0:
-            # Check if first row of data contains headers
-            first_row = data[0]
-            has_headers = all(
-                isinstance(value, str) and value.strip() == key.strip()
-                for key, value in first_row.items()
-            )
-            
-            # If first row contains headers, skip it when write_headers is True
-            if has_headers and write_headers:
-                data = data[1:]
-
-            _write_data_to_worksheet(ws, data, start_cell, write_headers)
+            _write_data_to_worksheet(ws, data, start_cell)
 
         wb.save(filepath)
         wb.close()
@@ -152,13 +143,97 @@ def write_data(
         logger.error(f"Failed to write data: {e}")
         raise DataError(str(e))
 
+def _looks_like_headers(row_dict):
+    """Check if a data row appears to be headers (keys match values)."""
+    return all(
+        isinstance(value, str) and str(value).strip() == str(key).strip()
+        for key, value in row_dict.items()
+    )
+    
+def _check_for_headers_above(worksheet, start_row, start_col, headers):
+    """Check if cells above start position contain headers."""
+    if start_row <= 1:
+        return False  # Nothing above row 1
+        
+    # Look for header-like content above
+    for check_row in range(max(1, start_row - 5), start_row):
+        # Count matches for this row
+        header_count = 0
+        cell_count = 0
+        
+        for i, header in enumerate(headers):
+            if i >= 10:  # Limit check to first 10 columns for performance
+                break
+                
+            cell = worksheet.cell(row=check_row, column=start_col + i)
+            cell_count += 1
+            
+            # Check if cell is formatted like a header (bold)
+            is_formatted = cell.font.bold if hasattr(cell.font, 'bold') else False
+            
+            # Check for any content that could be a header
+            if cell.value is not None:
+                # Case 1: Direct match with expected header
+                if str(cell.value).strip().lower() == str(header).strip().lower():
+                    header_count += 2  # Give higher weight to exact matches
+                # Case 2: Any formatted cell with content
+                elif is_formatted and cell.value:
+                    header_count += 1
+                # Case 3: Any cell with content in the first row we check
+                elif check_row == max(1, start_row - 5):
+                    header_count += 0.5
+        
+        # If we have a significant number of matching cells, consider it a header row
+        if cell_count > 0 and header_count >= cell_count * 0.5:
+            return True
+            
+    # No headers found above
+    return False
+
+def _determine_header_behavior(worksheet, start_row, start_col, data):
+    """Determine if headers should be written based on context."""
+    if not data:
+        return False  # No data means no headers
+        
+    # Check if we're in the title area (rows 1-4)
+    if start_row <= 4:
+        return False  # Don't add headers in title area
+    
+    # If we already have data in the sheet, be cautious about adding headers
+    if worksheet.max_row > 1:
+        # Check if the target row already has content
+        has_content = any(
+            worksheet.cell(row=start_row, column=start_col + i).value is not None
+            for i in range(min(5, len(data[0].keys())))
+        )
+        
+        if has_content:
+            return False  # Don't overwrite existing content with headers
+        
+        # Check if first row appears to be headers
+        first_row_is_headers = _looks_like_headers(data[0])
+        
+        # Check extensively for headers above (up to 5 rows)
+        has_headers_above = _check_for_headers_above(worksheet, start_row, start_col, list(data[0].keys()))
+        
+        # Be conservative - don't add headers if we detect headers above or the data has headers
+        if has_headers_above or first_row_is_headers:
+            return False
+        
+        # If we're appending data immediately after existing data, don't add headers
+        if any(worksheet.cell(row=start_row-1, column=start_col + i).value is not None 
+               for i in range(min(5, len(data[0].keys())))):
+            return False
+    
+    # For completely new sheets or empty areas far from content, add headers
+    return True
+
 def _write_data_to_worksheet(
     worksheet: Worksheet, 
     data: list[dict[str, Any]], 
     start_cell: str = "A1",
-    write_headers: bool = True,
 ) -> None:
-    """Write data to worksheet - internal helper function"""
+    """Write data to worksheet with intelligent header handling"""
     try:
         if not data:
             raise DataError("No data provided to write")
@@ -175,21 +250,41 @@ def _write_data_to_worksheet(
         if not all(isinstance(row, dict) for row in data):
             raise DataError("All data rows must be dictionaries")
 
-        # Write headers if requested
+        # Get headers from first data row's keys
         headers = list(data[0].keys())
-        if write_headers:
+        
+        # Check if first row appears to be headers (keys match values)
+        first_row_is_headers = _looks_like_headers(data[0])
+        
+        # Determine if we should write headers based on context
+        should_write_headers = _determine_header_behavior(
+            worksheet, start_row, start_col, data
+        )
+        
+        # Determine what data to write
+        actual_data = data
+        
+        # Only skip the first row if it contains headers AND we're writing headers
+        if first_row_is_headers and should_write_headers:
+            actual_data = data[1:]
+        elif first_row_is_headers and not should_write_headers:
+            actual_data = data
+        
+        # Write headers if needed
+        current_row = start_row
+        if should_write_headers:
             for i, header in enumerate(headers):
-                cell = worksheet.cell(row=start_row, column=start_col + i)
+                cell = worksheet.cell(row=current_row, column=start_col + i)
                 cell.value = header
                 cell.font = Font(bold=True)
-            start_row += 1  # Move start row down if headers were written
-
-        # Write data
-        for i, row_dict in enumerate(data):
+            current_row += 1  # Move down after writing headers
+        
+        # Write actual data
+        for i, row_dict in enumerate(actual_data):
             if not all(h in row_dict for h in headers):
                 raise DataError(f"Row {i+1} is missing required headers")
             for j, header in enumerate(headers):
-                cell = worksheet.cell(row=start_row + i, column=start_col + j)
+                cell = worksheet.cell(row=current_row + i, column=start_col + j)
                 cell.value = row_dict.get(header, "")
     except DataError as e:
         logger.error(str(e))

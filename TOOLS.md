@@ -50,8 +50,7 @@ write_data_to_excel(
     filepath: str,
     sheet_name: str,
     data: List[Dict],
-    start_cell: str = "A1",
-    write_headers: bool = True
+    start_cell: str = "A1"
 ) -> str
 ```
 
@@ -59,7 +58,6 @@ write_data_to_excel(
 - `sheet_name`: Target worksheet name
 - `data`: List of dictionaries containing data to write
 - `start_cell`: Starting cell (default: "A1")
-- `write_headers`: Whether to write dictionary keys as headers
 - Returns: Success message
 
 ### read_data_from_excel
