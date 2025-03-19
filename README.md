@@ -1,5 +1,4 @@
 # Excel MCP Server
-[![smithery badge](https://smithery.ai/badge/@haris-musa/excel-mcp-server)](https://smithery.ai/server/@haris-musa/excel-mcp-server)
 
 A Model Context Protocol (MCP) server implementation that provides Excel file manipulation capabilities without requiring Microsoft Excel installation. This server enables workbook creation, data manipulation, formatting, and advanced Excel features.
 
