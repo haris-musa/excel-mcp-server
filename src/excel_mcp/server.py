@@ -56,7 +56,7 @@ os.makedirs(EXCEL_FILES_PATH, exist_ok=True)
 # Initialize FastMCP server
 mcp = FastMCP(
     "excel-mcp",
-    version="0.1.0",
+    version="0.1.1",
     description="Excel MCP Server for manipulating Excel files",
     dependencies=["openpyxl>=3.1.2"],
     env_vars={
