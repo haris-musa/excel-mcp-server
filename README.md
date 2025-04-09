@@ -1,84 +1,62 @@
 # Excel MCP Server
 
-A Model Context Protocol (MCP) server implementation that provides Excel file manipulation capabilities without requiring Microsoft Excel installation. This server enables workbook creation, data manipulation, formatting, and advanced Excel features.
-
-## Requirements
-
-- Python 3.10+
-- MCP SDK 1.2.0+
-- OpenPyXL 3.1.2+
-
-## Components
-
-### Resources
-
-The server provides Excel workbook manipulation through OpenPyXL:
-
-- Creates and modifies Excel workbooks
-- Manages worksheets and ranges
-- Handles formatting and styles
-- Supports charts and pivot tables
-
-### Tools
-
-This server provides a comprehensive set of Excel manipulation tools. For detailed documentation of all available tools, their parameters, and usage examples, please refer to [TOOLS.md](TOOLS.md).
-
-The tools include capabilities for:
-
-- Workbook and worksheet management
-- Data reading and writing
-- Formatting and styling
-- Charts and visualizations
-- Pivot tables and data analysis
-
-See [TOOLS.md](TOOLS.md) for complete documentation.
+A Model Context Protocol (MCP) server that lets you manipulate Excel files without needing Microsoft Excel installed. Create, read, and modify Excel workbooks with your AI agent.
 
 ## Features
 
-- Full Excel Support: Comprehensive Excel functionality
-- Data Manipulation: Read, write, and transform data
-- Advanced Features: Charts, pivot tables, and formatting
-- Error Handling: Comprehensive error handling with clear messages
+- 📊 Create and modify Excel workbooks
+- 📝 Read and write data
+- 🎨 Apply formatting and styles
+- 📈 Create charts and visualizations
+- 📊 Generate pivot tables
+- 🔄 Manage worksheets and ranges
 
-## Usage
+## Quick Start
 
-### Environment Configuration
+### Prerequisites
 
-The server can be configured using the following environment variables:
+- Python 3.10 or higher
 
-- `EXCEL_FILES_PATH`: Directory where Excel files will be stored (default: `./excel_files`)
+### Installation
 
-You can set this in different ways:
+1. Clone the repository:
+```bash
+git clone https://github.com/haris-musa/excel-mcp-server.git
+cd excel-mcp-server
+```
 
-Windows CMD:
+2. Install using uv:
+```bash
+uv pip install -e .
+```
 
-```cmd
-set EXCEL_FILES_PATH=C:\path\to\excel\files
+### Running the Server
+
+Start the server (default port 8000):
+```bash
 uv run excel-mcp-server
 ```
 
-Windows PowerShell:
-
-```powershell
-$env:EXCEL_FILES_PATH="C:\path\to\excel\files"
-uv run excel-mcp-server
-```
-
-Linux/MacOS:
+Custom port (e.g., 8080):
 
 ```bash
-export EXCEL_FILES_PATH=/path/to/excel/files
-uv run excel-mcp-server
+# Bash/Linux/macOS
+export FASTMCP_PORT=8080 && uv run excel-mcp-server
+
+# Windows PowerShell
+$env:FASTMCP_PORT = "8080"; uv run excel-mcp-server
 ```
 
-Or in Claude Desktop config:
+## Using with AI Tools
 
+### Cursor IDE
+
+1. Add this configuration to Cursor:
 ```json
 {
   "mcpServers": {
     "excel": {
-      "command": "uv run excel-mcp-server",
-      "transport": "sse",
+      "url": "http://localhost:8000/sse",
       "env": {
         "EXCEL_FILES_PATH": "/path/to/excel/files"
       }
@@ -87,28 +65,27 @@ Or in Claude Desktop config:
 }
 ```
 
-### Starting the Server
+2. The Excel tools will be available through your AI assistant.
 
-Start the server:
+### Remote Hosting & Transport Protocols
 
-```bash
-uv run excel-mcp-server
-```
+This server uses Server-Sent Events (SSE) transport protocol. For different use cases:
 
-The server will start in SSE mode and wait for connections from MCP clients.
+1. **Using with Claude Desktop (requires stdio):**
+   - Use [Supergateway](https://github.com/supercorp-ai/supergateway) to convert SSE to stdio:
 
-### Connecting in Cursor IDE
+2. **Hosting Your MCP Server:**
+   - [Remote MCP Server Guide](https://developers.cloudflare.com/agents/guides/remote-mcp-server/)
 
-After starting the server, connect to the SSE endpoint in Cursor IDE:
+## Environment Variables
 
-```
-http://localhost:8000/sse
-```
+- `FASTMCP_PORT`: Server port (default: 8000)
+- `EXCEL_FILES_PATH`: Directory for Excel files (default: `./excel_files`)
 
-The Excel MCP tools will be available through the agent.
+## Available Tools
 
-For available tools and their usage, please refer to [TOOLS.md](TOOLS.md).
+The server provides a comprehensive set of Excel manipulation tools. See [TOOLS.md](TOOLS.md) for complete documentation of all available tools.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) for details.
