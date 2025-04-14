@@ -51,8 +51,14 @@ def read_excel_range(
             except ValueError as e:
                 raise DataError(f"Invalid end cell format: {str(e)}")
         else:
-            # For single cell, use same coordinates
+            # Dynamically expand range until all values are empty
             end_row, end_col = start_row, start_col
+            while end_row <= ws.max_row and any(ws.cell(row=end_row, column=c).value is not None for c in range(start_col, ws.max_column + 1)):
+                end_row += 1
+            while end_col <= ws.max_column and any(ws.cell(row=r, column=end_col).value is not None for r in range(start_row, ws.max_row + 1)):
+                end_col += 1
+            end_row -= 1  # Adjust back to last non-empty row
+            end_col -= 1  # Adjust back to last non-empty column
 
         # Validate range bounds
         if start_row > ws.max_row or start_col > ws.max_column:
@@ -62,31 +68,13 @@ def read_excel_range(
             )
 
         data = []
-        # If it's a single cell or single row, just read the values directly
-        if start_row == end_row:
-            row_data = {}
+        for row in range(start_row, end_row + 1):
+            row_data = []
             for col in range(start_col, end_col + 1):
-                cell = ws.cell(row=start_row, column=col)
-                col_name = f"Column_{col}"
-                row_data[col_name] = cell.value
-            if any(v is not None for v in row_data.values()):
+                cell = ws.cell(row=row, column=col)
+                row_data.append(cell.value)
+            if any(v is not None for v in row_data):
                 data.append(row_data)
-        else:
-            # Multiple rows - use header row
-            headers = []
-            for col in range(start_col, end_col + 1):
-                cell_value = ws.cell(row=start_row, column=col).value
-                headers.append(str(cell_value) if cell_value is not None else f"Column_{col}")
-
-            # Get data rows
-            max_rows = min(start_row + 5, end_row) if preview_only else end_row
-            for row in range(start_row + 1, max_rows + 1):
-                row_data = {}
-                for col, header in enumerate(headers, start=start_col):
-                    cell = ws.cell(row=row, column=col)
-                    row_data[header] = cell.value
-                if any(v is not None for v in row_data.values()):
-                    data.append(row_data)
 
         wb.close()
         return data
@@ -100,7 +88,7 @@ def read_excel_range(
 def write_data(
     filepath: str,
     sheet_name: str | None,
-    data: list[dict[str, Any]] | None,
+    data: list[list] | None,
     start_cell: str = "A1",
 ) -> dict[str, str]:
     """Write data to Excel sheet with workbook handling
@@ -230,7 +218,7 @@ def _determine_header_behavior(worksheet, start_row, start_col, data):
 
 def _write_data_to_worksheet(
     worksheet: Worksheet, 
-    data: list[dict[str, Any]], 
+    data: list[list], 
     start_cell: str = "A1",
 ) -> None:
     """Write data to worksheet with intelligent header handling"""
@@ -246,46 +234,10 @@ def _write_data_to_worksheet(
         except ValueError as e:
             raise DataError(f"Invalid start cell format: {str(e)}")
 
-        # Validate data structure
-        if not all(isinstance(row, dict) for row in data):
-            raise DataError("All data rows must be dictionaries")
-
-        # Get headers from first data row's keys
-        headers = list(data[0].keys())
-        
-        # Check if first row appears to be headers (keys match values)
-        first_row_is_headers = _looks_like_headers(data[0])
-        
-        # Determine if we should write headers based on context
-        should_write_headers = _determine_header_behavior(
-            worksheet, start_row, start_col, data
-        )
-        
-        # Determine what data to write
-        actual_data = data
-        
-        # Only skip the first row if it contains headers AND we're writing headers
-        if first_row_is_headers and should_write_headers:
-            actual_data = data[1:]
-        elif first_row_is_headers and not should_write_headers:
-            actual_data = data
-        
-        # Write headers if needed
-        current_row = start_row
-        if should_write_headers:
-            for i, header in enumerate(headers):
-                cell = worksheet.cell(row=current_row, column=start_col + i)
-                cell.value = header
-                cell.font = Font(bold=True)
-            current_row += 1  # Move down after writing headers
-        
-        # Write actual data
-        for i, row_dict in enumerate(actual_data):
-            if not all(h in row_dict for h in headers):
-                raise DataError(f"Row {i+1} is missing required headers")
-            for j, header in enumerate(headers):
-                cell = worksheet.cell(row=current_row + i, column=start_col + j)
-                cell.value = row_dict.get(header, "")
+        # Write data
+        for i, row in enumerate(data):
+            for j, val in enumerate(row):
+                worksheet.cell(row=start_row + i, column=start_col + j, value=val)
     except DataError as e:
         logger.error(str(e))
         raise

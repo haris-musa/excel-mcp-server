@@ -91,7 +91,10 @@ def apply_formula(
     cell: str,
     formula: str,
 ) -> str:
-    """Apply Excel formula to cell."""
+    """
+    Apply Excel formula to cell.
+    Excel formula will write to cell with verification.
+    """
     try:
         full_path = get_excel_path(filepath)
         # First validate the formula
@@ -188,7 +191,12 @@ def read_data_from_excel(
     end_cell: str = None,
     preview_only: bool = False
 ) -> str:
-    """Read data from Excel worksheet."""
+    """
+    Read data from Excel worksheet.
+    
+    Returns:  
+    Data from Excel worksheet as json string. list of lists or empty list if no data found. sublists are assumed to be rows.
+    """
     try:
         full_path = get_excel_path(filepath)
         from excel_mcp.data import read_excel_range
@@ -206,16 +214,19 @@ def read_data_from_excel(
 def write_data_to_excel(
     filepath: str,
     sheet_name: str,
-    data: List[Dict],
+    data: List[List],
     start_cell: str = "A1",
 ) -> str:
-    """Write data to Excel worksheet.
-    
-    The function automatically detects the context and handles headers intelligently:
-    - Headers are added when writing to a new area
-    - Headers are not duplicated when writing below existing headers
-    - Title areas (rows 1-4) are treated specially
-    - If the first row of data appears to be headers, it will be used accordingly
+    """
+    Write data to Excel worksheet.
+    Excel formula will write to cell without any verification.
+
+    PARAMETERS:  
+    filepath: Path to Excel file
+    sheet_name: Name of worksheet to write to
+    data: List of lists containing data to write to the worksheet, sublists are assumed to be rows
+    start_cell: Cell to start writing to, default is "A1"
+  
     """
     try:
         full_path = get_excel_path(filepath)
