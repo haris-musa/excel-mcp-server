@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  excel-mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: excel-mcp-server
+    ports:
+      - "8000:8000"
+    volumes:
+      # 挂载主要的用户目录
+      - /Users:/Users
+      - ${HOME}:${HOME}
+      # 如果用户使用相对路径，提供一个默认目录
+      - ./excel_files:/app/excel_files
+      # 动态挂载从mcp.json读取的路径
+      - ${EXCEL_FILES_PATH}:${EXCEL_FILES_PATH}
+    environment:
+      # 从启动脚本或环境变量中获取Excel文件路径
+      - EXCEL_FILES_PATH=${EXCEL_FILES_PATH:-/app/excel_files}
+    restart: unless-stopped
