@@ -9,14 +9,18 @@ services:
     ports:
       - "8000:8000"
     volumes:
+      # Mount main user directories
       # 挂载主要的用户目录
       - /Users:/Users
       - ${HOME}:${HOME}
+      # Provide a default directory if users use relative path
       # 如果用户使用相对路径，提供一个默认目录
       - ./excel_files:/app/excel_files
+      # Dynamically mount path read from mcp.json
       # 动态挂载从mcp.json读取的路径
       - ${EXCEL_FILES_PATH}:${EXCEL_FILES_PATH}
     environment:
+      # Get Excel file path from startup script or environment variable
       # 从启动脚本或环境变量中获取Excel文件路径
       - EXCEL_FILES_PATH=${EXCEL_FILES_PATH:-/app/excel_files}
     restart: unless-stopped
