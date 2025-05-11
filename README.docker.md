@@ -1,21 +1,21 @@
-# 在Docker中运行Excel MCP Server
+# Running Excel MCP Server in Docker
 
-这个文档提供了如何使用Docker来运行Excel MCP Server的说明。
+This document provides instructions on how to run Excel MCP Server using Docker.
 
-## 使用Docker
+## Using Docker
 
-### 前提条件
+### Prerequisites
 
-- 安装 [Docker](https://docs.docker.com/get-docker/)
-- 安装 [Docker Compose](https://docs.docker.com/compose/install/) (可选，但推荐)
+- Install [Docker](https://docs.docker.com/get-docker/)
+- Install [Docker Compose](https://docs.docker.com/compose/install/) (optional, but recommended)
 
-## 新的智能启动方式 (推荐)
+## New Smart Start Method (Recommended)
 
-我们提供了一个智能启动脚本，它能够自动从Cursor IDE的mcp.json配置中读取您设置的Excel文件路径，并正确配置Docker容器。这样，您可以随时在Cursor IDE中修改路径，而不需要修改Docker配置。
+We provide a smart startup script that can automatically read the Excel file path you set in the Cursor IDE's mcp.json configuration and correctly configure the Docker container. This way, you can modify the path in Cursor IDE at any time without having to modify the Docker configuration.
 
-### 使用智能启动脚本
+### Using the Smart Startup Script
 
-1. 确保您的Cursor IDE中已正确配置mcp.json:
+1. Make sure your Cursor IDE has mcp.json correctly configured:
 
 ```json
 {
@@ -23,72 +23,72 @@
     "excel-mcp-server": {
       "url": "http://localhost:8000/sse",
       "env": {
-        "EXCEL_FILES_PATH": "/您选择的路径"
+        "EXCEL_FILES_PATH": "/your/chosen/path"
       }
     }
   }
 }
 ```
 
-2. 运行启动脚本:
+2. Run the startup script:
 
 ```bash
 ./start-excel-mcp.sh
 ```
 
-脚本会自动:
-- 从mcp.json中读取您配置的`EXCEL_FILES_PATH`
-- 确保该目录存在并有正确的权限
-- 配置Docker容器使用该路径
-- 启动服务
+The script will automatically:
+- Read the `EXCEL_FILES_PATH` you configured in mcp.json
+- Ensure that directory exists and has correct permissions
+- Configure the Docker container to use that path
+- Start the service
 
-3. 查看日志:
+3. View logs:
 
 ```bash
 docker-compose logs -f
 ```
 
-4. 停止服务:
+4. Stop the service:
 
 ```bash
 docker-compose down
 ```
 
-### 关于路径挂载的说明
+### Notes on Path Mounting
 
-此Docker配置采用了灵活的路径挂载策略:
+This Docker configuration uses a flexible path mounting strategy:
 
-1. 自动挂载从mcp.json读取的路径
-2. 默认挂载了常见的用户目录路径:
-   - `/Users` 目录 (macOS)
-   - 当前用户的主目录 (`$HOME`)
-   - 相对路径 `./excel_files` 挂载到容器内的 `/app/excel_files`
+1. Automatically mounts the path read from mcp.json
+2. Default mounts for common user directory paths:
+   - `/Users` directory (macOS)
+   - Current user's home directory (`$HOME`)
+   - Relative path `./excel_files` mounted to `/app/excel_files` inside the container
 
-### Docker Desktop文件共享设置
+### Docker Desktop File Sharing Settings
 
-**重要：** 在macOS上使用Docker Desktop时，您必须确保要访问的目录已在Docker Desktop的文件共享设置中添加：
+**Important:** When using Docker Desktop on macOS, you must ensure that the directory you want to access has been added to Docker Desktop's file sharing settings:
 
-1. 打开Docker Desktop
-2. 点击右上角的齿轮图标（⚙️）打开设置
-3. 选择"Resources" > "File sharing"
-4. 确保您需要访问的目录已添加到列表中
-5. 如果没有，点击"+"添加目录，然后点击"Apply & Restart"
+1. Open Docker Desktop
+2. Click the gear icon (⚙️) in the top-right corner to open settings
+3. Select "Resources" > "File sharing"
+4. Make sure the directory you need to access is added to the list
+5. If not, click "+" to add the directory, then click "Apply & Restart"
 
-## 手动配置方式 (不推荐)
+## Manual Configuration Method (Not Recommended)
 
-如果您不想使用启动脚本，也可以手动配置和启动服务:
+If you don't want to use the startup script, you can also manually configure and start the service:
 
-### 方法一：手动设置环境变量
+### Method 1: Manually Set Environment Variables
 
 ```bash
-# 设置环境变量
-export EXCEL_FILES_PATH="/您的路径"
+# Set environment variables
+export EXCEL_FILES_PATH="/your/path"
 
-# 启动服务
+# Start the service
 docker-compose up -d
 ```
 
-### 方法二：使用Docker命令
+### Method 2: Using Docker Command
 
 ```bash
 docker run -d \
@@ -96,18 +96,18 @@ docker run -d \
   -p 8000:8000 \
   -v /Users:/Users \
   -v $HOME:$HOME \
-  -v 您的路径:您的路径 \
-  -e EXCEL_FILES_PATH=您的路径 \
+  -v your/path:your/path \
+  -e EXCEL_FILES_PATH=your/path \
   excel-mcp-server
 ```
 
-## 配置与使用
+## Configuration and Usage
 
-服务启动后，MCP服务器会在 http://localhost:8000/sse 上运行。
+After starting the service, the MCP server will run at http://localhost:8000/sse.
 
-### 在Cursor IDE中使用
+### Using in Cursor IDE
 
-在Cursor IDE的配置中添加（每位用户可以设置自己的路径）:
+Add to your Cursor IDE configuration (each user can set their own path):
 
 ```json
 {
@@ -115,45 +115,45 @@ docker run -d \
     "excel-mcp-server": {
       "url": "http://localhost:8000/sse",
       "env": {
-        "EXCEL_FILES_PATH": "/您选择的路径"
+        "EXCEL_FILES_PATH": "/your/chosen/path"
       }
     }
   }
 }
 ```
 
-**重要提示：** 
-- macOS用户应该选择`/Users`开头的路径或其主目录下的路径
-- 确保选择的路径已在Docker Desktop的文件共享设置中添加
-- 修改mcp.json中的路径后，需要重新运行启动脚本让更改生效
+**Important Notes:** 
+- macOS users should choose a path that starts with `/Users` or is within their home directory
+- Make sure the chosen path has been added to Docker Desktop's file sharing settings
+- After modifying the path in mcp.json, you need to run the startup script again to make the changes effective
 
-## 疑难解答
+## Troubleshooting
 
-1. 如果端口8000已被占用，可以在`docker-compose.yml`中修改端口映射:
+1. If port 8000 is already in use, you can modify the port mapping in `docker-compose.yml`:
 
 ```yaml
 ports:
-  - "8001:8000"  # 将主机的8001端口映射到容器的8000端口
+  - "8001:8000"  # Map port 8001 on the host to port 8000 in the container
 ```
 
-2. 如果遇到权限问题，可能需要调整您的Excel文件目录的权限:
+2. If you encounter permission issues, you may need to adjust the permissions of your Excel files directory:
 
 ```bash
-chmod 755 /您的路径
+chmod 755 /your/path
 ```
 
-3. 如果Docker容器无法访问挂载的目录，这是最常见的问题，请确保：
-   - 目录已在Docker Desktop的文件共享设置中添加
-   - 在macOS上，只能访问`/Users`、`/Volumes`、`/private`、`/tmp`等有限的目录
-   - 检查Docker Desktop的Settings > Resources > File sharing部分
+3. If the Docker container cannot access the mounted directory, which is the most common problem, make sure:
+   - The directory has been added to Docker Desktop's file sharing settings
+   - On macOS, only limited directories like `/Users`, `/Volumes`, `/private`, `/tmp` can be accessed
+   - Check Docker Desktop's Settings > Resources > File sharing section
 
-4. 错误"Mounts denied"通常表示Docker没有权限访问指定的路径，解决方法：
-   - 打开Docker Desktop设置
-   - 选择"Resources" > "File sharing"
-   - 添加需要访问的目录
-   - 应用更改并重启Docker
+4. The "Mounts denied" error usually indicates that Docker does not have permission to access the specified path. Solution:
+   - Open Docker Desktop settings
+   - Select "Resources" > "File sharing"
+   - Add the directory you need to access
+   - Apply changes and restart Docker
 
-5. 如果启动脚本无法正确读取mcp.json，请确保:
-   - mcp.json位于`~/.cursor/mcp.json`
-   - 文件格式正确
-   - 考虑安装jq工具(`brew install jq`)以获得更好的JSON解析支持
+5. If the startup script cannot correctly read mcp.json, make sure:
+   - mcp.json is located at `~/.cursor/mcp.json`
+   - The file format is correct
+   - Consider installing the jq tool (`brew install jq`) for better JSON parsing support
