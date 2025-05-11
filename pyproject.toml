@@ -1,26 +1,31 @@
 [project]
 name = "excel-mcp-server"
 version = "0.1.1"
-description = "MCP server for Excel file manipulation"
+description = "Excel MCP Server for manipulating Excel files"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "mcp[cli]>=1.2.0",
-    "openpyxl>=3.1.2"
+    "mcp[cli]>=1.6.0",
+    "openpyxl>=3.1.2",
+    "typer>=0.15.1"
 ]
 [[project.authors]]
 name = "haris"
 email = "haris.musa@outlook.com"
 
+[project.scripts]
+excel-mcp-server = "excel_mcp.__main__:app"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[project.scripts]
-excel-mcp-server = "excel_mcp.__main__:main"
-
 [tool.hatch.build.targets.wheel]
 packages = ["src/excel_mcp"]
+
+[[tool.uv.index]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
 
 [tool.hatch.build]
 packages = ["src/excel_mcp"]
