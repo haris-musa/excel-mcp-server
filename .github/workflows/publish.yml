@@ -22,13 +22,13 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Install build dependencies
+      - name: Install hatch dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install build
+          pip install hatch
 
       - name: Build package
-        run: python -m build
+        run: hatch build
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

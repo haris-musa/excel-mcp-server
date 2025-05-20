@@ -1,6 +1,5 @@
 import asyncio
 import typer
-from typing import Optional
 
 from .server import run_sse, run_stdio
 

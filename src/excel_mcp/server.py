@@ -1,5 +1,4 @@
 import logging
-import sys
 import os
 from typing import Any, List, Dict
 
@@ -44,7 +43,6 @@ from excel_mcp.sheet import (
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 LOG_FILE = os.path.join(ROOT_DIR, "excel-mcp.log")
 
-
 # Initialize EXCEL_FILES_PATH variable without assigning a value
 EXCEL_FILES_PATH = None
 
@@ -62,7 +60,7 @@ logger = logging.getLogger("excel-mcp")
 # Initialize FastMCP server
 mcp = FastMCP(
     "excel-mcp",
-    version="0.1.2",
+    version="0.1.3",
     description="Excel MCP Server for manipulating Excel files",
     dependencies=["openpyxl>=3.1.2"],
     env_vars={
