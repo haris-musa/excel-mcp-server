@@ -6,8 +6,6 @@
 [![PyPI downloads](https://img.shields.io/pypi/dm/excel-mcp-server.svg)](https://pypi.org/project/excel-mcp-server/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/haris-musa-excel-mcp-server-badge.png)](https://mseep.ai/app/haris-musa-excel-mcp-server)
-
 # Excel MCP Server
 
 A Model Context Protocol (MCP) server that lets you manipulate Excel files without needing Microsoft Excel installed. Create, read, and modify Excel workbooks with your AI agent.
