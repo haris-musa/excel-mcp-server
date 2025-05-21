@@ -1,4 +1,5 @@
 [![MseeP.ai Security Assessment Badge](https://mseep.net/pr/haris-musa-excel-mcp-server-badge.png)](https://mseep.ai/app/haris-musa-excel-mcp-server)
+[![smithery badge](https://smithery.ai/badge/@haris-musa/excel-mcp-server)](https://smithery.ai/server/@haris-musa/excel-mcp-server)
 
 # Excel MCP Server
 
@@ -22,6 +23,15 @@ A Model Context Protocol (MCP) server that lets you manipulate Excel files witho
 
 ### Installation
 
+#### Installing via Smithery
+
+To install excel-mcp-server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@haris-musa/excel-mcp-server):
+
+```bash
+npx -y @smithery/cli install @haris-musa/excel-mcp-server --client claude
+```
+
+#### Installing Manually
 1. Clone the repository:
 ```bash
 git clone https://github.com/haris-musa/excel-mcp-server.git
