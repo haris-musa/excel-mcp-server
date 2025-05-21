@@ -21,7 +21,7 @@ def read_excel_range(
 ) -> list[dict[str, Any]]:
     """Read data from Excel range with optional preview mode"""
     try:
-        wb = load_workbook(filepath, read_only=True)
+        wb = load_workbook(filepath, read_only=False)
         
         if sheet_name not in wb.sheetnames:
             raise DataError(f"Sheet '{sheet_name}' not found")

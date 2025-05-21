@@ -67,7 +67,7 @@ def get_workbook_info(filepath: str, include_ranges: bool = False) -> dict[str, 
         if not path.exists():
             raise WorkbookError(f"File not found: {filepath}")
             
-        wb = load_workbook(filepath, read_only=True)
+        wb = load_workbook(filepath, read_only=False)
         
         info = {
             "filename": path.name,
