@@ -165,7 +165,7 @@ def format_range(
         full_path = get_excel_path(filepath)
         from excel_mcp.formatting import format_range as format_range_func
         
-        result = format_range_func(
+        format_range_func(
             filepath=full_path,
             sheet_name=sheet_name,
             start_cell=start_cell,
@@ -201,20 +201,35 @@ def read_data_from_excel(
     preview_only: bool = False
 ) -> str:
     """
-    Read data from Excel worksheet.
+    Read data from Excel worksheet with cell metadata including validation rules.
+    
+    Args:
+        filepath: Path to Excel file
+        sheet_name: Name of worksheet
+        start_cell: Starting cell (default A1)
+        end_cell: Ending cell (optional, auto-expands if not provided)
+        preview_only: Whether to return preview only
     
     Returns:  
-    Data from Excel worksheet as json string. list of lists or empty list if no data found. sublists are assumed to be rows.
+    JSON string containing structured cell data with validation metadata.
+    Each cell includes: address, value, row, column, and validation info (if any).
     """
     try:
         full_path = get_excel_path(filepath)
-        from excel_mcp.data import read_excel_range
-        result = read_excel_range(full_path, sheet_name, start_cell, end_cell, preview_only)
-        if not result:
+        from excel_mcp.data import read_excel_range_with_metadata
+        result = read_excel_range_with_metadata(
+            full_path, 
+            sheet_name, 
+            start_cell, 
+            end_cell
+        )
+        if not result or not result.get("cells"):
             return "No data found in specified range"
-        # Convert the list of dicts to a formatted string
-        data_str = "\n".join([str(row) for row in result])
-        return data_str
+            
+        # Return as formatted JSON string
+        import json
+        return json.dumps(result, indent=2, default=str)
+        
     except Exception as e:
         logger.error(f"Error reading data: {e}")
         raise
@@ -253,7 +268,7 @@ def create_workbook(filepath: str) -> str:
     try:
         full_path = get_excel_path(filepath)
         from excel_mcp.workbook import create_workbook as create_workbook_impl
-        result = create_workbook_impl(full_path)
+        create_workbook_impl(full_path)
         return f"Created workbook at {full_path}"
     except WorkbookError as e:
         return f"Error: {str(e)}"
@@ -498,6 +513,50 @@ def validate_excel_range(
         return f"Error: {str(e)}"
     except Exception as e:
         logger.error(f"Error validating range: {e}")
+        raise
+
+@mcp.tool()
+def get_data_validation_info(
+    filepath: str,
+    sheet_name: str
+) -> str:
+    """
+    Get all data validation rules in a worksheet.
+    
+    This tool helps identify which cell ranges have validation rules
+    and what types of validation are applied.
+    
+    Args:
+        filepath: Path to Excel file
+        sheet_name: Name of worksheet
+        
+    Returns:
+        JSON string containing all validation rules in the worksheet
+    """
+    try:
+        full_path = get_excel_path(filepath)
+        from openpyxl import load_workbook
+        from excel_mcp.cell_validation import get_all_validation_ranges
+        
+        wb = load_workbook(full_path, read_only=False)
+        if sheet_name not in wb.sheetnames:
+            return f"Error: Sheet '{sheet_name}' not found"
+            
+        ws = wb[sheet_name]
+        validations = get_all_validation_ranges(ws)
+        wb.close()
+        
+        if not validations:
+            return "No data validation rules found in this worksheet"
+            
+        import json
+        return json.dumps({
+            "sheet_name": sheet_name,
+            "validation_rules": validations
+        }, indent=2, default=str)
+        
+    except Exception as e:
+        logger.error(f"Error getting validation info: {e}")
         raise
 
 async def run_sse():
