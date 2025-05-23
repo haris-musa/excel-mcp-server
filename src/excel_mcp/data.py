@@ -1,14 +1,14 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 import logging
 
 from openpyxl import load_workbook
-from openpyxl.styles import Font
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.utils import get_column_letter
 
 from .exceptions import DataError
 from .cell_utils import parse_cell_range
+from .cell_validation import get_data_validation_for_cell
 
 logger = logging.getLogger(__name__)
 
@@ -243,4 +243,109 @@ def _write_data_to_worksheet(
         raise
     except Exception as e:
         logger.error(f"Failed to write worksheet data: {e}")
+        raise DataError(str(e))
+
+def read_excel_range_with_metadata(
+    filepath: Path | str,
+    sheet_name: str,
+    start_cell: str = "A1",
+    end_cell: str | None = None,
+    include_validation: bool = True
+) -> Dict[str, Any]:
+    """Read data from Excel range with cell metadata including validation rules.
+    
+    Args:
+        filepath: Path to Excel file
+        sheet_name: Name of worksheet
+        start_cell: Starting cell address
+        end_cell: Ending cell address (optional)
+        include_validation: Whether to include validation metadata
+        
+    Returns:
+        Dictionary containing structured cell data with metadata
+    """
+    try:
+        wb = load_workbook(filepath, read_only=False)
+        
+        if sheet_name not in wb.sheetnames:
+            raise DataError(f"Sheet '{sheet_name}' not found")
+            
+        ws = wb[sheet_name]
+
+        # Parse start cell
+        if ':' in start_cell:
+            start_cell, end_cell = start_cell.split(':')
+            
+        # Get start coordinates
+        try:
+            start_coords = parse_cell_range(f"{start_cell}:{start_cell}")
+            if not start_coords or not all(coord is not None for coord in start_coords[:2]):
+                raise DataError(f"Invalid start cell reference: {start_cell}")
+            start_row, start_col = start_coords[0], start_coords[1]
+        except ValueError as e:
+            raise DataError(f"Invalid start cell format: {str(e)}")
+
+        # Determine end coordinates
+        if end_cell:
+            try:
+                end_coords = parse_cell_range(f"{end_cell}:{end_cell}")
+                if not end_coords or not all(coord is not None for coord in end_coords[:2]):
+                    raise DataError(f"Invalid end cell reference: {end_cell}")
+                end_row, end_col = end_coords[0], end_coords[1]
+            except ValueError as e:
+                raise DataError(f"Invalid end cell format: {str(e)}")
+        else:
+            # Dynamically expand range until all values are empty
+            end_row, end_col = start_row, start_col
+            while end_row <= ws.max_row and any(ws.cell(row=end_row, column=c).value is not None for c in range(start_col, ws.max_column + 1)):
+                end_row += 1
+            while end_col <= ws.max_column and any(ws.cell(row=r, column=end_col).value is not None for r in range(start_row, ws.max_row + 1)):
+                end_col += 1
+            end_row -= 1  # Adjust back to last non-empty row
+            end_col -= 1  # Adjust back to last non-empty column
+
+        # Validate range bounds
+        if start_row > ws.max_row or start_col > ws.max_column:
+            raise DataError(
+                f"Start cell out of bounds. Sheet dimensions are "
+                f"A1:{get_column_letter(ws.max_column)}{ws.max_row}"
+            )
+
+        # Build structured cell data
+        range_data = {
+            "range": f"{start_cell}:{get_column_letter(end_col)}{end_row}" if end_cell else start_cell,
+            "sheet_name": sheet_name,
+            "cells": []
+        }
+        
+        for row in range(start_row, end_row + 1):
+            for col in range(start_col, end_col + 1):
+                cell = ws.cell(row=row, column=col)
+                cell_address = f"{get_column_letter(col)}{row}"
+                
+                cell_data = {
+                    "address": cell_address,
+                    "value": cell.value,
+                    "row": row,
+                    "column": col
+                }
+                
+                # Add validation metadata if requested
+                if include_validation:
+                    validation_info = get_data_validation_for_cell(ws, cell_address)
+                    if validation_info:
+                        cell_data["validation"] = validation_info
+                    else:
+                        cell_data["validation"] = {"has_validation": False}
+                
+                range_data["cells"].append(cell_data)
+
+        wb.close()
+        return range_data
+        
+    except DataError as e:
+        logger.error(str(e))
+        raise
+    except Exception as e:
+        logger.error(f"Failed to read Excel range with metadata: {e}")
         raise DataError(str(e))
