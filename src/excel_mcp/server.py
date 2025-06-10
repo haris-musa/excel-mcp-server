@@ -61,7 +61,7 @@ logger = logging.getLogger("excel-mcp")
 # Initialize FastMCP server
 mcp = FastMCP(
     "excel-mcp",
-    version="0.1.3",
+    version="0.1.4",
     description="Excel MCP Server for manipulating Excel files",
     dependencies=["openpyxl>=3.1.2"],
     env_vars={
