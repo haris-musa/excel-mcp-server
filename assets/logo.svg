@@ -1,14 +1,8 @@
-<svg width="300" height="100" viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg" fill="none">
-  <rect width="600" height="200" fill="#0F172A" rx="20"/>
-  <g font-family="Arial, sans-serif" font-weight="bold" fill="#F8FAFC">
-    <text x="40" y="75" font-size="42" fill="#38BDF8">Excel</text>
-    <text x="180" y="75" font-size="42" fill="#FACC15">MCP</text>
-    <text x="290" y="75" font-size="42" fill="#4ADE80">Server</text>
-  </g>
-  <g transform="translate(40, 120)">
-    <rect x="0" y="0" width="30" height="30" fill="#38BDF8" rx="5"/>
-    <rect x="40" y="0" width="30" height="30" fill="#4ADE80" rx="5"/>
-    <rect x="80" y="0" width="30" height="30" fill="#FACC15" rx="5"/>
-    <text x="130" y="25" font-size="18" fill="#CBD5E1">Excel ops without Excel.</text>
+<svg width="400" height="100" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <rect width="800" height="200" fill="#0F172A" rx="20"/>
+  <g font-family="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" font-weight="bold" fill="#F8FAFC">
+    <text x="130" y="110" font-size="60" fill="#38BDF8">Excel</text>
+    <text x="310" y="110" font-size="60" fill="#FACC15">MCP</text>
+    <text x="470" y="110" font-size="60" fill="#4ADE80">Server</text>
   </g>
 </svg> 
