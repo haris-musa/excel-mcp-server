@@ -2,6 +2,10 @@
   <img src="assets/logo.png" alt="Excel MCP Server Logo" width="300"/>
 </p>
 
+<a href="https://glama.ai/mcp/servers/@haris-musa/excel-mcp-server">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@haris-musa/excel-mcp-server/badge" alt="excel-mcp-server MCP server" />
+</a>
+
 [![PyPI version](https://img.shields.io/pypi/v/excel-mcp-server.svg)](https://pypi.org/project/excel-mcp-server/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/excel-mcp-server.svg)](https://pypi.org/project/excel-mcp-server/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
