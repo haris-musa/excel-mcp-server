@@ -60,6 +60,25 @@ write_data_to_excel(
 - `start_cell`: Starting cell (default: "A1")
 - Returns: Success message
 
+### write_csv_to_excel
+
+Write CSV file data to Excel worksheet.
+
+```python
+write_csv_to_excel(
+    filepath: str,
+    sheet_name: str,
+    csv_path: str,
+    start_cell: str = "A1"
+) -> str
+```
+
+- `filepath`: Path to Excel file
+- `sheet_name`: Target worksheet name
+- `csv_path`: Path to CSV file to read from
+- `start_cell`: Starting cell (default: "A1")
+- Returns: Success message
+
 ### read_data_from_excel
 
 Read data from Excel worksheet.
