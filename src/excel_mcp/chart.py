@@ -4,14 +4,21 @@ from enum import Enum
 
 from openpyxl import load_workbook
 from openpyxl.chart import (
-    BarChart, LineChart, PieChart, ScatterChart, 
-    AreaChart, Reference, Series
+    BarChart,
+    LineChart,
+    PieChart,
+    ScatterChart,
+    AreaChart,
+    Reference,
+    Series,
 )
 from openpyxl.chart.label import DataLabelList
 from openpyxl.chart.legend import Legend
 from openpyxl.chart.axis import ChartLines
 from openpyxl.drawing.spreadsheet_drawing import (
-    AnchorMarker, OneCellAnchor, SpreadsheetDrawing
+    AnchorMarker,
+    OneCellAnchor,
+    SpreadsheetDrawing,
 )
 from openpyxl.utils import column_index_from_string
 
@@ -20,8 +27,10 @@ from .exceptions import ValidationError, ChartError
 
 logger = logging.getLogger(__name__)
 
+
 class ChartType(str, Enum):
     """Supported chart types"""
+
     LINE = "line"
     BAR = "bar"
     PIE = "pie"
@@ -32,8 +41,10 @@ class ChartType(str, Enum):
     SURFACE = "surface"
     RADAR = "radar"
 
+
 class ChartStyle:
     """Chart style configuration"""
+
     def __init__(
         self,
         title_size: int = 14,
@@ -43,7 +54,7 @@ class ChartStyle:
         legend_position: str = "r",
         show_data_labels: bool = True,
         grid_lines: bool = False,
-        style_id: int = 2
+        style_id: int = 2,
     ):
         self.title_size = title_size
         self.title_bold = title_bold
@@ -54,6 +65,7 @@ class ChartStyle:
         self.grid_lines = grid_lines
         self.style_id = style_id
 
+
 def create_chart_in_sheet(
     filepath: str,
     sheet_name: str,
@@ -63,7 +75,7 @@ def create_chart_in_sheet(
     title: str = "",
     x_axis: str = "",
     y_axis: str = "",
-    style: Optional[Dict] = None
+    style: Optional[Dict] = None,
 ) -> dict[str, Any]:
     """Create chart in sheet with enhanced styling options"""
     # Ensure style dict exists and defaults to showing data labels
@@ -81,23 +93,29 @@ def create_chart_in_sheet(
         worksheet = wb[sheet_name]
 
         # Initialize collections if they don't exist
-        if not hasattr(worksheet, '_drawings'):
+        if not hasattr(worksheet, "_drawings"):
             worksheet._drawings = []
-        if not hasattr(worksheet, '_charts'):
+        if not hasattr(worksheet, "_charts"):
             worksheet._charts = []
 
         # Parse the data range
         if "!" in data_range:
             range_sheet_name, cell_range = data_range.split("!")
             if range_sheet_name not in wb.sheetnames:
-                logger.error(f"Sheet '{range_sheet_name}' referenced in data range not found")
-                raise ValidationError(f"Sheet '{range_sheet_name}' referenced in data range not found")
+                logger.error(
+                    f"Sheet '{range_sheet_name}' referenced in data range not found"
+                )
+                raise ValidationError(
+                    f"Sheet '{range_sheet_name}' referenced in data range not found"
+                )
         else:
             cell_range = data_range
 
         try:
             start_cell, end_cell = cell_range.split(":")
-            start_row, start_col, end_row, end_col = parse_cell_range(start_cell, end_cell)
+            start_row, start_col, end_row, end_col = parse_cell_range(
+                start_cell, end_cell
+            )
         except ValueError as e:
             logger.error(f"Invalid data range format: {e}")
             raise ValidationError(f"Invalid data range format: {str(e)}")
@@ -108,9 +126,9 @@ def create_chart_in_sheet(
             "bar": BarChart,
             "pie": PieChart,
             "scatter": ScatterChart,
-            "area": AreaChart
+            "area": AreaChart,
         }
-        
+
         chart_type_lower = chart_type.lower()
         ChartClass = chart_classes.get(chart_type_lower)
         if not ChartClass:
@@ -119,9 +137,9 @@ def create_chart_in_sheet(
                 f"Unsupported chart type: {chart_type}. "
                 f"Supported types: {', '.join(chart_classes.keys())}"
             )
-            
+
         chart = ChartClass()
-        
+
         # Basic chart settings
         chart.title = title
         if hasattr(chart, "x_axis"):
@@ -138,13 +156,10 @@ def create_chart_in_sheet(
                         worksheet,
                         min_row=start_row + 1,
                         max_row=end_row,
-                        min_col=start_col
+                        min_col=start_col,
                     )
                     y_values = Reference(
-                        worksheet,
-                        min_row=start_row + 1,
-                        max_row=end_row,
-                        min_col=col
+                        worksheet, min_row=start_row + 1, max_row=end_row, min_col=col
                     )
                     series = Series(y_values, x_values, title_from_data=True)
                     chart.series.append(series)
@@ -155,13 +170,10 @@ def create_chart_in_sheet(
                     min_row=start_row,
                     max_row=end_row,
                     min_col=start_col + 1,
-                    max_col=end_col
+                    max_col=end_col,
                 )
                 cats = Reference(
-                    worksheet,
-                    min_row=start_row + 1,
-                    max_row=end_row,
-                    min_col=start_col
+                    worksheet, min_row=start_row + 1, max_row=end_row, min_col=start_col
                 )
                 chart.add_data(data, titles_from_data=True)
                 chart.set_categories(cats)
@@ -180,7 +192,11 @@ def create_chart_in_sheet(
             if style.get("show_data_labels", False):
                 data_labels = DataLabelList()
                 # Gather optional overrides
-                dlo = style.get("data_label_options", {}) if isinstance(style.get("data_label_options", {}), dict) else {}
+                dlo = (
+                    style.get("data_label_options", {})
+                    if isinstance(style.get("data_label_options", {}), dict)
+                    else {}
+                )
 
                 # Helper to read bool with fallback
                 def _opt(name: str, default: bool) -> bool:
@@ -215,7 +231,11 @@ def create_chart_in_sheet(
             drawing.chart = chart
 
             # Validate target cell format
-            if not target_cell or not any(c.isalpha() for c in target_cell) or not any(c.isdigit() for c in target_cell):
+            if (
+                not target_cell
+                or not any(c.isalpha() for c in target_cell)
+                or not any(c.isdigit() for c in target_cell)
+            ):
                 raise ValidationError(f"Invalid target cell format: {target_cell}")
 
             # Create anchor
@@ -246,10 +266,10 @@ def create_chart_in_sheet(
             "details": {
                 "type": chart_type,
                 "location": target_cell,
-                "data_range": data_range
-            }
+                "data_range": data_range,
+            },
         }
-        
+
     except (ValidationError, ChartError):
         raise
     except Exception as e:

@@ -93,7 +93,9 @@ def get_excel_path(filename: str) -> str:
     # Check if in SSE mode (EXCEL_FILES_PATH is not None)
     if EXCEL_FILES_PATH is None:
         # Must use absolute path
-        raise ValueError(f"Invalid filename: {filename}, must be an absolute path when not in SSE mode")
+        raise ValueError(
+            f"Invalid filename: {filename}, must be an absolute path when not in SSE mode"
+        )
 
     # In SSE mode, if it's a relative path, resolve it based on EXCEL_FILES_PATH
     return os.path.join(EXCEL_FILES_PATH, filename)
@@ -174,7 +176,7 @@ def format_range(
         full_path = get_excel_path(filepath)
         from excel_mcp.formatting import format_range as format_range_func
 
-        result = format_range_func(
+        _ = format_range_func(
             filepath=full_path,
             sheet_name=sheet_name,
             start_cell=start_cell,
@@ -220,7 +222,9 @@ def read_data_from_excel(
         full_path = get_excel_path(filepath)
         from excel_mcp.data import read_excel_range
 
-        result = read_excel_range(full_path, sheet_name, start_cell, end_cell, preview_only)
+        result = read_excel_range(
+            full_path, sheet_name, start_cell, end_cell, preview_only
+        )
         if not result:
             return "No data found in specified range"
         # Convert the list of dicts to a formatted string
@@ -237,21 +241,28 @@ def write_data_to_excel(
     sheet_name: str,
     data: list[list],
     start_cell: str = "A1",
+    auto_detect_types: bool = True,
 ) -> str:
     """
-    Write data to Excel worksheet.
-    Excel formula will write to cell without any verification.
+    Write data to Excel worksheet with automatic data type detection.
 
     PARAMETERS:
     filepath: Path to Excel file
     sheet_name: Name of worksheet to write to
     data: List of lists containing data to write to the worksheet, sublists are assumed to be rows
     start_cell: Cell to start writing to, default is "A1"
+    auto_detect_types: Whether to automatically detect and convert data types (numbers, dates, etc.)
 
+    When auto_detect_types is True, the function will:
+    - Convert string numbers to actual numbers (e.g., "123" -> 123)
+    - Detect and format percentages (e.g., "50%" -> 0.5 with percentage format)
+    - Detect and format currency (e.g., "$1,000" -> 1000 with currency format)
+    - Detect and format dates (e.g., "2023-12-25" -> date with date format)
+    - Convert boolean-like strings (e.g., "true" -> TRUE)
     """
     try:
         full_path = get_excel_path(filepath)
-        result = write_data(full_path, sheet_name, data, start_cell)
+        result = write_data(full_path, sheet_name, data, start_cell, auto_detect_types)
         return result["message"]
     except (ValidationError, DataError) as e:
         return f"Error: {str(e)}"
@@ -286,8 +297,10 @@ def write_csv_to_excel(
             for row in reader:
                 data.append(row)
 
-        # Write data to Excel using the existing write_data function
-        result = write_data(full_path, sheet_name, data, start_cell)
+        # Write data to Excel using the existing write_data function with type detection
+        result = write_data(
+            full_path, sheet_name, data, start_cell, auto_detect_types=True
+        )
         return result["message"]
     except (ValidationError, DataError) as e:
         return f"Error: {str(e)}"
@@ -305,7 +318,7 @@ def create_workbook(filepath: str) -> str:
         full_path = get_excel_path(filepath)
         from excel_mcp.workbook import create_workbook as create_workbook_impl
 
-        result = create_workbook_impl(full_path)
+        _ = create_workbook_impl(full_path)
         return f"Created workbook at {full_path}"
     except WorkbookError as e:
         return f"Error: {str(e)}"
@@ -463,7 +476,9 @@ def merge_cells(filepath: str, sheet_name: str, start_cell: str, end_cell: str) 
 
 
 @mcp.tool()
-def unmerge_cells(filepath: str, sheet_name: str, start_cell: str, end_cell: str) -> str:
+def unmerge_cells(
+    filepath: str, sheet_name: str, start_cell: str, end_cell: str
+) -> str:
     """Unmerge a range of cells."""
     try:
         full_path = get_excel_path(filepath)
@@ -490,7 +505,9 @@ def copy_range(
         full_path = get_excel_path(filepath)
         from excel_mcp.sheet import copy_range_operation
 
-        result = copy_range_operation(full_path, sheet_name, source_start, source_end, target_start, target_sheet)
+        result = copy_range_operation(
+            full_path, sheet_name, source_start, source_end, target_start, target_sheet
+        )
         return result["message"]
     except (ValidationError, SheetError) as e:
         return f"Error: {str(e)}"
@@ -512,7 +529,9 @@ def delete_range(
         full_path = get_excel_path(filepath)
         from excel_mcp.sheet import delete_range_operation
 
-        result = delete_range_operation(full_path, sheet_name, start_cell, end_cell, shift_direction)
+        result = delete_range_operation(
+            full_path, sheet_name, start_cell, end_cell, shift_direction
+        )
         return result["message"]
     except (ValidationError, SheetError) as e:
         return f"Error: {str(e)}"
@@ -522,7 +541,9 @@ def delete_range(
 
 
 @mcp.tool()
-def validate_excel_range(filepath: str, sheet_name: str, start_cell: str, end_cell: str = None) -> str:
+def validate_excel_range(
+    filepath: str, sheet_name: str, start_cell: str, end_cell: str = None
+) -> str:
     """Validate if a range exists and is properly formatted."""
     try:
         full_path = get_excel_path(filepath)
@@ -536,6 +557,88 @@ def validate_excel_range(filepath: str, sheet_name: str, start_cell: str, end_ce
         raise
 
 
+@mcp.tool()
+def auto_format_data_range(
+    filepath: str,
+    sheet_name: str,
+    start_cell: str = "A1",
+    end_cell: str = None,
+) -> str:
+    """
+    Automatically detect and apply proper formatting to data in a range.
+
+    This function analyzes existing cell values and applies appropriate number formatting:
+    - Detects numbers and applies numeric formatting
+    - Detects percentages and applies percentage formatting
+    - Detects currency and applies currency formatting
+    - Detects dates and applies date formatting
+
+    PARAMETERS:
+    filepath: Path to Excel file
+    sheet_name: Name of worksheet
+    start_cell: Starting cell reference (default: A1)
+    end_cell: Ending cell reference (optional, if not provided will format all data in sheet)
+    """
+    try:
+        full_path = get_excel_path(filepath)
+        from openpyxl import load_workbook
+        from openpyxl.utils import get_column_letter
+
+        from excel_mcp.cell_utils import parse_cell_range
+        from excel_mcp.data import _infer_and_convert_data_type
+
+        wb = load_workbook(full_path)
+        if sheet_name not in wb.sheetnames:
+            return f"Error: Sheet '{sheet_name}' not found"
+
+        ws = wb[sheet_name]
+
+        # Determine range to format
+        if end_cell:
+            try:
+                start_row, start_col, end_row, end_col = parse_cell_range(
+                    start_cell, end_cell
+                )
+            except ValueError as e:
+                return f"Error: Invalid cell range: {str(e)}"
+        else:
+            # Use all data in the sheet
+            start_row, start_col = 1, 1
+            end_row, end_col = ws.max_row, ws.max_column
+
+        formatted_count = 0
+
+        # Process each cell in the range
+        for row in range(start_row, end_row + 1):
+            for col in range(start_col, end_col + 1):
+                cell = ws.cell(row=row, column=col)
+                if cell.value is not None:
+                    # Analyze the current value and determine proper formatting
+                    converted_value, number_format = _infer_and_convert_data_type(
+                        cell.value
+                    )
+
+                    # Apply formatting if detected
+                    if number_format and converted_value is not None:
+                        cell.value = converted_value
+                        cell.number_format = number_format
+                        formatted_count += 1
+
+        wb.save(full_path)
+        wb.close()
+
+        range_desc = (
+            f"{start_cell}:{end_cell}"
+            if end_cell
+            else f"{start_cell} to {get_column_letter(end_col)}{end_row}"
+        )
+        return f"Applied automatic formatting to {formatted_count} cells in range {range_desc}"
+
+    except Exception as e:
+        logger.error(f"Error auto-formatting data: {e}")
+        return f"Error: {str(e)}"
+
+
 async def run_sse():
     """Run Excel MCP server in SSE mode."""
     # Assign value to EXCEL_FILES_PATH in SSE mode
@@ -545,7 +648,9 @@ async def run_sse():
     os.makedirs(EXCEL_FILES_PATH, exist_ok=True)
 
     try:
-        logger.info(f"Starting Excel MCP server with SSE transport (files directory: {EXCEL_FILES_PATH})")
+        logger.info(
+            f"Starting Excel MCP server with SSE transport (files directory: {EXCEL_FILES_PATH})"
+        )
         await mcp.run_sse_async()
     except KeyboardInterrupt:
         logger.info("Server stopped by user")

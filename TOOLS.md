@@ -399,3 +399,87 @@ get_data_validation_info(filepath: str, sheet_name: str) -> str
   - Prompt and error messages
 
 **Note**: The `read_data_from_excel` tool automatically includes validation metadata for individual cells when available.
+
+## Data Type Detection and Formatting
+
+### Enhanced Data Writing
+
+The `write_data_to_excel` function now includes automatic data type detection and formatting:
+
+```python
+# Automatic data type detection (default)
+write_data_to_excel(
+    filepath="data.xlsx",
+    sheet_name="Sheet1", 
+    data=[
+        ["Name", "Age", "Salary", "Start Date", "Active"],
+        ["John", "25", "$50,000", "2023-01-15", "true"],
+        ["Jane", "30", "$75,000.50", "2022-12-01", "false"]
+    ],
+    auto_detect_types=True  # Default: automatically converts data types
+)
+```
+
+**Automatic Conversions Applied:**
+- `"25"` → `25` (integer with number format)
+- `"$50,000"` → `50000` (number with currency format)
+- `"$75,000.50"` → `75000.50` (number with currency format)
+- `"2023-01-15"` → Date object (with date format)
+- `"true"` → `TRUE` (boolean)
+- `"false"` → `FALSE` (boolean)
+
+### Fix Existing Data Formatting
+
+Use the new `auto_format_data_range` function to fix existing data that was stored as text:
+
+```python
+# Fix formatting for entire sheet
+auto_format_data_range(
+    filepath="data.xlsx",
+    sheet_name="Sheet1"
+)
+
+# Fix formatting for specific range
+auto_format_data_range(
+    filepath="data.xlsx", 
+    sheet_name="Sheet1",
+    start_cell="A1",
+    end_cell="E10"
+)
+```
+
+This function will:
+- Detect numeric values stored as text and convert them to numbers
+- Apply appropriate number formatting (currency, percentage, date)
+- Preserve original data while applying proper Excel formatting
+
+### Supported Data Type Detections
+
+| Input Type | Example | Converted To | Excel Format |
+|------------|---------|--------------|--------------|
+| Integer strings | `"123"` | `123` | `0` |
+| Decimal strings | `"123.45"` | `123.45` | `0.00` |
+| Currency | `"$1,234.56"` | `1234.56` | `"$"#,##0.00` |
+| Percentages | `"25%"` | `0.25` | `0.00%` |
+| Dates | `"2023-12-25"` | Date object | `mm/dd/yyyy` |
+| DateTime | `"2023-12-25 10:30"` | DateTime object | `mm/dd/yyyy h:mm` |
+| Booleans | `"true"`, `"yes"`, `"1"` | `TRUE` | General |
+| Text | `"Hello"` | `"Hello"` | General |
+
+### Migration from Text-Based Data
+
+If you have existing Excel files where numeric data was stored as text, follow these steps:
+
+1. **Identify the problem**: Values appear left-aligned (text) instead of right-aligned (numbers)
+2. **Apply automatic formatting**:
+   ```python
+   auto_format_data_range(filepath="problem_file.xlsx", sheet_name="Data")
+   ```
+3. **Verify results**: Numbers should now be right-aligned and calculations should work
+
+### Best Practices
+
+1. **Always use `auto_detect_types=True`** (default) when writing new data
+2. **Run `auto_format_data_range`** on existing files with formatting issues  
+3. **Test calculations** after applying formatting to ensure numeric data is properly converted
+4. **Use specific cell ranges** for large files to improve performance

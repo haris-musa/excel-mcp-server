@@ -2,9 +2,9 @@ import re
 
 from openpyxl.utils import column_index_from_string
 
+
 def parse_cell_range(
-    cell_ref: str,
-    end_ref: str | None = None
+    cell_ref: str, end_ref: str | None = None
 ) -> tuple[int, int, int | None, int | None]:
     """Parse Excel cell reference into row and column indices."""
     if end_ref:
@@ -34,6 +34,7 @@ def parse_cell_range(
 
     return start_row, start_col, end_row, end_col
 
+
 def validate_cell_reference(cell_ref: str) -> bool:
     """Validate Excel cell reference format (e.g., 'A1', 'BC123')"""
     if not cell_ref:
@@ -51,4 +52,4 @@ def validate_cell_reference(cell_ref: str) -> bool:
         else:
             return False
 
-    return bool(col and row) 
+    return bool(col and row)

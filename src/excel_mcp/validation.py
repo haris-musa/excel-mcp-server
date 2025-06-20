@@ -11,11 +11,9 @@ from .exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
 
+
 def validate_formula_in_cell_operation(
-    filepath: str,
-    sheet_name: str,
-    cell: str,
-    formula: str
+    filepath: str, sheet_name: str, cell: str, formula: str
 ) -> dict[str, Any]:
     """Validate Excel formula before writing"""
     try:
@@ -32,12 +30,16 @@ def validate_formula_in_cell_operation(
             raise ValidationError(f"Invalid formula syntax: {message}")
 
         # Additional validation for cell references in formula
-        cell_refs = re.findall(r'[A-Z]+[0-9]+(?::[A-Z]+[0-9]+)?', formula)
+        cell_refs = re.findall(r"[A-Z]+[0-9]+(?::[A-Z]+[0-9]+)?", formula)
         for ref in cell_refs:
-            if ':' in ref:  # Range reference
-                start, end = ref.split(':')
-                if not (validate_cell_reference(start) and validate_cell_reference(end)):
-                    raise ValidationError(f"Invalid cell range reference in formula: {ref}")
+            if ":" in ref:  # Range reference
+                start, end = ref.split(":")
+                if not (
+                    validate_cell_reference(start) and validate_cell_reference(end)
+                ):
+                    raise ValidationError(
+                        f"Invalid cell range reference in formula: {ref}"
+                    )
             else:  # Single cell reference
                 if not validate_cell_reference(ref):
                     raise ValidationError(f"Invalid cell reference in formula: {ref}")
@@ -48,8 +50,8 @@ def validate_formula_in_cell_operation(
         current_formula = cell_obj.value
 
         # If cell has a formula (starts with =)
-        if isinstance(current_formula, str) and current_formula.startswith('='):
-            if formula.startswith('='):
+        if isinstance(current_formula, str) and current_formula.startswith("="):
+            if formula.startswith("="):
                 if current_formula != formula:
                     return {
                         "message": "Formula is valid but doesn't match cell content",
@@ -57,7 +59,7 @@ def validate_formula_in_cell_operation(
                         "matches": False,
                         "cell": cell,
                         "provided_formula": formula,
-                        "current_formula": current_formula
+                        "current_formula": current_formula,
                     }
             else:
                 if current_formula != f"={formula}":
@@ -67,7 +69,7 @@ def validate_formula_in_cell_operation(
                         "matches": False,
                         "cell": cell,
                         "provided_formula": formula,
-                        "current_formula": current_formula
+                        "current_formula": current_formula,
                     }
                 else:
                     return {
@@ -75,7 +77,7 @@ def validate_formula_in_cell_operation(
                         "valid": True,
                         "matches": True,
                         "cell": cell,
-                        "formula": formula
+                        "formula": formula,
                     }
         else:
             return {
@@ -84,7 +86,7 @@ def validate_formula_in_cell_operation(
                 "matches": False,
                 "cell": cell,
                 "provided_formula": formula,
-                "current_content": str(current_formula) if current_formula else ""
+                "current_content": str(current_formula) if current_formula else "",
             }
 
     except ValidationError as e:
@@ -93,6 +95,7 @@ def validate_formula_in_cell_operation(
     except Exception as e:
         logger.error(f"Failed to validate formula: {e}")
         raise ValidationError(str(e))
+
 
 def validate_range_in_sheet_operation(
     filepath: str,
@@ -105,41 +108,40 @@ def validate_range_in_sheet_operation(
         wb = load_workbook(filepath)
         if sheet_name not in wb.sheetnames:
             raise ValidationError(f"Sheet '{sheet_name}' not found")
-            
+
         worksheet = wb[sheet_name]
-        
+
         # Get actual data dimensions
         data_max_row = worksheet.max_row
         data_max_col = worksheet.max_column
-        
+
         # Validate range
         try:
-            start_row, start_col, end_row, end_col = parse_cell_range(start_cell, end_cell)
+            start_row, start_col, end_row, end_col = parse_cell_range(
+                start_cell, end_cell
+            )
         except ValueError as e:
             raise ValidationError(f"Invalid range: {str(e)}")
-            
+
         # If end not specified, use start
         if end_row is None:
             end_row = start_row
         if end_col is None:
             end_col = start_col
-            
+
         # Validate bounds against maximum possible Excel limits
         is_valid, message = validate_range_bounds(
             worksheet, start_row, start_col, end_row, end_col
         )
         if not is_valid:
             raise ValidationError(message)
-            
+
         range_str = f"{start_cell}" if end_cell is None else f"{start_cell}:{end_cell}"
         data_range_str = f"A1:{get_column_letter(data_max_col)}{data_max_row}"
-        
+
         # Check if range is within data or extends beyond
-        extends_beyond_data = (
-            end_row > data_max_row or 
-            end_col > data_max_col
-        )
-        
+        extends_beyond_data = end_row > data_max_row or end_col > data_max_col
+
         return {
             "message": (
                 f"Range '{range_str}' is valid. "
@@ -152,8 +154,8 @@ def validate_range_in_sheet_operation(
             "data_dimensions": {
                 "max_row": data_max_row,
                 "max_col": data_max_col,
-                "max_col_letter": get_column_letter(data_max_col)
-            }
+                "max_col_letter": get_column_letter(data_max_col),
+            },
         }
     except ValidationError as e:
         logger.error(str(e))
@@ -161,6 +163,7 @@ def validate_range_in_sheet_operation(
     except Exception as e:
         logger.error(f"Failed to validate range: {e}")
         raise ValidationError(str(e))
+
 
 def validate_formula(formula: str) -> tuple[bool, str]:
     """Validate Excel formula syntax and safety"""
