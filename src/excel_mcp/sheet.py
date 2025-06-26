@@ -243,6 +243,21 @@ def unmerge_range(filepath: str, sheet_name: str, start_cell: str, end_cell: str
         logger.error(f"Failed to unmerge range: {e}")
         raise SheetError(str(e))
 
+def get_merged_ranges(filepath: str, sheet_name: str) -> list[str]:
+    """Get merged cells in a worksheet."""
+    try:
+        wb = load_workbook(filepath)
+        if sheet_name not in wb.sheetnames:
+            raise SheetError(f"Sheet '{sheet_name}' not found")
+        worksheet = wb[sheet_name]
+        return [str(merged_range) for merged_range in worksheet.merged_cells.ranges]
+    except SheetError as e:
+        logger.error(str(e))
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get merged cells: {e}")
+        raise SheetError(str(e))
+
 def copy_range_operation(
     filepath: str,
     sheet_name: str,

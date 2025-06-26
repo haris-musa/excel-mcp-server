@@ -145,6 +145,19 @@ unmerge_cells(filepath: str, sheet_name: str, start_cell: str, end_cell: str) ->
 - `end_cell`: Ending cell of range
 - Returns: Success message
 
+### get_merged_cells
+
+Get merged cells in a worksheet.
+
+```python
+get_merged_cells(filepath: str, sheet_name: str) -> str
+```
+
+- `filepath`: Path to Excel file
+- `sheet_name`: Target worksheet name
+- Returns: String representation of merged cells
+
+
 ## Formula Operations
 
 ### apply_formula
