@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 import logging
 
 from openpyxl import load_workbook
@@ -16,9 +16,9 @@ def read_excel_range(
     filepath: Path | str,
     sheet_name: str,
     start_cell: str = "A1",
-    end_cell: str | None = None,
+    end_cell: Optional[str] = None,
     preview_only: bool = False
-) -> list[dict[str, Any]]:
+) -> List[Dict[str, Any]]:
     """Read data from Excel range with optional preview mode"""
     try:
         wb = load_workbook(filepath, read_only=False)
@@ -91,10 +91,10 @@ def read_excel_range(
 
 def write_data(
     filepath: str,
-    sheet_name: str | None,
-    data: list[list] | None,
+    sheet_name: Optional[str],
+    data: Optional[List[List]],
     start_cell: str = "A1",
-) -> dict[str, str]:
+) -> Dict[str, str]:
     """Write data to Excel sheet with workbook handling
     
     Headers are handled intelligently based on context.
@@ -107,7 +107,10 @@ def write_data(
 
         # If no sheet specified, use active sheet
         if not sheet_name:
-            sheet_name = wb.active.title
+            active_sheet = wb.active
+            if active_sheet is None:
+                raise DataError("No active sheet found in workbook")
+            sheet_name = active_sheet.title
         elif sheet_name not in wb.sheetnames:
             wb.create_sheet(sheet_name)
 
@@ -137,7 +140,7 @@ def write_data(
 
 def _write_data_to_worksheet(
     worksheet: Worksheet, 
-    data: list[list], 
+    data: List[List], 
     start_cell: str = "A1",
 ) -> None:
     """Write data to worksheet with intelligent header handling"""
@@ -168,7 +171,7 @@ def read_excel_range_with_metadata(
     filepath: Path | str,
     sheet_name: str,
     start_cell: str = "A1",
-    end_cell: str | None = None,
+    end_cell: Optional[str] = None,
     include_validation: bool = True
 ) -> Dict[str, Any]:
     """Read data from Excel range with cell metadata including validation rules.

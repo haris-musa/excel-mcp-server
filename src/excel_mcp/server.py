@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Optional
 
 from mcp.server.fastmcp import FastMCP
 
@@ -61,9 +61,9 @@ logger = logging.getLogger("excel-mcp")
 # Initialize FastMCP server
 mcp = FastMCP(
     "excel-mcp",
-    version="0.1.4",
+    version="0.1.5",
     description="Excel MCP Server for manipulating Excel files",
-    dependencies=["openpyxl>=3.1.2"],
+    dependencies=["openpyxl>=3.1.5"],
     env_vars={
         "EXCEL_FILES_PATH": {
             "description": "Path to Excel files directory",
@@ -145,46 +145,47 @@ def format_range(
     filepath: str,
     sheet_name: str,
     start_cell: str,
-    end_cell: str = None,
+    end_cell: Optional[str] = None,
     bold: bool = False,
     italic: bool = False,
     underline: bool = False,
-    font_size: int = None,
-    font_color: str = None,
-    bg_color: str = None,
-    border_style: str = None,
-    border_color: str = None,
-    number_format: str = None,
-    alignment: str = None,
+    font_size: Optional[int] = None,
+    font_color: Optional[str] = None,
+    bg_color: Optional[str] = None,
+    border_style: Optional[str] = None,
+    border_color: Optional[str] = None,
+    number_format: Optional[str] = None,
+    alignment: Optional[str] = None,
     wrap_text: bool = False,
     merge_cells: bool = False,
-    protection: Dict[str, Any] = None,
-    conditional_format: Dict[str, Any] = None
+    protection: Optional[Dict[str, Any]] = None,
+    conditional_format: Optional[Dict[str, Any]] = None
 ) -> str:
     """Apply formatting to a range of cells."""
     try:
         full_path = get_excel_path(filepath)
         from excel_mcp.formatting import format_range as format_range_func
         
+        # Convert None values to appropriate defaults for the underlying function
         format_range_func(
             filepath=full_path,
             sheet_name=sheet_name,
             start_cell=start_cell,
-            end_cell=end_cell,
+            end_cell=end_cell,  # This can be None
             bold=bold,
             italic=italic,
             underline=underline,
-            font_size=font_size,
-            font_color=font_color,
-            bg_color=bg_color,
-            border_style=border_style,
-            border_color=border_color,
-            number_format=number_format,
-            alignment=alignment,
+            font_size=font_size,  # This can be None
+            font_color=font_color,  # This can be None
+            bg_color=bg_color,  # This can be None
+            border_style=border_style,  # This can be None
+            border_color=border_color,  # This can be None
+            number_format=number_format,  # This can be None
+            alignment=alignment,  # This can be None
             wrap_text=wrap_text,
             merge_cells=merge_cells,
-            protection=protection,
-            conditional_format=conditional_format
+            protection=protection,  # This can be None
+            conditional_format=conditional_format  # This can be None
         )
         return "Range formatted successfully"
     except (ValidationError, FormattingError) as e:
@@ -198,7 +199,7 @@ def read_data_from_excel(
     filepath: str,
     sheet_name: str,
     start_cell: str = "A1",
-    end_cell: str = None,
+    end_cell: Optional[str] = None,
     preview_only: bool = False
 ) -> str:
     """
@@ -329,7 +330,7 @@ def create_pivot_table(
     data_range: str,
     rows: List[str],
     values: List[str],
-    columns: List[str] = None,
+    columns: Optional[List[str]] = None,
     agg_func: str = "mean"
 ) -> str:
     """Create pivot table in worksheet."""
@@ -356,7 +357,7 @@ def create_table(
     filepath: str,
     sheet_name: str,
     data_range: str,
-    table_name: str = None,
+    table_name: Optional[str] = None,
     table_style: str = "TableStyleMedium9"
 ) -> str:
     """Creates a native Excel table from a specified range of data."""
@@ -475,7 +476,7 @@ def copy_range(
     source_start: str,
     source_end: str,
     target_start: str,
-    target_sheet: str = None
+    target_sheet: Optional[str] = None
 ) -> str:
     """Copy a range of cells to another location."""
     try:
@@ -487,7 +488,7 @@ def copy_range(
             source_start,
             source_end,
             target_start,
-            target_sheet
+            target_sheet or sheet_name  # Use source sheet if target_sheet is None
         )
         return result["message"]
     except (ValidationError, SheetError) as e:
@@ -527,7 +528,7 @@ def validate_excel_range(
     filepath: str,
     sheet_name: str,
     start_cell: str,
-    end_cell: str = None
+    end_cell: Optional[str] = None
 ) -> str:
     """Validate if a range exists and is properly formatted."""
     try:
@@ -598,7 +599,25 @@ async def run_sse():
         await mcp.run_sse_async()
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
-        await mcp.shutdown()
+    except Exception as e:
+        logger.error(f"Server failed: {e}")
+        raise
+    finally:
+        logger.info("Server shutdown complete")
+
+async def run_streamable_http():
+    """Run Excel MCP server in streamable HTTP mode."""
+    # Assign value to EXCEL_FILES_PATH in streamable HTTP mode
+    global EXCEL_FILES_PATH
+    EXCEL_FILES_PATH = os.environ.get("EXCEL_FILES_PATH", "./excel_files")
+    # Create directory if it doesn't exist
+    os.makedirs(EXCEL_FILES_PATH, exist_ok=True)
+    
+    try:
+        logger.info(f"Starting Excel MCP server with streamable HTTP transport (files directory: {EXCEL_FILES_PATH})")
+        await mcp.run_streamable_http_async()
+    except KeyboardInterrupt:
+        logger.info("Server stopped by user")
     except Exception as e:
         logger.error(f"Server failed: {e}")
         raise

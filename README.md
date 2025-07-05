@@ -3,65 +3,50 @@
 </p>
 
 [![PyPI version](https://img.shields.io/pypi/v/excel-mcp-server.svg)](https://pypi.org/project/excel-mcp-server/)
-[![PyPI downloads](https://img.shields.io/pypi/dm/excel-mcp-server.svg)](https://pypi.org/project/excel-mcp-server/)
+[![Total Downloads](https://static.pepy.tech/badge/excel-mcp-server)](https://pepy.tech/project/excel-mcp-server)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=excel-mcp-server&config=eyJjb21tYW5kIjoidXZ4IGV4Y2VsLW1jcC1zZXJ2ZXIgc3RkaW8ifQ%3D%3D)
 
 A Model Context Protocol (MCP) server that lets you manipulate Excel files without needing Microsoft Excel installed. Create, read, and modify Excel workbooks with your AI agent.
 
 ## Features
 
-- 📊 Create and modify Excel workbooks
-- 📝 Read and write data
-- 🎨 Apply formatting and styles
-- 📈 Create charts and visualizations
-- 📊 Generate pivot tables
-- 🔄 Manage worksheets and ranges
-- 🔌 Dual transport support: stdio and SSE
+- 📊 **Excel Operations**: Create, read, update workbooks and worksheets
+- 📈 **Data Manipulation**: Formulas, formatting, charts, pivot tables, and Excel tables
+- 🔍 **Data Validation**: Built-in validation for ranges, formulas, and data integrity
+- 🎨 **Formatting**: Font styling, colors, borders, alignment, and conditional formatting
+- 📋 **Table Operations**: Create and manage Excel tables with custom styling
+- 📊 **Chart Creation**: Generate various chart types (line, bar, pie, scatter, etc.)
+- 🔄 **Pivot Tables**: Create dynamic pivot tables for data analysis
+- 🔧 **Sheet Management**: Copy, rename, delete worksheets with ease
+- 🔌 **Triple transport support**: stdio, SSE (deprecated), and streamable HTTP
+- 🌐 **Remote & Local**: Works both locally and as a remote service
 
-## Quick Start
+## Usage
 
-### Prerequisites
+The server supports three transport methods:
 
-- Python 3.10 or higher
-
-### Running the Server
-
-The server supports two transport modes: stdio and SSE.
-
-#### Using stdio transport
-
-Stdio transport is ideal for direct integration with tools like Cursor Desktop or local development, which can manipulate local files:
+### 1. Stdio Transport (for local use)
 
 ```bash
 uvx excel-mcp-server stdio
 ```
 
-#### Using SSE transport
-
-SSE transport is perfect for remote connections, which manipulate remote files:
-
-```bash
-uvx excel-mcp-server sse
-```
-
-### Add to Cursor
-
-[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=excel-mcp-server&config=eyJjb21tYW5kIjoidXZ4IGV4Y2VsLW1jcC1zZXJ2ZXIgc3RkaW8ifQ%3D%3D)
-
-## Using with AI Tools
-
-1. Add this configuration to your client, choosing the appropriate transport method for your needs:
-
-**Stdio transport connection** (for local integration):
 ```json
 {
    "mcpServers": {
-      "excel-stdio": {
+      "excel": {
          "command": "uvx",
          "args": ["excel-mcp-server", "stdio"]
       }
    }
 }
+```
+
+### 2. SSE Transport (Server-Sent Events - Deprecated)
+
+```bash
+uvx excel-mcp-server sse
 ```
 
 **SSE transport connection**:
@@ -75,25 +60,41 @@ uvx excel-mcp-server sse
 }
 ```
 
-2. The Excel tools will be available through your AI assistant.
+### 3. Streamable HTTP Transport (Recommended for remote connections)
+
+```bash
+uvx excel-mcp-server streamable-http
+```
+
+**Streamable HTTP transport connection**:
+```json
+{
+   "mcpServers": {
+      "excel": {
+         "url": "http://localhost:8000/mcp",
+         "transport": "streamable-http"
+      }
+   }
+}
+```
 
 ## Environment Variables & File Path Handling
 
-### SSE Transport
+### SSE and Streamable HTTP Transports
 
-When running the server with the **SSE protocol**, you **must set the `EXCEL_FILES_PATH` environment variable on the server side**. This variable tells the server where to read and write Excel files.
+When running the server with the **SSE or Streamable HTTP protocols**, you **must set the `EXCEL_FILES_PATH` environment variable on the server side**. This variable tells the server where to read and write Excel files.
 - If not set, it defaults to `./excel_files`.
 
 You can also set the `FASTMCP_PORT` environment variable to control the port the server listens on (default is `8000` if not set).
 - Example (Windows PowerShell):
   ```powershell
   $env:EXCEL_FILES_PATH="E:\MyExcelFiles"
-  $env:FASTMCP_PORT="8080"
-  uvx excel-mcp-server sse
+  $env:FASTMCP_PORT="8007"
+  uvx excel-mcp-server streamable-http
   ```
 - Example (Linux/macOS):
   ```bash
-  EXCEL_FILES_PATH=/path/to/excel_files FASTMCP_PORT=8080 uvx excel-mcp-server sse
+  EXCEL_FILES_PATH=/path/to/excel_files FASTMCP_PORT=8007 uvx excel-mcp-server streamable-http
   ```
 
 ### Stdio Transport

@@ -1,13 +1,13 @@
 [project]
 name = "excel-mcp-server"
-version = "0.1.4"
+version = "0.1.5"
 description = "Excel MCP Server for manipulating Excel files"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "mcp[cli]>=1.6.0",
-    "openpyxl>=3.1.2",
-    "typer>=0.15.1"
+    "mcp[cli]>=1.10.1",
+    "openpyxl>=3.1.5",
+    "typer>=0.16.0"
 ]
 [[project.authors]]
 name = "haris"

@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import Any, Dict, Optional
 from copy import copy
 
 from openpyxl import load_workbook
@@ -12,7 +12,7 @@ from .exceptions import SheetError, ValidationError
 
 logger = logging.getLogger(__name__)
 
-def copy_sheet(filepath: str, source_sheet: str, target_sheet: str) -> dict[str, Any]:
+def copy_sheet(filepath: str, source_sheet: str, target_sheet: str) -> Dict[str, Any]:
     """Copy a worksheet within the same workbook."""
     try:
         wb = load_workbook(filepath)
@@ -35,7 +35,7 @@ def copy_sheet(filepath: str, source_sheet: str, target_sheet: str) -> dict[str,
         logger.error(f"Failed to copy sheet: {e}")
         raise SheetError(str(e))
 
-def delete_sheet(filepath: str, sheet_name: str) -> dict[str, Any]:
+def delete_sheet(filepath: str, sheet_name: str) -> Dict[str, Any]:
     """Delete a worksheet from the workbook."""
     try:
         wb = load_workbook(filepath)
@@ -55,7 +55,7 @@ def delete_sheet(filepath: str, sheet_name: str) -> dict[str, Any]:
         logger.error(f"Failed to delete sheet: {e}")
         raise SheetError(str(e))
 
-def rename_sheet(filepath: str, old_name: str, new_name: str) -> dict[str, Any]:
+def rename_sheet(filepath: str, old_name: str, new_name: str) -> Dict[str, Any]:
     """Rename a worksheet."""
     try:
         wb = load_workbook(filepath)
@@ -84,7 +84,7 @@ def copy_range(
     source_ws: Worksheet,
     target_ws: Worksheet,
     source_range: str,
-    target_start: str | None = None,
+    target_start: Optional[str] = None,
 ) -> None:
     """Copy range from source worksheet to target worksheet."""
     # Parse source range
@@ -168,7 +168,7 @@ def copy_range(
             except Exception:
                 continue
 
-def delete_range(worksheet: Worksheet, start_cell: str, end_cell: str | None = None) -> None:
+def delete_range(worksheet: Worksheet, start_cell: str, end_cell: Optional[str] = None) -> None:
     """Delete contents and formatting of a range."""
     start_row, start_col, end_row, end_col = parse_cell_range(start_cell, end_cell)
 
@@ -186,7 +186,7 @@ def delete_range(worksheet: Worksheet, start_cell: str, end_cell: str | None = N
             cell.number_format = "General"
             cell.alignment = None
 
-def merge_range(filepath: str, sheet_name: str, start_cell: str, end_cell: str) -> dict[str, Any]:
+def merge_range(filepath: str, sheet_name: str, start_cell: str, end_cell: str) -> Dict[str, Any]:
     """Merge a range of cells."""
     try:
         wb = load_workbook(filepath)
@@ -210,7 +210,7 @@ def merge_range(filepath: str, sheet_name: str, start_cell: str, end_cell: str) 
         logger.error(f"Failed to merge range: {e}")
         raise SheetError(str(e))
 
-def unmerge_range(filepath: str, sheet_name: str, start_cell: str, end_cell: str) -> dict[str, Any]:
+def unmerge_range(filepath: str, sheet_name: str, start_cell: str, end_cell: str) -> Dict[str, Any]:
     """Unmerge a range of cells."""
     try:
         wb = load_workbook(filepath)
@@ -249,8 +249,8 @@ def copy_range_operation(
     source_start: str,
     source_end: str,
     target_start: str,
-    target_sheet: str = None
-) -> dict:
+    target_sheet: Optional[str] = None
+) -> Dict:
     """Copy a range of cells to another location."""
     try:
         wb = load_workbook(filepath)
@@ -301,9 +301,9 @@ def delete_range_operation(
     filepath: str,
     sheet_name: str,
     start_cell: str,
-    end_cell: str | None = None,
+    end_cell: Optional[str] = None,
     shift_direction: str = "up"
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """Delete a range of cells and shift remaining cells."""
     try:
         wb = load_workbook(filepath)

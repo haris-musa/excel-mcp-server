@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from openpyxl.styles import (
     PatternFill, Border, Side, Alignment, Protection, Font,
@@ -20,21 +20,21 @@ def format_range(
     filepath: str,
     sheet_name: str,
     start_cell: str,
-    end_cell: str = None,
+    end_cell: Optional[str] = None,
     bold: bool = False,
     italic: bool = False,
     underline: bool = False,
-    font_size: int = None,
-    font_color: str = None,
-    bg_color: str = None,
-    border_style: str = None,
-    border_color: str = None,
-    number_format: str = None,
-    alignment: str = None,
+    font_size: Optional[int] = None,
+    font_color: Optional[str] = None,
+    bg_color: Optional[str] = None,
+    border_style: Optional[str] = None,
+    border_color: Optional[str] = None,
+    number_format: Optional[str] = None,
+    alignment: Optional[str] = None,
     wrap_text: bool = False,
     merge_cells: bool = False,
-    protection: Dict[str, Any] = None,
-    conditional_format: Dict[str, Any] = None
+    protection: Optional[Dict[str, Any]] = None,
+    conditional_format: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """Apply formatting to a range of cells.
     
