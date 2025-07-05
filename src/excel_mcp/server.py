@@ -32,6 +32,7 @@ from excel_mcp.sheet import (
     rename_sheet,
     merge_range,
     unmerge_range,
+    get_merged_ranges,
 )
 
 # Get project root directory path for log file path.
@@ -467,6 +468,18 @@ def unmerge_cells(filepath: str, sheet_name: str, start_cell: str, end_cell: str
         return f"Error: {str(e)}"
     except Exception as e:
         logger.error(f"Error unmerging cells: {e}")
+        raise
+
+@mcp.tool()
+def get_merged_cells(filepath: str, sheet_name: str) -> str:
+    """Get merged cells in a worksheet."""
+    try:
+        full_path = get_excel_path(filepath)
+        return str(get_merged_ranges(full_path, sheet_name))
+    except (ValidationError, SheetError) as e:
+        return f"Error: {str(e)}"
+    except Exception as e:
+        logger.error(f"Error getting merged cells: {e}")
         raise
 
 @mcp.tool()
