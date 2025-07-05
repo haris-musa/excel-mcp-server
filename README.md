@@ -73,7 +73,6 @@ uvx excel-mcp-server streamable-http
    "mcpServers": {
       "excel": {
          "url": "http://localhost:8000/mcp",
-         "transport": "streamable-http"
       }
    }
 }
