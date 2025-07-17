@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/haris-musa-excel-mcp-server-badge.png)](https://mseep.ai/app/haris-musa-excel-mcp-server)
+
 # Excel MCP Server
 
 A Model Context Protocol (MCP) server that lets you manipulate Excel files without needing Microsoft Excel installed. Create, read, and modify Excel workbooks with your AI agent.
