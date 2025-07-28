@@ -33,6 +33,10 @@ from excel_mcp.sheet import (
     merge_range,
     unmerge_range,
     get_merged_ranges,
+    insert_row,
+    insert_cols,
+    delete_rows,
+    delete_cols,
 )
 
 # Get project root directory path for log file path.
@@ -597,6 +601,78 @@ def get_data_validation_info(
         
     except Exception as e:
         logger.error(f"Error getting validation info: {e}")
+        raise
+
+@mcp.tool()
+def insert_rows(
+    filepath: str,
+    sheet_name: str,
+    start_row: int,
+    count: int = 1
+) -> str:
+    """Insert one or more rows starting at the specified row."""
+    try:
+        full_path = get_excel_path(filepath)
+        result = insert_row(full_path, sheet_name, start_row, count)
+        return result["message"]
+    except (ValidationError, SheetError) as e:
+        return f"Error: {str(e)}"
+    except Exception as e:
+        logger.error(f"Error inserting rows: {e}")
+        raise
+
+@mcp.tool()
+def insert_columns(
+    filepath: str,
+    sheet_name: str,
+    start_col: int,
+    count: int = 1
+) -> str:
+    """Insert one or more columns starting at the specified column."""
+    try:
+        full_path = get_excel_path(filepath)
+        result = insert_cols(full_path, sheet_name, start_col, count)
+        return result["message"]
+    except (ValidationError, SheetError) as e:
+        return f"Error: {str(e)}"
+    except Exception as e:
+        logger.error(f"Error inserting columns: {e}")
+        raise
+
+@mcp.tool()
+def delete_sheet_rows(
+    filepath: str,
+    sheet_name: str,
+    start_row: int,
+    count: int = 1
+) -> str:
+    """Delete one or more rows starting at the specified row."""
+    try:
+        full_path = get_excel_path(filepath)
+        result = delete_rows(full_path, sheet_name, start_row, count)
+        return result["message"]
+    except (ValidationError, SheetError) as e:
+        return f"Error: {str(e)}"
+    except Exception as e:
+        logger.error(f"Error deleting rows: {e}")
+        raise
+
+@mcp.tool()
+def delete_sheet_columns(
+    filepath: str,
+    sheet_name: str,
+    start_col: int,
+    count: int = 1
+) -> str:
+    """Delete one or more columns starting at the specified column."""
+    try:
+        full_path = get_excel_path(filepath)
+        result = delete_cols(full_path, sheet_name, start_col, count)
+        return result["message"]
+    except (ValidationError, SheetError) as e:
+        return f"Error: {str(e)}"
+    except Exception as e:
+        logger.error(f"Error deleting columns: {e}")
         raise
 
 async def run_sse():
