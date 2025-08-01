@@ -393,3 +393,81 @@ get_data_validation_info(filepath: str, sheet_name: str) -> str
   - Prompt and error messages
 
 **Note**: The `read_data_from_excel` tool automatically includes validation metadata for individual cells when available.
+
+## Row and Column Operations
+
+### insert_rows
+
+Insert one or more rows starting at the specified row.
+
+```python
+insert_rows(
+    filepath: str,
+    sheet_name: str,
+    start_row: int,
+    count: int = 1
+) -> str
+```
+
+- `filepath`: Path to Excel file
+- `sheet_name`: Target worksheet name
+- `start_row`: Row number where to start inserting (1-based)
+- `count`: Number of rows to insert (default: 1)
+- Returns: Success message
+
+### insert_columns
+
+Insert one or more columns starting at the specified column.
+
+```python
+insert_columns(
+    filepath: str,
+    sheet_name: str,
+    start_col: int,
+    count: int = 1
+) -> str
+```
+
+- `filepath`: Path to Excel file
+- `sheet_name`: Target worksheet name
+- `start_col`: Column number where to start inserting (1-based)
+- `count`: Number of columns to insert (default: 1)
+- Returns: Success message
+
+### delete_sheet_rows
+
+Delete one or more rows starting at the specified row.
+
+```python
+delete_sheet_rows(
+    filepath: str,
+    sheet_name: str,
+    start_row: int,
+    count: int = 1
+) -> str
+```
+
+- `filepath`: Path to Excel file
+- `sheet_name`: Target worksheet name
+- `start_row`: Row number where to start deleting (1-based)
+- `count`: Number of rows to delete (default: 1)
+- Returns: Success message
+
+### delete_sheet_columns
+
+Delete one or more columns starting at the specified column.
+
+```python
+delete_sheet_columns(
+    filepath: str,
+    sheet_name: str,
+    start_col: int,
+    count: int = 1
+) -> str
+```
+
+- `filepath`: Path to Excel file
+- `sheet_name`: Target worksheet name
+- `start_col`: Column number where to start deleting (1-based)
+- `count`: Number of columns to delete (default: 1)
+- Returns: Success message
