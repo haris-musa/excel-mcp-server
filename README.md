@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="Excel MCP Server Logo" width="300"/>
+  <img src="https://raw.githubusercontent.com/haris-musa/excel-mcp-server/main/assets/logo.png" alt="Excel MCP Server Logo" width="300"/>
 </p>
 
 [![PyPI version](https://img.shields.io/pypi/v/excel-mcp-server.svg)](https://pypi.org/project/excel-mcp-server/)
