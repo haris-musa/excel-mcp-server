@@ -5,7 +5,7 @@ from typing import Any, List, Dict, Optional
 from mcp.server.fastmcp import FastMCP
 
 # Import exceptions
-from excel_mcp.exceptions import (
+from .exceptions import (
     ValidationError,
     WorkbookError,
     SheetError,
@@ -17,16 +17,16 @@ from excel_mcp.exceptions import (
 )
 
 # Import from excel_mcp package with consistent _impl suffixes
-from excel_mcp.validation import (
+from .validation import (
     validate_formula_in_cell_operation as validate_formula_impl,
     validate_range_in_sheet_operation as validate_range_impl
 )
-from excel_mcp.chart import create_chart_in_sheet as create_chart_impl
-from excel_mcp.workbook import get_workbook_info
-from excel_mcp.data import write_data
-from excel_mcp.pivot import create_pivot_table as create_pivot_table_impl
-from excel_mcp.tables import create_excel_table as create_table_impl
-from excel_mcp.sheet import (
+from .chart import create_chart_in_sheet as create_chart_impl
+from .workbook import get_workbook_info
+from .data import write_data
+from .pivot import create_pivot_table as create_pivot_table_impl
+from .tables import create_excel_table as create_table_impl
+from .sheet import (
     copy_sheet,
     delete_sheet,
     rename_sheet,
@@ -114,7 +114,7 @@ def apply_formula(
             return f"Error: {validation['error']}"
             
         # If valid, apply the formula
-        from excel_mcp.calculations import apply_formula as apply_formula_impl
+        from .calculations import apply_formula as apply_formula_impl
         result = apply_formula_impl(full_path, sheet_name, cell, formula)
         return result["message"]
     except (ValidationError, CalculationError) as e:
@@ -165,7 +165,7 @@ def format_range(
     """Apply formatting to a range of cells."""
     try:
         full_path = get_excel_path(filepath)
-        from excel_mcp.formatting import format_range as format_range_func
+        from .formatting import format_range as format_range_func
         
         # Convert None values to appropriate defaults for the underlying function
         format_range_func(
@@ -219,7 +219,7 @@ def read_data_from_excel(
     """
     try:
         full_path = get_excel_path(filepath)
-        from excel_mcp.data import read_excel_range_with_metadata
+        from .data import read_excel_range_with_metadata
         result = read_excel_range_with_metadata(
             full_path, 
             sheet_name, 
@@ -270,7 +270,7 @@ def create_workbook(filepath: str) -> str:
     """Create new Excel workbook."""
     try:
         full_path = get_excel_path(filepath)
-        from excel_mcp.workbook import create_workbook as create_workbook_impl
+        from .workbook import create_workbook as create_workbook_impl
         create_workbook_impl(full_path)
         return f"Created workbook at {full_path}"
     except WorkbookError as e:
@@ -284,7 +284,7 @@ def create_worksheet(filepath: str, sheet_name: str) -> str:
     """Create new worksheet in workbook."""
     try:
         full_path = get_excel_path(filepath)
-        from excel_mcp.workbook import create_sheet as create_worksheet_impl
+        from .workbook import create_sheet as create_worksheet_impl
         result = create_worksheet_impl(full_path, sheet_name)
         return result["message"]
     except (ValidationError, WorkbookError) as e:
@@ -494,7 +494,7 @@ def copy_range(
     """Copy a range of cells to another location."""
     try:
         full_path = get_excel_path(filepath)
-        from excel_mcp.sheet import copy_range_operation
+        from .sheet import copy_range_operation
         result = copy_range_operation(
             full_path,
             sheet_name,
@@ -521,7 +521,7 @@ def delete_range(
     """Delete a range of cells and shift remaining cells."""
     try:
         full_path = get_excel_path(filepath)
-        from excel_mcp.sheet import delete_range_operation
+        from .sheet import delete_range_operation
         result = delete_range_operation(
             full_path,
             sheet_name,
@@ -576,7 +576,7 @@ def get_data_validation_info(
     try:
         full_path = get_excel_path(filepath)
         from openpyxl import load_workbook
-        from excel_mcp.cell_validation import get_all_validation_ranges
+        from .cell_validation import get_all_validation_ranges
         
         wb = load_workbook(full_path, read_only=False)
         if sheet_name not in wb.sheetnames:
@@ -599,7 +599,7 @@ def get_data_validation_info(
         logger.error(f"Error getting validation info: {e}")
         raise
 
-async def run_sse():
+def run_sse():
     """Run Excel MCP server in SSE mode."""
     # Assign value to EXCEL_FILES_PATH in SSE mode
     global EXCEL_FILES_PATH
@@ -609,7 +609,7 @@ async def run_sse():
     
     try:
         logger.info(f"Starting Excel MCP server with SSE transport (files directory: {EXCEL_FILES_PATH})")
-        await mcp.run_sse_async()
+        mcp.run(transport="sse")
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
     except Exception as e:
@@ -618,24 +618,33 @@ async def run_sse():
     finally:
         logger.info("Server shutdown complete")
 
-async def run_streamable_http():
-    """Run Excel MCP server in streamable HTTP mode."""
+def run_streamable_http():
+    """Start the MCP server with streamable HTTP transport."""
     # Assign value to EXCEL_FILES_PATH in streamable HTTP mode
     global EXCEL_FILES_PATH
     EXCEL_FILES_PATH = os.environ.get("EXCEL_FILES_PATH", "./excel_files")
     # Create directory if it doesn't exist
     os.makedirs(EXCEL_FILES_PATH, exist_ok=True)
     
+    # Set host and port via environment variables for FastMCP
+    # Try different possible environment variable names
+    os.environ.setdefault("HOST", "0.0.0.0")  # Default to 0.0.0.0 for Docker
+    os.environ.setdefault("PORT", "8000")
+    os.environ.setdefault("FASTMCP_HOST", "0.0.0.0")  
+    os.environ.setdefault("FASTMCP_PORT", "8000")
+    
+    host = os.environ.get("HOST", "0.0.0.0")
+    port = os.environ.get("PORT", "8000")
+    
     try:
-        logger.info(f"Starting Excel MCP server with streamable HTTP transport (files directory: {EXCEL_FILES_PATH})")
-        await mcp.run_streamable_http_async()
+        logger.info(f"Starting Excel MCP server with streamable HTTP transport")
+        logger.info(f"Server binding to {host}:{port} (files directory: {EXCEL_FILES_PATH})")
+        mcp.run(transport="streamable-http")
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
     except Exception as e:
         logger.error(f"Server failed: {e}")
         raise
-    finally:
-        logger.info("Server shutdown complete")
 
 def run_stdio():
     """Run Excel MCP server in stdio mode."""

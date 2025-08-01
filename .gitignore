@@ -4,3 +4,4 @@ excel_files/
 __pycache__/
 .notes/
 *.log
+.env

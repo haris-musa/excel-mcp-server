@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Any
+from typing import Any, Optional
 
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
@@ -98,7 +98,7 @@ def validate_range_in_sheet_operation(
     filepath: str,
     sheet_name: str,
     start_cell: str,
-    end_cell: str | None = None,
+    end_cell: Optional[str] = None,
 ) -> dict[str, Any]:
     """Validate if a range exists in a worksheet and return data range info."""
     try:
@@ -199,8 +199,8 @@ def validate_range_bounds(
     worksheet: Worksheet,
     start_row: int,
     start_col: int,
-    end_row: int | None = None,
-    end_col: int | None = None,
+    end_row: Optional[int] = None,
+    end_col: Optional[int] = None,
 ) -> tuple[bool, str]:
     """Validate that cell range is within worksheet bounds"""
     max_row = worksheet.max_row
