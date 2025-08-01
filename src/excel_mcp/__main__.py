@@ -12,7 +12,7 @@ def sse():
     print("----------------------")
     print("Press Ctrl+C to exit")
     try:
-        asyncio.run(run_sse())
+        run_sse()
     except KeyboardInterrupt:
         print("\nShutting down server...")
     except Exception as e:
@@ -29,7 +29,7 @@ def streamable_http():
     print("---------------------------------------")
     print("Press Ctrl+C to exit")
     try:
-        asyncio.run(run_streamable_http())
+        run_streamable_http()
     except KeyboardInterrupt:
         print("\nShutting down server...")
     except Exception as e:

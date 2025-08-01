@@ -1,0 +1,46 @@
+services:
+  excel-mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: excel-mcp-server-prod
+    ports:
+      - "${HOST_PORT:-8000}:${FASTMCP_PORT:-8000}"
+    environment:
+      - EXCEL_FILES_PATH=/app/excel_files
+      - HOST=0.0.0.0
+      - PORT=8000
+      - FASTMCP_HOST=0.0.0.0
+      - FASTMCP_PORT=${FASTMCP_PORT:-8000}
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # 使用绝对路径挂载生产环境的Excel文件目录
+      - "${HOST_EXCEL_PATH:-/var/lib/excel-mcp/excel_files}:/app/excel_files"
+      # 生产环境日志目录
+      - "${HOST_LOG_PATH:-/var/log/excel-mcp}:/app/logs"
+    restart: always
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:${FASTMCP_PORT:-8000}/mcp')"]
+      interval: 60s
+      timeout: 15s
+      retries: 5
+      start_period: 60s
+    networks:
+      - excel-mcp-network
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    # 安全配置
+    security_opt:
+      - no-new-privileges:true
+    user: "1000:1000"
+
+networks:
+  excel-mcp-network:
+    driver: bridge 

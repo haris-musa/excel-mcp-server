@@ -1,6 +1,47 @@
-.venv/
-dist/
-excel_files/
+# Python
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+.python-version
+
+# Virtual environments  
+.venv/
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Project specific
+excel_files/
 .notes/
 *.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Temporary files
+*.tmp
+*.temp
