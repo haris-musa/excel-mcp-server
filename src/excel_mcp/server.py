@@ -66,16 +66,7 @@ logger = logging.getLogger("excel-mcp")
 # Initialize FastMCP server
 mcp = FastMCP(
     "excel-mcp",
-    version="0.1.5",
-    description="Excel MCP Server for manipulating Excel files",
-    dependencies=["openpyxl>=3.1.5"],
-    env_vars={
-        "EXCEL_FILES_PATH": {
-            "description": "Path to Excel files directory",
-            "required": False,
-            "default": EXCEL_FILES_PATH
-        }
-    }
+    instructions="Excel MCP Server for manipulating Excel files"
 )
 
 def get_excel_path(filename: str) -> str:
