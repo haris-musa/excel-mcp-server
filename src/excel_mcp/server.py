@@ -66,6 +66,8 @@ logger = logging.getLogger("excel-mcp")
 # Initialize FastMCP server
 mcp = FastMCP(
     "excel-mcp",
+    host=os.environ.get("FASTMCP_HOST", "0.0.0.0"),
+    port=int(os.environ.get("FASTMCP_PORT", "8017")),
     instructions="Excel MCP Server for manipulating Excel files"
 )
 
@@ -666,7 +668,7 @@ def delete_sheet_columns(
         logger.error(f"Error deleting columns: {e}")
         raise
 
-async def run_sse():
+def run_sse():
     """Run Excel MCP server in SSE mode."""
     # Assign value to EXCEL_FILES_PATH in SSE mode
     global EXCEL_FILES_PATH
@@ -676,7 +678,7 @@ async def run_sse():
     
     try:
         logger.info(f"Starting Excel MCP server with SSE transport (files directory: {EXCEL_FILES_PATH})")
-        await mcp.run_sse_async()
+        mcp.run(transport="sse")
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
     except Exception as e:
@@ -685,7 +687,7 @@ async def run_sse():
     finally:
         logger.info("Server shutdown complete")
 
-async def run_streamable_http():
+def run_streamable_http():
     """Run Excel MCP server in streamable HTTP mode."""
     # Assign value to EXCEL_FILES_PATH in streamable HTTP mode
     global EXCEL_FILES_PATH
@@ -695,7 +697,7 @@ async def run_streamable_http():
     
     try:
         logger.info(f"Starting Excel MCP server with streamable HTTP transport (files directory: {EXCEL_FILES_PATH})")
-        await mcp.run_streamable_http_async()
+        mcp.run(transport="streamable-http")
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
     except Exception as e:
