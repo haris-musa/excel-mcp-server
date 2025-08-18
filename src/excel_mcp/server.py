@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any, List, Dict, Optional
+from typing import Any, List, Dict, Optional, Union
 
 from mcp.server.fastmcp import FastMCP
 
@@ -238,7 +238,7 @@ def read_data_from_excel(
 def write_data_to_excel(
     filepath: str,
     sheet_name: str,
-    data: List[List],
+    data: List[List[Union[str, int, float, bool, None]]],  
     start_cell: str = "A1",
 ) -> str:
     """
