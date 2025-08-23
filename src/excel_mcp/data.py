@@ -278,3 +278,106 @@ def read_excel_range_with_metadata(
     except Exception as e:
         logger.error(f"Failed to read Excel range with metadata: {e}")
         raise DataError(str(e))
+
+def read_excel_sparse(
+    filepath: Path | str,
+    sheet_name: str,
+    start_cell: str = "A1",
+    end_cell: Optional[str] = None
+) -> Dict[str, Any]:
+    """Read data from Excel range returning only non-null cells with location metadata.
+    
+    Args:
+        filepath: Path to Excel file
+        sheet_name: Name of worksheet
+        start_cell: Starting cell address
+        end_cell: Ending cell address (optional)
+        
+    Returns:
+        Dictionary containing only non-null cells with location data
+    """
+    try:
+        wb = load_workbook(filepath, read_only=False)
+        
+        if sheet_name not in wb.sheetnames:
+            raise DataError(f"Sheet '{sheet_name}' not found")
+            
+        ws = wb[sheet_name]
+
+        # Parse start cell
+        if ':' in start_cell:
+            start_cell, end_cell = start_cell.split(':')
+            
+        # Get start coordinates
+        try:
+            start_coords = parse_cell_range(f"{start_cell}:{start_cell}")
+            if not start_coords or not all(coord is not None for coord in start_coords[:2]):
+                raise DataError(f"Invalid start cell reference: {start_cell}")
+            start_row, start_col = start_coords[0], start_coords[1]
+        except ValueError as e:
+            raise DataError(f"Invalid start cell format: {str(e)}")
+
+        # Determine end coordinates
+        if end_cell:
+            try:
+                end_coords = parse_cell_range(f"{end_cell}:{end_cell}")
+                if not end_coords or not all(coord is not None for coord in end_coords[:2]):
+                    raise DataError(f"Invalid end cell reference: {end_cell}")
+                end_row, end_col = end_coords[0], end_coords[1]
+            except ValueError as e:
+                raise DataError(f"Invalid end cell format: {str(e)}")
+        else:
+            # If no end_cell, use the full data range of the sheet
+            if ws.max_row == 1 and ws.max_column == 1 and ws.cell(1, 1).value is None:
+                # Handle empty sheet
+                end_row, end_col = start_row, start_col
+            else:
+                # Use the sheet's own boundaries, but respect the provided start_cell
+                end_row, end_col = ws.max_row, ws.max_column
+                # If start_cell is 'A1' (default), we should find the true start
+                if start_cell == 'A1':
+                    start_row, start_col = ws.min_row, ws.min_column
+
+        # Validate range bounds
+        if start_row > ws.max_row or start_col > ws.max_column:
+            # This case can happen if start_cell is outside the used area on a sheet with data
+            # or on a completely empty sheet.
+            logger.warning(
+                f"Start cell {start_cell} is outside the sheet's data boundary "
+                f"({get_column_letter(ws.min_column)}{ws.min_row}:{get_column_letter(ws.max_column)}{ws.max_row}). "
+                f"No data will be read."
+            )
+            return {"range": f"{start_cell}:", "sheet_name": sheet_name, "cells": []}
+
+        # Build sparse cell data (only non-null cells)
+        range_str = f"{get_column_letter(start_col)}{start_row}:{get_column_letter(end_col)}{end_row}"
+        range_data = {
+            "range": range_str,
+            "sheet_name": sheet_name,
+            "cells": []
+        }
+        
+        for row in range(start_row, end_row + 1):
+            for col in range(start_col, end_col + 1):
+                cell = ws.cell(row=row, column=col)
+                
+                # Only include non-null cells
+                if cell.value is not None:
+                    cell_address = f"{get_column_letter(col)}{row}"
+                    cell_data = {
+                        "address": cell_address,
+                        "value": cell.value,
+                        "row": row,
+                        "column": col
+                    }
+                    range_data["cells"].append(cell_data)
+
+        wb.close()
+        return range_data
+        
+    except DataError as e:
+        logger.error(str(e))
+        raise
+    except Exception as e:
+        logger.error(f"Failed to read Excel sparse range: {e}")
+        raise DataError(str(e))

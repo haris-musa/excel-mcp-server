@@ -193,31 +193,30 @@ def format_range(
         raise
 
 @mcp.tool()
-def read_data_from_excel(
+def read_excel(
     filepath: str,
     sheet_name: str,
     start_cell: str = "A1",
-    end_cell: Optional[str] = None,
-    preview_only: bool = False
+    end_cell: Optional[str] = None
 ) -> str:
     """
-    Read data from Excel worksheet with cell metadata including validation rules.
+    Read Excel data returning only non-null cells with location metadata. No validation info.
+    Optimized for AI processing with sparse output and clean structure.
     
     Args:
         filepath: Path to Excel file
         sheet_name: Name of worksheet
         start_cell: Starting cell (default A1)
         end_cell: Ending cell (optional, auto-expands if not provided)
-        preview_only: Whether to return preview only
     
     Returns:  
-    JSON string containing structured cell data with validation metadata.
-    Each cell includes: address, value, row, column, and validation info (if any).
+    JSON string containing only non-empty cells with location data.
+    Each cell includes: address, value, row, column (no validation metadata).
     """
     try:
         full_path = get_excel_path(filepath)
-        from excel_mcp.data import read_excel_range_with_metadata
-        result = read_excel_range_with_metadata(
+        from excel_mcp.data import read_excel_sparse
+        result = read_excel_sparse(
             full_path, 
             sheet_name, 
             start_cell, 
