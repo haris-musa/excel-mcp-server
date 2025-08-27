@@ -198,7 +198,7 @@ def read_data_from_excel(
     sheet_name: str,
     start_cell: str = "A1",
     end_cell: Optional[str] = None,
-    preview_only: bool = False
+    data_only: bool = False
 ) -> str:
     """
     Read data from Excel worksheet with cell metadata including validation rules.
@@ -208,7 +208,7 @@ def read_data_from_excel(
         sheet_name: Name of worksheet
         start_cell: Starting cell (default A1)
         end_cell: Ending cell (optional, auto-expands if not provided)
-        preview_only: Whether to return preview only
+        data_only: Whether to return data only
     
     Returns:  
     JSON string containing structured cell data with validation metadata.
@@ -221,7 +221,8 @@ def read_data_from_excel(
             full_path, 
             sheet_name, 
             start_cell, 
-            end_cell
+            end_cell,
+            data_only=data_only
         )
         if not result or not result.get("cells"):
             return "No data found in specified range"

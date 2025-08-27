@@ -172,7 +172,8 @@ def read_excel_range_with_metadata(
     sheet_name: str,
     start_cell: str = "A1",
     end_cell: Optional[str] = None,
-    include_validation: bool = True
+    include_validation: bool = True,
+    data_only: bool = False
 ) -> Dict[str, Any]:
     """Read data from Excel range with cell metadata including validation rules.
     
@@ -182,12 +183,13 @@ def read_excel_range_with_metadata(
         start_cell: Starting cell address
         end_cell: Ending cell address (optional)
         include_validation: Whether to include validation metadata
-        
+        data_only: Whether to return data only
+
     Returns:
         Dictionary containing structured cell data with metadata
     """
     try:
-        wb = load_workbook(filepath, read_only=False)
+        wb = load_workbook(filepath, read_only=False, data_only=data_only)
         
         if sheet_name not in wb.sheetnames:
             raise DataError(f"Sheet '{sheet_name}' not found")
