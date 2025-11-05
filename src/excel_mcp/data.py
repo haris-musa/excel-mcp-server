@@ -89,6 +89,53 @@ def read_excel_range(
         logger.error(f"Failed to read Excel range: {e}")
         raise DataError(str(e))
 
+
+def get_sheet_as_markdown_table(
+    filepath: str,
+    sheet_name: str,
+) -> str:
+    """
+    Reads a worksheet and returns its data as a Markdown table,
+    complete with Excel-style headers (A, B, C...) and row numbers.
+    Merged cells are represented by '<MERGED>'.
+
+    Args:
+        filepath: Path to the Excel file.
+        sheet_name: Name of the worksheet to read.
+
+    Returns:
+        A string containing the Markdown formatted table.
+    """
+    try:
+        grid_data = get_sheet_as_grid(filepath, sheet_name)
+        grid = grid_data["grid"]
+        num_cols = grid_data["columns"]
+
+        if not grid:
+            return "The sheet is empty."
+
+        # Header row (A, B, C...)
+        header = [" "] + [get_column_letter(i + 1) for i in range(num_cols)]
+        md_table_rows = ["| " + " | ".join(header) + " |"]
+
+        # Separator row
+        separator = ["---"] + ["---" for _ in range(num_cols)]
+        md_table_rows.append("| " + " | ".join(separator) + " |")
+
+        # Data rows (1, 2, 3...)
+        for i, row_data in enumerate(grid):
+            row_num = str(i + 1)
+            # Ensure all values are strings and handle None
+            row_values = [str(cell if cell is not None else "") for cell in row_data]
+            md_row = [row_num] + row_values
+            md_table_rows.append("| " + " | ".join(md_row) + " |")
+        
+        return "\n".join(md_table_rows)
+
+    except Exception as e:
+        logger.error(f"Failed to get sheet as markdown table: {e}")
+        raise DataError(str(e))
+
 def write_data(
     filepath: str,
     sheet_name: Optional[str],
@@ -277,4 +324,66 @@ def read_excel_range_with_metadata(
         raise
     except Exception as e:
         logger.error(f"Failed to read Excel range with metadata: {e}")
+        raise DataError(str(e))
+
+
+def get_sheet_as_grid(
+    filepath: str,
+    sheet_name: str,
+) -> Dict[str, Any]:
+    """
+    Reads an entire worksheet and returns its data as a 2D grid,
+    accounting for merged cells.
+
+    Args:
+        filepath: Path to the Excel file.
+        sheet_name: Name of the worksheet to read.
+
+    Returns:
+        A dictionary containing the sheet name, dimensions, and a 2D list
+        representing the grid. Merged cells (other than the top-left) will
+        be marked with a special placeholder.
+    """
+    try:
+        wb = load_workbook(filepath, read_only=False)
+        if sheet_name not in wb.sheetnames:
+            raise DataError(f"Sheet '{sheet_name}' not found.")
+
+        ws = wb[sheet_name]
+        
+        # Create a grid initialized with None
+        grid = [[None for _ in range(ws.max_column)] for _ in range(ws.max_row)]
+
+        # Get merged cell ranges
+        merged_ranges = ws.merged_cells.ranges
+
+        # Create a set of all cells that are part of a merge, excluding top-left cells
+        merged_cells_to_skip = set()
+        for merged_range in merged_ranges:
+            min_col, min_row, max_col, max_row = merged_range.bounds
+            for row in range(min_row, max_row + 1):
+                for col in range(min_col, max_col + 1):
+                    if row == min_row and col == min_col:
+                        continue
+                    merged_cells_to_skip.add((row, col))
+
+        # Populate the grid with cell values
+        for row_idx, row in enumerate(ws.iter_rows(), start=1):
+            for col_idx, cell in enumerate(row, start=1):
+                if (row_idx, col_idx) in merged_cells_to_skip:
+                    grid[row_idx - 1][col_idx - 1] = "<MERGED>"
+                else:
+                    grid[row_idx - 1][col_idx - 1] = cell.value
+        
+        wb.close()
+
+        return {
+            "sheet_name": sheet_name,
+            "rows": ws.max_row,
+            "columns": ws.max_column,
+            "grid": grid,
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get sheet as grid: {e}")
         raise DataError(str(e))

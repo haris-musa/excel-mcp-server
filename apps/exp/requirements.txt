@@ -1,0 +1,6 @@
+agno
+python-dotenv
+openai
+anthropic
+zhipuai
+openpyxl

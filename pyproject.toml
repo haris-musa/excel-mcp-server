@@ -8,7 +8,8 @@ dependencies = [
     "mcp[cli]>=1.10.1",
     "fastmcp>=2.0.0,<3.0.0",
     "openpyxl>=3.1.5",
-    "typer>=0.16.0"
+    "typer>=0.16.0",
+    "xlrd>=2.0.1"
 ]
 [[project.authors]]
 name = "haris"

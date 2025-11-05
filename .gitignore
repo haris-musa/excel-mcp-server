@@ -1,6 +1,19 @@
+# Environments
 .venv/
-dist/
+.conda/
+
+# Data and logs
 excel_files/
-__pycache__/
-.notes/
 *.log
+
+# Python cache
+__pycache__/
+
+# Build artifacts
+dist/
+
+# Notes
+.notes/
+
+# Secrets
+apps/exp/config/.env
