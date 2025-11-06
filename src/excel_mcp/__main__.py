@@ -1,3 +1,4 @@
+import sys
 import typer
 
 from .server import run_sse, run_stdio, run_streamable_http
@@ -38,13 +39,13 @@ def stdio():
     try:
         run_stdio()
     except KeyboardInterrupt:
-        print("\nShutting down server...")
+        print("\nShutting down server...", file=sys.stderr)
     except Exception as e:
-        print(f"\nError: {e}")
+        print(f"\nError: {e}", file=sys.stderr)
         import traceback
         traceback.print_exc()
     finally:
-        print("Service stopped.")
+        print("Service stopped.", file=sys.stderr)
 
 if __name__ == "__main__":
     app() 
