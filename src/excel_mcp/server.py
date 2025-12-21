@@ -3,6 +3,7 @@ import os
 from typing import Any, List, Dict, Optional
 
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 
 # Import exceptions
 from excel_mcp.exceptions import (
@@ -92,7 +93,12 @@ def get_excel_path(filename: str) -> str:
     # In SSE mode, if it's a relative path, resolve it based on EXCEL_FILES_PATH
     return os.path.join(EXCEL_FILES_PATH, filename)
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Apply Formula",
+        destructiveHint=True,
+    ),
+)
 def apply_formula(
     filepath: str,
     sheet_name: str,
@@ -120,7 +126,12 @@ def apply_formula(
         logger.error(f"Error applying formula: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Validate Formula Syntax",
+        readOnlyHint=True,
+    ),
+)
 def validate_formula_syntax(
     filepath: str,
     sheet_name: str,
@@ -138,7 +149,12 @@ def validate_formula_syntax(
         logger.error(f"Error validating formula: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Format Range",
+        destructiveHint=True,
+    ),
+)
 def format_range(
     filepath: str,
     sheet_name: str,
@@ -192,7 +208,12 @@ def format_range(
         logger.error(f"Error formatting range: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Read Data from Excel",
+        readOnlyHint=True,
+    ),
+)
 def read_data_from_excel(
     filepath: str,
     sheet_name: str,
@@ -234,7 +255,12 @@ def read_data_from_excel(
         logger.error(f"Error reading data: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Write Data to Excel",
+        destructiveHint=True,
+    ),
+)
 def write_data_to_excel(
     filepath: str,
     sheet_name: str,
@@ -262,7 +288,12 @@ def write_data_to_excel(
         logger.error(f"Error writing data: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Create Workbook",
+        destructiveHint=True,
+    ),
+)
 def create_workbook(filepath: str) -> str:
     """Create new Excel workbook."""
     try:
@@ -276,7 +307,12 @@ def create_workbook(filepath: str) -> str:
         logger.error(f"Error creating workbook: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Create Worksheet",
+        destructiveHint=True,
+    ),
+)
 def create_worksheet(filepath: str, sheet_name: str) -> str:
     """Create new worksheet in workbook."""
     try:
@@ -290,7 +326,12 @@ def create_worksheet(filepath: str, sheet_name: str) -> str:
         logger.error(f"Error creating worksheet: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Create Chart",
+        destructiveHint=True,
+    ),
+)
 def create_chart(
     filepath: str,
     sheet_name: str,
@@ -321,7 +362,12 @@ def create_chart(
         logger.error(f"Error creating chart: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Create Pivot Table",
+        destructiveHint=True,
+    ),
+)
 def create_pivot_table(
     filepath: str,
     sheet_name: str,
@@ -350,7 +396,12 @@ def create_pivot_table(
         logger.error(f"Error creating pivot table: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Create Table",
+        destructiveHint=True,
+    ),
+)
 def create_table(
     filepath: str,
     sheet_name: str,
@@ -375,7 +426,12 @@ def create_table(
         logger.error(f"Error creating table: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Copy Worksheet",
+        destructiveHint=True,
+    ),
+)
 def copy_worksheet(
     filepath: str,
     source_sheet: str,
@@ -392,7 +448,12 @@ def copy_worksheet(
         logger.error(f"Error copying worksheet: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Delete Worksheet",
+        destructiveHint=True,
+    ),
+)
 def delete_worksheet(
     filepath: str,
     sheet_name: str
@@ -408,7 +469,12 @@ def delete_worksheet(
         logger.error(f"Error deleting worksheet: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Rename Worksheet",
+        destructiveHint=True,
+    ),
+)
 def rename_worksheet(
     filepath: str,
     old_name: str,
@@ -425,7 +491,12 @@ def rename_worksheet(
         logger.error(f"Error renaming worksheet: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Get Workbook Metadata",
+        readOnlyHint=True,
+    ),
+)
 def get_workbook_metadata(
     filepath: str,
     include_ranges: bool = False
@@ -441,7 +512,12 @@ def get_workbook_metadata(
         logger.error(f"Error getting workbook metadata: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Merge Cells",
+        destructiveHint=True,
+    ),
+)
 def merge_cells(filepath: str, sheet_name: str, start_cell: str, end_cell: str) -> str:
     """Merge a range of cells."""
     try:
@@ -454,7 +530,12 @@ def merge_cells(filepath: str, sheet_name: str, start_cell: str, end_cell: str) 
         logger.error(f"Error merging cells: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Unmerge Cells",
+        destructiveHint=True,
+    ),
+)
 def unmerge_cells(filepath: str, sheet_name: str, start_cell: str, end_cell: str) -> str:
     """Unmerge a range of cells."""
     try:
@@ -467,7 +548,12 @@ def unmerge_cells(filepath: str, sheet_name: str, start_cell: str, end_cell: str
         logger.error(f"Error unmerging cells: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Get Merged Cells",
+        readOnlyHint=True,
+    ),
+)
 def get_merged_cells(filepath: str, sheet_name: str) -> str:
     """Get merged cells in a worksheet."""
     try:
@@ -479,7 +565,12 @@ def get_merged_cells(filepath: str, sheet_name: str) -> str:
         logger.error(f"Error getting merged cells: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Copy Range",
+        destructiveHint=True,
+    ),
+)
 def copy_range(
     filepath: str,
     sheet_name: str,
@@ -507,7 +598,12 @@ def copy_range(
         logger.error(f"Error copying range: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Delete Range",
+        destructiveHint=True,
+    ),
+)
 def delete_range(
     filepath: str,
     sheet_name: str,
@@ -533,7 +629,12 @@ def delete_range(
         logger.error(f"Error deleting range: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Validate Excel Range",
+        readOnlyHint=True,
+    ),
+)
 def validate_excel_range(
     filepath: str,
     sheet_name: str,
@@ -552,7 +653,12 @@ def validate_excel_range(
         logger.error(f"Error validating range: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Get Data Validation Info",
+        readOnlyHint=True,
+    ),
+)
 def get_data_validation_info(
     filepath: str,
     sheet_name: str
@@ -596,7 +702,12 @@ def get_data_validation_info(
         logger.error(f"Error getting validation info: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Insert Rows",
+        destructiveHint=True,
+    ),
+)
 def insert_rows(
     filepath: str,
     sheet_name: str,
@@ -614,7 +725,12 @@ def insert_rows(
         logger.error(f"Error inserting rows: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Insert Columns",
+        destructiveHint=True,
+    ),
+)
 def insert_columns(
     filepath: str,
     sheet_name: str,
@@ -632,7 +748,12 @@ def insert_columns(
         logger.error(f"Error inserting columns: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Delete Rows",
+        destructiveHint=True,
+    ),
+)
 def delete_sheet_rows(
     filepath: str,
     sheet_name: str,
@@ -650,7 +771,12 @@ def delete_sheet_rows(
         logger.error(f"Error deleting rows: {e}")
         raise
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Delete Columns",
+        destructiveHint=True,
+    ),
+)
 def delete_sheet_columns(
     filepath: str,
     sheet_name: str,
