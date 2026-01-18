@@ -1,0 +1,57 @@
+# Exclude everything except manifest and icon (uvx pattern)
+# The uvx command downloads the package from PyPI at runtime
+
+# Python source files
+*.py
+*.pyc
+*.pyo
+__pycache__/
+
+# Package files
+*.toml
+*.lock
+*.txt
+*.cfg
+*.ini
+
+# Source directories
+src/
+tests/
+docs/
+
+# Assets (icon is copied to root)
+assets/
+
+# Documentation
+*.md
+!README.md
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Environment
+.env*
+*.local
+.venv/
+venv/
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+
+# Misc
+.DS_Store
+Thumbs.db

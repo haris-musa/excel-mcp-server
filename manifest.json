@@ -1,0 +1,50 @@
+{
+  "manifest_version": "0.3",
+  "name": "excel-mcp-server",
+  "version": "0.1.7",
+  "description": "A Model Context Protocol server for Excel file manipulation",
+  "author": {
+    "name": "haris",
+    "url": "https://github.com/haris-musa"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/haris-musa/excel-mcp-server"
+  },
+  "icon": "icon.png",
+  "server": {
+    "type": "python",
+    "entry_point": "src/excel_mcp/__main__.py",
+    "mcp_config": {
+      "command": "uvx",
+      "args": ["excel-mcp-server", "stdio"]
+    }
+  },
+  "tools": [
+    {"name": "create_workbook", "description": "Create a new Excel workbook"},
+    {"name": "create_worksheet", "description": "Create a new worksheet in a workbook"},
+    {"name": "get_workbook_metadata", "description": "Get workbook metadata and structure"},
+    {"name": "write_data_to_excel", "description": "Write data to Excel cells"},
+    {"name": "read_data_from_excel", "description": "Read data from Excel range"},
+    {"name": "format_range", "description": "Apply formatting to cell range"},
+    {"name": "merge_cells", "description": "Merge cells in a range"},
+    {"name": "unmerge_cells", "description": "Unmerge previously merged cells"},
+    {"name": "get_merged_cells", "description": "Get list of merged cell ranges"},
+    {"name": "apply_formula", "description": "Apply Excel formula to cell"},
+    {"name": "validate_formula_syntax", "description": "Validate Excel formula syntax"},
+    {"name": "create_chart", "description": "Create chart (line, bar, pie, scatter, etc.)"},
+    {"name": "create_pivot_table", "description": "Create pivot table from data"},
+    {"name": "create_table", "description": "Create Excel table with styling"},
+    {"name": "copy_worksheet", "description": "Copy worksheet within workbook"},
+    {"name": "delete_worksheet", "description": "Delete worksheet from workbook"},
+    {"name": "rename_worksheet", "description": "Rename a worksheet"},
+    {"name": "copy_range", "description": "Copy cell range to another location"},
+    {"name": "delete_range", "description": "Delete cell range contents"},
+    {"name": "validate_excel_range", "description": "Validate Excel range format"},
+    {"name": "get_data_validation_info", "description": "Get data validation rules for cell"},
+    {"name": "insert_rows", "description": "Insert rows into worksheet"},
+    {"name": "insert_columns", "description": "Insert columns into worksheet"},
+    {"name": "delete_sheet_rows", "description": "Delete rows from worksheet"},
+    {"name": "delete_sheet_columns", "description": "Delete columns from worksheet"}
+  ]
+}
