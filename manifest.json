@@ -11,6 +11,9 @@
     "type": "git",
     "url": "https://github.com/haris-musa/excel-mcp-server"
   },
+  "homepage": "https://github.com/haris-musa/excel-mcp-server",
+  "documentation": "https://github.com/haris-musa/excel-mcp-server#readme",
+  "support": "https://github.com/haris-musa/excel-mcp-server/issues",
   "icon": "icon.png",
   "server": {
     "type": "python",
