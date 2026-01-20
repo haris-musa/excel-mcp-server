@@ -90,7 +90,14 @@ def get_excel_path(filename: str) -> str:
         raise ValueError(f"Invalid filename: {filename}, must be an absolute path when not in SSE mode")
 
     # In SSE mode, if it's a relative path, resolve it based on EXCEL_FILES_PATH
-    return os.path.join(EXCEL_FILES_PATH, filename)
+    # Secure path resolution to prevent Path Traversal
+    base_dir = os.path.abspath(EXCEL_FILES_PATH)
+    target_path = os.path.abspath(os.path.join(base_dir, filename))
+    
+    if not target_path.startswith(base_dir):
+        raise ValueError(f"Access denied: {filename} is outside the allowed directory")
+
+    return target_path
 
 @mcp.tool()
 def apply_formula(
