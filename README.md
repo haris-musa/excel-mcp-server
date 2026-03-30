@@ -23,6 +23,10 @@ A Model Context Protocol (MCP) server that lets you manipulate Excel files witho
 - 🔌 **Triple transport support**: stdio, SSE (deprecated), and streamable HTTP
 - 🌐 **Remote & Local**: Works both locally and as a remote service
 
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/haris-musa-excel-mcp-server).
+
 ## Usage
 
 The server supports three transport methods:
