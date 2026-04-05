@@ -1,0 +1,24 @@
+{
+  "name": "excel-mcp-server",
+  "version": "0.1.0",
+  "description": "Excel file manipulation from Codex via MCP",
+  "author": {
+    "name": "haris-musa",
+    "url": "https://github.com/haris-musa/excel-mcp-server"
+  },
+  "homepage": "https://github.com/haris-musa/excel-mcp-server",
+  "repository": "https://github.com/haris-musa/excel-mcp-server",
+  "keywords": [
+    "mcp",
+    "codex"
+  ],
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Excel MCP Server",
+    "shortDescription": "Excel file manipulation from Codex via MCP",
+    "longDescription": "A Model Context Protocol server for Excel file manipulation.",
+    "category": "Productivity",
+    "websiteURL": "https://github.com/haris-musa/excel-mcp-server"
+  },
+  "skills": "./skills/"
+}
