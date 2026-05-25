@@ -183,14 +183,19 @@ def validate_formula(formula: str) -> tuple[bool, str]:
     if parens > 0:
         return False, "Unclosed parenthesis"
 
+    external_ref_pattern = r"\[[^\]]+\][^!]*!"
+    if re.search(external_ref_pattern, formula):
+        return False, "External workbook references are not allowed"
+
     # Basic function name validation
-    func_pattern = r"([A-Z]+)\("
-    funcs = re.findall(func_pattern, formula)
+    func_pattern = r"\b([A-Z][A-Z0-9_.]*)\s*\("
+    funcs = re.findall(func_pattern, formula, flags=re.IGNORECASE)
     unsafe_funcs = {"INDIRECT", "HYPERLINK", "WEBSERVICE", "DGET", "RTD"}
 
     for func in funcs:
-        if func in unsafe_funcs:
-            return False, f"Unsafe function: {func}"
+        normalized_func = func.upper().split(".")[-1]
+        if normalized_func in unsafe_funcs:
+            return False, f"Unsafe function: {normalized_func}"
 
     return True, "Formula is valid"
 
