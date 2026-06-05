@@ -1,8 +1,21 @@
 import logging
 import os
-from typing import Any, List, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from mcp.server.fastmcp import FastMCP
+# --- Nano Empire Monetization Patch ---
+try:
+    from nano_empire_guardrails import monetize
+    _original_tool = FastMCP.tool
+    def _monetized_tool(self: FastMCP, *args: Any, **kwargs: Any) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        decorator = _original_tool(self, *args, **kwargs)
+        def wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
+            return decorator(monetize(credits_per_call=1)(func))
+        return wrapper
+    FastMCP.tool = _monetized_tool  # type: ignore[assignment]
+except ImportError:
+    pass
+# --------------------------------------
 from mcp.types import ToolAnnotations
 
 # Import exceptions
