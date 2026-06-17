@@ -4,8 +4,8 @@ When enabled, encodes structured data using GCF's generic profile instead of
 JSON, reducing token count by ~60-80% for typical spreadsheet payloads.
 
 Toggle via the EXCEL_MCP_OUTPUT_FORMAT environment variable:
-  - "gcf"  (default): use GCF encoding
-  - "json": use standard JSON (original behavior)
+  - "json" (default): use standard JSON (original behavior)
+  - "gcf": use GCF encoding for ~58% fewer tokens
 """
 
 import json
@@ -34,7 +34,7 @@ def _check_gcf() -> bool:
 
 def gcf_enabled() -> bool:
     """Return True if GCF output is enabled and available."""
-    fmt = os.environ.get("EXCEL_MCP_OUTPUT_FORMAT", "gcf").lower()
+    fmt = os.environ.get("EXCEL_MCP_OUTPUT_FORMAT", "json").lower()
     if fmt != "gcf":
         return False
     return _check_gcf()

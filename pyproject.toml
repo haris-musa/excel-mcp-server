@@ -9,8 +9,10 @@ dependencies = [
     "fastmcp>=2.0.0,<3.0.0",
     "openpyxl>=3.1.5",
     "typer>=0.16.0",
-    "gcf-python>=2.1.0"
 ]
+
+[project.optional-dependencies]
+gcf = ["gcf-python>=2.1.0"]
 [[project.authors]]
 name = "haris"
 email = "haris.musa@outlook.com"
