@@ -313,6 +313,7 @@ version = "0.1.8"
 source = { editable = "." }
 dependencies = [
     { name = "fastmcp" },
+    { name = "gcf-python" },
     { name = "mcp", extra = ["cli"] },
     { name = "openpyxl" },
     { name = "typer" },
@@ -321,6 +322,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "fastmcp", specifier = ">=2.0.0,<3.0.0" },
+    { name = "gcf-python", specifier = ">=2.1.0" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.10.1" },
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "typer", specifier = ">=0.16.0" },
@@ -355,6 +357,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c2/02/0701624e938fe4d1f13464de9bdc27be9aba2e4c4d41edab3ea496d31751/fastmcp-2.11.0.tar.gz", hash = "sha256:af0c52988607d8e9197df300e91880169e8fe24fd6ca177dca6a9eb6b245ce3c", size = 2663877, upload-time = "2025-08-01T21:30:11.629Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0c/9a/51108b68e77650a7289b5f1ceff8dc0929ab48a26d1d2015f22121a9d183/fastmcp-2.11.0-py3-none-any.whl", hash = "sha256:8709a04522e66fda407b469fbe4d3290651aa7b06097b91c097e9a973c9b9bb3", size = 256193, upload-time = "2025-08-01T21:30:09.905Z" },
+]
+
+[[package]]
+name = "gcf-python"
+version = "2.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/80/b1/bf0e5356952ce50bec766b253a3e298285faa4f104da7de9be92ca2b1de1/gcf_python-2.1.0.tar.gz", hash = "sha256:111cee413ecb2199f896153b2a9b8443ff98749ff5a4e306e53bbb6b6777fc55", size = 33087, upload-time = "2026-06-14T21:52:07.567Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5e/3d/2c0f4ce4a89177ffa9d1f96201ff4fec1def08a1d65c3fbd86cfed682667/gcf_python-2.1.0-py3-none-any.whl", hash = "sha256:f7924b86a5e846286c30cd5315038af6c85f4250a78fe33f8263117a73a53fc9", size = 27786, upload-time = "2026-06-14T21:52:06.679Z" },
 ]
 
 [[package]]

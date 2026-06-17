@@ -250,25 +250,25 @@ def read_data_from_excel(
         end_cell: Ending cell (optional, auto-expands if not provided)
         preview_only: Whether to return preview only
     
-    Returns:  
-    JSON string containing structured cell data with validation metadata.
+    Returns:
+    Structured cell data with validation metadata (GCF or JSON, depending on
+    EXCEL_MCP_OUTPUT_FORMAT).
     Each cell includes: address, value, row, column, and validation info (if any).
     """
     try:
         full_path = get_excel_path(filepath)
         from excel_mcp.data import read_excel_range_with_metadata
+        from excel_mcp.gcf_utils import serialize
         result = read_excel_range_with_metadata(
-            full_path, 
-            sheet_name, 
-            start_cell, 
+            full_path,
+            sheet_name,
+            start_cell,
             end_cell
         )
         if not result or not result.get("cells"):
             return "No data found in specified range"
-            
-        # Return as formatted JSON string
-        import json
-        return json.dumps(result, indent=2, default=str)
+
+        return serialize(result)
         
     except Exception as e:
         logger.error(f"Error reading data: {e}")
@@ -523,8 +523,9 @@ def get_workbook_metadata(
     """Get metadata about workbook including sheets, ranges, etc."""
     try:
         full_path = get_excel_path(filepath)
+        from excel_mcp.gcf_utils import serialize
         result = get_workbook_info(full_path, include_ranges=include_ranges)
-        return str(result)
+        return serialize(result)
     except WorkbookError as e:
         return f"Error: {str(e)}"
     except Exception as e:
@@ -707,15 +708,15 @@ def get_data_validation_info(
         ws = wb[sheet_name]
         validations = get_all_validation_ranges(ws)
         wb.close()
-        
+
         if not validations:
             return "No data validation rules found in this worksheet"
-            
-        import json
-        return json.dumps({
+
+        from excel_mcp.gcf_utils import serialize
+        return serialize({
             "sheet_name": sheet_name,
             "validation_rules": validations
-        }, indent=2, default=str)
+        })
         
     except Exception as e:
         logger.error(f"Error getting validation info: {e}")

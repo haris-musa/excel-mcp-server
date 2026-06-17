@@ -1,0 +1,18 @@
+========================================================================
+GCF vs JSON Token Benchmark for excel-mcp-server
+Date: 2026-06-17 19:46 UTC
+Token estimator: max(1, len(text) // 4)
+========================================================================
+
+Scenario                         JSON tok    GCF tok    Saved  Reduction
+------------------------------------------------------------------------
+Small (10 rows x 5 cols)            2,006        799   +1,207      60.2%
+Medium (50 rows x 10 cols)         20,170      8,156  +12,014      59.6%
+Large (100 rows x 15 cols)         60,666     24,772  +35,894      59.2%
+XL (250 rows x 20 cols)           204,424     85,366 +119,058      58.2%
+XXL (500 rows x 20 cols)          410,053    172,218 +237,835      58.0%
+------------------------------------------------------------------------
+TOTAL                             697,319    291,311 +406,008      58.2%
+
+GCF = Graph Compact Format (https://github.com/blackwell-systems/gcf)
+gcf-python v2.1.0 | encode_generic(data)
