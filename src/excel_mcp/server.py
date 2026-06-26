@@ -140,7 +140,7 @@ def apply_formula(
         result = apply_formula_impl(full_path, sheet_name, cell, formula)
         return result["message"]
     except (ValidationError, CalculationError) as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error applying formula: {e}")
         raise
@@ -163,7 +163,7 @@ def validate_formula_syntax(
         result = validate_formula_impl(full_path, sheet_name, cell, formula)
         return result["message"]
     except (ValidationError, CalculationError) as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error validating formula: {e}")
         raise
@@ -222,7 +222,7 @@ def format_range(
         )
         return "Range formatted successfully"
     except (ValidationError, FormattingError) as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error formatting range: {e}")
         raise
@@ -302,7 +302,7 @@ def write_data_to_excel(
         result = write_data(full_path, sheet_name, data, start_cell)
         return result["message"]
     except (ValidationError, DataError) as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error writing data: {e}")
         raise
@@ -321,7 +321,7 @@ def create_workbook(filepath: str) -> str:
         create_workbook_impl(full_path)
         return f"Created workbook at {full_path}"
     except WorkbookError as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error creating workbook: {e}")
         raise
@@ -340,7 +340,7 @@ def create_worksheet(filepath: str, sheet_name: str) -> str:
         result = create_worksheet_impl(full_path, sheet_name)
         return result["message"]
     except (ValidationError, WorkbookError) as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error creating worksheet: {e}")
         raise
@@ -376,7 +376,7 @@ def create_chart(
         )
         return result["message"]
     except (ValidationError, ChartError) as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error creating chart: {e}")
         raise
@@ -410,7 +410,7 @@ def create_pivot_table(
         )
         return result["message"]
     except (ValidationError, PivotError) as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error creating pivot table: {e}")
         raise
@@ -440,7 +440,7 @@ def create_table(
         )
         return result["message"]
     except DataError as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error creating table: {e}")
         raise
@@ -462,7 +462,7 @@ def copy_worksheet(
         result = copy_sheet(full_path, source_sheet, target_sheet)
         return result["message"]
     except (ValidationError, SheetError) as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error copying worksheet: {e}")
         raise
@@ -483,7 +483,7 @@ def delete_worksheet(
         result = delete_sheet(full_path, sheet_name)
         return result["message"]
     except (ValidationError, SheetError) as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error deleting worksheet: {e}")
         raise
@@ -505,7 +505,7 @@ def rename_worksheet(
         result = rename_sheet(full_path, old_name, new_name)
         return result["message"]
     except (ValidationError, SheetError) as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error renaming worksheet: {e}")
         raise
@@ -526,7 +526,7 @@ def get_workbook_metadata(
         result = get_workbook_info(full_path, include_ranges=include_ranges)
         return str(result)
     except WorkbookError as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error getting workbook metadata: {e}")
         raise
@@ -544,7 +544,7 @@ def merge_cells(filepath: str, sheet_name: str, start_cell: str, end_cell: str) 
         result = merge_range(full_path, sheet_name, start_cell, end_cell)
         return result["message"]
     except (ValidationError, SheetError) as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error merging cells: {e}")
         raise
@@ -562,7 +562,7 @@ def unmerge_cells(filepath: str, sheet_name: str, start_cell: str, end_cell: str
         result = unmerge_range(full_path, sheet_name, start_cell, end_cell)
         return result["message"]
     except (ValidationError, SheetError) as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error unmerging cells: {e}")
         raise
@@ -579,7 +579,7 @@ def get_merged_cells(filepath: str, sheet_name: str) -> str:
         full_path = get_excel_path(filepath)
         return str(get_merged_ranges(full_path, sheet_name))
     except (ValidationError, SheetError) as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error getting merged cells: {e}")
         raise
@@ -612,7 +612,7 @@ def copy_range(
         )
         return result["message"]
     except (ValidationError, SheetError) as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error copying range: {e}")
         raise
@@ -643,7 +643,7 @@ def delete_range(
         )
         return result["message"]
     except (ValidationError, SheetError) as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error deleting range: {e}")
         raise
@@ -667,7 +667,7 @@ def validate_excel_range(
         result = validate_range_impl(full_path, sheet_name, range_str)
         return result["message"]
     except ValidationError as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error validating range: {e}")
         raise
@@ -739,7 +739,7 @@ def insert_rows(
         result = insert_row(full_path, sheet_name, start_row, count)
         return result["message"]
     except (ValidationError, SheetError) as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error inserting rows: {e}")
         raise
@@ -762,7 +762,7 @@ def insert_columns(
         result = insert_cols(full_path, sheet_name, start_col, count)
         return result["message"]
     except (ValidationError, SheetError) as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error inserting columns: {e}")
         raise
@@ -785,7 +785,7 @@ def delete_sheet_rows(
         result = delete_rows(full_path, sheet_name, start_row, count)
         return result["message"]
     except (ValidationError, SheetError) as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error deleting rows: {e}")
         raise
@@ -808,7 +808,7 @@ def delete_sheet_columns(
         result = delete_cols(full_path, sheet_name, start_col, count)
         return result["message"]
     except (ValidationError, SheetError) as e:
-        return f"Error: {str(e)}"
+        raise
     except Exception as e:
         logger.error(f"Error deleting columns: {e}")
         raise
