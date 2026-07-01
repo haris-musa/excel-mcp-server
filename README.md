@@ -1,7 +1,7 @@
 <p align="center">
   <img src="https://raw.githubusercontent.com/haris-musa/excel-mcp-server/main/assets/logo.png" alt="Excel MCP Server Logo" width="300"/>
 </p>
-[![mcp-customs](https://img.shields.io/badge/mcp--customs-CLEARED_97%2F100-brightgreen)](https://github.com/mcpcustoms/mcp-customs)
+[![mcp-customs](https://img.shields.io/badge/mcp--customs-CLEARED_97%2F100-brightgreen)](https://mcpcustoms.github.io/?server=excel-mcp-server)
 [![PyPI version](https://img.shields.io/pypi/v/excel-mcp-server.svg)](https://pypi.org/project/excel-mcp-server/)
 [![Total Downloads](https://static.pepy.tech/badge/excel-mcp-server)](https://pepy.tech/project/excel-mcp-server)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
