@@ -9,6 +9,7 @@ from openpyxl.utils import get_column_letter
 from .exceptions import DataError
 from .cell_utils import parse_cell_range
 from .cell_validation import get_data_validation_for_cell
+from .validation import validate_formula
 
 logger = logging.getLogger(__name__)
 
@@ -159,6 +160,10 @@ def _write_data_to_worksheet(
         # Write data
         for i, row in enumerate(data):
             for j, val in enumerate(row):
+                if isinstance(val, str) and val.startswith("="):
+                    is_valid, message = validate_formula(val)
+                    if not is_valid:
+                        raise DataError(f"Invalid formula in data: {message}")
                 worksheet.cell(row=start_row + i, column=start_col + j, value=val)
     except DataError as e:
         logger.error(str(e))

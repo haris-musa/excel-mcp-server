@@ -288,7 +288,7 @@ def write_data_to_excel(
 ) -> str:
     """
     Write data to Excel worksheet.
-    Excel formula will write to cell without any verification.
+    Excel formulas are validated before they are written.
 
     PARAMETERS:  
     filepath: Path to Excel file
