@@ -185,12 +185,13 @@ def validate_formula(formula: str) -> tuple[bool, str]:
 
     # Basic function name validation
     func_pattern = r"([A-Z]+)\("
-    funcs = re.findall(func_pattern, formula)
+    funcs = re.findall(func_pattern, formula, flags=re.IGNORECASE)
     unsafe_funcs = {"INDIRECT", "HYPERLINK", "WEBSERVICE", "DGET", "RTD"}
 
     for func in funcs:
-        if func in unsafe_funcs:
-            return False, f"Unsafe function: {func}"
+        normalized_func = func.upper()
+        if normalized_func in unsafe_funcs:
+            return False, f"Unsafe function: {normalized_func}"
 
     return True, "Formula is valid"
 
