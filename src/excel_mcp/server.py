@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from typing import Any, List, Dict, Optional
 
 from mcp.server.fastmcp import FastMCP
@@ -52,6 +53,7 @@ LOG_FILE = os.path.join(ROOT_DIR, "excel-mcp.log")
 
 # Initialize EXCEL_FILES_PATH variable without assigning a value
 EXCEL_FILES_PATH = None
+UNSAFE_PATH_CHARS = re.compile(r"[;&|`$(){}\[\]!#<>]")
 
 # Configure logging
 logging.basicConfig(
@@ -95,6 +97,8 @@ def get_excel_path(filename: str) -> str:
     """
     if not filename or "\x00" in filename:
         raise ValueError(f"Invalid filename: {filename}")
+    if UNSAFE_PATH_CHARS.search(filename):
+        raise ValueError(f"Invalid filename: {filename}, contains unsafe characters")
 
     if EXCEL_FILES_PATH is None:
         if not os.path.isabs(filename):

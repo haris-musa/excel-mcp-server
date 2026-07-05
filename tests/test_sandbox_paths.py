@@ -53,6 +53,25 @@ class TestGetExcelPathSandbox(unittest.TestCase):
             with self.assertRaises(ValueError):
                 server.get_excel_path("a\x00b.xlsx")
 
+    def test_stdio_rejects_shell_metacharacters(self):
+        server.EXCEL_FILES_PATH = None
+        bad_path = os.path.join(tempfile.gettempdir(), "safe.xlsx; echo injected")
+        with self.assertRaises(ValueError):
+            server.get_excel_path(bad_path)
+
+    def test_remote_rejects_shell_metacharacters(self):
+        with tempfile.TemporaryDirectory() as d:
+            server.EXCEL_FILES_PATH = d
+            for bad_path in [
+                "safe.xlsx; echo injected",
+                "safe.xlsx && touch injected",
+                "safe.xlsx|cat",
+                "`safe.xlsx`",
+            ]:
+                with self.subTest(bad_path=bad_path):
+                    with self.assertRaises(ValueError):
+                        server.get_excel_path(bad_path)
+
 
 if __name__ == "__main__":
     unittest.main()
