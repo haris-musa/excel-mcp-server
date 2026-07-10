@@ -183,13 +183,17 @@ def validate_formula(formula: str) -> tuple[bool, str]:
     if parens > 0:
         return False, "Unclosed parenthesis"
 
-    # Basic function name validation
-    func_pattern = r"([A-Z]+)\("
+    # Basic function name validation.
+    # Excel function names are case-insensitive (e.g. =indirect(A1) and
+    # =INDIRECT(A1) are equivalent), so the function-name regex must accept
+    # mixed/lower case too. Compare against the unsafe set using the
+    # canonical uppercase form.
+    func_pattern = r"([A-Za-z_][A-Za-z0-9_.]*)\("
     funcs = re.findall(func_pattern, formula)
     unsafe_funcs = {"INDIRECT", "HYPERLINK", "WEBSERVICE", "DGET", "RTD"}
 
     for func in funcs:
-        if func in unsafe_funcs:
+        if func.upper() in unsafe_funcs:
             return False, f"Unsafe function: {func}"
 
     return True, "Formula is valid"
