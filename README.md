@@ -27,6 +27,16 @@ A Model Context Protocol (MCP) server that lets you manipulate Excel files witho
 
 The server supports three transport methods:
 
+### Autohand Code
+
+Add the local stdio server from the command line:
+
+```bash
+autohand mcp add excel uvx excel-mcp-server stdio
+```
+
+Add `--scope project` after `add` to keep the server configuration in the current project. See [Autohand Code](https://github.com/autohandai/code-cli/) for current installation and CLI details.
+
 ### 1. Stdio Transport (for local use)
 
 ```bash
