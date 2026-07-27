@@ -1,3 +1,5 @@
+[![MCP Toplist](https://mcptoplist.com/badge/glama%2Fharis-musa%2Fexcel-mcp-server.svg)](https://mcptoplist.com/server/glama%2Fharis-musa%2Fexcel-mcp-server)
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/haris-musa/excel-mcp-server/main/assets/logo.png" alt="Excel MCP Server Logo" width="300"/>
 </p>
