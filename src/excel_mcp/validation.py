@@ -59,6 +59,14 @@ def validate_formula_in_cell_operation(
                         "provided_formula": formula,
                         "current_formula": current_formula
                     }
+                else:
+                    return {
+                        "message": "Formula is valid and matches cell content",
+                        "valid": True,
+                        "matches": True,
+                        "cell": cell,
+                        "formula": formula
+                    }
             else:
                 if current_formula != f"={formula}":
                     return {
@@ -93,6 +101,10 @@ def validate_formula_in_cell_operation(
     except Exception as e:
         logger.error(f"Failed to validate formula: {e}")
         raise ValidationError(str(e))
+
+    # Defensive: all branches above return; never fall through to an implicit
+    # None (which would crash callers doing result["message"]).
+    raise ValidationError("Formula validation reached an unexpected state")
 
 def validate_range_in_sheet_operation(
     filepath: str,
