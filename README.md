@@ -102,6 +102,26 @@ You can also set the `FASTMCP_PORT` environment variable to control the port the
 
 When using the **stdio protocol**, the file path is provided with each tool call, so you do **not** need to set `EXCEL_FILES_PATH` on the server. The server will use the path sent by the client for each operation.
 
+## Optional: Agent verification (TrustModel AgentCert)
+
+On the HTTP transports (SSE / streamable-http) you can optionally verify a calling
+agent's **AgentCert + TrustScore** on each tool call. It is **off by default** and
+**never blocks** unless you opt in — a [FastMCP middleware](https://gofastmcp.com/servers/middleware)
+that reads request metadata only.
+
+```bash
+pip install "excel-mcp-server[trustmodel]"
+TRUSTMODEL_VERIFY=1 excel-mcp-server streamable-http      # shadow mode: logs verdicts
+```
+
+| Env var | Meaning |
+|---|---|
+| `TRUSTMODEL_VERIFY=1` | enable the gate (nothing runs otherwise) |
+| `TRUSTMODEL_MODE=enforce` | reject unverified/revoked agents (default: `shadow`, log-only) |
+| `TRUSTMODEL_VERIFY_URL` | TAG verify endpoint |
+
+Powered by the dependency-free [`trustmodel-agentcert-tag`](https://pypi.org/project/trustmodel-agentcert-tag/) client (MIT). More at [trustmodel.ai/verify](https://trustmodel.ai/verify).
+
 ## Available Tools
 
 The server provides a comprehensive set of Excel manipulation tools. See [TOOLS.md](TOOLS.md) for complete documentation of all available tools.

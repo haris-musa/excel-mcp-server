@@ -24,6 +24,7 @@ from excel_mcp.validation import (
 )
 from excel_mcp.chart import create_chart_in_sheet as create_chart_impl
 from excel_mcp.workbook import get_workbook_info
+from excel_mcp.trustmodel_verify import register_trustmodel_verify
 from excel_mcp.data import write_data
 from excel_mcp.pivot import create_pivot_table as create_pivot_table_impl
 from excel_mcp.tables import create_excel_table as create_table_impl
@@ -823,6 +824,7 @@ def run_sse():
     
     try:
         logger.info(f"Starting Excel MCP server with SSE transport (files directory: {EXCEL_FILES_PATH})")
+        register_trustmodel_verify(mcp)  # opt-in; no-op unless TRUSTMODEL_VERIFY=1
         mcp.run(transport="sse")
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
@@ -842,6 +844,7 @@ def run_streamable_http():
     
     try:
         logger.info(f"Starting Excel MCP server with streamable HTTP transport (files directory: {EXCEL_FILES_PATH})")
+        register_trustmodel_verify(mcp)  # opt-in; no-op unless TRUSTMODEL_VERIFY=1
         mcp.run(transport="streamable-http")
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
