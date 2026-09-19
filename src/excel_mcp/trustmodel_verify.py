@@ -29,26 +29,36 @@ def register_trustmodel_verify(mcp) -> bool:
     if os.environ.get("TRUSTMODEL_VERIFY", "").strip().lower() not in _TRUTHY:
         return False
 
+    # Resolve mode before importing, so enforce mode can fail closed on a missing dep.
+    mode = os.environ.get("TRUSTMODEL_MODE", "shadow").strip().lower()
+
     try:
         from fastmcp.server.dependencies import get_http_headers
         from fastmcp.server.middleware import Middleware
         from trustmodel_agentcert_tag import extract_token, verify_gate
-    except ImportError:
+    except ImportError as exc:
+        # Fail CLOSED in enforce mode: never start "protected" without the verifier.
+        if mode == "enforce":
+            raise RuntimeError(
+                "TRUSTMODEL_MODE=enforce requires 'trustmodel-agentcert-tag'; "
+                "install with `pip install excel-mcp-server[trustmodel]`."
+            ) from exc
         logger.warning(
             "TRUSTMODEL_VERIFY is set but 'trustmodel-agentcert-tag' is not installed; "
-            "install with `pip install excel-mcp-server[trustmodel]`. Skipping verify-gate."
+            "install with `pip install excel-mcp-server[trustmodel]`. Skipping verify-gate (shadow)."
         )
         return False
 
-    mode = os.environ.get("TRUSTMODEL_MODE", "shadow")
-
     class _TrustModelVerifyMiddleware(Middleware):
+        """FastMCP middleware that verifies the calling agent's AgentCert per tool call."""
+
         def __init__(self) -> None:
+            """Build the shadow/enforce guard once from the configured mode."""
             self._guard = verify_gate(mode=mode)
 
         async def on_call_tool(self, context, call_next):
+            """Verify the request's AgentCert token, then proceed (shadow logs; enforce raises)."""
             # metadata-only: read the AgentCert token from the request headers.
-            # shadow mode logs the verdict; enforce mode raises VerifyError.
             await self._guard(extract_token(get_http_headers() or {}))
             return await call_next(context)
 
