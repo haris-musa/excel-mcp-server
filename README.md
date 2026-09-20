@@ -82,7 +82,7 @@ uvx excel-mcp-server streamable-http
 
 ### SSE and Streamable HTTP Transports
 
-When running the server with the **SSE or Streamable HTTP protocols**, you **must set the `EXCEL_FILES_PATH` environment variable on the server side**. This variable tells the server where to read and write Excel files.
+When running the server with the **SSE or Streamable HTTP protocols**, you **should set the `EXCEL_FILES_PATH` environment variable on the server side**. This variable tells the server where to read and write Excel files.
 - If not set, it defaults to `./excel_files`.
 - With these transports, tool `filepath` values must be **relative** to that directory (e.g. `reports/q1.xlsx`); absolute paths and directory traversal are rejected.
 
