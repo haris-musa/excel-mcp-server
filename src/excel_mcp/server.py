@@ -394,7 +394,7 @@ def create_pivot_table(
     rows: List[str],
     values: List[str],
     columns: Optional[List[str]] = None,
-    agg_func: str = "mean"
+    agg_func: str = "sum"
 ) -> str:
     """Create pivot table in worksheet."""
     try:
