@@ -127,6 +127,12 @@ def apply_formula(
     """
     Apply Excel formula to cell.
     Excel formula will write to cell with verification.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        sheet_name: Name of worksheet
+        cell: Target cell reference (e.g. "C1")
+        formula: Excel formula (e.g. "=SUM(A1:B1)"); a leading "=" is added if missing
     """
     try:
         full_path = get_excel_path(filepath)
@@ -157,7 +163,15 @@ def validate_formula_syntax(
     cell: str,
     formula: str,
 ) -> str:
-    """Validate Excel formula syntax without applying it."""
+    """
+    Validate Excel formula syntax without applying it.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        sheet_name: Name of worksheet
+        cell: Target cell reference (e.g. "C1")
+        formula: Excel formula to validate (e.g. "=SUM(A1:B1)")
+    """
     try:
         full_path = get_excel_path(filepath)
         result = validate_formula_impl(full_path, sheet_name, cell, formula)
@@ -194,7 +208,29 @@ def format_range(
     protection: Optional[Dict[str, Any]] = None,
     conditional_format: Optional[Dict[str, Any]] = None
 ) -> str:
-    """Apply formatting to a range of cells."""
+    """
+    Apply formatting to a range of cells.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        sheet_name: Name of worksheet
+        start_cell: Starting cell of range (e.g. "A1")
+        end_cell: Ending cell of range (optional; formats only start_cell if not provided)
+        bold: Apply bold font
+        italic: Apply italic font
+        underline: Apply underline
+        font_size: Font size in points
+        font_color: Font color as hex without "#" (e.g. "FF0000")
+        bg_color: Background fill color as hex without "#" (e.g. "FFFF00")
+        border_style: Border style for all four sides (e.g. "thin", "medium", "thick", "double")
+        border_color: Border color as hex without "#" (default "000000"; used only with border_style)
+        number_format: Excel number format string (e.g. "0.00", "yyyy-mm-dd")
+        alignment: Horizontal alignment (e.g. "left", "center", "right", "justify")
+        wrap_text: Wrap text within cells
+        merge_cells: Merge the range (requires end_cell)
+        protection: Cell protection settings (e.g. {"locked": true, "hidden": false})
+        conditional_format: Conditional formatting rule as {"type": ..., "params": {...}}, where type is one of "cell_is", "color_scale", "data_bar", "icon_set", "formula"
+    """
     try:
         full_path = get_excel_path(filepath)
         from excel_mcp.formatting import format_range as format_range_func
@@ -290,12 +326,11 @@ def write_data_to_excel(
     Write data to Excel worksheet.
     Excel formula will write to cell without any verification.
 
-    PARAMETERS:  
-    filepath: Path to Excel file
-    sheet_name: Name of worksheet to write to
-    data: List of lists containing data to write to the worksheet, sublists are assumed to be rows
-    start_cell: Cell to start writing to, default is "A1"
-  
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        sheet_name: Name of worksheet to write to (created if it does not exist)
+        data: List of lists containing data to write to the worksheet, sublists are assumed to be rows
+        start_cell: Cell to start writing to, default is "A1"
     """
     try:
         full_path = get_excel_path(filepath)
@@ -314,7 +349,12 @@ def write_data_to_excel(
     ),
 )
 def create_workbook(filepath: str) -> str:
-    """Create new Excel workbook."""
+    """
+    Create new Excel workbook.
+
+    Args:
+        filepath: Path where the workbook is created (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode). An existing file at this path is overwritten
+    """
     try:
         full_path = get_excel_path(filepath)
         from excel_mcp.workbook import create_workbook as create_workbook_impl
@@ -333,7 +373,13 @@ def create_workbook(filepath: str) -> str:
     ),
 )
 def create_worksheet(filepath: str, sheet_name: str) -> str:
-    """Create new worksheet in workbook."""
+    """
+    Create new worksheet in workbook.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        sheet_name: Name for the new worksheet (must not already exist)
+    """
     try:
         full_path = get_excel_path(filepath)
         from excel_mcp.workbook import create_sheet as create_worksheet_impl
@@ -361,7 +407,19 @@ def create_chart(
     x_axis: str = "",
     y_axis: str = ""
 ) -> str:
-    """Create chart in worksheet."""
+    """
+    Create chart in worksheet.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        sheet_name: Name of worksheet to add the chart to
+        data_range: Range containing chart data (e.g. "A1:C10", or "Sheet2!A1:C10" for another sheet)
+        chart_type: One of "line", "bar", "pie", "scatter", "area"
+        target_cell: Cell where the chart's top-left corner is placed (e.g. "E2")
+        title: Chart title (optional)
+        x_axis: X-axis label (optional)
+        y_axis: Y-axis label (optional)
+    """
     try:
         full_path = get_excel_path(filepath)
         result = create_chart_impl(
@@ -396,7 +454,19 @@ def create_pivot_table(
     columns: Optional[List[str]] = None,
     agg_func: str = "mean"
 ) -> str:
-    """Create pivot table in worksheet."""
+    """
+    Create pivot table in worksheet.
+    The result is written to a sheet named "<sheet_name>_pivot", replacing it if it exists.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        sheet_name: Name of worksheet containing the source data
+        data_range: Source data range including the header row (e.g. "A1:D100")
+        rows: Column headers to use as row labels
+        values: Column headers to aggregate
+        columns: Column headers to use as column labels (optional)
+        agg_func: Aggregation function, one of "sum", "average", "count", "min", "max"
+    """
     try:
         full_path = get_excel_path(filepath)
         result = create_pivot_table_impl(
@@ -428,7 +498,16 @@ def create_table(
     table_name: Optional[str] = None,
     table_style: str = "TableStyleMedium9"
 ) -> str:
-    """Creates a native Excel table from a specified range of data."""
+    """
+    Creates a native Excel table from a specified range of data.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        sheet_name: Name of worksheet
+        data_range: Cell range for the table, including the header row (e.g. "A1:D5")
+        table_name: Unique name for the table (optional; generated if not provided)
+        table_style: Excel table style name (default "TableStyleMedium9")
+    """
     try:
         full_path = get_excel_path(filepath)
         result = create_table_impl(
@@ -456,7 +535,14 @@ def copy_worksheet(
     source_sheet: str,
     target_sheet: str
 ) -> str:
-    """Copy worksheet within workbook."""
+    """
+    Copy worksheet within workbook.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        source_sheet: Name of worksheet to copy
+        target_sheet: Name for the new copy (must not already exist)
+    """
     try:
         full_path = get_excel_path(filepath)
         result = copy_sheet(full_path, source_sheet, target_sheet)
@@ -477,7 +563,13 @@ def delete_worksheet(
     filepath: str,
     sheet_name: str
 ) -> str:
-    """Delete worksheet from workbook."""
+    """
+    Delete worksheet from workbook.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        sheet_name: Name of worksheet to delete
+    """
     try:
         full_path = get_excel_path(filepath)
         result = delete_sheet(full_path, sheet_name)
@@ -499,7 +591,14 @@ def rename_worksheet(
     old_name: str,
     new_name: str
 ) -> str:
-    """Rename worksheet in workbook."""
+    """
+    Rename worksheet in workbook.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        old_name: Current worksheet name
+        new_name: New worksheet name (must not already exist)
+    """
     try:
         full_path = get_excel_path(filepath)
         result = rename_sheet(full_path, old_name, new_name)
@@ -520,7 +619,13 @@ def get_workbook_metadata(
     filepath: str,
     include_ranges: bool = False
 ) -> str:
-    """Get metadata about workbook including sheets, ranges, etc."""
+    """
+    Get metadata about workbook including sheets, ranges, etc.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        include_ranges: Include the used range of each sheet
+    """
     try:
         full_path = get_excel_path(filepath)
         result = get_workbook_info(full_path, include_ranges=include_ranges)
@@ -538,7 +643,15 @@ def get_workbook_metadata(
     ),
 )
 def merge_cells(filepath: str, sheet_name: str, start_cell: str, end_cell: str) -> str:
-    """Merge a range of cells."""
+    """
+    Merge a range of cells.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        sheet_name: Name of worksheet
+        start_cell: Starting cell of range (e.g. "A1")
+        end_cell: Ending cell of range (e.g. "C1")
+    """
     try:
         full_path = get_excel_path(filepath)
         result = merge_range(full_path, sheet_name, start_cell, end_cell)
@@ -556,7 +669,15 @@ def merge_cells(filepath: str, sheet_name: str, start_cell: str, end_cell: str) 
     ),
 )
 def unmerge_cells(filepath: str, sheet_name: str, start_cell: str, end_cell: str) -> str:
-    """Unmerge a range of cells."""
+    """
+    Unmerge a range of cells.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        sheet_name: Name of worksheet
+        start_cell: Starting cell of the merged range (e.g. "A1")
+        end_cell: Ending cell of the merged range (e.g. "C1")
+    """
     try:
         full_path = get_excel_path(filepath)
         result = unmerge_range(full_path, sheet_name, start_cell, end_cell)
@@ -574,7 +695,13 @@ def unmerge_cells(filepath: str, sheet_name: str, start_cell: str, end_cell: str
     ),
 )
 def get_merged_cells(filepath: str, sheet_name: str) -> str:
-    """Get merged cells in a worksheet."""
+    """
+    Get merged cells in a worksheet.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        sheet_name: Name of worksheet
+    """
     try:
         full_path = get_excel_path(filepath)
         return str(get_merged_ranges(full_path, sheet_name))
@@ -598,7 +725,17 @@ def copy_range(
     target_start: str,
     target_sheet: Optional[str] = None
 ) -> str:
-    """Copy a range of cells to another location."""
+    """
+    Copy a range of cells to another location.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        sheet_name: Name of source worksheet
+        source_start: Starting cell of source range (e.g. "A1")
+        source_end: Ending cell of source range (e.g. "C10")
+        target_start: Top-left cell of the destination (e.g. "E1")
+        target_sheet: Destination worksheet (optional; defaults to sheet_name)
+    """
     try:
         full_path = get_excel_path(filepath)
         from excel_mcp.sheet import copy_range_operation
@@ -630,7 +767,16 @@ def delete_range(
     end_cell: str,
     shift_direction: str = "up"
 ) -> str:
-    """Delete a range of cells and shift remaining cells."""
+    """
+    Delete a range of cells and shift remaining cells.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        sheet_name: Name of worksheet
+        start_cell: Starting cell of range (e.g. "A1")
+        end_cell: Ending cell of range (e.g. "C10")
+        shift_direction: Direction to shift remaining cells, "up" or "left" (default "up")
+    """
     try:
         full_path = get_excel_path(filepath)
         from excel_mcp.sheet import delete_range_operation
@@ -660,7 +806,15 @@ def validate_excel_range(
     start_cell: str,
     end_cell: Optional[str] = None
 ) -> str:
-    """Validate if a range exists and is properly formatted."""
+    """
+    Validate if a range exists and is properly formatted.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        sheet_name: Name of worksheet
+        start_cell: Starting cell of range (e.g. "A1")
+        end_cell: Ending cell of range (optional; validates only start_cell if not provided)
+    """
     try:
         full_path = get_excel_path(filepath)
         range_str = start_cell if not end_cell else f"{start_cell}:{end_cell}"
@@ -733,7 +887,15 @@ def insert_rows(
     start_row: int,
     count: int = 1
 ) -> str:
-    """Insert one or more rows starting at the specified row."""
+    """
+    Insert one or more rows starting at the specified row.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        sheet_name: Name of worksheet
+        start_row: Row number to insert at (1-based)
+        count: Number of rows to insert (default 1)
+    """
     try:
         full_path = get_excel_path(filepath)
         result = insert_row(full_path, sheet_name, start_row, count)
@@ -756,7 +918,15 @@ def insert_columns(
     start_col: int,
     count: int = 1
 ) -> str:
-    """Insert one or more columns starting at the specified column."""
+    """
+    Insert one or more columns starting at the specified column.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        sheet_name: Name of worksheet
+        start_col: Column number to insert at (1-based, A = 1)
+        count: Number of columns to insert (default 1)
+    """
     try:
         full_path = get_excel_path(filepath)
         result = insert_cols(full_path, sheet_name, start_col, count)
@@ -779,7 +949,15 @@ def delete_sheet_rows(
     start_row: int,
     count: int = 1
 ) -> str:
-    """Delete one or more rows starting at the specified row."""
+    """
+    Delete one or more rows starting at the specified row.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        sheet_name: Name of worksheet
+        start_row: First row number to delete (1-based)
+        count: Number of rows to delete (default 1)
+    """
     try:
         full_path = get_excel_path(filepath)
         result = delete_rows(full_path, sheet_name, start_row, count)
@@ -802,7 +980,15 @@ def delete_sheet_columns(
     start_col: int,
     count: int = 1
 ) -> str:
-    """Delete one or more columns starting at the specified column."""
+    """
+    Delete one or more columns starting at the specified column.
+
+    Args:
+        filepath: Path to Excel file (absolute path in stdio mode; relative to EXCEL_FILES_PATH in SSE/streamable HTTP mode)
+        sheet_name: Name of worksheet
+        start_col: First column number to delete (1-based, A = 1)
+        count: Number of columns to delete (default 1)
+    """
     try:
         full_path = get_excel_path(filepath)
         result = delete_cols(full_path, sheet_name, start_col, count)
