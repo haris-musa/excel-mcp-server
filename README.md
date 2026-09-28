@@ -23,33 +23,34 @@ Works with `.xlsx`, `.xlsm` (macros are preserved), `.xltx` and `.xltm` files.
 
 ## Quick start
 
-You need [uv](https://docs.astral.sh/uv/getting-started/installation/). The server runs
-with `uvx excel-mcp-server stdio`.
+You need [uv](https://docs.astral.sh/uv/getting-started/installation/). Every client runs the
+server with `uvx excel-mcp-server stdio`; replace `/path/to/workbooks` with the folder the
+server may use.
 
-**Claude Desktop**: download `excel-mcp-server-<version>.mcpb` from the
+**Claude Desktop (Chat)**: download `excel-mcp-server-<version>.mcpb` from the
 [latest release](https://github.com/haris-musa/excel-mcp-server/releases/latest) and open it.
 Claude asks which folder the server may use.
 
-**Claude Code**:
+**Claude Code** (the CLI, and the Code tab in Claude Desktop):
 
 ```bash
-claude mcp add excel -- uvx excel-mcp-server stdio --allow-dir ~/Documents/Excel
+claude mcp add excel --scope user -- uvx excel-mcp-server stdio --allow-dir /path/to/workbooks
 ```
 
-**Cursor, Windsurf, Claude Desktop (manual) and most other clients**:
+**Cursor** (`~/.cursor/mcp.json`), and most clients that use an `mcpServers` config:
 
 ```json
 {
   "mcpServers": {
     "excel": {
       "command": "uvx",
-      "args": ["excel-mcp-server", "stdio", "--allow-dir", "/path/to/your/workbooks"]
+      "args": ["excel-mcp-server", "stdio", "--allow-dir", "/path/to/workbooks"]
     }
   }
 }
 ```
 
-**VS Code** (`.vscode/mcp.json`):
+**VS Code with GitHub Copilot** (`.vscode/mcp.json`, note the `servers` key):
 
 ```json
 {
@@ -63,8 +64,34 @@ claude mcp add excel -- uvx excel-mcp-server stdio --allow-dir ~/Documents/Excel
 }
 ```
 
-If your client cannot find `uvx` (common with desktop apps on macOS), use its full path,
-which `which uvx` prints.
+<details>
+<summary>OpenAI Codex, Gemini CLI, Devin Desktop, and Claude Desktop without the bundle</summary>
+
+**OpenAI Codex** (CLI, IDE extension and app):
+
+```bash
+codex mcp add excel -- uvx excel-mcp-server stdio --allow-dir /path/to/workbooks
+```
+
+**Gemini CLI**:
+
+```bash
+gemini mcp add -s user excel uvx excel-mcp-server stdio --allow-dir /path/to/workbooks
+```
+
+**Devin Desktop** (formerly Windsurf):
+
+```bash
+devin mcp add -s user excel -- uvx excel-mcp-server stdio --allow-dir /path/to/workbooks
+```
+
+**Claude Desktop, manual setup**: open Settings, Developer, Edit Config, add the `mcpServers`
+JSON above to `claude_desktop_config.json`, and restart Claude.
+
+</details>
+
+Desktop apps often cannot find `uvx`, because they do not see your shell's `PATH` (common
+on macOS). Use its full path instead, which `which uvx` prints.
 
 ## Choosing which files it can use
 
