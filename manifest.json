@@ -1,10 +1,13 @@
 {
-  "manifest_version": "0.3",
+  "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/mcpb/main/schemas/mcpb-manifest-v0.4.schema.json",
+  "manifest_version": "0.4",
   "name": "excel-mcp-server",
-  "version": "0.1.8",
-  "description": "A Model Context Protocol server for Excel file manipulation",
+  "display_name": "Excel MCP Server",
+  "version": "1.0.0",
+  "description": "Create, read and edit Excel workbooks without Microsoft Excel",
+  "long_description": "Work with .xlsx and .xlsm files: read and write cells, formulas and dates, format ranges, add tables, charts, conditional formats and data validation. Access is limited to the folder you choose, and formulas that reach the network or other programs are blocked.",
   "author": {
-    "name": "haris",
+    "name": "Haris Musa",
     "url": "https://github.com/haris-musa"
   },
   "repository": {
@@ -12,42 +15,154 @@
     "url": "https://github.com/haris-musa/excel-mcp-server"
   },
   "homepage": "https://github.com/haris-musa/excel-mcp-server",
-  "documentation": "https://github.com/haris-musa/excel-mcp-server#readme",
+  "documentation": "https://github.com/haris-musa/excel-mcp-server/blob/main/TOOLS.md",
   "support": "https://github.com/haris-musa/excel-mcp-server/issues",
   "icon": "icon.png",
+  "license": "MIT",
+  "keywords": [
+    "excel",
+    "xlsx",
+    "spreadsheet",
+    "openpyxl"
+  ],
   "server": {
-    "type": "python",
+    "type": "uv",
     "entry_point": "src/excel_mcp/__main__.py",
     "mcp_config": {
-      "command": "uvx",
-      "args": ["excel-mcp-server", "stdio"]
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "${__dirname}",
+        "--frozen",
+        "--no-dev",
+        "excel-mcp-server",
+        "stdio",
+        "--allow-dir",
+        "${user_config.workbook_directory}"
+      ]
+    }
+  },
+  "user_config": {
+    "workbook_directory": {
+      "type": "directory",
+      "title": "Workbook folder",
+      "description": "The folder the server may read and write Excel files in, including its subfolders.",
+      "required": true,
+      "default": "${DOCUMENTS}"
     }
   },
   "tools": [
-    {"name": "create_workbook", "description": "Create a new Excel workbook"},
-    {"name": "create_worksheet", "description": "Create a new worksheet in a workbook"},
-    {"name": "get_workbook_metadata", "description": "Get workbook metadata and structure"},
-    {"name": "write_data_to_excel", "description": "Write data to Excel cells"},
-    {"name": "read_data_from_excel", "description": "Read data from Excel range"},
-    {"name": "format_range", "description": "Apply formatting to cell range"},
-    {"name": "merge_cells", "description": "Merge cells in a range"},
-    {"name": "unmerge_cells", "description": "Unmerge previously merged cells"},
-    {"name": "get_merged_cells", "description": "Get list of merged cell ranges"},
-    {"name": "apply_formula", "description": "Apply Excel formula to cell"},
-    {"name": "validate_formula_syntax", "description": "Validate Excel formula syntax"},
-    {"name": "create_chart", "description": "Create chart (line, bar, pie, scatter, etc.)"},
-    {"name": "create_pivot_table", "description": "Create pivot table from data"},
-    {"name": "create_table", "description": "Create Excel table with styling"},
-    {"name": "copy_worksheet", "description": "Copy worksheet within workbook"},
-    {"name": "delete_worksheet", "description": "Delete worksheet from workbook"},
-    {"name": "rename_worksheet", "description": "Rename a worksheet"},
-    {"name": "copy_range", "description": "Copy cell range to another location"},
-    {"name": "delete_range", "description": "Delete cell range contents"},
-    {"name": "validate_excel_range", "description": "Validate Excel range format"},
-    {"name": "get_data_validation_info", "description": "Get data validation rules for cell"},
-    {"name": "insert_rows", "description": "Insert rows into worksheet"},
-    {"name": "insert_columns", "description": "Insert columns into worksheet"},
-    {"name": "delete_sheet_rows", "description": "Delete rows from worksheet"},
-    {"name": "delete_sheet_columns", "description": "Delete columns from worksheet"}
-  ]
+    {
+      "name": "create_workbook",
+      "description": "Create a new, empty Excel workbook."
+    },
+    {
+      "name": "describe_workbook",
+      "description": "List a workbook's sheets with their used ranges, plus its defined names."
+    },
+    {
+      "name": "list_workbooks",
+      "description": "List Excel files in a directory."
+    },
+    {
+      "name": "export_workbook",
+      "description": "Return the workbook file itself as an embedded base64 resource."
+    },
+    {
+      "name": "import_workbook",
+      "description": "Save an uploaded workbook file on the server, e.g. to edit it remotely."
+    },
+    {
+      "name": "describe_sheet",
+      "description": "Describe a sheet's structure: used range, frozen panes, merged ranges, tables, charts, data validation, conditional formats and custom column widths."
+    },
+    {
+      "name": "create_sheet",
+      "description": "Add an empty worksheet."
+    },
+    {
+      "name": "rename_sheet",
+      "description": "Rename a worksheet. Formulas that refer to the old name are not updated."
+    },
+    {
+      "name": "copy_sheet",
+      "description": "Duplicate a worksheet (values, styles and dimensions) within the workbook."
+    },
+    {
+      "name": "delete_sheet",
+      "description": "Delete a worksheet and everything on it."
+    },
+    {
+      "name": "insert_rows_or_columns",
+      "description": "Insert empty rows or columns before position `at`, shifting the rest down or right."
+    },
+    {
+      "name": "delete_rows_or_columns",
+      "description": "Delete rows or columns starting at position `at`, shifting the rest up or left."
+    },
+    {
+      "name": "read_range",
+      "description": "Read cell values as rows. Dates come back as ISO 8601 strings."
+    },
+    {
+      "name": "write_range",
+      "description": "Write values into cells, overwriting what is there."
+    },
+    {
+      "name": "clear_range",
+      "description": "Clear the values and/or formatting of a range without shifting other cells."
+    },
+    {
+      "name": "copy_range",
+      "description": "Copy values and formatting to another place, overwriting the destination."
+    },
+    {
+      "name": "find_cells",
+      "description": "Find cells whose value contains (or equals) the query."
+    },
+    {
+      "name": "format_range",
+      "description": "Change fonts, fill, borders, alignment or number format of a range."
+    },
+    {
+      "name": "merge_cells",
+      "description": "Merge a range into one cell, or split a merged range again."
+    },
+    {
+      "name": "set_sheet_layout",
+      "description": "Set column widths, row heights, frozen panes, the auto filter and the tab color."
+    },
+    {
+      "name": "add_conditional_format",
+      "description": "Add a conditional format rule to a range."
+    },
+    {
+      "name": "add_data_validation",
+      "description": "Restrict what can be entered in a range, e.g. a dropdown list."
+    },
+    {
+      "name": "create_table",
+      "description": "Turn a range with a header row of unique text labels into an Excel table."
+    },
+    {
+      "name": "create_chart",
+      "description": "Add a chart that plots a block of data."
+    },
+    {
+      "name": "create_summary_table",
+      "description": "Group rows and aggregate columns, like a pivot table, writing the result as cells."
+    }
+  ],
+  "tools_generated": false,
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "runtimes": {
+      "python": ">=3.11"
+    }
+  }
 }

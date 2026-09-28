@@ -13,6 +13,16 @@
             padding: 0;
             line-height: 1.6;
         }
+        a {
+            color: #7cb8ff;
+        }
+        pre {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+        }
         .container {
             max-width: 800px;
             margin: 0 auto;
@@ -124,39 +134,38 @@
         <main>
             <section class="hero">
                 <h1>Excel MCP Server</h1>
-                <p>A Model Context Protocol (MCP) server that lets you manipulate Excel files without needing Microsoft Excel installed. Create, read, and modify Excel workbooks with your AI agent.</p>
+                <p>A Model Context Protocol (MCP) server that lets AI assistants create, read and edit Excel workbooks, without Microsoft Excel installed.</p>
             </section>
 
             <section class="section">
                 <h2>Features</h2>
                 <ul>
-                    <li>📊 Create and modify Excel workbooks</li>
-                    <li>📝 Read and write data</li>
-                    <li>🎨 Apply formatting and styles</li>
-                    <li>📈 Create charts and visualizations</li>
-                    <li>📊 Generate pivot tables</li>
-                    <li>🔄 Manage worksheets and ranges</li>
-                    <li>🔌 Triple transport support: stdio, streamable HTTP, and SSE</li>
+                    <li>📝 Read and write cells, formulas and dates, with paging and search</li>
+                    <li>🎨 Fonts, fills, borders, number formats, column widths and frozen panes</li>
+                    <li>📈 Tables, charts and summary tables</li>
+                    <li>✅ Conditional formatting and data validation</li>
+                    <li>🔒 Folder confinement, formula safety checks and a read-only mode</li>
+                    <li>🔌 stdio for local clients and Streamable HTTP for remote use</li>
                 </ul>
             </section>
 
             <section class="section">
-                <h2>Available Tools</h2>
-                <p>A comprehensive set of tools to interact with your Excel files.</p>
-                <ul>
-                    <li><strong>Workbook Operations:</strong> Create workbooks and worksheets, and get metadata.</li>
-                    <li><strong>Data Operations:</strong> Read and write data to worksheets.</li>
-                    <li><strong>Formatting Operations:</strong> Apply rich formatting to cell ranges.</li>
-                    <li><strong>Formula Operations:</strong> Apply and validate Excel formulas.</li>
-                    <li><strong>Chart Operations:</strong> Create various types of charts.</li>
-                    <li><strong>Pivot Table Operations:</strong> Generate pivot tables from your data.</li>
-                    <li><strong>Table Operations:</strong> Create native Excel tables.</li>
-                </ul>
+                <h2>Get started</h2>
+                <p>Download the <a href="https://github.com/haris-musa/excel-mcp-server/releases/latest">Claude Desktop bundle</a>, or add this to your MCP client (requires <a href="https://docs.astral.sh/uv/">uv</a>):</p>
+                <pre><code>{
+  "mcpServers": {
+    "excel": {
+      "command": "uvx",
+      "args": ["excel-mcp-server", "stdio", "--allow-dir", "/path/to/workbooks"]
+    }
+  }
+}</code></pre>
+                <p>See the <a href="https://github.com/haris-musa/excel-mcp-server#readme">README</a> for other clients and remote setups, and <a href="https://github.com/haris-musa/excel-mcp-server/blob/main/TOOLS.md">TOOLS.md</a> for every tool.</p>
             </section>
         </main>
 
         <footer>
-            <p>&copy; 2025 excelmcpserver.com - An open source project by haris-musa.</p>
+            <p>&copy; 2025-2026 excelmcpserver.com - An open source project by haris-musa.</p>
         </footer>
     </div>
     <script>

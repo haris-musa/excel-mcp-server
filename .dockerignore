@@ -1,0 +1,12 @@
+.git
+.github
+.venv
+**/__pycache__
+.pytest_cache
+.ruff_cache
+dist
+docs
+tests
+scripts
+excel_files
+*.mcpb

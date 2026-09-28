@@ -2,5 +2,8 @@
 dist/
 excel_files/
 __pycache__/
-.notes/
+.pytest_cache/
+.ruff_cache/
+*.mcpb
 *.log
+.DS_Store

@@ -1,34 +1,92 @@
-name: Publish to PyPI
+name: Publish
 
+# Runs when a GitHub release is published for a tag such as v1.0.0.
 on:
   release:
     types: [published]
 
+permissions: {}
+
 jobs:
-  build-n-publish:
-    name: Build and publish to PyPI
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          no-cache: true
+      - name: Check the tag matches the package version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: test "v$(uv version --short)" = "$TAG"
+      - run: uv build
+      - name: Smoke test the wheel
+        run: uv run --isolated --no-project --with dist/*.whl excel-mcp-server --version
+      - name: Build the MCP bundle
+        run: bunx @anthropic-ai/mcpb@2.1.2 pack . "dist/excel-mcp-server-$(uv version --short).mcpb"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist
+          path: dist/
+
+  pypi:
+    needs: build
     runs-on: ubuntu-latest
     environment:
       name: release
       url: https://pypi.org/project/excel-mcp-server
     permissions:
       id-token: write
-
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          python-version: "3.x"
+          name: dist
+          path: dist/
+      - run: rm dist/*.mcpb
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
 
-      - name: Install hatch dependencies
+  release-assets:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist
+          path: dist/
+      - name: Attach the bundle and packages to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY"
+
+  mcp-registry:
+    needs: pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install mcp-publisher
+        run: >-
+          curl -fsSL
+          https://github.com/modelcontextprotocol/registry/releases/download/v1.8.1/mcp-publisher_linux_amd64.tar.gz
+          | tar xz mcp-publisher
+      - name: Publish to the MCP Registry
+        # PyPI can take a minute to show a new version, and the registry checks it.
         run: |
-          python -m pip install --upgrade pip
-          pip install hatch
-
-      - name: Build package
-        run: hatch build
-
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+          ./mcp-publisher login github-oidc
+          for attempt in 1 2 3 4 5; do
+            ./mcp-publisher publish && exit 0
+            sleep 30
+          done
+          exit 1
