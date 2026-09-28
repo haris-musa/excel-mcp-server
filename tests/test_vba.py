@@ -29,7 +29,7 @@ async def test_read_vba_lists_modules_with_code(call: ToolCall, macro_workbook: 
     ]
     module1 = project["modules"][0]
     assert module1["code"].startswith("Sub ")
-    assert "Attribute VB_" not in module1["code"]
+    assert "Attribute " not in module1["code"]
     assert module1["line_count"] == len(module1["code"].splitlines())
     assert project["truncated"] is False
 

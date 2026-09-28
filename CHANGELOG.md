@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- `read_vba` hides procedure attributes such as `Attribute Macro1.VB_ProcData...`, as the
+  VBA editor does.
+
 ## [1.1.0] - 2026-09-28
 
 ### Added
