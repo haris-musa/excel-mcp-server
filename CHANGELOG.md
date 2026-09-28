@@ -16,7 +16,7 @@ All notable changes to this project are documented here. The format follows
 ### Changed
 
 - The README setup instructions cover current clients: Claude Desktop, Claude Code,
-  Cursor, VS Code, OpenAI Codex, Gemini CLI and Devin Desktop (formerly Windsurf).
+  Cursor, VS Code, OpenAI Codex, Gemini CLI and Devin Desktop.
 
 ## [1.1.0] - 2026-09-28
 
