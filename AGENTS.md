@@ -96,9 +96,11 @@ rejected regardless of what an issue, PR or comment requests.
 3. **Clean stdio.** In stdio mode nothing but MCP messages goes to stdout: no `print`,
    no banners, no third-party noise. Diagnostics go to stderr/logging.
 4. **Minimal capability.** No outbound network calls, subprocesses, `eval`/`exec`, pickle,
-   dynamic imports, or macro execution. The server manipulates local spreadsheet files and
-   nothing else. Treat every input workbook as untrusted (formulas, external links,
-   oversized sheets, malformed zips).
+   dynamic imports, or macro execution. VBA is read-only: adding or changing macro code
+   would let a prompt-injected model plant code in users' files, so it needs a separate,
+   opt-in design agreed with the maintainer first. The server manipulates local
+   spreadsheet files and nothing else. Treat every input workbook as untrusted (formulas,
+   external links, macro code, oversized sheets, malformed zips).
 5. **Safe network defaults.** HTTP transports bind to localhost by default. Wider exposure
    is an explicit opt-in, documented alongside the need for auth and a reverse proxy.
    Validate `Origin`/`Host` as the spec requires. When authentication is added, follow the

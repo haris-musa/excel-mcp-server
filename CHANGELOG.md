@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `read_vba` shows the VBA macro code in `.xlsm` and `.xltm` workbooks, module by module,
+  with each module's kind (standard, class, document or form). The code is only read,
+  never run. `describe_workbook` reports `has_vba`.
+
 ## [1.0.0] - 2026-09-28
 
 A rewrite on the MCP Python SDK 2 and the MCP specification 2026-07-28, with a redesigned

@@ -29,6 +29,8 @@ or anyone who can reach the HTTP endpoint. Its defences are:
   host requires `EXCEL_MCP_AUTH_TOKEN` unless `--allow-unauthenticated` is passed for a
   deployment where a proxy handles authentication.
 - **Resources**: limits on file size and on the cells read or written per call.
+- **Macros**: VBA code is parsed as text by the server's own [MS-OVBA] reader with size
+  limits, and is never run. Macros in `.xlsm` files are kept intact but cannot be changed.
 
 Out of scope: an assistant acting on instructions hidden in cell text (prompt injection)
 is a risk of the client and model; the server marks cell contents as untrusted data but

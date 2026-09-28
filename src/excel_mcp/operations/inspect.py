@@ -22,6 +22,7 @@ class SheetSummary(BaseModel):
 class WorkbookInfo(BaseModel):
     path: str
     size_bytes: int
+    has_vba: bool
     sheets: list[SheetSummary]
     defined_names: list[str]
 
@@ -73,10 +74,13 @@ def summarize_sheet(sheet: Worksheet) -> SheetSummary:
     )
 
 
-def describe_workbook(workbook: Workbook, display_path: str, size_bytes: int) -> WorkbookInfo:
+def describe_workbook(
+    workbook: Workbook, display_path: str, size_bytes: int, has_vba: bool
+) -> WorkbookInfo:
     return WorkbookInfo(
         path=display_path,
         size_bytes=size_bytes,
+        has_vba=has_vba,
         sheets=[summarize_sheet(sheet) for sheet in worksheets(workbook)],
         defined_names=sorted(workbook.defined_names),
     )

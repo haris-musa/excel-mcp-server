@@ -6,7 +6,7 @@ from urllib.parse import quote
 from mcp.types import BlobResourceContents, CallToolResult, EmbeddedResource, TextContent
 from pydantic import Field
 
-from excel_mcp.operations import files, inspect
+from excel_mcp.operations import files, inspect, vba
 from excel_mcp.operations.inspect import WorkbookFile, WorkbookInfo
 from excel_mcp.operations.sheets import validate_sheet_name
 from excel_mcp.server.params import WorkbookPath
@@ -40,11 +40,15 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         """List a workbook's sheets with their used ranges, plus its defined names.
 
         Start here to learn a workbook's structure before reading or editing it.
+        `has_vba` tells whether the workbook contains macros, which read_vba can show.
         """
         resolved = workspace.resolve_existing(path)
         with workspace.read(path) as workbook:
             return inspect.describe_workbook(
-                workbook, workspace.display(resolved), resolved.stat().st_size
+                workbook,
+                workspace.display(resolved),
+                resolved.stat().st_size,
+                vba.has_vba(resolved),
             )
 
     @tools.reader("List workbooks")

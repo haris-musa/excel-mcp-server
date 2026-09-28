@@ -15,6 +15,7 @@ create, read and edit Excel workbooks. It needs no Microsoft Excel installation.
 - **Format** fonts, fills, borders, number formats, column widths and frozen panes
 - **Structure** sheets, rows and columns, merged cells, tables, charts and summary tables
 - **Rules**: conditional formatting and data validation (dropdowns, number limits)
+- **Macros**: read the VBA code in `.xlsm` files, module by module (read-only, never run)
 - **Safe by design**: optional folder confinement, a formula safety check, read-only mode,
   localhost-only HTTP by default, and atomic saves that never leave a half-written file
 
@@ -123,6 +124,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
 | Cells | `read_range`, `write_range`, `clear_range`, `copy_range`, `find_cells` |
 | Formatting | `format_range`, `merge_cells`, `set_sheet_layout`, `add_conditional_format`, `add_data_validation` |
 | Objects | `create_table`, `create_chart`, `create_summary_table` |
+| Macros | `read_vba` |
 
 Every parameter is documented in [TOOLS.md](TOOLS.md).
 
