@@ -46,7 +46,7 @@ def read_vba(path: Path, module: str | None, max_chars: int) -> VbaProject:
 def editor_text(source: str) -> str:
     """The code as the VBA editor shows it: without hidden attributes, with \\n line ends."""
     lines = source.replace("\r\n", "\n").split("\n")
-    return "\n".join(line for line in lines if not line.startswith("Attribute VB_")).strip("\n")
+    return "\n".join(line for line in lines if not line.startswith("Attribute ")).strip("\n")
 
 
 def _project_bytes(path: Path) -> bytes:
