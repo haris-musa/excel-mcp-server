@@ -3,7 +3,7 @@
   "manifest_version": "0.4",
   "name": "excel-mcp-server",
   "display_name": "Excel MCP Server",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Create, read and edit Excel workbooks without Microsoft Excel",
   "long_description": "Work with .xlsx and .xlsm files: read and write cells, formulas and dates, format ranges, add tables, charts, conditional formats and data validation, and inspect VBA macro code. Access is limited to the folder you choose, and formulas that reach the network or other programs are blocked.",
   "author": {
