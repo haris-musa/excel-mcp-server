@@ -5,7 +5,7 @@
   "display_name": "Excel MCP Server",
   "version": "1.0.0",
   "description": "Create, read and edit Excel workbooks without Microsoft Excel",
-  "long_description": "Work with .xlsx and .xlsm files: read and write cells, formulas and dates, format ranges, add tables, charts, conditional formats and data validation. Access is limited to the folder you choose, and formulas that reach the network or other programs are blocked.",
+  "long_description": "Work with .xlsx and .xlsm files: read and write cells, formulas and dates, format ranges, add tables, charts, conditional formats and data validation, and inspect VBA macro code. Access is limited to the folder you choose, and formulas that reach the network or other programs are blocked.",
   "author": {
     "name": "Haris Musa",
     "url": "https://github.com/haris-musa"
@@ -152,6 +152,10 @@
     {
       "name": "create_summary_table",
       "description": "Group rows and aggregate columns, like a pivot table, writing the result as cells."
+    },
+    {
+      "name": "read_vba",
+      "description": "Show the VBA macro code in an .xlsm or .xltm workbook, module by module."
     }
   ],
   "tools_generated": false,

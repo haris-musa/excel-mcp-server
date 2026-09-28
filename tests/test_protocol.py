@@ -31,7 +31,7 @@ def _untyped_schemas(schema: Any, where: str = "") -> list[str]:
 
 async def test_every_tool_is_documented_and_typed(client: Client) -> None:
     tools = (await client.list_tools()).tools
-    assert len(tools) == 25
+    assert len(tools) == 26
     for tool in tools:
         assert tool.title, tool.name
         assert tool.description and not tool.description.startswith(" "), tool.name
@@ -64,6 +64,7 @@ async def test_read_only_mode_registers_only_read_tools(files: Path) -> None:
         "describe_sheet",
         "read_range",
         "find_cells",
+        "read_vba",
     }
     assert all(tool.annotations and tool.annotations.read_only_hint for tool in tools)
 

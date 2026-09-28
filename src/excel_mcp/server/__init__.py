@@ -10,12 +10,13 @@ from excel_mcp.server import (
     format_tools,
     object_tools,
     sheet_tools,
+    vba_tools,
     workbook_tools,
 )
 from excel_mcp.server.registry import ToolRegistry
 from excel_mcp.workspace import Workspace
 
-TOOL_MODULES = (workbook_tools, sheet_tools, data_tools, format_tools, object_tools)
+TOOL_MODULES = (workbook_tools, sheet_tools, data_tools, format_tools, object_tools, vba_tools)
 
 
 def create_server(settings: Settings) -> MCPServer:
