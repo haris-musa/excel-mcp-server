@@ -79,7 +79,7 @@ codex mcp add excel -- uvx excel-mcp-server stdio --allow-dir /path/to/workbooks
 gemini mcp add -s user excel uvx excel-mcp-server stdio --allow-dir /path/to/workbooks
 ```
 
-**Devin Desktop** (formerly Windsurf):
+**Devin Desktop**:
 
 ```bash
 devin mcp add -s user excel -- uvx excel-mcp-server stdio --allow-dir /path/to/workbooks
