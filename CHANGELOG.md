@@ -6,11 +6,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-28
+
 ### Added
 
 - `read_vba` shows the VBA macro code in `.xlsm` and `.xltm` workbooks, module by module,
   with each module's kind (standard, class, document or form). The code is only read,
   never run. `describe_workbook` reports `has_vba`.
+
+### Changed
+
+- The license names the author in full.
 
 ## [1.0.0] - 2026-09-28
 
@@ -119,6 +125,7 @@ Ideas and fixes from these pull requests were reimplemented in this release: #78
 
 See the [GitHub releases](https://github.com/haris-musa/excel-mcp-server/releases).
 
-[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/haris-musa/excel-mcp-server/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/haris-musa/excel-mcp-server/compare/v0.1.8...v1.0.0
 [0.1.8]: https://github.com/haris-musa/excel-mcp-server/releases/tag/v0.1.8
