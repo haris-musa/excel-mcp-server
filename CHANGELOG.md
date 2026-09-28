@@ -13,6 +13,11 @@ All notable changes to this project are documented here. The format follows
 - `read_vba` hides procedure attributes such as `Attribute Macro1.VB_ProcData...`, as the
   VBA editor does.
 
+### Changed
+
+- The README setup instructions cover current clients: Claude Desktop, Claude Code,
+  Cursor, VS Code, OpenAI Codex, Gemini CLI and Devin Desktop (formerly Windsurf).
+
 ## [1.1.0] - 2026-09-28
 
 ### Added
