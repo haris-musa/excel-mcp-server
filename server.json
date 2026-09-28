@@ -1,0 +1,36 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.haris-musa/excel-mcp-server",
+  "title": "Excel MCP Server",
+  "description": "Create, read and edit Excel workbooks without Microsoft Excel.",
+  "repository": {
+    "url": "https://github.com/haris-musa/excel-mcp-server",
+    "source": "github"
+  },
+  "version": "1.0.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "excel-mcp-server",
+      "version": "1.0.0",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "stdio"
+        },
+        {
+          "type": "named",
+          "name": "--allow-dir",
+          "description": "Folder the server may read and write workbooks in.",
+          "format": "filepath",
+          "isRequired": false
+        }
+      ]
+    }
+  ]
+}

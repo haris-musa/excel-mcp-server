@@ -1,115 +1,171 @@
+<!-- mcp-name: io.github.haris-musa/excel-mcp-server -->
 <p align="center">
-  <img src="https://raw.githubusercontent.com/haris-musa/excel-mcp-server/main/assets/logo.png" alt="Excel MCP Server Logo" width="300"/>
+  <img src="https://raw.githubusercontent.com/haris-musa/excel-mcp-server/main/assets/logo.png" alt="Excel MCP Server" width="300"/>
 </p>
 
 [![PyPI version](https://img.shields.io/pypi/v/excel-mcp-server.svg)](https://pypi.org/project/excel-mcp-server/)
-[![Total Downloads](https://static.pepy.tech/badge/excel-mcp-server)](https://pepy.tech/project/excel-mcp-server)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![smithery badge](https://smithery.ai/badge/@haris-musa/excel-mcp-server)](https://smithery.ai/server/@haris-musa/excel-mcp-server)
-[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=excel-mcp-server&config=eyJjb21tYW5kIjoidXZ4IGV4Y2VsLW1jcC1zZXJ2ZXIgc3RkaW8ifQ%3D%3D)
+[![Downloads](https://static.pepy.tech/badge/excel-mcp-server)](https://pepy.tech/project/excel-mcp-server)
+[![CI](https://github.com/haris-musa/excel-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/haris-musa/excel-mcp-server/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A Model Context Protocol (MCP) server that lets you manipulate Excel files without needing Microsoft Excel installed. Create, read, and modify Excel workbooks with your AI agent.
+A [Model Context Protocol](https://modelcontextprotocol.io) server that lets AI assistants
+create, read and edit Excel workbooks. It needs no Microsoft Excel installation.
 
-## Features
+- **Read and write** cells, formulas and dates, with paging for large sheets and search
+- **Format** fonts, fills, borders, number formats, column widths and frozen panes
+- **Structure** sheets, rows and columns, merged cells, tables, charts and summary tables
+- **Rules**: conditional formatting and data validation (dropdowns, number limits)
+- **Safe by design**: optional folder confinement, a formula safety check, read-only mode,
+  localhost-only HTTP by default, and atomic saves that never leave a half-written file
 
-- 📊 **Excel Operations**: Create, read, update workbooks and worksheets
-- 📈 **Data Manipulation**: Formulas, formatting, charts, pivot tables, and Excel tables
-- 🔍 **Data Validation**: Built-in validation for ranges, formulas, and data integrity
-- 🎨 **Formatting**: Font styling, colors, borders, alignment, and conditional formatting
-- 📋 **Table Operations**: Create and manage Excel tables with custom styling
-- 📊 **Chart Creation**: Generate various chart types (line, bar, pie, scatter, etc.)
-- 🔄 **Pivot Tables**: Create dynamic pivot tables for data analysis
-- 🔧 **Sheet Management**: Copy, rename, delete worksheets with ease
-- 🔌 **Triple transport support**: stdio, SSE (deprecated), and streamable HTTP
-- 🌐 **Remote & Local**: Works both locally and as a remote service
+Works with `.xlsx`, `.xlsm` (macros are preserved), `.xltx` and `.xltm` files.
 
-## Usage
+## Quick start
 
-The server supports three transport methods:
+You need [uv](https://docs.astral.sh/uv/getting-started/installation/). The server runs
+with `uvx excel-mcp-server stdio`.
 
-### 1. Stdio Transport (for local use)
+**Claude Desktop**: download `excel-mcp-server-<version>.mcpb` from the
+[latest release](https://github.com/haris-musa/excel-mcp-server/releases/latest) and open it.
+Claude asks which folder the server may use.
+
+**Claude Code**:
 
 ```bash
-uvx excel-mcp-server stdio
+claude mcp add excel -- uvx excel-mcp-server stdio --allow-dir ~/Documents/Excel
 ```
+
+**Cursor, Windsurf, Claude Desktop (manual) and most other clients**:
 
 ```json
 {
-   "mcpServers": {
-      "excel": {
-         "command": "uvx",
-         "args": ["excel-mcp-server", "stdio"]
-      }
-   }
+  "mcpServers": {
+    "excel": {
+      "command": "uvx",
+      "args": ["excel-mcp-server", "stdio", "--allow-dir", "/path/to/your/workbooks"]
+    }
+  }
 }
 ```
 
-### 2. SSE Transport (Server-Sent Events - Deprecated)
+**VS Code** (`.vscode/mcp.json`):
 
-```bash
-uvx excel-mcp-server sse
-```
-
-**SSE transport connection**:
 ```json
 {
-   "mcpServers": {
-      "excel": {
-         "url": "http://localhost:8000/sse",
-      }
-   }
+  "servers": {
+    "excel": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["excel-mcp-server", "stdio", "--allow-dir", "${workspaceFolder}"]
+    }
+  }
 }
 ```
 
-### 3. Streamable HTTP Transport (Recommended for remote connections)
+If your client cannot find `uvx` (common with desktop apps on macOS), use its full path,
+which `which uvx` prints.
+
+## Choosing which files it can use
+
+With `--allow-dir DIR`, the server only opens workbooks inside `DIR` (subfolders included)
+and relative paths such as `reports/q1.xlsx` start there. Repeat the flag to allow several
+folders, or set `EXCEL_FILES_PATH` (separate folders with `:` on macOS/Linux and `;` on
+Windows).
+
+Without `--allow-dir`, any absolute path to an Excel file works. In every mode the server
+only touches Excel files and never silently overwrites an existing workbook.
+
+## Remote use (Streamable HTTP)
 
 ```bash
-uvx excel-mcp-server streamable-http
+uvx excel-mcp-server streamable-http --allow-dir /srv/workbooks
 ```
 
-**Streamable HTTP transport connection**:
-```json
-{
-   "mcpServers": {
-      "excel": {
-         "url": "http://localhost:8000/mcp",
-      }
-   }
-}
+Clients connect to `http://127.0.0.1:8017/mcp`. Workbooks live in the `--allow-dir` folder
+(default `./excel_files`), and `export_workbook` / `import_workbook` move files between the
+server and the client.
+
+The server listens on localhost only. To accept other machines, set a token and a host:
+
+```bash
+EXCEL_MCP_AUTH_TOKEN=change-me uvx excel-mcp-server streamable-http --host 0.0.0.0
 ```
 
-## Environment Variables & File Path Handling
+Clients then send `Authorization: Bearer change-me`. Put a TLS-terminating reverse proxy in
+front of it for use across networks.
 
-### SSE and Streamable HTTP Transports
+### Docker
 
-When running the server with the **SSE or Streamable HTTP protocols**, you **must set the `EXCEL_FILES_PATH` environment variable on the server side**. This variable tells the server where to read and write Excel files.
-- If not set, it defaults to `./excel_files`.
-- With these transports, tool `filepath` values must be **relative** to that directory (e.g. `reports/q1.xlsx`); absolute paths and directory traversal are rejected.
+```bash
+docker build -t excel-mcp-server .
+docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change-me excel-mcp-server
+```
 
-You can also set the `FASTMCP_PORT` environment variable to control the port the server listens on (default is `8017` if not set).
-- Example (Windows PowerShell):
-  ```powershell
-  $env:EXCEL_FILES_PATH="E:\MyExcelFiles"
-  $env:FASTMCP_PORT="8007"
-  uvx excel-mcp-server streamable-http
-  ```
-- Example (Linux/macOS):
-  ```bash
-  EXCEL_FILES_PATH=/path/to/excel_files FASTMCP_PORT=8007 uvx excel-mcp-server streamable-http
-  ```
+## Configuration
 
-### Stdio Transport
+| Flag | Environment variable | Default | Meaning |
+| --- | --- | --- | --- |
+| `--allow-dir DIR` | `EXCEL_FILES_PATH` | none (stdio), `./excel_files` (HTTP) | Folders workbooks must be in |
+| `--read-only` | `EXCEL_MCP_READ_ONLY=1` | off | Only offer tools that do not change files |
+| `--max-file-mb N` | | `100` | Largest workbook the server opens |
+| `--log-level LEVEL` | | `WARNING` | Logging on stderr |
+| `--host HOST` | `EXCEL_MCP_HOST` | `127.0.0.1` | HTTP listen address |
+| `--port PORT` | `EXCEL_MCP_PORT` | `8017` | HTTP port |
+| | `EXCEL_MCP_AUTH_TOKEN` | none | Bearer token required on HTTP requests |
+| `--allow-unauthenticated` | | off | Allow a non-local `--host` without a token |
 
-When using the **stdio protocol**, the file path is provided with each tool call, so you do **not** need to set `EXCEL_FILES_PATH` on the server. The server will use the path sent by the client for each operation.
+## Tools
 
-## Available Tools
+| Area | Tools |
+| --- | --- |
+| Workbooks | `create_workbook`, `describe_workbook`, `list_workbooks`, `export_workbook`, `import_workbook` |
+| Sheets | `describe_sheet`, `create_sheet`, `rename_sheet`, `copy_sheet`, `delete_sheet`, `insert_rows_or_columns`, `delete_rows_or_columns` |
+| Cells | `read_range`, `write_range`, `clear_range`, `copy_range`, `find_cells` |
+| Formatting | `format_range`, `merge_cells`, `set_sheet_layout`, `add_conditional_format`, `add_data_validation` |
+| Objects | `create_table`, `create_chart`, `create_summary_table` |
 
-The server provides a comprehensive set of Excel manipulation tools. See [TOOLS.md](TOOLS.md) for complete documentation of all available tools.
+Every parameter is documented in [TOOLS.md](TOOLS.md).
 
-## Star History
+## Security
+
+- Formulas are parsed before they are written. Functions that reach the network, other
+  programs or host information (`WEBSERVICE`, `HYPERLINK`, `IMAGE`, `RTD`, `CALL`, `INFO`,
+  `INDIRECT`, Google Sheets `IMPORTXML` and others), DDE links and references to other
+  workbooks are rejected.
+- Paths are resolved, including symlinks, before they are checked against the allowed folders.
+- A single call processes at most 100,000 cells, and large reads are returned in pages.
+- Cell contents are data from files. The server tells the model not to follow instructions
+  found in them, but review what an assistant does with workbooks from untrusted sources.
+
+Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
+
+## Limitations
+
+- Formulas are stored, not calculated. `read_range` in `values` mode returns the results
+  Excel last saved, so formulas written by this server read as empty until the file is
+  opened and saved in Excel or LibreOffice.
+- Legacy `.xls` and `.csv` files are not supported.
+- `create_summary_table` writes a static summary; openpyxl cannot create real PivotTables.
+- Inserting or deleting rows and columns does not update formulas, charts or tables that
+  refer to the moved cells.
+- Workbook features openpyxl does not understand, such as shapes, slicers and some
+  embedded objects, may be lost when a workbook is edited. Pictures, charts, tables and
+  macros in `.xlsm` files are kept.
+
+## Upgrading from 0.x
+
+Version 1.0 renames and redesigns the tools, removes the SSE transport and requires
+Python 3.11 or newer. The [changelog](CHANGELOG.md#100---2026-09-28) maps every old tool to
+its replacement.
+
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Star history
 
 [![Star History Chart](https://api.star-history.com/svg?repos=haris-musa/excel-mcp-server&type=Date)](https://www.star-history.com/#haris-musa/excel-mcp-server&Date)
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT. See [LICENSE](LICENSE).

@@ -1,57 +1,21 @@
-# Exclude everything except manifest and icon (uvx pattern)
-# The uvx command downloads the package from PyPI at runtime
-
-# Python source files
-*.py
-*.pyc
-*.pyo
-__pycache__/
-
-# Package files
-*.toml
-*.lock
-*.txt
-*.cfg
-*.ini
-
-# Source directories
-src/
-tests/
-docs/
-
-# Assets (icon is copied to root)
-assets/
-
-# Documentation
-*.md
-!README.md
-
-# Build artifacts
-*.egg-info/
-dist/
-build/
-.eggs/
-
-# Environment
-.env*
-*.local
-.venv/
-venv/
-
-# IDE/Editor
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Git
+# The uv bundle ships the project source and lockfile; uv installs dependencies on first run.
 .git/
-.gitignore
-.gitattributes
-
-# CI/CD
 .github/
-
-# Misc
-.DS_Store
-Thumbs.db
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+dist/
+docs/
+tests/
+scripts/
+assets/
+excel_files/
+*.mcpb
+Dockerfile
+.dockerignore
+.python-version
+AGENTS.md
+CLAUDE.md
+server.json
