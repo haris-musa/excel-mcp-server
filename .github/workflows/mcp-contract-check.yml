@@ -1,0 +1,28 @@
+name: MCP Contract Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  contract-validation:
+    name: Validate MCP Tool Contracts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Run MCP Contract & Schema Fuzz Check
+        uses: gendjo-owlhead/mcp-contract-check@v1
+        with:
+          command: "uv run excel-mcp-server"
+          fuzz: "true"
