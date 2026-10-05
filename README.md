@@ -7,7 +7,6 @@
 [![Downloads](https://static.pepy.tech/badge/excel-mcp-server)](https://pepy.tech/project/excel-mcp-server)
 [![CI](https://github.com/haris-musa/excel-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/haris-musa/excel-mcp-server/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![MCP Contract Validated](https://img.shields.io/badge/MCP%20Contract-Validated-0080ff?logo=shield)](https://github.com/gendjo-owlhead/mcp-contract-check)
 
 A [Model Context Protocol](https://modelcontextprotocol.io) server that lets AI assistants
 create, read and edit Excel workbooks. It needs no Microsoft Excel installation.
