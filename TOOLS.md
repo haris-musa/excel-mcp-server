@@ -32,6 +32,7 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`add_data_validation`](#add_data_validation) | Restrict what can be entered in a range, e.g. a dropdown list. |
 | [`create_table`](#create_table) | Turn a range with a header row of unique text labels into an Excel table. |
 | [`create_chart`](#create_chart) | Add a chart that plots a block of data. |
+| [`delete_chart`](#delete_chart) | Remove a chart from a sheet. The data it plotted is left untouched. |
 | [`create_summary_table`](#create_summary_table) | Group rows and aggregate columns, like a pivot table, writing the result as cells. |
 | [`read_vba`](#read_vba) | Show the VBA macro code in an .xlsm or .xltm workbook, module by module. |
 
@@ -430,16 +431,18 @@ Turn a range with a header row of unique text labels into an Excel table.
 Add a chart that plots a block of data.
 
 'column' draws vertical bars, 'bar' horizontal bars. For 'scatter', the first column
-holds the x values.
+holds the x values. 'doughnut' is a pie with a hole; 'radar' draws one polygon per
+series. Options that do not apply to the chart type are rejected. List a sheet's
+charts with describe_sheet and remove one with delete_chart.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path` | string | yes | Path to an .xlsx, .xlsm, .xltx or .xltm file. Relative paths are resolved in the server's workbook directory when one is configured; otherwise use an absolute path. |
 | `sheet` | string | yes | Worksheet name, e.g. 'Sheet1'. |
 | `data_range` | string | yes | Data with a header row, labels in the first column and one series per further column, e.g. 'A1:C13'. |
-| `chart_type` | `column` \| `bar` \| `line` \| `area` \| `pie` \| `scatter` | yes | Kind of chart to draw. |
+| `chart_type` | `column` \| `bar` \| `line` \| `area` \| `pie` \| `scatter` \| `doughnut` \| `radar` | yes | Kind of chart to draw. |
 | `anchor_cell` | string | yes | Cell where the chart's top-left sits. |
-| `options` | object | no | Titles, size and legend. Default: none. |
+| `options` | object | no | Titles, size, legend, data labels, stacking, colors, markers, axis range and number format, and secondary-axis lines. Every field is optional; omitted fields keep the chart type's defaults. |
 | `data_sheet` | string | no | Sheet holding the data. Default: `sheet`. |
 
 `options` fields:
@@ -452,6 +455,31 @@ holds the x values.
 | `width_cm` | number | no | Chart width in cm. Default: `15`. |
 | `height_cm` | number | no | Chart height in cm. Default: `7.5`. |
 | `show_legend` | boolean | no | Show the series legend. Default: `True`. |
+| `legend_position` | `right` \| `left` \| `top` \| `bottom` | no | Where the legend sits. Default: right. Needs show_legend true. |
+| `data_labels` | boolean | no | Print each value on its bar, point or slice. Default: `False`. |
+| `grouping` | `standard` \| `stacked` \| `percent_stacked` | no | How series combine: 'standard' (side by side for column/bar), 'stacked' or 'percent_stacked' (each category sums to 100%). For column, bar, line and area charts only. Default: standard. |
+| `colors` | array of string | no | Hex colors such as ['#1F4E78', '#C00000'], one per series in the order of the data columns (fewer colors leave the remaining series on the default palette). For pie and doughnut charts, one color per slice instead. |
+| `markers` | boolean | no | Show (true) or hide (false) point markers. Line and scatter charts only. Default: the chart type's own style. |
+| `smooth` | boolean | no | Draw curved (true) or straight (false) lines. Line and scatter charts only. Default: the chart type's own style. |
+| `y_axis_min` | number | no | Lowest value on the (primary) vertical axis. Default: automatic. |
+| `y_axis_max` | number | no | Highest value on the (primary) vertical axis. Default: automatic. |
+| `y_axis_number_format` | string | no | Excel number format for the (primary) vertical axis labels, e.g. '0%' or '#,##0'. Default: taken from the data. |
+| `secondary_line_columns` | array of string | no | Header names of data columns to draw as lines on a secondary vertical axis on the right, combined with the other columns as columns or bars (a combo chart). For column and bar charts only; at least one column must stay as columns or bars. |
+
+## delete_chart
+
+**Delete chart** (modifies files, may overwrite data)
+
+Remove a chart from a sheet. The data it plotted is left untouched.
+
+Charts after the removed one move up by one index, so call describe_sheet again
+before deleting another.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Path to an .xlsx, .xlsm, .xltx or .xltm file. Relative paths are resolved in the server's workbook directory when one is configured; otherwise use an absolute path. |
+| `sheet` | string | yes | Worksheet name, e.g. 'Sheet1'. |
+| `index` | integer | yes | 1-based chart number, as listed under 'charts' by describe_sheet. |
 
 ## create_summary_table
 

@@ -7,6 +7,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
 
 from excel_mcp.operations.cells import used_range
+from excel_mcp.operations.chart_index import ChartInfo, list_charts
 from excel_mcp.paths import EXCEL_SUFFIXES
 from excel_mcp.workspace import worksheets
 
@@ -53,6 +54,7 @@ class SheetDetails(BaseModel):
     merged_ranges: list[str]
     tables: list[NamedRange]
     chart_count: int
+    charts: list[ChartInfo]
     data_validations: list[DataValidationInfo]
     conditional_formats: list[ConditionalFormatInfo]
     column_widths: dict[str, float]
@@ -87,6 +89,7 @@ def describe_workbook(
 
 
 def describe_sheet(sheet: Worksheet) -> SheetDetails:
+    charts = list_charts(sheet)
     return SheetDetails(
         name=sheet.title,
         used_range=str(used_range(sheet)),
@@ -94,7 +97,8 @@ def describe_sheet(sheet: Worksheet) -> SheetDetails:
         auto_filter=sheet.auto_filter.ref,
         merged_ranges=sorted(str(merged) for merged in sheet.merged_cells.ranges),
         tables=[NamedRange(name=name, range=ref) for name, ref in sheet.tables.items()],
-        chart_count=len(sheet._charts),  # pyright: ignore[reportAttributeAccessIssue]
+        chart_count=len(charts),
+        charts=charts,
         data_validations=[
             DataValidationInfo(
                 range=str(rule.sqref),

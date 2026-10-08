@@ -150,6 +150,10 @@
       "description": "Add a chart that plots a block of data."
     },
     {
+      "name": "delete_chart",
+      "description": "Remove a chart from a sheet. The data it plotted is left untouched."
+    },
+    {
       "name": "create_summary_table",
       "description": "Group rows and aggregate columns, like a pivot table, writing the result as cells."
     },

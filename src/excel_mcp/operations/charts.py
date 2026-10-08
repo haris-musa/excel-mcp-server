@@ -1,27 +1,38 @@
 """Charts built from a block of data on a sheet."""
 
-from typing import Literal
-
-from openpyxl.chart import AreaChart, BarChart, LineChart, PieChart, Reference, ScatterChart
+from openpyxl.chart import (
+    AreaChart,
+    BarChart,
+    DoughnutChart,
+    LineChart,
+    PieChart,
+    RadarChart,
+    Reference,
+    ScatterChart,
+)
+from openpyxl.chart.series import Series
 from openpyxl.chart.series_factory import SeriesFactory
 from openpyxl.worksheet.worksheet import Worksheet
-from pydantic import BaseModel, Field
 
 from excel_mcp.errors import InvalidArgumentError
+from excel_mcp.operations.charts_options import (
+    ChartOptions,
+    ChartType,
+    check_options,
+    parse_colors,
+)
+from excel_mcp.operations.charts_style import style_chart, style_series
 from excel_mcp.refs import CellRange, cell_name, parse_cell, parse_range
 
-ChartType = Literal["column", "bar", "line", "area", "pie", "scatter"]
-
-
-class ChartOptions(BaseModel):
-    """Chart titles, size and legend."""
-
-    title: str | None = Field(default=None, description="Chart title.")
-    x_axis_title: str | None = Field(default=None, description="Horizontal axis title.")
-    y_axis_title: str | None = Field(default=None, description="Vertical axis title.")
-    width_cm: float = Field(default=15, gt=0, le=100, description="Chart width in cm.")
-    height_cm: float = Field(default=7.5, gt=0, le=100, description="Chart height in cm.")
-    show_legend: bool = Field(default=True, description="Show the series legend.")
+_CATEGORICAL = {
+    "column": BarChart,
+    "bar": BarChart,
+    "line": LineChart,
+    "area": AreaChart,
+    "pie": PieChart,
+    "doughnut": DoughnutChart,
+    "radar": RadarChart,
+}
 
 
 def create_chart(
@@ -39,51 +50,67 @@ def create_chart(
             "e.g. 'A1:C10' with labels in A and series in B and C."
         )
     anchor = cell_name(*parse_cell(anchor_cell))
+    check_options(options, chart_type)
+    slots = area.rows - 1 if chart_type in ("pie", "doughnut") else area.cols - 1
+    colors = parse_colors(options, chart_type, slots)
 
     if chart_type == "scatter":
-        chart = _scatter(data_sheet, area)
+        chart, series = _scatter(data_sheet, area)
     else:
-        chart = _categorical(data_sheet, area, chart_type)
-    chart.title = options.title
-    chart.width = options.width_cm  # pyright: ignore[reportAttributeAccessIssue]
-    chart.height = options.height_cm  # pyright: ignore[reportAttributeAccessIssue]
-    if not options.show_legend:
-        chart.legend = None
-    if chart_type != "pie":
-        chart.x_axis.title = options.x_axis_title
-        chart.y_axis.title = options.y_axis_title
-        # openpyxl marks axes as deleted by default, which hides them in current Excel.
-        chart.x_axis.delete = False
-        chart.y_axis.delete = False
+        chart, series = _categorical(data_sheet, area, chart_type, options)
+    style_chart(chart, options, chart_type)
+    style_series(series, colors, chart_type, options)
 
     sheet.add_chart(chart, anchor)
     return str(area)
 
 
-def _categorical(sheet: Worksheet, area: CellRange, chart_type: ChartType):
-    chart = {
-        "column": BarChart,
-        "bar": BarChart,
-        "line": LineChart,
-        "area": AreaChart,
-        "pie": PieChart,
-    }[chart_type]()
+def _categorical(sheet: Worksheet, area: CellRange, chart_type: ChartType, options: ChartOptions):
+    chart = _CATEGORICAL[chart_type]()
     if chart_type == "bar":
         chart.type = "bar"
-    series = Reference(
-        sheet,
-        min_col=area.min_col + 1,
-        max_col=area.max_col,
-        min_row=area.min_row,
-        max_row=area.max_row,
-    )
+    secondary = _secondary_columns(sheet, area, options)
+    line = LineChart() if secondary else None
+    series: list[Series] = []
+    for col in range(area.min_col + 1, area.max_col + 1):
+        target = line if col in secondary and line else chart
+        data = Reference(sheet, min_col=col, min_row=area.min_row, max_row=area.max_row)
+        target.add_data(data, titles_from_data=True)
+        series.append(target.series[-1])
     labels = Reference(sheet, min_col=area.min_col, min_row=area.min_row + 1, max_row=area.max_row)
-    chart.add_data(series, titles_from_data=True)
     chart.set_categories(labels)
-    return chart
+    if line:
+        line.set_categories(labels)
+        line.y_axis.axId = 200
+        line.y_axis.crosses = "max"
+        line.y_axis.delete = False
+        chart += line
+    return chart, series
 
 
-def _scatter(sheet: Worksheet, area: CellRange) -> ScatterChart:
+def _secondary_columns(sheet: Worksheet, area: CellRange, options: ChartOptions) -> set[int]:
+    """Column numbers of the headers named in secondary_line_columns."""
+    names = options.secondary_line_columns or []
+    headers = {
+        str(sheet.cell(area.min_row, col).value): col
+        for col in range(area.min_col + 1, area.max_col + 1)
+    }
+    unknown = [name for name in names if name not in headers]
+    if unknown:
+        raise InvalidArgumentError(
+            f"secondary_line_columns {unknown} not found among the series headers: "
+            f"{', '.join(repr(header) for header in headers)}."
+        )
+    columns = {headers[name] for name in names}
+    if len(columns) == len(headers):
+        raise InvalidArgumentError(
+            "secondary_line_columns cannot include every series; leave at least one as "
+            "columns or bars."
+        )
+    return columns
+
+
+def _scatter(sheet: Worksheet, area: CellRange):
     chart = ScatterChart()
     x_values = Reference(
         sheet, min_col=area.min_col, min_row=area.min_row + 1, max_row=area.max_row
@@ -91,4 +118,4 @@ def _scatter(sheet: Worksheet, area: CellRange) -> ScatterChart:
     for col in range(area.min_col + 1, area.max_col + 1):
         y_values = Reference(sheet, min_col=col, min_row=area.min_row, max_row=area.max_row)
         chart.series.append(SeriesFactory(y_values, x_values, title_from_data=True))
-    return chart
+    return chart, list(chart.series)

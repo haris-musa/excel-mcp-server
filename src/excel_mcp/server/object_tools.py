@@ -4,8 +4,8 @@ from typing import Annotated
 
 from pydantic import Field
 
-from excel_mcp.operations import charts, summary, tables
-from excel_mcp.operations.charts import ChartOptions, ChartType
+from excel_mcp.operations import chart_index, charts, summary, tables
+from excel_mcp.operations.charts_options import ChartOptions, ChartType
 from excel_mcp.operations.summary import SummaryValue
 from excel_mcp.server.params import CellRef, RangeRef, SheetName, WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
@@ -47,7 +47,12 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         chart_type: Annotated[ChartType, Field(description="Kind of chart to draw.")],
         anchor_cell: Annotated[str, Field(description="Cell where the chart's top-left sits.")],
         options: Annotated[
-            ChartOptions | None, Field(description="Titles, size and legend. Default: none.")
+            ChartOptions | None,
+            Field(
+                description="Titles, size, legend, data labels, stacking, colors, markers, "
+                "axis range and number format, and secondary-axis lines. Every field is "
+                "optional; omitted fields keep the chart type's defaults."
+            ),
         ] = None,
         data_sheet: Annotated[
             str | None, Field(description="Sheet holding the data. Default: `sheet`.")
@@ -56,7 +61,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         """Add a chart that plots a block of data.
 
         'column' draws vertical bars, 'bar' horizontal bars. For 'scatter', the first column
-        holds the x values.
+        holds the x values. 'doughnut' is a pie with a hole; 'radar' draws one polygon per
+        series. Options that do not apply to the chart type are rejected. List a sheet's
+        charts with describe_sheet and remove one with delete_chart.
         """
         with workspace.edit(path) as workbook:
             area = charts.create_chart(
@@ -68,6 +75,25 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 options or ChartOptions(),
             )
         return f"Added a {chart_type} chart of {data_sheet or sheet}!{area} at {anchor_cell}."
+
+    @tools.destroyer("Delete chart")
+    def delete_chart(
+        path: WorkbookPath,
+        sheet: SheetName,
+        index: Annotated[
+            int,
+            Field(description="1-based chart number, as listed under 'charts' by describe_sheet."),
+        ],
+    ) -> str:
+        """Remove a chart from a sheet. The data it plotted is left untouched.
+
+        Charts after the removed one move up by one index, so call describe_sheet again
+        before deleting another.
+        """
+        with workspace.edit(path) as workbook:
+            removed = chart_index.delete_chart(get_sheet(workbook, sheet), index)
+        label = f" {removed.title!r}" if removed.title else ""
+        return f"Deleted {removed.type} chart {index}{label} from {sheet}."
 
     @tools.destroyer("Create summary table")
     def create_summary_table(
