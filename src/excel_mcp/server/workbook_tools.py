@@ -102,6 +102,6 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         overwrite: bool = False,
     ) -> Changed:
         """Save an uploaded workbook file on the server (remote editing)."""
-        content = files.decode_workbook(content_base64, workspace.limits.max_file_bytes)
+        content = files.decode_workbook(content_base64, workspace.limits)
         stored = workspace.store(path, content, overwrite=overwrite)
         return Changed(path=workspace.display(stored))
