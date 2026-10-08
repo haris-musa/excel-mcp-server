@@ -153,9 +153,9 @@ def copy(source: Worksheet, target: Worksheet, refs: SheetCopyRefs) -> None:
             text = match[2]
             if found := _NAME.fullmatch(text):
                 reference = workbook.defined_names[text].attr_text or ""
-                text = book.of(refs.operand(reference), int(found[1]))
+                text = book.of(refs.operand(reference, target.title), int(found[1]))
             else:
-                text = refs.operand(text)
+                text = refs.operand(text, target.title)
             return f"{match[1]}{text}{match[3]}"
 
         data = _FORMULA.sub(repoint, chart.xml).encode("utf-8")

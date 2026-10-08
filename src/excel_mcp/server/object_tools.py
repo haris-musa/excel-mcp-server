@@ -56,9 +56,8 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             Field(
                 description="A block with a header row, labels in the first column and one "
                 "series per further column, e.g. 'A1:C13' or 'Data!A1:C13'. Scatter: x values "
-                "first. Bubble: x, y, size. Excel 2016 charts: waterfall, pareto, funnel and "
-                "box_whisker take labels then values; histogram, values only; treemap and "
-                "sunburst, the hierarchy columns then the sizes."
+                "first. Bubble: x, y, size. Excel 2016 charts: leading text columns are "
+                "labels (the levels, for treemap and sunburst), the number columns the series."
             ),
         ] = None,
         series_in: Annotated[

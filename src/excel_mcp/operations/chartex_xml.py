@@ -24,6 +24,13 @@ _NAMESPACES = (
 _POSITIONS = {
     "center": "ctr", "inside_end": "inEnd", "inside_base": "inBase", "outside_end": "outEnd"
 }  # fmt: skip
+# What Excel shows on a chart that is inserted without any option.
+_DEFAULT_LABELS = {
+    "waterfall": DataLabels(show=["value"]),
+    "funnel": DataLabels(show=["value"]),
+    "treemap": DataLabels(show=["category"]),
+    "sunburst": DataLabels(show=["category"]),
+}
 _LEGEND = {"right": "r", "left": "l", "top": "t", "bottom": "b"}
 
 
@@ -96,9 +103,12 @@ def chart_xml(workbook: Workbook, chart_type: str, plots: list[Plot], options: C
         dims = f'<cx:strDim type="cat"><cx:f>{categories}</cx:f></cx:strDim>' if categories else ""
         dims += f'<cx:numDim type="{kind.value_type}"><cx:f>{values}</cx:f></cx:numDim>'
         data.append(f'<cx:data id="{number}">{dims}</cx:data>')
-        labels = _labels(plot.spec.data_labels or options.data_labels)
+        labels = _labels(
+            plot.spec.data_labels or options.data_labels or _DEFAULT_LABELS.get(chart_type)
+        )
         parts = [
-            name, labels, f'<cx:dataId val="{number}"/>', _layout(chart_type, options),
+            name, labels, f'<cx:dataId val="{number}"/>',
+            _layout(chart_type, options, bool(categories)),
             '<cx:axisId val="1"/>' if chart_type == "pareto" else "",
         ]  # fmt: skip
         series.append(_series(kind.layout, f"{{{number + 1:08X}{tail}}}", "".join(parts)))
@@ -153,7 +163,7 @@ def _legend(position: str) -> str:
 
 
 def _labels(labels: DataLabels | None) -> str:
-    if labels is None:
+    if labels is None or not labels.show:
         return ""
     shown = {
         attribute: int(name in labels.show)
@@ -173,7 +183,7 @@ def _labels(labels: DataLabels | None) -> str:
     return f"<cx:dataLabels{position}>{number}<cx:visibility {visibility}/></cx:dataLabels>"
 
 
-def _layout(chart_type: str, options: ChartOptions) -> str:
+def _layout(chart_type: str, options: ChartOptions, categorised: bool) -> str:
     if chart_type == "waterfall":
         lines = "" if options.connector_lines else '<cx:visibility connectorLines="0"/>'
         totals = "".join(f'<cx:idx val="{n - 1}"/>' for n in sorted(set(options.totals)))
@@ -181,13 +191,12 @@ def _layout(chart_type: str, options: ChartOptions) -> str:
     if chart_type == "histogram":
         return f"<cx:layoutPr>{_binning(options)}</cx:layoutPr>"
     if chart_type == "pareto":
-        return "<cx:layoutPr><cx:aggregation/></cx:layoutPr>"
+        inner = "<cx:aggregation/>" if categorised else _binning(options)
+        return f"<cx:layoutPr>{inner}</cx:layoutPr>"
     if chart_type == "box_whisker":
         return f"<cx:layoutPr>{_box(options)}</cx:layoutPr>"
     if chart_type == "treemap":
-        label = options.parent_labels
-        found = "" if label == "none" else f'<cx:parentLabelLayout val="{label}"/>'
-        return f"<cx:layoutPr>{found}</cx:layoutPr>"
+        return f'<cx:layoutPr><cx:parentLabelLayout val="{options.parent_labels}"/></cx:layoutPr>'
     return ""
 
 

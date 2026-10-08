@@ -32,13 +32,14 @@ ROUND_TYPES = ("pie", "doughnut")
 MODERN_TYPES = (
     "waterfall", "histogram", "pareto", "box_whisker", "treemap", "sunburst", "funnel"
 )  # fmt: skip
-ParentLabels = Literal["none", "banner", "overlapping"]
+ParentLabels = Literal["overlapping", "banner", "none"]
 Quartiles = Literal["exclusive", "inclusive"]
 
 
 class DataLabels(InputModel):
     show: list[LabelContent] = Field(
-        default=["value"], description="'percent' fits pie and doughnut charts only."
+        default=["value"],
+        description="'percent' fits pie and doughnut charts only. Empty: no labels.",
     )
     position: LabelPosition | None = Field(
         default=None,
@@ -218,7 +219,10 @@ class ChartOptions(InputModel):
     )
     connector_lines: bool = Field(default=True, description="Waterfall: lines between bars.")
     bins: Bins = Field(
-        default_factory=Bins, description="Histogram. Default: Excel's automatic bins."
+        default_factory=Bins,
+        description="Histogram, or pareto of numbers. Default: Excel's automatic bins.",
     )
     box: BoxPlot = Field(default_factory=BoxPlot, description="Box and whisker.")
-    parent_labels: ParentLabels = Field(default="none", description="Treemap.")
+    parent_labels: ParentLabels = Field(
+        default="overlapping", description="Treemap: how the labels of the groups sit."
+    )

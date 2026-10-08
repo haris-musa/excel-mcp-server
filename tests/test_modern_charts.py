@@ -269,12 +269,12 @@ async def test_blocks_for_labelled_and_value_only_charts(call: ToolCall, sample:
     )  # fmt: skip
     await call(
         "create_chart", path="sales.xlsx", sheet="Report", chart_type="histogram",
-        anchor_cell="B20", data_range="Data!C1:D5",
+        anchor_cell="B20", data_range="Data!C1:C5",
     )  # fmt: skip
 
     names = list(hidden_names(sample).values())
     assert names[:3] == ["Data!$B$2:$B$5", "Data!$C$1", "Data!$C$2:$C$5"]
-    assert names[3:] == ["Data!$C$1", "Data!$C$2:$C$5", "Data!$D$1", "Data!$D$2:$D$5"]
+    assert names[3:] == ["Data!$C$1", "Data!$C$2:$C$5"]
 
 
 async def test_size_follows_the_options_and_the_sheet_geometry(
@@ -456,11 +456,8 @@ async def test_anchors_follow_inserted_rows_through_the_references_api(
             "trendline does not apply",
         ),
         ("waterfall", {"series": [LABELLED, LABELLED]}, "plots one series, got 2"),
-        ("histogram", {"series": [LABELLED]}, "leave out categories"),
-        ("pareto", {"series": [{"values": "Data!C2:C5"}]}, "pareto chart needs categories"),
-        ("treemap", {"series": [{"values": "Data!C2:C5"}]}, "treemap chart needs categories"),
         ("waterfall", {"series_in": "rows"}, "read their data in columns"),
-        ("waterfall", {"series": [], "data_range": "Data!A1:A5"}, "label column and a value"),
+        ("waterfall", {"series": [], "data_range": "Data!A1:A5"}, "holds no column of numbers"),
         ("histogram", {"series": [], "data_range": "Data!C1:C1"}, "header row"),
         ("waterfall", {"series": [], "data_range": None}, "either data_range"),
         ("waterfall", {"series": [{"values": "Data!B2:C5"}]}, "one row or one column"),
@@ -563,3 +560,95 @@ async def test_the_secondary_axis_fits_pareto_only(call_error: ToolCall, sample:
     )  # fmt: skip
 
     assert "secondary_y_axis.title does not apply" in message
+
+
+@pytest.mark.parametrize(
+    ("chart_type", "expected"),
+    [
+        ("waterfall", '<cx:dataLabels><cx:visibility seriesName="0" categoryName="0" value="1"/>'),
+        ("funnel", '<cx:dataLabels><cx:visibility seriesName="0" categoryName="0" value="1"/>'),
+        ("treemap", '<cx:dataLabels><cx:visibility seriesName="0" categoryName="1" value="0"/>'),
+        ("sunburst", '<cx:dataLabels><cx:visibility seriesName="0" categoryName="1" value="0"/>'),
+        ("histogram", None), ("pareto", None), ("box_whisker", None),
+    ],
+)  # fmt: skip
+async def test_labels_default_to_what_excel_shows_on_a_new_chart(
+    call: ToolCall, sample: Path, chart_type: str, expected: str | None
+) -> None:
+    await add(call, chart_type)
+
+    chart = chart_text(sample)
+    assert (expected in chart) if expected else ("<cx:dataLabels" not in chart)
+
+
+async def test_labels_can_be_turned_off_and_replaced(call: ToolCall, sample: Path) -> None:
+    await add(call, "treemap", options={"data_labels": {"show": []}})
+    assert "<cx:dataLabels" not in chart_text(sample)
+
+    await add(call, "treemap", index=1, options={"data_labels": {"show": ["value"]}})
+    assert 'categoryName="0" value="1"' in chart_text(sample)
+
+
+async def test_parent_labels_are_written_with_excels_default(call: ToolCall, sample: Path) -> None:
+    await add(call, "treemap")
+
+    assert '<cx:parentLabelLayout val="overlapping"/>' in chart_text(sample)
+
+
+async def test_a_pareto_of_numbers_is_binned_like_a_histogram(call: ToolCall, sample: Path) -> None:
+    await add(
+        call, "pareto", series=[{"values": "Data!C2:C5", "name": "Data!C1"}],
+        options={"bins": {"count": 3}},
+    )  # fmt: skip
+
+    chart = chart_text(sample)
+    assert '<cx:binning intervalClosed="r"><cx:binCount val="3"/></cx:binning>' in chart
+    assert "<cx:aggregation" not in chart and 'layoutId="paretoLine"' in chart
+    assert "<cx:strDim" not in chart
+
+
+async def test_a_histogram_may_have_labels_and_a_box_a_single_column(
+    call: ToolCall, sample: Path
+) -> None:
+    await add(call, "histogram", series=[LABELLED])
+    assert "<cx:strDim" in chart_text(sample) and "<cx:binning" in chart_text(sample)
+
+    await call(
+        "create_chart", path="sales.xlsx", sheet="Report", chart_type="box_whisker",
+        anchor_cell="B30", data_range="Data!C1:C5",
+    )  # fmt: skip
+    assert "<cx:strDim" not in chart_text(sample, 2)
+    assert 'quartileMethod="exclusive"' in chart_text(sample, 2)
+
+
+@pytest.mark.parametrize("chart_type", ["waterfall", "funnel", "treemap", "sunburst"])
+async def test_a_single_column_of_numbers_needs_no_labels(
+    call: ToolCall, sample: Path, chart_type: str
+) -> None:
+    await call(
+        "create_chart", path="sales.xlsx", sheet="Report", chart_type=chart_type,
+        anchor_cell="B2", data_range="Data!C1:C5",
+    )  # fmt: skip
+
+    assert "<cx:strDim" not in chart_text(sample)
+    assert list(hidden_names(sample).values())[-1] == "Data!$C$2:$C$5"
+
+
+async def test_a_histogram_plots_one_series(call_error: ToolCall, sample: Path) -> None:
+    message = await call_error(
+        "create_chart", path="sales.xlsx", sheet="Report", chart_type="histogram",
+        anchor_cell="B2", data_range="Data!C1:D5",
+    )  # fmt: skip
+
+    assert "plots one series, got 2" in message
+
+
+async def test_bins_of_a_categorised_pareto_are_an_error(
+    call_error: ToolCall, sample: Path
+) -> None:
+    message = await call_error(
+        "create_chart", path="sales.xlsx", sheet="Report", chart_type="pareto",
+        anchor_cell="B2", options={"bins": {"count": 3}}, **CHARTS["pareto"],
+    )  # fmt: skip
+
+    assert "bins apply to a pareto chart of numbers" in message

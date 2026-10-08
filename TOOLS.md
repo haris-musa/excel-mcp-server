@@ -711,7 +711,7 @@ Options that do not fit the chart type are rejected. describe_sheet lists the ch
 | `chart_type` | `column` \| `bar` \| `line` \| `area` \| `pie` \| `doughnut` \| `radar` \| `scatter` \| `bubble` \| `waterfall` \| `histogram` \| `pareto` \| `box_whisker` \| `treemap` \| `sunburst` \| `funnel` | yes | Kind of chart. waterfall, histogram, pareto, box_whisker, treemap, sunburst and funnel are Excel 2016 charts: they need anchor_cell and take no combo, trendline, colors or secondary axis. |
 | `options` | object | no |  |
 | `anchor_cell` | string | no | Top-left cell, e.g. 'E2'. Omit to put the chart on a new chart sheet named `sheet`. |
-| `data_range` | string | no | A block with a header row, labels in the first column and one series per further column, e.g. 'A1:C13' or 'Data!A1:C13'. Scatter: x values first. Bubble: x, y, size. Excel 2016 charts: waterfall, pareto, funnel and box_whisker take labels then values; histogram, values only; treemap and sunburst, the hierarchy columns then the sizes. |
+| `data_range` | string | no | A block with a header row, labels in the first column and one series per further column, e.g. 'A1:C13' or 'Data!A1:C13'. Scatter: x values first. Bubble: x, y, size. Excel 2016 charts: leading text columns are labels (the levels, for treemap and sunburst), the number columns the series. |
 | `series_in` | `columns` \| `rows` | no | 'rows': series are the rows of data_range. Default: `columns`. |
 | `series` | array of object | no | Explicit series instead of data_range, for any ranges on any sheet. Default: `[]`. |
 | `categories` | string | no | Category labels (x values) for series without their own. |
@@ -739,15 +739,15 @@ Options that do not fit the chart type are rejected. describe_sheet lists the ch
 | `secondary_y_axis` | object | no | Used by series with secondary_axis; for pareto, the percentage axis (title, min, max as fractions; 0 to 1 by default). |
 | `totals` | array of integer | no | Waterfall: 1-based positions of the points shown as totals ('Set as total'). |
 | `connector_lines` | boolean | no | Waterfall: lines between bars. Default: `True`. |
-| `bins` | object | no | Histogram. Default: Excel's automatic bins. |
+| `bins` | object | no | Histogram, or pareto of numbers. Default: Excel's automatic bins. |
 | `box` | object | no | Box and whisker. |
-| `parent_labels` | `none` \| `banner` \| `overlapping` | no | Treemap. Default: `none`. |
+| `parent_labels` | `overlapping` \| `banner` \| `none` | no | Treemap: how the labels of the groups sit. Default: `overlapping`. |
 
 `data_labels` fields:
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
-| `show` | array of `value` \| `percent` \| `category` \| `series` | no | 'percent' fits pie and doughnut charts only. Default: `['value']`. |
+| `show` | array of `value` \| `percent` \| `category` \| `series` | no | 'percent' fits pie and doughnut charts only. Empty: no labels. Default: `['value']`. |
 | `position` | `center` \| `inside_end` \| `inside_base` \| `outside_end` \| `above` \| `below` \| `left` \| `right` \| `best_fit` | no | Default: Excel's. Valid positions depend on the chart type: column and bar charts take center, inside_end, inside_base, outside_end (not when stacked); line, scatter and bubble charts center, above, below, left, right; pie charts center, inside_end, outside_end, best_fit; waterfall, histogram and pareto charts as column charts. The other Excel 2016 charts place their labels themselves. |
 | `number_format` | string | no | e.g. '0.0%' or '#,##0'. |
 
