@@ -67,9 +67,8 @@ class ChartOptions(BaseModel):
     secondary_line_columns: list[str] | None = Field(
         default=None,
         description="Header names of data columns to draw as lines on a secondary vertical "
-        "axis on the right, combined with the other columns as columns or bars (a combo "
-        "chart). For column and bar charts only; at least one column must stay as columns "
-        "or bars.",
+        "axis on the right, combined with the other data columns drawn as columns (a combo "
+        "chart). For column charts only; at least one data column must stay as columns.",
     )
 
 
@@ -87,7 +86,7 @@ def check_options(options: ChartOptions, chart_type: ChartType) -> None:
     require("grouping", _GROUPED)
     require("markers", ("line", "scatter"))
     require("smooth", ("line", "scatter"))
-    require("secondary_line_columns", ("column", "bar"))
+    require("secondary_line_columns", ("column",))
     for name in ("y_axis_min", "y_axis_max", "y_axis_number_format"):
         if getattr(options, name) is not None and chart_type in ROUND_TYPES:
             raise InvalidArgumentError(f"{name} does not apply to {chart_type} charts: no axes.")

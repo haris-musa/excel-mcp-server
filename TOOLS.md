@@ -464,7 +464,7 @@ charts with describe_sheet and remove one with delete_chart.
 | `y_axis_min` | number | no | Lowest value on the (primary) vertical axis. Default: automatic. |
 | `y_axis_max` | number | no | Highest value on the (primary) vertical axis. Default: automatic. |
 | `y_axis_number_format` | string | no | Excel number format for the (primary) vertical axis labels, e.g. '0%' or '#,##0'. Default: taken from the data. |
-| `secondary_line_columns` | array of string | no | Header names of data columns to draw as lines on a secondary vertical axis on the right, combined with the other columns as columns or bars (a combo chart). For column and bar charts only; at least one column must stay as columns or bars. |
+| `secondary_line_columns` | array of string | no | Header names of data columns to draw as lines on a secondary vertical axis on the right, combined with the other data columns drawn as columns (a combo chart). For column charts only; at least one data column must stay as columns. |
 
 ## delete_chart
 
