@@ -11,7 +11,9 @@ All notable changes to this project are documented here. The format follows
 - `import_workbook` checked only cell formulas, so a blocked function or a link to another
   workbook could be stored in a defined name (including a print area), a conditional
   format, a data validation rule or an Excel 2010 extension. It now checks every formula in
-  the uploaded file. GHSA-69rc-6f6g-43xj (@NotAFlightRisk).
+  the uploaded file. GHSA-69rc-6f6g-43xj (@NotAFlightRisk). Workbooks whose data
+  validation uses `INDIRECT` (a common way to build dependent drop-down lists) or `CELL`
+  are now rejected on import, as those rules already are when written through the tools.
 - The formula check missed links to another workbook written without square brackets
   (`=Budget.xlsx!Sales`, `='\\server\share\book.xlsx'!Sales`), references to another
   workbook that end in a function call, and blocked functions after a range operator
