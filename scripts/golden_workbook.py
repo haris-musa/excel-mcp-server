@@ -29,10 +29,10 @@ def build_workbook(
         workbook.create_sheet(title)
     for title, rows in inputs.items():
         if rows:
-            write_range(workbook[title], "A1", rows, MAX_CELLS)  # pyright: ignore[reportArgumentType]
+            write_range(workbook[title], "A1", rows, [], MAX_CELLS)  # pyright: ignore[reportArgumentType]
     cases = workbook["Cases"]
     for row, formula in enumerate(formulas, start=1):
-        write_range(cases, f"A{row}", [[formula]], MAX_CELLS)  # pyright: ignore[reportArgumentType]
+        write_range(cases, f"A{row}", [[formula]], [], MAX_CELLS)  # pyright: ignore[reportArgumentType]
     for title, rows_hidden in hidden_rows.items():
         for row in rows_hidden:
             workbook[title].row_dimensions[row].hidden = True

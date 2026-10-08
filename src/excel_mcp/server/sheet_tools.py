@@ -21,8 +21,8 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     @tools.reader("Describe sheet")
     def describe_sheet(path: WorkbookPath, sheet: SheetName) -> SheetDetails:
         """Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables,
-        images, notes, validation, conditional formats, custom column widths, hidden rows and
-        columns, print area and protection. Empty items are omitted.
+        images, notes, hyperlinks, validation, conditional formats, custom column widths, hidden
+        rows and columns, print area and protection. Empty items are omitted.
 
         Loads the whole workbook into memory, so it is slow on very large files."""
         with workspace.read(path) as workbook:

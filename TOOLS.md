@@ -9,11 +9,12 @@ Cells use A1 notation and row and column numbers are 1-based.
 | Tool | Summary |
 | --- | --- |
 | [`create_workbook`](#create_workbook) | Create a new, empty Excel workbook. |
-| [`describe_workbook`](#describe_workbook) | List a workbook's sheets with their used ranges, and its defined names. |
+| [`describe_workbook`](#describe_workbook) | List a workbook's sheets with their used ranges, and its defined names, properties and calculation settings. |
+| [`set_workbook_settings`](#set_workbook_settings) | Set document properties (title, subject, author, keywords, company), calculation options (manual or automatic, iterative calculation, recalculation on load) and workbook structure protection. |
 | [`list_workbooks`](#list_workbooks) | List Excel files in a directory as path to size in bytes. |
 | [`export_workbook`](#export_workbook) | Return the workbook file as an embedded base64 resource, for remote servers. |
 | [`import_workbook`](#import_workbook) | Save an uploaded workbook file on the server, e.g. to edit it remotely. |
-| [`describe_sheet`](#describe_sheet) | Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables, images, notes, validation, conditional formats, custom column widths, hidden rows and columns, print area and protection. Empty items are omitted. |
+| [`describe_sheet`](#describe_sheet) | Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables, images, notes, hyperlinks, validation, conditional formats, custom column widths, hidden rows and columns, print area and protection. Empty items are omitted. |
 | [`create_sheet`](#create_sheet) | Add an empty worksheet. |
 | [`rename_sheet`](#rename_sheet) | Rename a worksheet. Formulas that refer to the old name are not updated. |
 | [`copy_sheet`](#copy_sheet) | Copy a worksheet to a new sheet at the end, as Excel's "Create a copy" does. |
@@ -28,9 +29,9 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`transform_range`](#transform_range) | Remove duplicate rows, split text into columns, or fill down or right or with a series (like Excel's Data and Fill commands). |
 | [`find_cells`](#find_cells) | Find cells whose value contains (or equals) the query. |
 | [`replace_cells`](#replace_cells) | Find and replace text in cells, like Excel's Replace All; find_cells only reads. |
-| [`format_range`](#format_range) | Change the font, fill, borders, alignment or number format of a range. |
+| [`format_range`](#format_range) | Change the font, fill, borders, alignment, number format or protection flags of a range. |
 | [`merge_cells`](#merge_cells) | Merge a range into one cell, or split a merged range again. |
-| [`set_sheet_layout`](#set_sheet_layout) | Set column widths, row heights, hidden or grouped rows and columns, frozen panes, auto filter (on a range or a table, with criteria), tab color, sheet visibility, print setup and sheet protection. |
+| [`set_sheet_layout`](#set_sheet_layout) | Set column widths, row heights, hidden or grouped rows and columns, frozen panes, auto filter (on a range or a table, with criteria), tab color, sheet visibility and position, view options (zoom, gridlines, headings, show formulas, right to left, active sheet, selected cell), print setup and sheet protection. |
 | [`add_conditional_format`](#add_conditional_format) | Add a conditional format rule to a range: scales, data bars, icon sets, cell value or formula rules, top/bottom, average, duplicates, text, dates, blanks and errors. |
 | [`add_data_validation`](#add_data_validation) | Restrict what can be entered in a range: a dropdown list (typed in, or from cells or a name), whole numbers, decimals, dates, times, text length or a custom formula, with an optional input message and error alert. |
 | [`create_table`](#create_table) | Turn a range with a header row of unique text labels into an Excel table. |
@@ -62,14 +63,67 @@ Create a new, empty Excel workbook.
 
 **Describe workbook** (read-only)
 
-List a workbook's sheets with their used ranges, and its defined names.
+List a workbook's sheets with their used ranges, and its defined names, properties and
+calculation settings.
 
-Start here. Reads each sheet once in full. `has_vba` is only present when true; see
-read_vba.
+Start here. Reads each sheet once in full. Default and empty values are omitted;
+`has_vba` is only present when true, see read_vba.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
+
+## set_workbook_settings
+
+**Set workbook settings** (modifies files)
+
+Set document properties (title, subject, author, keywords, company), calculation
+options (manual or automatic, iterative calculation, recalculation on load) and
+workbook structure protection.
+
+Structure protection discourages adding, deleting, renaming, moving and hiding sheets
+in Excel but is not security: it does not stop this server, and the password is weakly
+hashed.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
+| `settings` | object | yes | Every field is optional; fields left out are not changed. |
+
+`settings` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `doc_properties` | object | no | Fields left out are not changed; '' clears one. |
+| `calculation` | object | no | Fields left out are not changed. |
+| `structure_protection` | object | no | Stops sheets being added, deleted, renamed, moved or hidden. |
+
+`doc_properties` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `title` | string | no |  |
+| `subject` | string | no |  |
+| `author` | string | no |  |
+| `keywords` | string | no |  |
+| `company` | string | no |  |
+
+`calculation` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `mode` | `auto` \| `manual` \| `auto_except_tables` | no | 'manual' recalculates only on request (F9); 'auto_except_tables' skips data tables. |
+| `iterative` | boolean | no | Allow circular references, repeating the calculation. |
+| `max_iterations` | integer | no |  |
+| `max_change` | number | no | Stop iterating when results change less than this. |
+| `full_calc_on_load` | boolean | no | Recalculate every formula when the file opens. |
+
+`structure_protection` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `enabled` | boolean | yes | False unprotects. |
+| `password` | string | no | To set; to unprotect, the current one. |
 
 ## list_workbooks
 
@@ -109,8 +163,8 @@ Save an uploaded workbook file on the server, e.g. to edit it remotely.
 **Describe sheet** (read-only)
 
 Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables,
-images, notes, validation, conditional formats, custom column widths, hidden rows and
-columns, print area and protection. Empty items are omitted.
+images, notes, hyperlinks, validation, conditional formats, custom column widths, hidden
+rows and columns, print area and protection. Empty items are omitted.
 
 Loads the whole workbook into memory, so it is slow on very large files.
 
@@ -234,12 +288,17 @@ is a formula such as '=SUM(B2:B9)'; formulas that reach the network, other progr
 or other workbooks are rejected. '2026-01-31' or '2026-01-31T09:30:00' is stored as
 a date. Send long numeric IDs as text.
 
+`links` makes written cells clickable, with their value as the display text, e.g.
+[{"cell": "B2", "target": "https://example.com"}]. Only http, https, mailto and places in
+this workbook are allowed. clear_range with clear='all' removes a link.
+
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
 | `start_cell` | string | yes | Cell, e.g. 'B2'. |
 | `rows` | array of array of string \| integer \| number \| boolean | yes | Rows of values, written right and down from start_cell. |
+| `links` | array of object | no | Cells of the written block to turn into hyperlinks. Default: `[]`. |
 
 ## clear_range
 
@@ -369,7 +428,9 @@ per sheet.
 
 **Format range** (modifies files)
 
-Change the font, fill, borders, alignment or number format of a range.
+Change the font, fill, borders, alignment, number format or protection flags of a range.
+
+`locked` and `formula_hidden` take effect once the sheet is protected (set_sheet_layout).
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -396,6 +457,8 @@ Change the font, fill, borders, alignment or number format of a range.
 | `wrap_text` | boolean | no |  |
 | `border_style` | `none` \| `thin` \| `medium` \| `thick` \| `double` \| `dashed` \| `dotted` | no | On all four sides of every cell; 'none' removes it. |
 | `border_color` | string | no | Hex. Default: black. |
+| `locked` | boolean | no | Locked cells (the default) cannot be edited on a protected sheet. |
+| `formula_hidden` | boolean | no | Hide the formula in the formula bar on a protected sheet. |
 
 ## merge_cells
 
@@ -417,8 +480,9 @@ Merging keeps only the top-left value.
 **Set sheet layout** (modifies files)
 
 Set column widths, row heights, hidden or grouped rows and columns, frozen panes,
-auto filter (on a range or a table, with criteria), tab color, sheet visibility, print
-setup and sheet protection.
+auto filter (on a range or a table, with criteria), tab color, sheet visibility and
+position, view options (zoom, gridlines, headings, show formulas, right to left, active
+sheet, selected cell), print setup and sheet protection.
 
 Protection discourages edits in Excel but is not security: it does not stop this
 server, and the password is weakly hashed.
@@ -444,6 +508,8 @@ server, and the password is weakly hashed.
 | `visibility` | `visible` \| `hidden` | no | One sheet must stay visible. |
 | `print_setup` | object | no |  |
 | `protection` | object | no |  |
+| `position` | integer | no | Move the sheet to this 1-based tab position. |
+| `view` | object | no |  |
 
 `auto_filter` fields:
 
@@ -512,6 +578,18 @@ server, and the password is weakly hashed.
 | `enabled` | boolean | yes | False unprotects. |
 | `password` | string | no | To set; to unprotect, the current one. |
 | `allow` | array of `select_locked_cells` \| `select_unlocked_cells` \| `format_cells` \| `format_columns` \| `format_rows` \| `insert_columns` \| `insert_rows` \| `insert_hyperlinks` \| `delete_columns` \| `delete_rows` \| `sort` \| `auto_filter` \| `pivot_tables` | no | What users may still do. Default: `['select_locked_cells', 'select_unlocked_cells']`. |
+
+`view` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `zoom` | integer | no | Percent. |
+| `gridlines` | boolean | no |  |
+| `headings` | boolean | no | Row numbers and column letters. |
+| `show_formulas` | boolean | no |  |
+| `right_to_left` | boolean | no | Columns run right to left. |
+| `active` | boolean | no | Make this the sheet that is shown when the file opens. |
+| `selected_cell` | string | no | e.g. 'B2'. |
 
 ## add_conditional_format
 
@@ -722,10 +800,11 @@ Later charts move up one index; call describe_sheet again before deleting anothe
 
 Add an Excel PivotTable that summarizes a block of data.
 
-Excel can refresh it (Data > Refresh All) when the source changes. Its values are
-also written into the cells, with subtotals for outer row fields and grand totals,
-so other tools can read them. Filters start out showing everything. A field can be
-used only once among rows, columns and filters. describe_sheet lists PivotTables;
+Excel can refresh it (Data > Refresh All) when the source changes, and shows the same
+figures. They are also written into the cells, laid out as Excel does (subtotals, grand
+totals), so other tools can read them. A field can be used only once among rows, columns
+and filters; filters show every item unless `fields` sets `show_items`. Items that tie when
+sorted by value may swap places when Excel refreshes. describe_sheet lists PivotTables;
 delete_pivot_table removes one.
 
 | Parameter | Type | Required | Description |
@@ -739,6 +818,11 @@ delete_pivot_table removes one.
 | `target_cell` | string | yes | Top-left cell of the PivotTable; the area must be empty. |
 | `columns` | array of string | no | Headers to spread across the top, outermost first. Default: `[]`. |
 | `filters` | array of string | no | Headers offered as page filters above the table. Default: `[]`. |
+| `fields` | array of object | no | Per-field settings for headers used in rows, columns or filters: items to show (`show_items`), sort order, date or number grouping. Default: `[]`. |
+| `calculated_fields` | array of object | no | Fields calculated from others, usable in values. Default: `[]`. |
+| `layout` | `compact` \| `outline` \| `tabular` | no | Report layout of the row labels. Default: `tabular`. |
+| `subtotals` | boolean | no | Show subtotals of outer fields. Default: `True`. |
+| `values_in` | `columns` \| `rows` | no | Where several values fields go: as columns or as rows. Default: `columns`. |
 | `name` | string | no | PivotTable name. Default: PivotTableN. |
 
 ## delete_pivot_table

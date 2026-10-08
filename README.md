@@ -14,8 +14,8 @@ create, read and edit Excel workbooks. It needs no Microsoft Excel installation.
 - **Read and write** cells, formulas (with results calculated for you) and dates, with paging and streaming reads for large sheets, and search
 - **Format** fonts, fills, borders, number formats, column widths and frozen panes; hide or
   group rows, columns and sheets; set up printing; protect sheets
-- **Structure** sheets, rows and columns, merged cells, tables, charts (column, bar, line, area, pie, doughnut, radar, scatter and
-  bubble, with combos, secondary axes, trendlines and error bars), images and PivotTables
+- **Structure** sheets (order, view, workbook settings and protection), rows and columns, merged cells, tables, charts (column, bar, line, area, pie, doughnut, radar, scatter and
+  bubble, with combos, secondary axes, trendlines and error bars), images, hyperlinks and PivotTables
 - **Data tools**: paste special, fill series, remove duplicates, text to columns, find and
   replace, sheet and table filters with criteria
 - **Rules**: conditional formatting (scales, icon sets, top/bottom, duplicates, text, dates and
@@ -153,7 +153,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
 
 | Area | Tools |
 | --- | --- |
-| Workbooks | `create_workbook`, `describe_workbook`, `list_workbooks`, `export_workbook`, `import_workbook` |
+| Workbooks | `create_workbook`, `describe_workbook`, `set_workbook_settings`, `list_workbooks`, `export_workbook`, `import_workbook` |
 | Sheets | `describe_sheet`, `create_sheet`, `rename_sheet`, `copy_sheet`, `delete_sheet`, `insert_rows_or_columns`, `delete_rows_or_columns` |
 | Cells | `read_range`, `write_range`, `clear_range`, `copy_range`, `sort_range`, `transform_range`, `find_cells`, `replace_cells` |
 | Formatting | `format_range`, `merge_cells`, `set_sheet_layout`, `add_conditional_format`, `add_data_validation` |
@@ -207,8 +207,15 @@ Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
   sorted cells, conditional formats, data validation, defined names).
 - Legacy `.xls` and `.csv` files are not supported.
 - PivotTables are created from a snapshot and can use text, number and date columns of up to
-  100,000 cells; Excel refreshes them from the live source data. Filters start with all items
-  shown.
+  100,000 cells; Excel refreshes them from the live source data. They support number formats,
+  "show values as" (percent of total, row, column or parent, difference from, running total,
+  rank), sorting by label or value, date and number grouping, calculated fields, compact,
+  outline and tabular layouts, subtotals on or off, filters with chosen items and several
+  values fields as columns or rows. The figures written into the cells are the ones Excel shows
+  after a refresh, checked against about 200 PivotTables recorded from real Excel
+  (`tests/fixtures/pivot_golden.json`). The exceptions: items that tie when sorted by value may
+  swap places on refresh, and `values_in: "rows"` cannot be combined with rank figures or, with
+  subtotals, other figures along a field, because Excel mixes the values fields up there.
 - Inserting or deleting rows and columns does not update formulas, charts or tables that
   refer to the moved cells.
 - Workbook features openpyxl does not understand, such as shapes, slicers and some

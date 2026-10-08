@@ -6,9 +6,11 @@ from urllib.parse import quote
 from mcp.types import BlobResourceContents, CallToolResult, EmbeddedResource, TextContent
 from pydantic import Field
 
-from excel_mcp.operations import files, inspect, vba
+from excel_mcp import app_properties
+from excel_mcp.operations import files, inspect, vba, workbook_settings
 from excel_mcp.operations.inspect import WorkbookInfo
 from excel_mcp.operations.sheets import validate_sheet_name
+from excel_mcp.operations.workbook_settings import WorkbookSettings
 from excel_mcp.server.params import WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
 from excel_mcp.workspace import Workspace
@@ -37,13 +39,31 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
 
     @tools.reader("Describe workbook")
     def describe_workbook(path: WorkbookPath) -> WorkbookInfo:
-        """List a workbook's sheets with their used ranges, and its defined names.
+        """List a workbook's sheets with their used ranges, and its defined names, properties and
+        calculation settings.
 
-        Start here. Reads each sheet once in full. `has_vba` is only present when true; see
-        read_vba.
+        Start here. Reads each sheet once in full. Default and empty values are omitted;
+        `has_vba` is only present when true, see read_vba.
         """
         with workspace.stream(path) as workbook:
-            return inspect.describe_workbook(workbook, vba.has_vba(workspace.resolve(path)))
+            resolved = workspace.resolve(path)
+            return inspect.describe_workbook(
+                workbook, vba.has_vba(resolved), app_properties.read_company(resolved)
+            )
+
+    @tools.writer("Set workbook settings")
+    def set_workbook_settings(path: WorkbookPath, settings: WorkbookSettings) -> str:
+        """Set document properties (title, subject, author, keywords, company), calculation
+        options (manual or automatic, iterative calculation, recalculation on load) and
+        workbook structure protection.
+
+        Structure protection discourages adding, deleting, renaming, moving and hiding sheets
+        in Excel but is not security: it does not stop this server, and the password is weakly
+        hashed.
+        """
+        with workspace.edit(path) as workbook:
+            workbook_settings.apply_settings(workbook, settings)
+        return "Updated the workbook settings."
 
     @tools.reader("List workbooks")
     def list_workbooks(

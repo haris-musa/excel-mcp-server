@@ -4,7 +4,7 @@ import re
 from copy import copy
 from typing import Literal
 
-from openpyxl.styles import Alignment, Border, PatternFill, Side
+from openpyxl.styles import Alignment, Border, PatternFill, Protection, Side
 from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import Field
 
@@ -40,6 +40,13 @@ class CellFormat(InputModel):
         default=None, description="On all four sides of every cell; 'none' removes it."
     )
     border_color: str | None = Field(default=None, description="Hex. Default: black.")
+    locked: bool | None = Field(
+        default=None,
+        description="Locked cells (the default) cannot be edited on a protected sheet.",
+    )
+    formula_hidden: bool | None = Field(
+        default=None, description="Hide the formula in the formula bar on a protected sheet."
+    )
 
 
 def parse_color(value: str) -> str:
@@ -63,6 +70,7 @@ def format_range(sheet: Worksheet, ref: str, style: CellFormat, max_cells: int) 
         for cell in row:
             cell.font = _font(cell.font, style)
             cell.alignment = _alignment(cell.alignment, style)
+            cell.protection = _protection(cell.protection, style)
             if fill:
                 cell.fill = fill
             if border:
@@ -100,6 +108,15 @@ def _alignment(current, style: CellFormat) -> Alignment:
     if style.wrap_text is not None:
         alignment.wrap_text = style.wrap_text
     return alignment
+
+
+def _protection(current, style: CellFormat) -> Protection:
+    protection = copy(current)
+    if style.locked is not None:
+        protection.locked = style.locked
+    if style.formula_hidden is not None:
+        protection.hidden = style.formula_hidden
+    return protection
 
 
 def _fill(style: CellFormat) -> PatternFill | None:

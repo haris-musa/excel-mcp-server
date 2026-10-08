@@ -57,24 +57,38 @@ def apply_protection(sheet: Worksheet, change: Protection) -> None:
 
 
 def _password_matches(current: SheetProtection, password: str | None) -> bool:
+    return password_matches(
+        password,
+        legacy=current.password,
+        algorithm=current.algorithmName,
+        salt=current.saltValue,
+        spin_count=current.spinCount,
+        digest=current.hashValue,
+    )
+
+
+def password_matches(
+    password: str | None,
+    *,
+    legacy: str | None,
+    algorithm: str | None,
+    salt: str | None,
+    spin_count: int | None,
+    digest: str | None,
+) -> bool:
+    """Check a password against what Excel stored: the old 16-bit hash or a salted SHA-512."""
     if password is None:
         return False
-    if current.hashValue:
-        return _sha512_hash(current, password) == b64decode(current.hashValue)
-    return int(hash_password(password), 16) == int(current.password, 16)
-
-
-def _sha512_hash(current: SheetProtection, password: str) -> bytes:
-    """The hash Excel 2013 and later store: salted, then repeated spinCount times."""
-    if current.algorithmName != "SHA-512":
+    if not digest:
+        return int(hash_password(password), 16) == int(legacy or "0", 16)
+    if algorithm != "SHA-512":
         raise InvalidArgumentError(
-            f"This sheet's password uses {current.algorithmName}, which is not supported. "
-            "Unprotect it in Excel."
+            f"The password uses {algorithm}, which is not supported. Unprotect it in Excel."
         )
-    digest = sha512(b64decode(current.saltValue) + password.encode("utf-16-le")).digest()
-    for index in range(current.spinCount or 0):
-        digest = sha512(digest + index.to_bytes(4, "little")).digest()
-    return digest
+    hashed = sha512(b64decode(salt or "") + password.encode("utf-16-le")).digest()
+    for index in range(spin_count or 0):
+        hashed = sha512(hashed + index.to_bytes(4, "little")).digest()
+    return hashed == b64decode(digest)
 
 
 def _protected(change: Protection) -> SheetProtection:

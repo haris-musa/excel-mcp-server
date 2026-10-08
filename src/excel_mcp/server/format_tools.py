@@ -22,7 +22,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     def format_range(
         path: WorkbookPath, sheet: SheetName, range: RangeRef, style: CellFormat
     ) -> str:
-        """Change the font, fill, borders, alignment or number format of a range."""
+        """Change the font, fill, borders, alignment, number format or protection flags of a range.
+
+        `locked` and `formula_hidden` take effect once the sheet is protected (set_sheet_layout)."""
         with workspace.edit(path) as workbook:
             formatted = formatting.format_range(
                 get_sheet(workbook, sheet), range, style, workspace.limits.max_cells
@@ -54,8 +56,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     @tools.writer("Set sheet layout")
     def set_sheet_layout(path: WorkbookPath, sheet: SheetName, layout: SheetLayout) -> str:
         """Set column widths, row heights, hidden or grouped rows and columns, frozen panes,
-        auto filter (on a range or a table, with criteria), tab color, sheet visibility, print
-        setup and sheet protection.
+        auto filter (on a range or a table, with criteria), tab color, sheet visibility and
+        position, view options (zoom, gridlines, headings, show formulas, right to left, active
+        sheet, selected cell), print setup and sheet protection.
 
         Protection discourages edits in Excel but is not security: it does not stop this
         server, and the password is weakly hashed.

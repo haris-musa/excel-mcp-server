@@ -1,53 +1,53 @@
 """Creating PivotTables that Excel can refresh and rearrange."""
 
-from typing import Literal
+from dataclasses import dataclass
 
-from openpyxl.pivot.table import (
-    DataField,
-    FieldItem,
-    Location,
-    PageField,
-    PivotField,
-    PivotTableStyle,
-    RowColField,
-    TableDefinition,
-)
+from openpyxl.styles import Alignment
+from openpyxl.styles.numbers import BUILTIN_FORMATS_MAX_SIZE, BUILTIN_FORMATS_REVERSE
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
-from pydantic import Field
 
+from excel_mcp.calc.values import ExcelError
 from excel_mcp.errors import InvalidArgumentError
-from excel_mcp.inputs import InputModel
 from excel_mcp.operations.cells import stored_cells, writable_cell
-from excel_mcp.operations.pivot_cache import FieldItems, build_cache, build_items
+from excel_mcp.operations.pivot_axis import Axis, Path, Ranker, build_axis
+from excel_mcp.operations.pivot_cache import build_cache
+from excel_mcp.operations.pivot_calc import CalcField, compile_calculated
+from excel_mcp.operations.pivot_definition import Definition, PageFilter, build_definition
+from excel_mcp.operations.pivot_fields import AxisField, plan_fields
 from excel_mcp.operations.pivot_index import pivot_area, sheet_pivots, workbook_pivots
-from excel_mcp.operations.pivot_layout import (
-    CellContent,
-    DataSpec,
-    Function,
-    Shape,
-    axis_items,
-    axis_slots,
-    render,
+from excel_mcp.operations.pivot_options import (
+    CalculatedField,
+    Layout,
+    PivotField,
+    PivotValue,
+    ValuesIn,
 )
+from excel_mcp.operations.pivot_render import Shown, item_label, number_format, render
+from excel_mcp.operations.pivot_showas import Figures
 from excel_mcp.operations.pivot_source import Source, read_source
+from excel_mcp.operations.pivot_specs import (
+    check_values_in_rows,
+    data_specs,
+    resolve_comparisons,
+    sorted_by,
+)
+from excel_mcp.operations.pivot_values import Aggregator, DataSpec
 from excel_mcp.refs import CellRange, parse_cell, parse_range
 
-_CAPTIONS = {
-    "sum": "Sum",
-    "count": "Count",
-    "average": "Average",
-    "min": "Min",
-    "max": "Max",
-}
-_DATA_FIELD_COLUMNS = -2
 
-
-class PivotValue(InputModel):
-    field: str = Field(description="Header of the column to summarize.")
-    function: Function = Field(
-        default="sum", description="'count' counts non-empty cells; the others need numbers."
-    )
+@dataclass(frozen=True)
+class PivotRequest:
+    rows: list[str]
+    columns: list[str]
+    values: list[PivotValue]
+    filters: list[str]
+    fields: list[PivotField]
+    calculated: list[CalculatedField]
+    layout: Layout
+    subtotals: bool
+    values_in: ValuesIn
+    name: str | None
 
 
 def create_pivot(
@@ -56,82 +56,123 @@ def create_pivot(
     source_range: str,
     target_sheet: Worksheet,
     target_cell: str,
-    rows: list[str],
-    columns: list[str],
-    values: list[PivotValue],
-    filters: list[str],
-    name: str | None,
+    request: PivotRequest,
     max_cells: int,
 ) -> tuple[str, CellRange]:
     source = read_source(source_sheet, source_range, max_cells)
-    row_fields = [source.field_index(field) for field in rows]
-    column_fields = [source.field_index(field) for field in columns]
-    filter_fields = [source.field_index(field) for field in filters]
+    row_fields = [source.field_index(field) for field in request.rows]
+    column_fields = [source.field_index(field) for field in request.columns]
+    filter_fields = [source.field_index(field) for field in request.filters]
     _check_distinct(source, row_fields, column_fields, filter_fields)
-    specs = _data_specs(source, values)
-    items = {
-        field: build_items(source.columns[field])
-        for field in [*row_fields, *column_fields, *filter_fields]
-    }
-    shape = Shape(source, row_fields, column_fields, specs, items)
-
-    row_slots = axis_slots(row_fields, shape)
-    column_slots = axis_slots(column_fields, shape, data_count=len(specs))
-    filter_height = len(filters) + 1 if filters else 0
+    calculated = compile_calculated(source, request.calculated)
+    options = _options(source, request.fields, [*row_fields, *column_fields, *filter_fields])
+    setup = plan_fields(source, [*row_fields, *column_fields, *filter_fields], options)
+    specs = data_specs(source, setup, calculated, request.values)
+    on_rows = [axis for index in row_fields for axis in setup.axis[index]]
+    on_columns = [axis for index in column_fields for axis in setup.axis[index]]
+    pages = [axis for index in filter_fields for axis in setup.axis[index]]
+    specs = resolve_comparisons(specs, request.values, on_rows + on_columns)
+    if len(specs) > 1 and request.values_in == "rows":
+        check_values_in_rows(specs, request.subtotals, len(on_rows))
+    on_rows = [sorted_by(field, specs) for field in on_rows]
+    on_columns = [sorted_by(field, specs) for field in on_columns]
+    rows, columns, aggregator = _axes(
+        source, calculated, specs, on_rows, on_columns, pages, request
+    )
+    formats = [number_format(spec, _source_format(source, spec)) for spec in specs]
+    figures = Figures(aggregator, rows, columns, specs)
+    table = render(rows, columns, specs, figures, formats, request.layout)
     start_row, start_col = parse_cell(target_cell)
+    filter_height = len(pages) + 1 if pages else 0
     body = CellRange(
         start_row + filter_height,
         start_col,
-        start_row + filter_height + shape.header_rows + len(row_slots) - 1,
-        start_col + len(row_fields) + len(column_slots) - 1,
+        start_row + filter_height + table.header_rows + table.rows - 1,
+        start_col + table.label_columns + table.columns - 1,
     )
     area = CellRange(start_row, start_col, body.max_row, body.max_col).within(max_cells)
     _check_free(target_sheet, area, source_sheet, source.ref)
 
-    pivot_name = _pivot_name(workbook, name)
-    cache = build_cache(source, items)
-    cache_id = max((pivot.cacheId for pivot in workbook_pivots(workbook)), default=0) + 1
-    pivot = TableDefinition(
-        name=pivot_name,
-        cacheId=cache_id,
-        dataCaption="Values",
-        updatedVersion=6,
-        minRefreshableVersion=3,
-        createdVersion=6,
-        useAutoFormatting=True,
-        itemPrintTitles=True,
-        indent=0,
-        compact=False,
-        compactData=False,
-        multipleFieldFilters=False,
-        applyWidthHeightFormats=True,
-        location=_location(shape, body, len(filters)),
-        pivotFields=_pivot_fields(shape, filter_fields),
-        rowFields=[RowColField(x=field) for field in row_fields],
-        rowItems=axis_items(row_slots, with_data=False),
-        colFields=_column_fields(column_fields, len(specs)),
-        colItems=axis_items(column_slots, with_data=len(specs) > 1),
-        pageFields=[PageField(fld=field, hier=-1) for field in filter_fields],
-        dataFields=[_data_field(source, spec) for spec in specs],
-        pivotTableStyleInfo=PivotTableStyle(
-            name="PivotStyleLight16",
-            showRowHeaders=True,
-            showColHeaders=True,
-            showRowStripes=False,
-            showColStripes=False,
-            showLastColumn=True,
-        ),
+    pivot_name = _pivot_name(workbook, request.name)
+    page_filters = [_page_filter(axis) for axis in pages]
+    pivot = build_definition(
+        Definition(
+            name=pivot_name,
+            cache_id=max((pivot.cacheId for pivot in workbook_pivots(workbook)), default=0) + 1,
+            setup=setup,
+            calculated=calculated,
+            rows=rows,
+            columns=columns,
+            pages=page_filters,
+            specs=specs,
+            format_ids=[_format_id(workbook, fmt) for fmt in formats],
+            table=table,
+            body=body,
+            layout=request.layout,
+            subtotals=request.subtotals,
+        )
     )
-    pivot.cache = cache
+    pivot.cache = build_cache(setup, calculated)
     target_sheet.add_pivot(pivot)
-
-    cells = render(shape, row_slots, column_slots)
-    for (row, column), (value, number_format) in cells.items():
-        _write(target_sheet, body.min_row + row, body.min_col + column, value, number_format)
-    for position, field in enumerate(filter_fields):
-        _write(target_sheet, start_row + position, start_col, source.columns[field].name, None)
-        _write(target_sheet, start_row + position, start_col + 1, "(All)", None)
+    for (row, column), shown in table.cells.items():
+        _write(target_sheet, body.min_row + row, body.min_col + column, shown)
+    for position, page in enumerate(page_filters):
+        _write(target_sheet, start_row + position, start_col, Shown(page.field.name))
+        _write(target_sheet, start_row + position, start_col + 1, _page_cell(page))
     return pivot_name, body
+
+
+def _axes(
+    source: Source,
+    calculated: list[CalcField],
+    specs: list[DataSpec],
+    on_rows: list[AxisField],
+    on_columns: list[AxisField],
+    pages: list[AxisField],
+    request: PivotRequest,
+) -> tuple[Axis, Axis, Aggregator]:
+    """The lines of both axes, from the records the chosen items leave."""
+    records = _visible_records(source, [*on_rows, *on_columns, *pages])
+    row_keys = _keys(source, on_rows)
+    column_keys = _keys(source, on_columns)
+    aggregator = Aggregator(source, calculated, specs, row_keys, column_keys, records)
+    several = len(specs) > 1
+    rows = build_axis(
+        on_rows,
+        {row_keys[record] for record in records},
+        _ranker(aggregator, specs, on_rows=True),
+        layout=request.layout,
+        subtotals=request.subtotals,
+        values=len(specs) if several and request.values_in == "rows" else 0,
+    )
+    columns = build_axis(
+        on_columns,
+        {column_keys[record] for record in records},
+        _ranker(aggregator, specs, on_rows=False),
+        layout="tabular",
+        subtotals=request.subtotals,
+        values=len(specs) if several and request.values_in == "columns" else 0,
+    )
+    return rows, columns, aggregator
+
+
+def _source_format(source: Source, spec: DataSpec) -> str:
+    kind, index = spec.key
+    return source.columns[index].number_format if kind == "column" else "General"
+
+
+def _options(source: Source, fields: list[PivotField], used: list[int]) -> dict[int, PivotField]:
+    options: dict[int, PivotField] = {}
+    for option in fields:
+        index = source.field_index(option.field)
+        if index not in used:
+            raise InvalidArgumentError(
+                f"Field {option.field!r} in fields is not used in rows, columns or filters."
+            )
+        if index in options:
+            raise InvalidArgumentError(f"Field {option.field!r} is listed twice in fields.")
+        options[index] = option
+    return options
 
 
 def _check_distinct(
@@ -146,23 +187,59 @@ def _check_distinct(
         )
 
 
-def _data_specs(source: Source, values: list[PivotValue]) -> list[DataSpec]:
-    specs = []
-    for value in values:
-        field = source.field_index(value.field)
-        column = source.columns[field]
-        if value.function != "count" and column.kind != "number":
-            raise InvalidArgumentError(
-                f"Field {column.name!r} holds {column.kind}, not numbers, so it cannot be "
-                f"{value.function!r}-ed. Use function 'count'."
-            )
-        caption = f"{_CAPTIONS[value.function]} of {column.name}"
-        if any(spec.caption.casefold() == caption.casefold() for spec in specs):
-            raise InvalidArgumentError(f"{caption!r} is listed twice in values.")
-        if caption.casefold() in {other.name.casefold() for other in source.columns}:
-            raise InvalidArgumentError(f"Rename the source column {caption!r}: it clashes.")
-        specs.append(DataSpec(field, value.function, caption))
-    return specs
+def _visible_records(source: Source, fields: list[AxisField]) -> list[int]:
+    hiding = [field for field in fields if field.visible is not None]
+    records = [
+        record
+        for record in range(source.record_count)
+        if all(field.positions[record] in (field.visible or ()) for field in hiding)
+    ]
+    if not records:
+        raise InvalidArgumentError("The items chosen leave no data to summarize.")
+    return records
+
+
+def _keys(source: Source, fields: list[AxisField]) -> list[Path]:
+    return [
+        tuple(field.positions[record] for field in fields) for record in range(source.record_count)
+    ]
+
+
+def _ranker(aggregator: Aggregator, specs: list[DataSpec], *, on_rows: bool) -> Ranker:
+    def rank(field: AxisField, prefix: Path, item: int) -> tuple[float, ...]:
+        if field.sort_by is None:
+            return (item,)
+        data = next(i for i, spec in enumerate(specs) if spec.caption == field.sort_by)
+        path = (*prefix, item)
+        value = aggregator.value(path, (), data) if on_rows else aggregator.value((), path, data)
+        number = 0.0 if value is None or isinstance(value, ExcelError) else float(value)
+        # Excel orders ties by where the items first appear in the source; descending reverses all.
+        appearance = field.item_ids[item]
+        return (-number, -appearance) if field.descending else (number, appearance)
+
+    return rank
+
+
+def _page_filter(axis: AxisField) -> PageFilter:
+    shown = axis.visible
+    return PageFilter(axis, next(iter(shown)) if shown is not None and len(shown) == 1 else None)
+
+
+def _page_cell(page: PageFilter) -> Shown:
+    if not page.field.hides_items:
+        return Shown("(All)")
+    if page.item is not None:
+        return item_label(page.field, page.item)
+    return Shown("(Multiple Items)")
+
+
+def _format_id(workbook: Workbook, number_format: str | None) -> int | None:
+    if number_format is None:
+        return None
+    if number_format in BUILTIN_FORMATS_REVERSE:
+        return BUILTIN_FORMATS_REVERSE[number_format]
+    formats = workbook._number_formats  # pyright: ignore[reportAttributeAccessIssue]
+    return formats.add(number_format) + BUILTIN_FORMATS_MAX_SIZE
 
 
 def _check_free(
@@ -200,73 +277,17 @@ def _pivot_name(workbook: Workbook, name: str | None) -> str:
     return name
 
 
-def _location(shape: Shape, body: CellRange, filter_count: int) -> Location:
-    return Location(
-        ref=str(body),
-        firstHeaderRow=1,
-        firstDataRow=shape.header_rows,
-        firstDataCol=len(shape.rows),
-        rowPageCount=filter_count or None,
-        colPageCount=1 if filter_count else None,
-    )
-
-
-def _pivot_fields(shape: Shape, filters: list[int]) -> list[PivotField]:
-    axes: dict[int, Literal["axisRow", "axisCol", "axisPage"]] = {
-        **dict.fromkeys(filters, "axisPage"),
-        **dict.fromkeys(shape.columns, "axisCol"),
-        **dict.fromkeys(shape.rows, "axisRow"),
-    }
-    summarized = {spec.field for spec in shape.values}
-    return [
-        PivotField(
-            axis=axes.get(position),
-            dataField=True if position in summarized else None,
-            items=_field_items(shape.items.get(position)),
-            numFmtId=column.number_format_id or None,
-            compact=False,
-            outline=False,
-            showAll=False,
-        )
-        for position, column in enumerate(shape.source.columns)
-    ]
-
-
-def _field_items(items: FieldItems | None) -> list[FieldItem]:
-    if items is None:
-        return []
-    return [*(FieldItem(x=position) for position in items.order), FieldItem(t="default")]
-
-
-def _column_fields(columns: list[int], value_count: int) -> list[RowColField]:
-    fields = [RowColField(x=field) for field in columns]
-    if value_count > 1:
-        fields.append(RowColField(x=_DATA_FIELD_COLUMNS))
-    return fields
-
-
-def _data_field(source: Source, spec: DataSpec) -> DataField:
-    column = source.columns[spec.field]
-    return DataField(
-        name=spec.caption,
-        fld=spec.field,
-        subtotal=spec.function,
-        baseField=0,
-        baseItem=0,
-        numFmtId=None if spec.function == "count" else column.number_format_id or None,
-    )
-
-
-def _write(
-    sheet: Worksheet,
-    row: int,
-    column: int,
-    value: CellContent,
-    number_format: str | None,
-) -> None:
+def _write(sheet: Worksheet, row: int, column: int, shown: Shown) -> None:
     cell = writable_cell(sheet, row, column)
-    cell.value = value
-    if isinstance(value, str):
-        cell.data_type = "s"
-    if number_format:
-        cell.number_format = number_format
+    value = shown.value
+    if isinstance(value, ExcelError):
+        cell.value = value.code
+        cell.data_type = "e"
+    else:
+        cell.value = value
+        if isinstance(value, str):
+            cell.data_type = "s"
+    if shown.number_format:
+        cell.number_format = shown.number_format
+    if shown.indent:
+        cell.alignment = Alignment(horizontal="left", indent=shown.indent)
