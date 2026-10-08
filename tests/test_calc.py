@@ -1,5 +1,6 @@
 """The formula calculator behind read_range, and the function prefixes written to files."""
 
+import datetime as dt
 from pathlib import Path
 from typing import Any
 from zipfile import ZipFile
@@ -36,7 +37,7 @@ async def test_formulas_without_a_stored_result_are_calculated(call: ToolCall, f
     data = await read_values(call, "A1:B3")
 
     assert data["values"] == [[10, 30], [20, 60], [None, "big"]]
-    assert data["uncalculated"] is None
+    assert "uncalculated" not in data
 
 
 async def test_stored_results_are_kept(call: ToolCall, files: Path) -> None:
@@ -63,7 +64,7 @@ async def test_unsupported_functions_are_listed_not_guessed(call: ToolCall, file
 
     data = await read_values(call, "B1:B3")
 
-    assert data["values"] == [[None], [None], [2]]
+    assert data["values"] == [[], [], [2]]
     assert data["uncalculated"] == {"B1": "FOO", "B2": "RAND"}
 
 
@@ -74,7 +75,7 @@ async def test_blocked_functions_are_never_calculated(call: ToolCall, files: Pat
 
     data = await read_values(call, "B1:B2")
 
-    assert data["values"] == [[None], [None]]
+    assert data["values"] == []
     assert set(data["uncalculated"]) == {"B1", "B2"}
 
 
@@ -83,7 +84,7 @@ async def test_circular_references_are_uncalculated(call: ToolCall, files: Path)
 
     data = await read_values(call, "A1:B1")
 
-    assert data["values"] == [[None, None]]
+    assert data["values"] == []
     assert data["uncalculated"] == {"A1": "circular reference", "B1": "circular reference"}
 
 
@@ -102,7 +103,7 @@ async def test_work_is_bounded(call: ToolCall, files: Path) -> None:
 
     data = await read_values(call, "A1")
 
-    assert data["values"] == [[None]]
+    assert data["values"] == []
     assert data["uncalculated"] == {"A1": "too much to calculate"}
 
 
@@ -116,7 +117,7 @@ async def test_dates_come_back_as_dates(call: ToolCall, files: Path) -> None:
 
     data = await read_values(call, "A1")
 
-    assert data["values"] == [["2024-03-01T00:00:00"]]
+    assert data["values"] == [["2024-03-01"]]
 
 
 async def test_errors_are_values(call: ToolCall, files: Path) -> None:
@@ -172,3 +173,12 @@ async def test_written_formulas_get_storage_prefixes(call: ToolCall, sample: Pat
 )
 def test_add_prefixes(formula: str, expected: str) -> None:
     assert add_prefixes(formula) == expected
+
+
+async def test_today_and_now(call: ToolCall, files: Path) -> None:
+    make_workbook(files / "calc.xlsx", {"A1": "=TODAY()", "A2": "=INT(NOW())"})
+
+    data = await read_values(call, "A1:A2")
+
+    today = (dt.date.today() - dt.date(1899, 12, 30)).days
+    assert data["values"] == [[today], [today]]

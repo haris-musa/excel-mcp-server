@@ -30,6 +30,9 @@ or anyone who can reach the HTTP endpoint. Its defences are:
   reference can only name sheets of the workbook it is in. Uploaded workbooks are checked
   the same way, including defined names (also when created by `set_defined_name`), conditional formats, data validation, tables and
   chart references.
+- **Calculator**: `read_range` evaluates formulas with a built-in interpreter that has no
+  access to files, the network or other programs. It never evaluates the functions the
+  formula check rejects, and its work (cells evaluated, nesting depth) is bounded per call.
 - **Network**: HTTP binds to localhost by default with DNS rebinding protection. A public
   host requires `EXCEL_MCP_AUTH_TOKEN` unless `--allow-unauthenticated` is passed for a
   deployment where a proxy handles authentication.

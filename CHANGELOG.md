@@ -8,6 +8,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `read_range` in `values` mode calculates formulas that have no stored result, which used
+  to read as null until Excel saved the file. A built-in calculator covers about 260
+  functions (math, statistics, financial and securities, dates, text, lookup, logical,
+  `LET`, `SORT`/`FILTER`/`UNIQUE`/`SEQUENCE`, `SUBTOTAL`, `AGGREGATE`). It follows Excel's
+  rules for blanks, text-numbers, errors, criteria wildcards and rounding; results Excel
+  stored are kept. Formulas it cannot reproduce exactly are returned as null and listed in
+  `uncalculated` with the reason. It is checked against 2,500+ results recorded from real
+  Excel, and its work per call is bounded.
+- Formulas written with functions Excel added after 2007 are stored with the `_xlfn.`
+  prefix (and `_xlpm.` for `LET` names).
+
 - `set_sheet_layout` can hide, show, group and ungroup rows and columns (`rows`, `columns`),
   hide or show a whole sheet (`visibility`; the last visible sheet cannot be hidden), set
   up printing (`print_setup`: orientation, paper size, scale or fit to pages, margins in cm,
@@ -77,6 +88,9 @@ All notable changes to this project are documented here. The format follows
 - `set_sheet_layout` no longer writes overlapping column definitions when it changes a
   column that Excel stored together with its neighbours.
 - Chart titles, axis titles and legends no longer sit on top of the plot in Excel.
+- Formulas that use `IFS`, `XLOOKUP`, `TEXTJOIN`, `STDEV.S`, `SORT` and other newer
+  functions showed `#NAME?` when the file was opened in Excel (and `SORT` made it
+  unopenable) because the storage prefix was missing.
 
 ## [1.1.2] - 2026-10-08
 
