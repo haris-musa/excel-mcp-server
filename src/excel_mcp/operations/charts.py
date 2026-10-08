@@ -84,6 +84,9 @@ def _categorical(sheet: Worksheet, area: CellRange, chart_type: ChartType, optio
         line.y_axis.axId = 200
         line.y_axis.crosses = "max"
         line.y_axis.delete = False
+        line.y_axis.majorGridlines = None
+        for item in line.series:
+            item.smooth = False
         chart += line
     return chart, series
 

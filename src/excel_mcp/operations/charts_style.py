@@ -6,6 +6,7 @@ from openpyxl.chart.label import DataLabelList
 from openpyxl.chart.marker import DataPoint, Marker
 from openpyxl.chart.series import Series
 from openpyxl.chart.shapes import GraphicalProperties
+from openpyxl.chart.title import Title, title_maker
 
 from excel_mcp.operations.charts_options import ROUND_TYPES, ChartOptions, ChartType
 
@@ -13,13 +14,16 @@ _LEGEND_POSITIONS = {"right": "r", "left": "l", "top": "t", "bottom": "b"}
 
 
 def style_chart(chart, options: ChartOptions, chart_type: ChartType) -> None:
-    chart.title = options.title
     chart.width = options.width_cm
     chart.height = options.height_cm
+    # Without an explicit overlay flag, Excel draws the title and legend over the plot.
+    chart.title = _title(options.title)
     if not options.show_legend:
         chart.legend = None
-    elif options.legend_position:
-        chart.legend.position = _LEGEND_POSITIONS[options.legend_position]
+    else:
+        chart.legend.overlay = False
+        if options.legend_position:
+            chart.legend.position = _LEGEND_POSITIONS[options.legend_position]
     if options.data_labels:
         for part in chart._charts:
             part.dataLabels = DataLabelList(
@@ -45,9 +49,17 @@ def style_chart(chart, options: ChartOptions, chart_type: ChartType) -> None:
         )
 
 
+def _title(text: str | None) -> Title | None:
+    if text is None:
+        return None
+    title = title_maker(text)
+    title.overlay = False
+    return title
+
+
 def _style_axes(chart, options: ChartOptions) -> None:
-    chart.x_axis.title = options.x_axis_title
-    chart.y_axis.title = options.y_axis_title
+    chart.x_axis.title = _title(options.x_axis_title)
+    chart.y_axis.title = _title(options.y_axis_title)
     # openpyxl marks axes as deleted by default, which hides them in current Excel.
     chart.x_axis.delete = False
     chart.y_axis.delete = False
@@ -64,8 +76,9 @@ def style_series(
     for index, item in enumerate(series):
         if options.markers is not None:
             item.marker = Marker(symbol="circle" if options.markers else "none")
-        if options.smooth is not None:
-            item.smooth = options.smooth
+        if chart_type in ("line", "scatter"):
+            # Excel curves lines that carry no smooth flag.
+            item.smooth = bool(options.smooth)
         if index < len(colors) and chart_type not in ROUND_TYPES:
             _color_series(item, colors[index], chart_type)
     if chart_type in ROUND_TYPES:

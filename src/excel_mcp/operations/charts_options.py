@@ -50,7 +50,7 @@ class ChartOptions(BaseModel):
     smooth: bool | None = Field(
         default=None,
         description="Draw curved (true) or straight (false) lines. Line and scatter charts "
-        "only. Default: the chart type's own style.",
+        "only. Default: straight.",
     )
     y_axis_min: float | None = Field(
         default=None, description="Lowest value on the (primary) vertical axis. Default: automatic."
