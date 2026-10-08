@@ -117,7 +117,10 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         sheet: SheetName,
         name: Annotated[str, Field(description="PivotTable name, as listed by describe_sheet.")],
     ) -> str:
-        """Remove a PivotTable and clear the cells it fills. The source data is left untouched."""
+        """Remove a PivotTable and clear the cells it fills. The source data is left untouched.
+
+        Fails while slicers or timelines are connected to it.
+        """
         with workspace.edit(path) as workbook:
             removed = pivot_index.delete_pivot(
                 get_sheet(workbook, sheet), name, workspace.limits.max_cells

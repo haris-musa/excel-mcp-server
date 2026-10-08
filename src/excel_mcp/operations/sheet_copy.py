@@ -18,6 +18,7 @@ from excel_mcp.operations.cells import stored_cells
 from excel_mcp.operations.sheet_refs import SheetCopyRefs
 from excel_mcp.operations.sheets import validate_sheet_name
 from excel_mcp.operations.tables import table_names
+from excel_mcp.package import arrays
 from excel_mcp.workspace import get_sheet
 
 
@@ -34,6 +35,7 @@ def copy_sheet(workbook: Workbook, name: str, new_name: str) -> None:
     _copy_sheet_settings(source, target)
     _copy_drawings(source, target, refs)
     _copy_pivots(source, target)
+    arrays.copy_marks(source, target)
 
 
 def _copy_tables(workbook: Workbook, source: Worksheet, target: Worksheet) -> dict[str, str]:

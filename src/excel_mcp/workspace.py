@@ -15,8 +15,7 @@ from openpyxl.chart import AreaChart
 from openpyxl.worksheet._read_only import ReadOnlyWorksheet
 from openpyxl.worksheet.worksheet import Worksheet
 
-from excel_mcp import chart_roundtrip, macros, pivot_ext
-from excel_mcp.app_properties import attach_company, company_of, read_company, with_company
+from excel_mcp import chart_roundtrip, macros, package
 from excel_mcp.config import Limits
 from excel_mcp.errors import (
     InvalidArgumentError,
@@ -45,7 +44,6 @@ class Workspace:
         self.limits = limits
         self.allow_macro_workbooks = allow_macro_workbooks
         self._write_lock = threading.Lock()
-        pivot_ext.keep_extensions()
 
     def resolve(self, raw_path: str) -> Path:
         return self.paths.resolve(raw_path)
@@ -108,6 +106,7 @@ class Workspace:
             path = self.resolve_existing(raw_path)
             workbook = self._load(path, data_only=False)
             _restore_area_chart_axes(workbook)
+            package.capture(path, workbook, self.limits.max_file_bytes)
             try:
                 yield workbook
                 _pin_hyperlinks(workbook)
@@ -159,15 +158,12 @@ class Workspace:
                 "supported; legacy .xls and CSV files must be converted first."
             )
         try:
-            workbook = load_workbook(
+            return load_workbook(
                 path,
                 data_only=data_only,
                 read_only=stream,
                 keep_vba=not stream and path.suffix.lower() in MACRO_SUFFIXES,
             )
-            if not stream:
-                attach_company(workbook, read_company(path))
-            return workbook
         except Exception as error:
             # openpyxl raises many different exception types for damaged files.
             raise WorkbookError(
@@ -179,11 +175,12 @@ def save_atomically(workbook: Workbook, path: Path) -> None:
     """Serialize the workbook in memory, then write it atomically."""
     buffer = io.BytesIO()
     try:
+        package.prepare(workbook)
         workbook.save(buffer)
     except Exception as error:
         # openpyxl reports invalid workbook states with many exception types.
         raise WorkbookError(f"Could not save the workbook: {error}") from None
-    write_atomically(path, with_company(buffer.getvalue(), company_of(workbook)))
+    write_atomically(path, package.apply(workbook, buffer.getvalue()))
 
 
 def write_atomically(path: Path, content: bytes) -> None:

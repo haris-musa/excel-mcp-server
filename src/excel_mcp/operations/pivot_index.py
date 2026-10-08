@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.operations.cells import clear_range
+from excel_mcp.package.guards import check_pivot_removal
 from excel_mcp.refs import CellRange, parse_range
 from excel_mcp.text import quoted
 from excel_mcp.workspace import worksheets
@@ -49,6 +50,7 @@ def delete_pivot(sheet: Worksheet, name: str, max_cells: int) -> PivotInfo:
     pivots = sheet_pivots(sheet)
     for pivot in pivots:
         if pivot.name.casefold() == name.strip().casefold():
+            check_pivot_removal(sheet, pivot.name)
             info = PivotInfo(name=pivot.name, range=pivot.location.ref, source=_source(pivot))
             pivots.remove(pivot)
             clear_range(

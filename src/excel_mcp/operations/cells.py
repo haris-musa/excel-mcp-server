@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from excel_mcp.errors import InvalidArgumentError, LimitExceededError
 from excel_mcp.operations.hyperlinks import Link, set_link
+from excel_mcp.operations.spill import spill_formulas
 from excel_mcp.refs import (
     MAX_COLUMN,
     MAX_ROW,
@@ -34,6 +35,7 @@ class WriteResult(BaseModel):
     sheet: str
     range: str
     cells_written: int
+    blocked: list[str] | None = None
 
 
 class FindResult(BaseModel):
@@ -190,15 +192,21 @@ def write_range(
             raise InvalidArgumentError(f"Link cell {link.cell} is outside the written {written}.")
     names = sheet_names(sheet)
     converted = [[to_cell(value, names) for value in row] for row in rows]
+    formulas = []
     for row_offset, row in enumerate(converted):
         for col_offset, value in enumerate(row):
             cell = writable_cell(sheet, start_row + row_offset, start_col + col_offset)
             cell.value = value
             if number_format := date_number_format(value):
                 cell.number_format = number_format
+            if cell.data_type == "f":
+                formulas.append(cell)
     for link in links:
         set_link(writable_cell(sheet, *parse_cell(link.cell)), link)
-    return WriteResult(sheet=sheet.title, range=str(written), cells_written=count)
+    blocked = spill_formulas(sheet, formulas, max_cells)
+    return WriteResult(
+        sheet=sheet.title, range=str(written), cells_written=count, blocked=blocked or None
+    )
 
 
 def clear_range(sheet: Worksheet, ref: str, contents: bool, formats: bool, max_cells: int) -> str:

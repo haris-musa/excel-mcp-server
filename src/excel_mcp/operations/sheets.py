@@ -9,6 +9,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.operations.cells import used_range
+from excel_mcp.package.guards import check_sheet_removal
 from excel_mcp.refs import MAX_COLUMN, MAX_ROW
 from excel_mcp.workspace import get_sheet
 
@@ -48,6 +49,7 @@ def delete_sheet(workbook: Workbook, name: str) -> None:
     visible = [other for other in workbook.worksheets if other.sheet_state == "visible"]
     if visible == [sheet]:
         raise InvalidArgumentError("A workbook must keep at least one visible worksheet.")
+    check_sheet_removal(sheet)
     workbook.remove(sheet)
 
 

@@ -10,9 +10,16 @@ from openpyxl.workbook.defined_name import DefinedName
 from excel_mcp.calc.engine import Engine
 from excel_mcp.calc.values import ExcelError, UncalculableError
 from excel_mcp.operations.cells import write_range
+from excel_mcp.workspace import save_atomically
 
 MAX_CELLS = 1_000_000
 DEFAULT_TOLERANCE = 1e-12
+CASE_STRIDE = 25  # rows between cases, so that what a case spills never reaches the next one
+
+
+def case_row(index: int) -> int:
+    """The row of 'Cases' column A that holds the formula with this 0-based index."""
+    return 1 + index * CASE_STRIDE
 
 
 def build_workbook(
@@ -22,7 +29,7 @@ def build_workbook(
     formulas: list[str],
     hidden_rows: dict[str, list[int]],
 ) -> None:
-    """Write the inputs and one formula per row of 'Cases' column A, as the server would."""
+    """Write the inputs and the formulas into 'Cases' column A, as the server would."""
     workbook = Workbook()
     workbook.remove(workbook.active)  # pyright: ignore[reportArgumentType]
     for title in inputs:
@@ -31,14 +38,14 @@ def build_workbook(
         if rows:
             write_range(workbook[title], "A1", rows, [], MAX_CELLS)  # pyright: ignore[reportArgumentType]
     cases = workbook["Cases"]
-    for row, formula in enumerate(formulas, start=1):
-        write_range(cases, f"A{row}", [[formula]], [], MAX_CELLS)  # pyright: ignore[reportArgumentType]
+    for index, formula in enumerate(formulas):
+        write_range(cases, f"A{case_row(index)}", [[formula]], [], MAX_CELLS)  # pyright: ignore[reportArgumentType]
     for title, rows_hidden in hidden_rows.items():
         for row in rows_hidden:
             workbook[title].row_dimensions[row].hidden = True
     for name, target in names.items():
         workbook.defined_names[name] = DefinedName(name, attr_text=target)
-    workbook.save(path)
+    save_atomically(workbook, path)
 
 
 def calculate_cases(path: Path, count: int) -> list[object]:
@@ -48,9 +55,9 @@ def calculate_cases(path: Path, count: int) -> list[object]:
     engine = Engine(cached, formulas)
     sheet = formulas["Cases"]
     results: list[object] = []
-    for row in range(1, count + 1):
+    for index in range(count):
         try:
-            value = engine.calculate(sheet, row, 1)
+            value = engine.calculate(sheet, case_row(index), 1)
         except UncalculableError:
             results.append(None)
             continue

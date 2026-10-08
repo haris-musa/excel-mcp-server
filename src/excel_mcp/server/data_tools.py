@@ -89,6 +89,10 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         `links` makes written cells clickable, with their value as the display text, e.g.
         [{"cell": "B2", "target": "https://example.com"}]. Only http, https, mailto and places in
         this workbook are allowed. clear_range with clear='all' removes a link.
+
+        A formula that returns several values (`=SORT(A2:A9)`, `=A2:A9*2`) spills into the
+        cells below and to the right, as in Excel. `blocked` lists formulas that cannot
+        spill because a cell in the way holds data (Excel shows #SPILL!).
         """
         with workspace.edit(path) as workbook:
             return cells.write_range(

@@ -1,10 +1,13 @@
 """Results for formula cells that Excel has not calculated yet."""
 
 import datetime as dt
+from typing import cast
 
+from openpyxl.cell.cell import Cell
 from openpyxl.styles.numbers import is_date_format
 from openpyxl.utils.datetime import from_excel
 from openpyxl.worksheet._read_only import ReadOnlyWorksheet
+from openpyxl.worksheet.formula import ArrayFormula
 from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.calc.engine import Engine
@@ -13,6 +16,7 @@ from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.operations import cells
 from excel_mcp.operations.cells import RangeData
 from excel_mcp.operations.comparison import FormulaResults
+from excel_mcp.operations.spill import is_free
 from excel_mcp.refs import CellRange, cell_name, parse_range
 from excel_mcp.values import CellValue, to_json
 from excel_mcp.workspace import Workspace, get_sheet, get_streamed_sheet
@@ -106,18 +110,40 @@ def _fill(
         target = get_sheet(formulas, sheet)
         engine = Engine(stored, formulas)
         for row, col in pending:
+            cell = target._cells[(row, col)]
             try:
-                result = engine.calculate(target, row, col)
+                if isinstance(cell.value, ArrayFormula):
+                    _fill_spill(engine, cast(Cell, cell), data, area)
+                else:
+                    result = engine.calculate(target, row, col)
+                    _put(data, area, row, col, _json(result, cell.number_format))
             except UncalculableError as reason:
                 unresolved[cell_name(row, col)] = str(reason)
-                continue
-            number_format = target._cells[(row, col)].number_format
-            _put(data, area, row, col, _json(result, number_format))
     if unresolved:
         listed = dict(list(unresolved.items())[:MAX_LISTED])
         if len(unresolved) > MAX_LISTED:
             listed["..."] = f"{len(unresolved) - MAX_LISTED} more"
         data.uncalculated = listed
+
+
+def _fill_spill(engine: Engine, anchor: Cell, data: RangeData, area: CellRange) -> None:
+    """Show an array formula and what it spills into, as Excel would once it calculated it."""
+    sheet = cast(Worksheet, anchor.parent)
+    grid = engine.spill(
+        sheet, anchor.row, anchor.column, str(cast(ArrayFormula, anchor.value).text)
+    )
+    spilled = CellRange(
+        anchor.row, anchor.column, anchor.row + grid.height - 1, anchor.column + grid.width - 1
+    )
+    if not is_free(sheet, spilled, anchor):
+        _put(data, area, anchor.row, anchor.column, ExcelError("#SPILL!").code)
+        return
+    for row_offset, line in enumerate(grid.rows):
+        for col_offset, item in enumerate(line):
+            row, col = anchor.row + row_offset, anchor.column + col_offset
+            inside = area.min_row <= row <= area.max_row and area.min_col <= col <= area.max_col
+            if inside and (row_offset == col_offset == 0 or _stored(data, area, row, col) is None):
+                _put(data, area, row, col, _json(item, anchor.number_format))
 
 
 def _put(data: RangeData, area: CellRange, row: int, col: int, value: CellValue) -> None:

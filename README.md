@@ -218,9 +218,18 @@ Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
   subtotals, other figures along a field, because Excel mixes the values fields up there.
 - Inserting or deleting rows and columns does not update formulas, charts or tables that
   refer to the moved cells.
-- Workbook features openpyxl does not understand, such as shapes, slicers and some
-  embedded objects, may be lost when a workbook is edited. Pictures, charts, tables and
-  macros in `.xlsm` files are kept.
+- Editing a workbook keeps what the tools cannot change: sparklines, extended conditional
+  formats and validation, slicers and timelines, newer charts (waterfall, histogram,
+  treemap and others), threaded comments, shapes, form controls, linked data types and
+  custom XML stay as Excel saved them. They are not moved when rows or columns are inserted
+  or deleted and `copy_sheet` does not copy them. Deleting a sheet removes slicers that only
+  it used; slicers that would be left without their PivotTable or table block the deletion.
+  Digital signatures are removed, as Excel does when a signed file changes.
+- Formulas that return several values (`FILTER`, `SORT`, `UNIQUE`, `SEQUENCE`, `A2:A9*2`) are
+  stored as dynamic array formulas, as Excel stores them, and spill into the cells next to
+  them. A cell in the way blocks the spill (Excel shows `#SPILL!`), and `write_range`
+  reports it. Where the calculator cannot tell how large a result is, only the formula's
+  cell is stored and Excel fills in the rest when it opens the file.
 
 ## Upgrading from 0.x
 

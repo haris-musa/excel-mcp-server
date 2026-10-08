@@ -150,15 +150,15 @@ async def test_written_formulas_get_storage_prefixes(call: ToolCall, sample: Pat
         path="sales.xlsx",
         sheet="Report",
         start_cell="A1",
-        rows=[['=IFS(Data!C2>5,"a",TRUE,"b")'], ["=SORT(Data!C2:C5)"], ["=SUM(Data!C2:C5)"]],
+        rows=[['=IFS(Data!C2>5,"a",TRUE,"b")', "=SORT(Data!C2:C5)"], ["=SUM(Data!C2:C5)"]],
     )
 
     sheet = load_workbook(sample)["Report"]
     assert sheet["A1"].value == '=_xlfn.IFS(Data!C2>5,"a",TRUE,"b")'
-    assert sheet["A2"].value == "=_xlfn._xlws.SORT(Data!C2:C5)"
-    assert sheet["A3"].value == "=SUM(Data!C2:C5)"
+    assert sheet["B1"].value.text == "=_xlfn._xlws.SORT(Data!C2:C5)"
+    assert sheet["A2"].value == "=SUM(Data!C2:C5)"
     data = await call("read_range", path="sales.xlsx", sheet="Report")
-    assert data["values"] == [["a"], [3], [25]]
+    assert data["values"] == [["a", 3], [25, 5], [None, 7], [None, 10]]
 
 
 @pytest.mark.parametrize(
@@ -169,6 +169,26 @@ async def test_written_formulas_get_storage_prefixes(call: ToolCall, sample: Pat
         ('=TEXTJOIN(",",TRUE,"IFS(")', '=_xlfn.TEXTJOIN(",",TRUE,"IFS(")'),
         ("=STDEV.S(A1:A3)+STDEV(A1:A3)", "=_xlfn.STDEV.S(A1:A3)+STDEV(A1:A3)"),
         ("=SUM(A1)", "=SUM(A1)"),
+        # As Excel itself stores the formulas (Formula2 saved to a file).
+        (
+            "=MAP(A1:A5,LAMBDA(x,x*2))",
+            "=_xlfn.MAP(A1:A5,_xlfn.LAMBDA(_xlpm.x,_xlpm.x*2))",
+        ),
+        (
+            "=BYROW(A1:B5,LAMBDA(r,SUM(r)))",
+            "=_xlfn.BYROW(A1:B5,_xlfn.LAMBDA(_xlpm.r,SUM(_xlpm.r)))",
+        ),
+        (
+            "=REDUCE(0,A1:A5,LAMBDA(a,b,a+b))",
+            "=_xlfn.REDUCE(0,A1:A5,_xlfn.LAMBDA(_xlpm.a,_xlpm.b,_xlpm.a+_xlpm.b))",
+        ),
+        ("=LAMBDA(x,ISOMITTED(x))(1)", "=_xlfn.LAMBDA(_xlpm.x,_xlfn.ISOMITTED(_xlpm.x))(1)"),
+        (
+            "=BYCOL(A1:B5,LAMBDA(c,SUM(c)))",
+            "=_xlfn.BYCOL(A1:B5,_xlfn.LAMBDA(_xlpm.c,SUM(_xlpm.c)))",
+        ),
+        ("=VALUETOTEXT(A1)", "=_xlfn.VALUETOTEXT(A1)"),
+        ("=ARRAYTOTEXT(A1:B2)", "=_xlfn.ARRAYTOTEXT(A1:B2)"),
     ],
 )
 def test_add_prefixes(formula: str, expected: str) -> None:

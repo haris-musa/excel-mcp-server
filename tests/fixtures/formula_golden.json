@@ -11899,19 +11899,19 @@
   },
   {
    "formula": "=SUM(Data!C2:C11*2)",
-   "expected": "#VALUE!"
+   "expected": 150.0
   },
   {
    "formula": "=SUM((Data!C2:C11>5)*Data!D2:D11)",
-   "expected": "#VALUE!"
+   "expected": 15.0
   },
   {
    "formula": "=MAX(Data!C2:C11*2)",
-   "expected": "#VALUE!"
+   "expected": 24.0
   },
   {
    "formula": "=SUM(IF(Data!C2:C11>5,Data!C2:C11,0))",
-   "expected": "#VALUE!"
+   "expected": 63.0
   },
   {
    "formula": "=ROUND(2.5,0)",
@@ -12687,7 +12687,7 @@
   },
   {
    "formula": "=CHOOSE(2,1,Data!C2:C4)",
-   "expected": "#VALUE!"
+   "expected": 10.0
   },
   {
    "formula": "=ISNUMBER(1)",
@@ -14011,7 +14011,7 @@
   },
   {
    "formula": "=INDEX(Data!C2:C11,0)",
-   "expected": "#VALUE!"
+   "expected": 10.0
   },
   {
    "formula": "=INDEX(Data!C2:C11,11)",
@@ -14027,7 +14027,7 @@
   },
   {
    "formula": "=INDEX(Data!A2:D11,0,3)",
-   "expected": "#VALUE!"
+   "expected": 10.0
   },
   {
    "formula": "=INDEX(Data!A2:D11,2)",
@@ -14035,7 +14035,7 @@
   },
   {
    "formula": "=INDEX(Data!A2:D11,0,0)",
-   "expected": "#VALUE!"
+   "expected": "North"
   },
   {
    "formula": "=INDEX(Data!A2:D11,12,1)",
@@ -14271,7 +14271,7 @@
   },
   {
    "formula": "=ROW()",
-   "expected": 761.0
+   "expected": 19001.0
   },
   {
    "formula": "=COLUMN(Data!C5)",
@@ -14311,11 +14311,11 @@
   },
   {
    "formula": "=TRANSPOSE(Data!C2:E2)",
-   "expected": "#VALUE!"
+   "expected": 10.0
   },
   {
    "formula": "=SUM(TRANSPOSE(Data!C2:C4))",
-   "expected": "#VALUE!"
+   "expected": 22.0
   },
   {
    "formula": "=MEDIAN(Data!C2:C11)",
@@ -14431,7 +14431,7 @@
   },
   {
    "formula": "=LARGE(Data!C2:C11*2,1)",
-   "expected": "#VALUE!"
+   "expected": 24.0
   },
   {
    "formula": "=SMALL(Data!G2:G11,1)",
@@ -15596,7 +15596,7 @@
   },
   {
    "formula": "=MATCH(7,Data!C2:C11*1,0)",
-   "expected": "#VALUE!"
+   "expected": 3.0
   },
   {
    "formula": "=INDEX(Data!C2:C11*2,3)",
@@ -15604,7 +15604,7 @@
   },
   {
    "formula": "=VLOOKUP(7,Data!C2:D11*1,2,FALSE)",
-   "expected": "#VALUE!"
+   "expected": 1.5
   },
   {
    "formula": "=XLOOKUP(7,Data!C2:C11*1,Data!A2:A11)",
@@ -15616,23 +15616,23 @@
   },
   {
    "formula": "=MEDIAN(Data!C2:C11*1)",
-   "expected": "#VALUE!"
+   "expected": 7.5
   },
   {
    "formula": "=STDEV(Data!C2:C11*1)",
-   "expected": "#VALUE!"
+   "expected": 3.0276503540974917
   },
   {
    "formula": "=PERCENTILE(Data!C2:C11*1,0.5)",
-   "expected": "#VALUE!"
+   "expected": 7.5
   },
   {
    "formula": "=QUARTILE(Data!C2:C11*1,1)",
-   "expected": "#VALUE!"
+   "expected": 5.25
   },
   {
    "formula": "=SMALL(Data!C2:C11*1,2)",
-   "expected": "#VALUE!"
+   "expected": 4.0
   },
   {
    "formula": "=IRR(Data!K2:K6*1)",
@@ -15640,11 +15640,11 @@
   },
   {
    "formula": "=NPV(0.1,Data!K2:K6*1)",
-   "expected": "#VALUE!"
+   "expected": 105.05988786160889
   },
   {
    "formula": "=XNPV(0.1,Data!K2:K6*1,Data!L2:L6)",
-   "expected": "#VALUE!"
+   "expected": 324.017779534713
   },
   {
    "formula": "=MIRR(Data!K2:K6*1,0.1,0.1)",
@@ -15652,23 +15652,23 @@
   },
   {
    "formula": "=FVSCHEDULE(100,Data!D2:D4*1)",
-   "expected": "#VALUE!"
+   "expected": 1875.0
   },
   {
    "formula": "=COUNT(Data!C2:C11*1)",
-   "expected": 0.0
+   "expected": 10.0
   },
   {
    "formula": "=AVERAGE(Data!C2:C11*1)",
-   "expected": "#VALUE!"
+   "expected": 7.5
   },
   {
    "formula": "=PRODUCT(Data!C2:C11*1)",
-   "expected": "#VALUE!"
+   "expected": 239500800.0
   },
   {
    "formula": "=SUMSQ(Data!C2:C11*1)",
-   "expected": "#VALUE!"
+   "expected": 645.0
   },
   {
    "formula": "=MODE(Data!C2:C11*1)",
@@ -15688,23 +15688,23 @@
   },
   {
    "formula": "=TEXTJOIN(\",\",TRUE,Data!C2:C4*1)",
-   "expected": "#VALUE!"
+   "expected": "10,5,7"
   },
   {
    "formula": "=CONCAT(Data!C2:C4*1)",
-   "expected": "#VALUE!"
+   "expected": "1057"
   },
   {
    "formula": "=AND(Data!C2:C4*1)",
-   "expected": "#VALUE!"
+   "expected": true
   },
   {
    "formula": "=OR(Data!C2:C4*1)",
-   "expected": "#VALUE!"
+   "expected": true
   },
   {
    "formula": "=NETWORKDAYS(Data!E2,Data!E10,Data!E5:E6+0)",
-   "expected": "#VALUE!"
+   "expected": 250.0
   },
   {
    "formula": "=SUMPRODUCT(--(Data!A2:A11=\"North\"),Data!C2:C11)",
@@ -15712,31 +15712,31 @@
   },
   {
    "formula": "=GEOMEAN(Data!C2:C11*1)",
-   "expected": "#VALUE!"
+   "expected": 6.885424124446887
   },
   {
    "formula": "=MAX(Data!C2:C11+0)",
-   "expected": "#VALUE!"
+   "expected": 12.0
   },
   {
    "formula": "=COUNTA(Data!C2:C11&\"\")",
-   "expected": 1.0
+   "expected": 10.0
   },
   {
    "formula": "=LEN(Data!A2:A11)",
-   "expected": "#VALUE!"
+   "expected": 5.0
   },
   {
    "formula": "=ROUND(Data!D2:D11,0)",
-   "expected": "#VALUE!"
+   "expected": 2.0
   },
   {
    "formula": "=SUM(ROUND(Data!D2:D11,0))",
-   "expected": "#VALUE!"
+   "expected": 22.0
   },
   {
    "formula": "=SUM(LEN(Data!A2:A11))",
-   "expected": "#VALUE!"
+   "expected": 46.0
   },
   {
    "formula": "=SUMPRODUCT(LEN(Data!A2:A11)*1)",
@@ -15748,7 +15748,7 @@
   },
   {
    "formula": "=INDEX(Data!C2:C11,0)+1",
-   "expected": "#VALUE!"
+   "expected": 11.0
   },
   {
    "formula": "=SUM(INDEX(Data!C2:C11,0))",
@@ -15760,31 +15760,32 @@
   },
   {
    "formula": "=HLOOKUP(2,Data!H1:J3*1,2,TRUE)",
-   "expected": "#VALUE!"
+   "expected": "#N/A"
   },
   {
    "formula": "=XIRR(Data!K2:K6*1,Data!L2:L6)",
-   "expected": "#VALUE!"
+   "expected": 0.810939610004425,
+   "tolerance": 1e-08
   },
   {
    "formula": "=DEVSQ(Data!C2:C11*1)",
-   "expected": "#VALUE!"
+   "expected": 82.5
   },
   {
    "formula": "=AVEDEV(Data!C2:C11*1)",
-   "expected": "#VALUE!"
+   "expected": 2.5
   },
   {
    "formula": "=HARMEAN(Data!C2:C11*1)",
-   "expected": "#VALUE!"
+   "expected": 6.237483404963884
   },
   {
    "formula": "=VAR(Data!C2:C11*1)",
-   "expected": "#VALUE!"
+   "expected": 9.166666666666666
   },
   {
    "formula": "=LARGE(Data!C2:C11*1,2)",
-   "expected": "#VALUE!"
+   "expected": 11.0
   },
   {
    "formula": "=IRR(Data!K2:K6+0,0.2)",
@@ -15901,7 +15902,7 @@
   },
   {
    "formula": "=SUM(IF(Data!C2:C11>5,1,0))",
-   "expected": "#VALUE!"
+   "expected": 7.0
   },
   {
    "formula": "=LEN(TEXT(1234.5,\"#,##0.00\"))",

@@ -3,7 +3,7 @@
 Excel stores these with a prefix (``_xlfn.IFS``). A formula written without it is
 reported as #NAME? when the file is opened, and some (``SORT``) stop the file from
 opening at all, so formulas are prefixed when they are written. The names that LET
-declares are stored with a ``_xlpm.`` prefix.
+declares, and the parameters of LAMBDA, are stored with a ``_xlpm.`` prefix.
 """
 
 import re
@@ -17,6 +17,7 @@ _XLFN = [
     "ACOTH",
     "AGGREGATE",
     "ARABIC",
+    "ARRAYTOTEXT",
     "BASE",
     "BETA.DIST",
     "BETA.INV",
@@ -28,6 +29,8 @@ _XLFN = [
     "BITOR",
     "BITRSHIFT",
     "BITXOR",
+    "BYCOL",
+    "BYROW",
     "CEILING.MATH",
     "CEILING.PRECISE",
     "CHISQ.DIST",
@@ -74,6 +77,7 @@ _XLFN = [
     "IFNA",
     "IFS",
     "ISFORMULA",
+    "ISOMITTED",
     "ISOWEEKNUM",
     "LAMBDA",
     "LET",
@@ -134,6 +138,7 @@ _XLFN = [
     "UNICHAR",
     "UNICODE",
     "UNIQUE",
+    "VALUETOTEXT",
     "VAR.P",
     "VAR.S",
     "VSTACK",
@@ -163,6 +168,9 @@ class _Call:
     args: list[list[int]] = field(default_factory=lambda: [[]])
 
 
+_DECLARING = ("LET", "LAMBDA")
+
+
 def add_prefixes(formula: str) -> str:
     """Return the formula with the storage prefixes Excel expects on functions and LET names."""
     tokenizer = Tokenizer(formula)
@@ -181,7 +189,7 @@ def add_prefixes(formula: str) -> str:
             stack.append(_Call(name, index))
         elif token.type == Token.FUNC and token.subtype == Token.CLOSE and stack:
             call = stack.pop()
-            if call.name == "LET":
+            if call.name in _DECLARING:
                 declared = _declared_names(tokens, call)
                 names.update(
                     position
@@ -216,10 +224,15 @@ def _is_name(token: Token) -> bool:
 
 
 def _declared_names(tokens: list[Token], call: _Call) -> set[str]:
-    """The names a LET call declares: its odd-numbered arguments, except the last."""
+    """The names a LET call declares (its odd-numbered arguments, except the last), or all
+    the parameters of a LAMBDA (every argument but the last)."""
     declared = set()
     for number, indexes in enumerate(call.args[:-1]):
         parts = [i for i in indexes if tokens[i].type != Token.WSPACE]
-        if number % 2 == 0 and len(parts) == 1 and _is_name(tokens[parts[0]]):
+        if (
+            (call.name == "LAMBDA" or number % 2 == 0)
+            and len(parts) == 1
+            and _is_name(tokens[parts[0]])
+        ):
             declared.add(tokens[parts[0]].value.casefold())
     return declared
