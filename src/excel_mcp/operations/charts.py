@@ -17,13 +17,22 @@ from openpyxl.chart import (
 from openpyxl.chart._chart import ChartBase
 from openpyxl.chart.data_source import AxDataSource, NumDataSource, NumRef
 from openpyxl.chart.series import Series, XYSeries
+from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.errors import InvalidArgumentError
+from excel_mcp.operations import chartex
 from excel_mcp.operations import charts_axes as axes
-from excel_mcp.operations.chart_index import replace_chart
+from excel_mcp.operations.chart_index import (
+    check_index,
+    delete_chart,
+    list_charts,
+    replace_chart,
+)
 from excel_mcp.operations.charts_check import check_chart
 from excel_mcp.operations.charts_data import Plot, SeriesIn, resolve_series
+from excel_mcp.operations.charts_modern import check_modern, check_only_for, resolve_modern
 from excel_mcp.operations.charts_options import (
+    MODERN_TYPES,
     ROUND_TYPES,
     ChartOptions,
     ChartType,
@@ -75,6 +84,15 @@ def create_chart(
                 "delete the sheet and create it again."
             )
         validate_sheet_name(sheet, workbook.sheetnames)
+    check_only_for(options, chart_type)
+    if chart_type in MODERN_TYPES:
+        if series_in == "rows":
+            raise InvalidArgumentError(
+                f"{chart_type} charts read their data in columns; list rows with `series`."
+            )
+        return _create_modern(
+            workbook, host, anchor, chart_type, data_range, series, categories, options, index
+        )
     plots = resolve_series(
         workbook,
         host.title if host else sheet,
@@ -92,8 +110,45 @@ def create_chart(
     if index is None:
         host.add_chart(chart, anchor)
         return f"Added a {chart_type} chart to {host.title} at {anchor}."
+    moved = index > len(host._charts)
     replace_chart(host, index, chart, anchor)
-    return f"Replaced chart {index} of {host.title} with a {chart_type} chart at {anchor}."
+    return _replaced(host, index, chart_type, anchor, len(host._charts) if moved else index)
+
+
+def _create_modern(
+    workbook: Workbook,
+    host: Worksheet | None,
+    anchor: str | None,
+    chart_type: ChartType,
+    data_range: str | None,
+    series: list[SeriesSpec],
+    categories: str | None,
+    options: ChartOptions,
+    index: int | None,
+) -> str:
+    if host is None or anchor is None:
+        raise InvalidArgumentError(
+            f"A {chart_type} chart sits on the sheet: give anchor_cell, e.g. 'E2'."
+        )
+    plots = resolve_modern(workbook, host.title, chart_type, data_range, series, categories)
+    check_modern(plots, chart_type, options)
+    if index is None:
+        chartex.add(workbook, host, anchor, chart_type, plots, options, None)
+        return f"Added a {chart_type} chart to {host.title} at {anchor}."
+    check_index(host, index)
+    classic = len(host._charts)
+    if index > classic:
+        old = chartex.modern_charts(host)[index - classic - 1]
+        chartex.add(workbook, host, anchor, chart_type, plots, options, old)
+        return _replaced(host, index, chart_type, anchor, index)
+    delete_chart(host, index)
+    chartex.add(workbook, host, anchor, chart_type, plots, options, None)
+    return _replaced(host, index, chart_type, anchor, len(list_charts(host)))
+
+
+def _replaced(host: Worksheet, index: int, chart_type: str, anchor: str | None, now: int) -> str:
+    moved = f" It is now chart {now}." if now != index else ""
+    return f"Replaced chart {index} of {host.title} with a {chart_type} chart at {anchor}.{moved}"
 
 
 def build_chart(plots: list[Plot], chart_type: ChartType, options: ChartOptions) -> ChartBase:

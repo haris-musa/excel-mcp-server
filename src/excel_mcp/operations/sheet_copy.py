@@ -10,6 +10,7 @@ from openpyxl.worksheet.formula import ArrayFormula
 from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.formulas import storable_formula, storable_operand
+from excel_mcp.operations import chartex
 from excel_mcp.operations.cells import stored_cells
 from excel_mcp.operations.sheet_refs import SheetCopyRefs
 from excel_mcp.operations.sheets import validate_sheet_name
@@ -128,6 +129,7 @@ def _copy_drawings(source: Worksheet, target: Worksheet, refs: SheetCopyRefs) ->
             for reference in chart_references(plot):
                 reference.f = refs.operand(str(reference.f), target.title)
         target.add_chart(clone)
+    chartex.copy(source, target, refs)
 
 
 def _copy_pivots(source: Worksheet, target: Worksheet) -> None:

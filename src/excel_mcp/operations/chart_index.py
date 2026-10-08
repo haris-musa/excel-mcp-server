@@ -5,22 +5,16 @@ from openpyxl.chart._chart import ChartBase
 from openpyxl.chart.title import Title
 from openpyxl.drawing.spreadsheet_drawing import OneCellAnchor, TwoCellAnchor
 from openpyxl.worksheet.worksheet import Worksheet
-from pydantic import BaseModel
 
 from excel_mcp.errors import InvalidArgumentError
+from excel_mcp.operations import chartex
+from excel_mcp.operations.chart_info import ChartInfo
 from excel_mcp.refs import cell_name
 
 
-class ChartInfo(BaseModel):
-    index: int
-    type: str
-    title: str | None
-    anchor: str | None
-    series: list[str]
-
-
 def list_charts(sheet: Worksheet) -> list[ChartInfo]:
-    return [
+    """The charts of a sheet: those openpyxl models first, then the Excel 2016 ones."""
+    classic = [
         ChartInfo(
             index=index,
             type=_type_name(chart),
@@ -30,17 +24,26 @@ def list_charts(sheet: Worksheet) -> list[ChartInfo]:
         )
         for index, chart in enumerate(sheet._charts, start=1)  # pyright: ignore[reportAttributeAccessIssue]
     ]
+    return classic + chartex.describe(sheet, len(classic) + 1)
 
 
 def delete_chart(sheet: Worksheet, index: int) -> ChartInfo:
     removed = check_index(sheet, index)
-    del sheet._charts[index - 1]  # pyright: ignore[reportAttributeAccessIssue]
+    classic = len(sheet._charts)  # pyright: ignore[reportAttributeAccessIssue]
+    if index > classic:
+        chartex.remove(sheet, chartex.modern_charts(sheet)[index - classic - 1])
+    else:
+        del sheet._charts[index - 1]  # pyright: ignore[reportAttributeAccessIssue]
     return removed
 
 
 def replace_chart(sheet: Worksheet, index: int, chart: ChartBase, anchor: str | None) -> None:
     """Put `chart` where chart `index` was in the sheet's list, drawn at `anchor`."""
     check_index(sheet, index)
+    if index > len(sheet._charts):  # pyright: ignore[reportAttributeAccessIssue]
+        delete_chart(sheet, index)
+        sheet.add_chart(chart, anchor)
+        return
     sheet.add_chart(chart, anchor)
     sheet._charts[index - 1] = sheet._charts.pop()  # pyright: ignore[reportAttributeAccessIssue]
 

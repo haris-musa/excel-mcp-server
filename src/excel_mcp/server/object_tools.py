@@ -35,7 +35,14 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     def create_chart(
         path: WorkbookPath,
         sheet: SheetName,
-        chart_type: Annotated[ChartType, Field(description="Kind of chart.")],
+        chart_type: Annotated[
+            ChartType,
+            Field(
+                description="Kind of chart. waterfall, histogram, pareto, box_whisker, treemap, "
+                "sunburst and funnel are Excel 2016 charts: they need anchor_cell and take no "
+                "combo, trendline, colors or secondary axis."
+            ),
+        ],
         options: Annotated[ChartOptions, Field(default_factory=ChartOptions)],
         anchor_cell: Annotated[
             str | None,
@@ -49,7 +56,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             Field(
                 description="A block with a header row, labels in the first column and one "
                 "series per further column, e.g. 'A1:C13' or 'Data!A1:C13'. Scatter: x values "
-                "first. Bubble: x, y, size."
+                "first. Bubble: x, y, size. Excel 2016 charts: waterfall, pareto, funnel and "
+                "box_whisker take labels then values; histogram, values only; treemap and "
+                "sunburst, the hierarchy columns then the sizes."
             ),
         ] = None,
         series_in: Annotated[
@@ -78,8 +87,8 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         Give data_range for a plain block, or series for ranges that are not adjacent, sit in
         rows, have their own names or live on other sheets. Combo charts take a `type` and
         `secondary_axis` per series. To change a chart, create it again with `index`.
-        Options that do not fit the chart type are rejected. describe_sheet lists the charts;
-        delete_chart removes one.
+        Options that do not fit the chart type are rejected. describe_sheet lists the charts
+        (those of Excel 2016 after the others); delete_chart removes one.
         """
         with workspace.edit(path) as workbook:
             return charts.create_chart(

@@ -701,17 +701,17 @@ Add a chart to `sheet`, or replace one.
 Give data_range for a plain block, or series for ranges that are not adjacent, sit in
 rows, have their own names or live on other sheets. Combo charts take a `type` and
 `secondary_axis` per series. To change a chart, create it again with `index`.
-Options that do not fit the chart type are rejected. describe_sheet lists the charts;
-delete_chart removes one.
+Options that do not fit the chart type are rejected. describe_sheet lists the charts
+(those of Excel 2016 after the others); delete_chart removes one.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
-| `chart_type` | `column` \| `bar` \| `line` \| `area` \| `pie` \| `doughnut` \| `radar` \| `scatter` \| `bubble` | yes | Kind of chart. |
+| `chart_type` | `column` \| `bar` \| `line` \| `area` \| `pie` \| `doughnut` \| `radar` \| `scatter` \| `bubble` \| `waterfall` \| `histogram` \| `pareto` \| `box_whisker` \| `treemap` \| `sunburst` \| `funnel` | yes | Kind of chart. waterfall, histogram, pareto, box_whisker, treemap, sunburst and funnel are Excel 2016 charts: they need anchor_cell and take no combo, trendline, colors or secondary axis. |
 | `options` | object | no |  |
 | `anchor_cell` | string | no | Top-left cell, e.g. 'E2'. Omit to put the chart on a new chart sheet named `sheet`. |
-| `data_range` | string | no | A block with a header row, labels in the first column and one series per further column, e.g. 'A1:C13' or 'Data!A1:C13'. Scatter: x values first. Bubble: x, y, size. |
+| `data_range` | string | no | A block with a header row, labels in the first column and one series per further column, e.g. 'A1:C13' or 'Data!A1:C13'. Scatter: x values first. Bubble: x, y, size. Excel 2016 charts: waterfall, pareto, funnel and box_whisker take labels then values; histogram, values only; treemap and sunburst, the hierarchy columns then the sizes. |
 | `series_in` | `columns` \| `rows` | no | 'rows': series are the rows of data_range. Default: `columns`. |
 | `series` | array of object | no | Explicit series instead of data_range, for any ranges on any sheet. Default: `[]`. |
 | `categories` | string | no | Category labels (x values) for series without their own. |
@@ -737,13 +737,18 @@ delete_chart removes one.
 | `x_axis` | object | no | The category axis, which has no min, max, major_unit, log or number_format; for scatter and bubble charts, the x axis. |
 | `y_axis` | object | no | The value axis. |
 | `secondary_y_axis` | object | no | Used by series with secondary_axis. |
+| `totals` | array of integer | no | Waterfall: 1-based positions of the points shown as totals ('Set as total'). |
+| `connector_lines` | boolean | no | Waterfall: lines between bars. Default: `True`. |
+| `bins` | object | no | Histogram. Default: Excel's automatic bins. |
+| `box` | object | no | Box and whisker. |
+| `parent_labels` | `none` \| `banner` \| `overlapping` | no | Treemap. Default: `none`. |
 
 `data_labels` fields:
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `show` | array of `value` \| `percent` \| `category` \| `series` | no | 'percent' fits pie and doughnut charts only. Default: `['value']`. |
-| `position` | `center` \| `inside_end` \| `inside_base` \| `outside_end` \| `above` \| `below` \| `left` \| `right` \| `best_fit` | no | Default: Excel's. Valid positions depend on the chart type: column and bar charts take center, inside_end, inside_base, outside_end (not when stacked); line, scatter and bubble charts center, above, below, left, right; pie charts center, inside_end, outside_end, best_fit. |
+| `position` | `center` \| `inside_end` \| `inside_base` \| `outside_end` \| `above` \| `below` \| `left` \| `right` \| `best_fit` | no | Default: Excel's. Valid positions depend on the chart type: column and bar charts take center, inside_end, inside_base, outside_end (not when stacked); line, scatter and bubble charts center, above, below, left, right; pie charts center, inside_end, outside_end, best_fit; waterfall, histogram and pareto charts as column charts. The other Excel 2016 charts place their labels themselves. |
 | `number_format` | string | no | e.g. '0.0%' or '#,##0'. |
 
 `x_axis` fields:
@@ -790,6 +795,25 @@ delete_chart removes one.
 | `major_gridlines` | boolean | no | Default: on for the main value axis (and the x axis of scatter and bubble charts), off otherwise. |
 | `minor_gridlines` | boolean | no | Default: `False`. |
 | `labels` | `next_to_axis` \| `low` \| `high` | no | Where the tick labels sit; for none at all, number_format ';;;'. Default: `next_to_axis`. |
+
+`bins` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `width` | number | no | Values per bin. |
+| `count` | integer | no | Number of bins. |
+| `underflow` | number | no | One bin for all values at or below this. |
+| `overflow` | number | no | One bin for all values above this. |
+
+`box` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `quartiles` | `exclusive` \| `inclusive` | no | 'inclusive' includes the median in both halves. Default: `exclusive`. |
+| `mean_marker` | boolean | no | Default: `True`. |
+| `mean_line` | boolean | no | Default: `False`. |
+| `inner_points` | boolean | no | Show the points that are no outliers. Default: `False`. |
+| `outliers` | boolean | no | Default: `True`. |
 
 ## delete_chart
 
