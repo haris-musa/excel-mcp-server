@@ -231,6 +231,7 @@ All notable changes to this project are documented here. The format follows
 
 - **Breaking:** `create_table` no longer takes `style` and `striped_rows`; they are fields of
   `options`.
+- New tables use Excel's default style, `TableStyleMedium2`, instead of `TableStyleMedium9`.
 
 - **Breaking:** `options.legend` defaults to Excel's own for the chart type instead of
   always the bottom: none for a single series (except pie and doughnut: bottom), bottom for

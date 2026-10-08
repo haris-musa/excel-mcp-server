@@ -58,7 +58,7 @@ class TableOptions(InputModel):
 
     style: str | None = Field(
         default=None,
-        description="Built-in style, e.g. 'TableStyleMedium9' (Light1-21, Medium1-28, Dark1-11).",
+        description="Built-in style, e.g. 'TableStyleMedium2' (Light1-21, Medium1-28, Dark1-11).",
     )
     header_row: bool | None = Field(
         default=None,
