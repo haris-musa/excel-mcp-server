@@ -20,6 +20,9 @@ All notable changes to this project are documented here. The format follows
   (`=SUM(A1:INDIRECT("B2"))`). A reference can now only name sheets of the workbook it is
   written to, so a formula that refers to a sheet that does not exist yet is rejected
   until that sheet is created. GHSA-frr9-2j4w-q923 (@zachary-satterly).
+- Warnings from libraries such as openpyxl, which can quote workbook content (for example
+  a defined name used as a print area), are no longer written to stderr. They are logged
+  only with `--log-level DEBUG`.
 
 ## [1.1.1] - 2026-09-28
 
