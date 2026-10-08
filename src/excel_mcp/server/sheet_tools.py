@@ -4,7 +4,7 @@ from typing import Annotated
 
 from pydantic import Field
 
-from excel_mcp.operations import inspect, sheets
+from excel_mcp.operations import inspect, sheet_copy, sheets
 from excel_mcp.operations.inspect import SheetDetails
 from excel_mcp.operations.sheets import Axis
 from excel_mcp.server.params import LineCount, LineIndex, SheetName, WorkbookPath
@@ -50,9 +50,16 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
 
     @tools.writer("Copy sheet")
     def copy_sheet(path: WorkbookPath, sheet: SheetName, new_name: NewSheetName) -> str:
-        """Duplicate a worksheet (values, styles, dimensions)."""
+        """Copy a worksheet to a new sheet at the end, as Excel's "Create a copy" does.
+
+        Copies cells, styles, merges, sizes, hidden rows and columns, freeze panes, filters, data
+        validation, conditional formats, images, notes, charts, tables, PivotTables, print setup,
+        protection and sheet-scoped names. References to the sheet itself, including chart data,
+        point at the copy. Tables get new names (Sales becomes Sales2). PivotTables share the
+        original's data. Workbook-scoped names are not duplicated.
+        """
         with workspace.edit(path) as workbook:
-            sheets.copy_sheet(workbook, sheet, new_name)
+            sheet_copy.copy_sheet(workbook, sheet, new_name)
         return f"Copied sheet {sheet!r} to {new_name!r}."
 
     @tools.destroyer("Delete sheet")

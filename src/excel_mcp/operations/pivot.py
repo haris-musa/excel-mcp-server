@@ -14,9 +14,10 @@ from openpyxl.pivot.table import (
 )
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from excel_mcp.errors import InvalidArgumentError
+from excel_mcp.inputs import InputModel
 from excel_mcp.operations.cells import stored_cells, writable_cell
 from excel_mcp.operations.pivot_cache import FieldItems, build_cache, build_items
 from excel_mcp.operations.pivot_index import pivot_area, sheet_pivots, workbook_pivots
@@ -42,7 +43,7 @@ _CAPTIONS = {
 _DATA_FIELD_COLUMNS = -2
 
 
-class PivotValue(BaseModel):
+class PivotValue(InputModel):
     field: str = Field(description="Header of the column to summarize.")
     function: Function = Field(
         default="sum", description="'count' counts non-empty cells; the others need numbers."

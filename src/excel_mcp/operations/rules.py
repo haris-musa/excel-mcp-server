@@ -6,10 +6,11 @@ from openpyxl.formatting.rule import CellIsRule, ColorScaleRule, DataBarRule, Fo
 from openpyxl.styles import Font, PatternFill
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.worksheet import Worksheet
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.formulas import storable_operand
+from excel_mcp.inputs import InputModel
 from excel_mcp.operations.formatting import parse_color
 from excel_mcp.refs import parse_range
 from excel_mcp.workspace import sheet_names
@@ -26,7 +27,7 @@ Operator = Literal[
 ]
 
 
-class ConditionalFormat(BaseModel):
+class ConditionalFormat(InputModel):
     """Which fields apply depends on ``type``."""
 
     type: Literal["color_scale", "data_bar", "cell_value", "formula"]
@@ -48,7 +49,7 @@ class ConditionalFormat(BaseModel):
     font_color: str | None = Field(default=None, description="cell_value, formula.")
 
 
-class DataValidationRule(BaseModel):
+class DataValidationRule(InputModel):
     """Which fields apply depends on ``type``."""
 
     type: Literal["list", "whole", "decimal", "date", "text_length", "custom"]

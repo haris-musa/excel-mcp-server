@@ -87,7 +87,7 @@
     },
     {
       "name": "copy_sheet",
-      "description": "Duplicate a worksheet (values, styles and dimensions) within the workbook."
+      "description": "Copy a worksheet to a new sheet at the end, as Excel's \"Create a copy\" does."
     },
     {
       "name": "delete_sheet",

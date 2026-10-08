@@ -95,6 +95,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- `copy_sheet` now copies what Excel's "Create a copy" does: data validation, conditional
+  formats, images, charts (re-pointed at the copy's own data), tables (renamed, as Excel
+  does), PivotTables, freeze panes, filters, print setup, protection and sheet-scoped
+  names. It used to drop all of these. References to the sheet itself point at the copy.
 - `set_sheet_layout` no longer writes overlapping column definitions when it changes a
   column that Excel stored together with its neighbours.
 - Chart titles, axis titles and legends no longer sit on top of the plot in Excel.

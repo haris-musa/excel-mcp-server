@@ -4,8 +4,9 @@ from typing import Literal
 
 from openpyxl.worksheet.properties import PageSetupProperties
 from openpyxl.worksheet.worksheet import Worksheet
-from pydantic import BaseModel, Field, model_validator
+from pydantic import Field, model_validator
 
+from excel_mcp.inputs import InputModel
 from excel_mcp.operations.spans import Axis, format_span, parse_span
 from excel_mcp.refs import parse_range
 
@@ -13,12 +14,12 @@ CM_PER_INCH = 2.54
 PAPER_SIZES = {"letter": 1, "legal": 5, "tabloid": 3, "a3": 8, "a4": 9, "a5": 11}
 
 
-class FitToPages(BaseModel):
+class FitToPages(InputModel):
     wide: int = Field(default=1, ge=0, le=100, description="Pages across; 0 = any number.")
     tall: int = Field(default=1, ge=0, le=100, description="Pages down; 0 = any number.")
 
 
-class Margins(BaseModel):
+class Margins(InputModel):
     left: float | None = Field(default=None, ge=0, le=50)
     right: float | None = Field(default=None, ge=0, le=50)
     top: float | None = Field(default=None, ge=0, le=50)
@@ -27,7 +28,7 @@ class Margins(BaseModel):
     footer: float | None = Field(default=None, ge=0, le=50, description="Distance from the edge.")
 
 
-class HeaderFooterText(BaseModel):
+class HeaderFooterText(InputModel):
     """'' clears a part."""
 
     left: str | None = None
@@ -35,7 +36,7 @@ class HeaderFooterText(BaseModel):
     right: str | None = None
 
 
-class PrintSetup(BaseModel):
+class PrintSetup(InputModel):
     orientation: Literal["portrait", "landscape"] | None = None
     paper_size: Literal["letter", "legal", "tabloid", "a3", "a4", "a5"] | None = None
     scale: int | None = Field(

@@ -150,18 +150,18 @@ def _check_token(token: Token, sheets: dict[str, str]) -> None:
 
 def _qualifiers(reference: str) -> Iterator[str]:
     """The unquoted names before each "!" in a reference, e.g. "My Sheet" in "'My Sheet'!A1"."""
-    parts = _split_top_level(reference, ":")
+    parts = split_top_level(reference, ":")
     for previous, part in zip([None, *parts], parts, strict=False):
-        qualifier = _split_top_level(part, "!")
+        qualifier = split_top_level(part, "!")
         if len(qualifier) == 1:
             continue
-        yield _unquote(qualifier[0])
+        yield unquote(qualifier[0])
         # An unquoted 3D reference such as "Sheet1:Sheet3!A1" starts in the part before.
-        if previous is not None and len(_split_top_level(previous, "!")) == 1:
-            yield _unquote(previous)
+        if previous is not None and len(split_top_level(previous, "!")) == 1:
+            yield unquote(previous)
 
 
-def _split_top_level(text: str, separator: str) -> list[str]:
+def split_top_level(text: str, separator: str) -> list[str]:
     """Split at ``separator`` outside quoted sheet names and outside brackets.
 
     Brackets hold table columns ("Table1[[Col1]:[Col2]]") or a workbook ("[1]"),
@@ -189,7 +189,7 @@ def _split_top_level(text: str, separator: str) -> list[str]:
     return parts
 
 
-def _unquote(name: str) -> str:
+def unquote(name: str) -> str:
     if len(name) > 1 and name.startswith("'") and name.endswith("'"):
         return name[1:-1].replace("''", "'")
     return name

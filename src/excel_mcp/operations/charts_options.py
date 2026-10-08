@@ -2,9 +2,10 @@
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from excel_mcp.errors import InvalidArgumentError
+from excel_mcp.inputs import InputModel
 from excel_mcp.operations.formatting import parse_color
 
 ChartType = Literal["column", "bar", "line", "area", "pie", "scatter", "doughnut", "radar"]
@@ -15,7 +16,7 @@ ROUND_TYPES = ("pie", "doughnut")
 _GROUPED = ("column", "bar", "line", "area")
 
 
-class ChartOptions(BaseModel):
+class ChartOptions(InputModel):
     title: str | None = None
     x_axis_title: str | None = None
     y_axis_title: str | None = None

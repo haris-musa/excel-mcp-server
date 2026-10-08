@@ -78,6 +78,25 @@ async def test_invalid_arguments_are_rejected_before_running(client: Client) -> 
     assert result.is_error
 
 
+async def test_unknown_nested_field_is_rejected(client: Client) -> None:
+    result = await client.call_tool(
+        "set_sheet_layout",
+        {"path": "a.xlsx", "sheet": "S", "layout": {"print": {"orientation": "landscape"}}},
+    )
+    assert result.is_error
+    message = error_text(result)
+    assert "Unknown field(s): print" in message
+    assert "print_setup" in message
+
+
+async def test_unknown_top_level_argument_is_rejected(client: Client) -> None:
+    result = await client.call_tool("read_range", {"path": "a.xlsx", "sheet": "S", "rnge": "A1"})
+    assert result.is_error
+    message = error_text(result)
+    assert "Unknown field(s): rnge" in message
+    assert "range" in message
+
+
 async def test_instructions_describe_path_mode(files: Path, tmp_path: Path) -> None:
     confined = create_server(Settings(allowed_dirs=[files]))
     assert "relative" in (confined.instructions or "")

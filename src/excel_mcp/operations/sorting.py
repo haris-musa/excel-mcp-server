@@ -14,10 +14,11 @@ from openpyxl.utils.cell import column_index_from_string, get_column_letter
 from openpyxl.utils.datetime import to_excel
 from openpyxl.worksheet.hyperlink import Hyperlink
 from openpyxl.worksheet.worksheet import Worksheet
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.formulas import storable_formula
+from excel_mcp.inputs import InputModel
 from excel_mcp.refs import CellRange, parse_range
 from excel_mcp.workspace import sheet_names
 
@@ -29,7 +30,7 @@ _NUMBER, _TEXT, _BOOLEAN, _ERROR, _BLANK = range(5)
 SortValue = tuple[int, Any]
 
 
-class SortKey(BaseModel):
+class SortKey(InputModel):
     column: str = Field(description="Header text (if has_header) or column letter, e.g. 'C'.")
     order: Order = "ascending"
 
