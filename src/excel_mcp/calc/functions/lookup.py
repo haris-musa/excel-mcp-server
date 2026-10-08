@@ -23,6 +23,7 @@ from excel_mcp.calc.values import (
     to_int,
     type_rank,
 )
+from excel_mcp.refs import MAX_COLUMN, MAX_ROW
 
 if TYPE_CHECKING:
     from excel_mcp.calc.engine import Engine
@@ -283,3 +284,46 @@ def rows(array: Value) -> float:
 @function("COLUMNS")
 def columns(array: Value) -> float:
     return float(exact_extent(array, rows=False).width)
+
+
+@function("LOOKUP")
+def lookup(value: Value, lookup_vector: Value, result_vector: Value = None) -> Scalar:
+    keys = exact_extent(lookup_vector)
+    if result_vector is None and keys.height > 1 and keys.width > 1:
+        raise UncalculableError("LOOKUP in array form")
+    found = find_position(scalar(value), vector(keys), 1, wildcards=False)
+    if found is None:
+        raise FormulaError(NA)
+    results = vector(keys if result_vector is None else exact_extent(result_vector))
+    if found >= len(results):
+        raise FormulaError(NA)
+    return results[found]
+
+
+@function("OFFSET", kind="lazy")
+def offset(
+    engine: "Engine",
+    reference: Node,
+    rows: Node,
+    columns: Node,
+    height: Node | None = None,
+    width: Node | None = None,
+) -> Value:
+    if not (
+        isinstance(reference, Ref)
+        and reference.top
+        and reference.left
+        and reference.bottom
+        and reference.right
+    ):
+        raise UncalculableError("OFFSET from a name or a whole row or column")
+    shift_rows, shift_cols = to_int(engine.scalar(rows)), to_int(engine.scalar(columns))
+    tall = reference.bottom - reference.top + 1 if height is None else to_int(engine.scalar(height))
+    wide = reference.right - reference.left + 1 if width is None else to_int(engine.scalar(width))
+    top, left = reference.top + shift_rows, reference.left + shift_cols
+    if tall < 1 or wide < 1 or top < 1 or left < 1:
+        raise FormulaError(REF)
+    if top + tall - 1 > MAX_ROW or left + wide - 1 > MAX_COLUMN:
+        raise FormulaError(REF)
+    moved = Ref(reference.sheets, top, left, top + tall - 1, left + wide - 1, False)
+    return engine.reference(moved)

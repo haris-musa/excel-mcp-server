@@ -15,7 +15,7 @@ import tempfile
 from pathlib import Path
 
 import win32com.client  # pyright: ignore[reportMissingImports]
-from golden_cases import CASES, INPUTS, NAMES
+from golden_cases import CASES, HIDDEN_ROWS, INPUTS, NAMES
 from golden_workbook import build_workbook, calculate_cases, same
 
 from excel_mcp.errors import UnsafeFormulaError
@@ -37,7 +37,7 @@ ERROR_CODES = {
 def excel_values(excel: object, formulas: list[str], directory: Path) -> list[object] | None:
     """Excel's result for each formula, or None if Excel cannot open the workbook."""
     path = directory / "golden.xlsx"
-    build_workbook(path, INPUTS, NAMES, formulas)
+    build_workbook(path, INPUTS, NAMES, formulas, HIDDEN_ROWS)
     temp = Path(os.environ["TEMP"])
     before = set(temp.glob("error*.xml"))
     try:
@@ -117,7 +117,7 @@ def main() -> None:
     ]
     with tempfile.TemporaryDirectory() as temp:
         path = Path(temp) / "check.xlsx"
-        build_workbook(path, INPUTS, NAMES, accepted)
+        build_workbook(path, INPUTS, NAMES, accepted, HIDDEN_ROWS)
         actual = calculate_cases(path, len(accepted))
     uncalculated = [i for i, value in enumerate(actual) if value is None]
     wrong = [
@@ -138,10 +138,11 @@ def main() -> None:
         "excel": version,
         "inputs": INPUTS,
         "names": NAMES,
+        "hidden_rows": HIDDEN_ROWS,
         "cases": cases,
         "uncalculated": uncalculated,
     }
-    FIXTURE.write_text(json.dumps(document, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    FIXTURE.write_bytes((json.dumps(document, indent=1, ensure_ascii=False) + "\n").encode("utf-8"))
     sys.exit(1 if wrong else 0)
 
 

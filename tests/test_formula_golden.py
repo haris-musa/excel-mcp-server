@@ -16,7 +16,13 @@ def test_calculator_matches_excel(tmp_path: Path) -> None:
     golden = json.loads(FIXTURE.read_text(encoding="utf-8"))
     cases = golden["cases"]
     path = tmp_path / "golden.xlsx"
-    build_workbook(path, golden["inputs"], golden["names"], [c["formula"] for c in cases])
+    build_workbook(
+        path,
+        golden["inputs"],
+        golden["names"],
+        [c["formula"] for c in cases],
+        golden["hidden_rows"],
+    )
 
     actual = calculate_cases(path, len(cases))
 

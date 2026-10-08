@@ -2,16 +2,19 @@
 
 Excel stores these with a prefix (``_xlfn.IFS``). A formula written without it is
 reported as #NAME? when the file is opened, and some (``SORT``) stop the file from
-opening at all, so formulas are prefixed when they are written.
+opening at all, so formulas are prefixed when they are written. The names that LET
+declares are stored with a ``_xlpm.`` prefix.
 """
+
+from dataclasses import dataclass, field
 
 from openpyxl.formula import Tokenizer
 from openpyxl.formula.tokenizer import Token
 
 _XLFN = [
     "ACOT",
-    "AGGREGATE",
     "ACOTH",
+    "AGGREGATE",
     "ARABIC",
     "BASE",
     "BETA.DIST",
@@ -149,15 +152,61 @@ FUTURE_FUNCTIONS: dict[str, str] = {
 }
 
 
+@dataclass
+class _Call:
+    name: str
+    start: int
+    args: list[list[int]] = field(default_factory=lambda: [[]])
+
+
 def add_prefixes(formula: str) -> str:
-    """Return the formula with the storage prefix on every function that needs one."""
+    """Return the formula with the storage prefixes Excel expects on functions and LET names."""
     tokenizer = Tokenizer(formula)
+    tokens = tokenizer.items
     changed = False
-    for token in tokenizer.items:
-        if token.type != Token.FUNC or token.subtype != Token.OPEN:
-            continue
-        prefix = FUTURE_FUNCTIONS.get(token.value.removesuffix("(").upper())
-        if prefix:
-            token.value = prefix + token.value
-            changed = True
+    names: set[int] = set()
+    stack: list[_Call] = []
+    for index, token in enumerate(tokens):
+        if token.type == Token.FUNC and token.subtype == Token.OPEN:
+            name = token.value.removesuffix("(").upper()
+            if prefix := FUTURE_FUNCTIONS.get(name):
+                token.value = prefix + token.value
+                changed = True
+            if stack:
+                stack[-1].args[-1].append(index)
+            stack.append(_Call(name, index))
+        elif token.type == Token.FUNC and token.subtype == Token.CLOSE and stack:
+            call = stack.pop()
+            if call.name == "LET":
+                declared = _declared_names(tokens, call)
+                names.update(
+                    position
+                    for position in range(call.start, index)
+                    if _is_name(tokens[position]) and tokens[position].value.casefold() in declared
+                )
+        elif token.type == Token.SEP and token.subtype == Token.ARG and stack:
+            stack[-1].args.append([])
+        elif stack:
+            stack[-1].args[-1].append(index)
+    for position in names:
+        tokens[position].value = "_xlpm." + tokens[position].value
+        changed = True
     return tokenizer.render() if changed else formula
+
+
+def _is_name(token: Token) -> bool:
+    return (
+        token.type == Token.OPERAND
+        and token.subtype == Token.RANGE
+        and not token.value.startswith("_xlpm.")
+    )
+
+
+def _declared_names(tokens: list[Token], call: _Call) -> set[str]:
+    """The names a LET call declares: its odd-numbered arguments, except the last."""
+    declared = set()
+    for number, indexes in enumerate(call.args[:-1]):
+        parts = [i for i in indexes if tokens[i].type != Token.WSPACE]
+        if number % 2 == 0 and len(parts) == 1 and _is_name(tokens[parts[0]]):
+            declared.add(tokens[parts[0]].value.casefold())
+    return declared

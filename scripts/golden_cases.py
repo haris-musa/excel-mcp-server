@@ -248,11 +248,13 @@ INPUTS: dict[str, list[list[object]]] = {
     ],
     "Other": [[100, "k", None, "=D2"], [200, None, None, "=D1"], [300]],
     "My Sheet": [[7], [8]],
+    "Sub": [[10], [20], [30], [40], [50], ["=SUBTOTAL(9,A1:A5)"], ["=AGGREGATE(9,0,A1:A5)"], [5]],
     "Jan": [[1]],
     "Feb": [[2]],
     "Mar": [[3]],
     "Cases": [],
 }
+HIDDEN_ROWS = {"Sub": [3]}
 NAMES = {"Rate": "Data!$D$2", "Units": "Data!$C$2:$C$11", "Tax": "0.2"}
 
 C, D, E = "Data!C2:C11", "Data!D2:D11", "Data!E2:E11"
@@ -492,3 +494,230 @@ CASES: list[str | tuple[str, float]] = [
     '=DATE(YEAR(Data!E3),MONTH(Data!E3)+1,1)-1', '=EOMONTH(DATE(2024,1,15),1)-DATE(2024,1,15)', f'=COUNTA({A})-COUNTIF({A},"North")', '=MID("hello world",FIND(" ","hello world")+1,5)',
     f'=SUMPRODUCT(({C}>5)*({D}<3))', f'=MAX(INDEX(({A}="North")*{C},0))', "=Data!T11-SUMPRODUCT(Data!C2:C11,Data!D2:D11)", "=Other!A1/Other!A2*Tax",
 ]  # fmt: skip
+
+
+CASES += (
+    [
+        # ---- subtotals and aggregates
+        "=SUBTOTAL(9,Sub!A1:A8)",
+        "=SUBTOTAL(109,Sub!A1:A8)",
+        "=SUBTOTAL(9,Sub!A4:A8)",
+        "=SUBTOTAL(109,Sub!A4:A8)",
+        "=SUBTOTAL(9,Sub!A1:A5)",
+        "=SUBTOTAL(109,Sub!A1:A5)",
+        "=SUBTOTAL(2,Sub!A4:A8)",
+        "=SUBTOTAL(102,Sub!A1:A8)",
+        "=SUBTOTAL(3,Sub!A4:A8)",
+        "=SUBTOTAL(103,Sub!A1:A8)",
+        "=SUBTOTAL(12,Sub!A4:A8)",
+        "=SUBTOTAL(0,Sub!A4:A8)",
+        "=SUBTOTAL(9,Data!C2:C11,Data!D2:D11)",
+    ]
+    + [f"=SUBTOTAL({n},Data!C2:C11)" for n in range(1, 12)]
+    + [f"=SUBTOTAL({n + 100},Data!C2:C11)" for n in range(1, 12)]
+    + [
+        "=AGGREGATE(9,0,Sub!A1:A8)",
+        "=AGGREGATE(9,1,Sub!A1:A8)",
+        "=AGGREGATE(9,2,Sub!A1:A8)",
+        "=AGGREGATE(9,3,Sub!A1:A8)",
+        "=AGGREGATE(9,4,Sub!A1:A8)",
+        "=AGGREGATE(9,5,Sub!A1:A8)",
+        "=AGGREGATE(9,6,Sub!A1:A8)",
+        "=AGGREGATE(9,7,Sub!A1:A8)",
+        "=AGGREGATE(9,4,Data!G2:G11)",
+        "=AGGREGATE(9,6,Data!G2:G11)",
+        "=AGGREGATE(4,6,Data!G2:G11)",
+        "=AGGREGATE(5,6,Data!G2:G11)",
+        "=AGGREGATE(14,6,Data!G2:G11,1)",
+        "=AGGREGATE(15,6,Data!G2:G11,2)",
+        "=AGGREGATE(14,4,Data!G2:G11,1)",
+        "=AGGREGATE(16,4,Data!C2:C11,0.25)",
+        "=AGGREGATE(17,4,Data!C2:C11,1)",
+        "=AGGREGATE(18,4,Data!C2:C11,0.25)",
+        "=AGGREGATE(19,4,Data!C2:C11,3)",
+        "=AGGREGATE(14,4,Data!C2:C11)",
+        "=AGGREGATE(20,4,Data!C2:C11)",
+        "=AGGREGATE(9,8,Data!C2:C11)",
+    ]
+    + [f"=AGGREGATE({n},6,Data!C2:C11)" for n in range(1, 14)]
+    + [
+        "=AGGREGATE(9,6,Data!C2:C5,Data!C8:C9)",
+        "=AGGREGATE(9,0,Data!C2:C5,Data!G5:G6)",
+        # ---- math extras
+        "=CEILING.MATH(2.1)",
+        "=CEILING.MATH(-2.1)",
+        "=CEILING.MATH(-2.5,2)",
+        "=CEILING.MATH(-2.5,2,1)",
+        "=CEILING.MATH(2.5,-2)",
+        "=CEILING.MATH(2.5,0)",
+        "=CEILING.MATH(4.2,0.5)",
+        "=FLOOR.MATH(2.9)",
+        "=FLOOR.MATH(-2.1)",
+        "=FLOOR.MATH(-2.5,2)",
+        "=FLOOR.MATH(-2.5,2,1)",
+        "=FLOOR.MATH(2.5,-2)",
+        "=FLOOR.MATH(2.5,0)",
+        "=SQRTPI(2)",
+        "=SQRTPI(-1)",
+        "=SUMX2MY2(Data!M2:M6,Data!N2:N6)",
+        "=SUMX2PY2(Data!M2:M6,Data!N2:N6)",
+        "=SUMXMY2(Data!M2:M6,Data!N2:N6)",
+        "=SUMXMY2(Data!M2:M6,Data!N2:N5)",
+        # ---- statistics extras
+        "=PEARSON(Data!M2:M11,Data!N2:N11)",
+        "=PERCENTRANK(Data!M2:M11,5.2)",
+        "=PERCENTRANK(Data!M2:M11,6)",
+        "=PERCENTRANK.INC(Data!M2:M11,6,5)",
+        "=PERCENTRANK.INC(Data!M2:M11,2.5)",
+        "=PERCENTRANK.INC(Data!M2:M11,11.6)",
+        "=PERCENTRANK.INC(Data!M2:M11,1)",
+        "=PERCENTRANK.EXC(Data!M2:M11,5.2)",
+        "=PERCENTRANK.EXC(Data!M2:M11,6)",
+        "=PERCENTRANK.EXC(Data!M2:M11,2.5)",
+        "=PERCENTRANK.INC(Data!C2:C11,7)",
+        "=PERCENTRANK.INC(Data!C2:C11,7.5,2)",
+        "=PERCENTRANK.INC(Data!C2:C11,7,0)",
+        "=SKEW(Data!M2:M11)",
+        "=SKEW(Data!C2:C11)",
+        "=SKEW(1,2)",
+        "=KURT(Data!M2:M11)",
+        "=KURT(Data!C2:C11)",
+        "=KURT(1,2,3)",
+        "=STANDARDIZE(5,3,2)",
+        "=STANDARDIZE(5,3,0)",
+        "=BINOM.DIST(3,10,0.5,FALSE)",
+        "=BINOM.DIST(3,10,0.5,TRUE)",
+        "=BINOM.DIST(11,10,0.5,TRUE)",
+        "=BINOM.DIST(3,10,1.5,TRUE)",
+        "=POISSON.DIST(3,2.5,FALSE)",
+        "=POISSON.DIST(3,2.5,TRUE)",
+        "=POISSON.DIST(-1,2.5,TRUE)",
+        "=EXPON.DIST(1.5,2,TRUE)",
+        "=EXPON.DIST(1.5,2,FALSE)",
+        "=EXPON.DIST(-1,2,TRUE)",
+        "=CONFIDENCE.NORM(0.05,2.5,50)",
+        "=CONFIDENCE.NORM(0,2.5,50)",
+        # ---- lookup extras
+        "=LOOKUP(6,Data!H2:H7)",
+        "=LOOKUP(6,Data!H2:H7,Data!I2:I7)",
+        "=LOOKUP(0,Data!H2:H7,Data!I2:I7)",
+        "=LOOKUP(100,Data!H2:H7,Data!I2:I7)",
+        '=LOOKUP("c",Data!J2:J6)',
+        "=LOOKUP(6,Data!H2:H7,Data!I2:I6)",
+        "=OFFSET(Data!C2,2,0)",
+        "=OFFSET(Data!C2,2,1)",
+        "=SUM(OFFSET(Data!C2,0,0,3,1))",
+        "=SUM(OFFSET(Data!C2:C4,1,0))",
+        "=OFFSET(Data!C2,-1,0)",
+        "=OFFSET(Data!C2,0,0,0)",
+        "=SUM(OFFSET(Data!C2,0,0,3,2))",
+        "=OFFSET(Data!C2,100,0)",
+        "=OFFSET(Data!C2,2,0)+1",
+        "=ROWS(OFFSET(Data!C2,0,0,5,1))",
+        "=COUNT(OFFSET(Data!A1,1,2,10,1))",
+        # ---- LET
+        "=LET(x,5,x*2)",
+        "=LET(x,5,y,x+1,x*y)",
+        "=LET(x,Data!C2:C11,SUM(x))",
+        "=LET(x,Data!C2:C11,MAX(x)-MIN(x))",
+        "=LET(a,2,a^a^a)",
+        '=LET(s,"ab",UPPER(s)&s)',
+        "=LET(x,1/0,IFERROR(x,-1))",
+        "=LET(x,SEQUENCE(4),SUM(x))",
+        "=LET(r,Data!D2,Data!C2*r)",
+        "=LET(x,2,LET(y,x*3,x+y))",
+        "=LET(total,SUM(Data!C2:C11),total/COUNT(Data!C2:C11))",
+        # ---- text extras
+        '=REPLACE("abcdef",2,3,"XY")',
+        '=REPLACE("abcdef",0,3,"XY")',
+        '=REPLACE("abcdef",10,3,"XY")',
+        '=REPLACE("abcdef",2,0,"XY")',
+        '=REPLACE("abcdef",2,-1,"XY")',
+        '=REPLACE(12345,2,2,"-")',
+        '=CLEAN("a"&CHAR(7)&"b")',
+        '=CLEAN("plain")',
+        # ---- financial extras
+        "=ISPMT(0.1,1,12,1200)",
+        "=ISPMT(0.1,12,12,1200)",
+        "=ISPMT(0.1,0,12,1200)",
+        "=ISPMT(0.1,1,0,1200)",
+        "=DOLLARDE(1.08,16)",
+        "=DOLLARDE(1.02,8)",
+        "=DOLLARDE(-1.08,16)",
+        "=DOLLARDE(1.08,0)",
+        "=DOLLARDE(1.5,100)",
+        "=DOLLARDE(1.08,10)",
+        "=DOLLARFR(1.5,16)",
+        "=DOLLARFR(1.125,8)",
+        "=DOLLARFR(-1.5,16)",
+        "=DOLLARFR(1.5,0)",
+        "=DOLLARFR(1.5,10)",
+    ]
+)
+
+# Bonds and other securities.
+_BOND_DATES = [
+    ("DATE(2024,3,15)", "DATE(2029,11,15)"),
+    ("DATE(2024,3,15)", "DATE(2024,9,30)"),
+    ("DATE(2024,2,29)", "DATE(2027,8,31)"),
+    ("DATE(2023,12,31)", "DATE(2025,2,28)"),
+    ("DATE(2024,5,15)", "DATE(2024,11,15)"),
+    ("DATE(2024,11,15)", "DATE(2026,5,15)"),
+    ("DATE(2024,1,31)", "DATE(2026,7,31)"),
+]
+for _settle, _mature in _BOND_DATES:
+    for _freq in (1, 2, 4):
+        for _basis in range(5):
+            _tail = f"{_settle},{_mature},{_freq},{_basis}"
+            CASES += [
+                f"={_fn}({_tail})"
+                for _fn in ("COUPNCD", "COUPPCD", "COUPNUM", "COUPDAYBS", "COUPDAYS", "COUPDAYSNC")
+            ]
+            CASES += [
+                f"=PRICE({_settle},{_mature},0.05,0.06,100,{_freq},{_basis})",
+                (f"=YIELD({_settle},{_mature},0.05,98.5,100,{_freq},{_basis})", 1e-8),
+                f"=DURATION({_settle},{_mature},0.05,0.06,{_freq},{_basis})",
+                f"=MDURATION({_settle},{_mature},0.05,0.06,{_freq},{_basis})",
+            ]
+CASES += [
+    "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,2)",
+    "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0,0.06,100,2,0)",
+    "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0,100,2,0)",
+    "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,3,0)",
+    "=PRICE(DATE(2029,11,15),DATE(2024,3,15),0.05,0.06,100,2,0)",
+    "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,2,5)",
+    "=PRICE(DATE(2024,3,15),DATE(2029,11,15),-0.05,0.06,100,2,0)",
+    "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,0,2,0)",
+    "=COUPNUM(DATE(2024,3,15),DATE(2024,3,15),2,0)",
+    "=YIELD(DATE(2024,3,15),DATE(2029,11,15),0.05,0,100,2,0)",
+    "=DURATION(DATE(2024,3,15),DATE(2029,11,15),0,0.06,2,0)",
+    "=DURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0,2,0)",
+]
+for _settle, _mature in [
+    ("DATE(2024,3,15)", "DATE(2024,9,30)"),
+    ("DATE(2024,2,29)", "DATE(2024,12,31)"),
+    ("DATE(2023,12,31)", "DATE(2024,2,29)"),
+    ("DATE(2024,1,15)", "DATE(2025,1,15)"),
+    ("DATE(2023,6,30)", "DATE(2025,6,30)"),
+]:
+    for _basis in range(5):
+        CASES += [
+            f"=DISC({_settle},{_mature},97.5,100,{_basis})",
+            f"=PRICEDISC({_settle},{_mature},0.05,100,{_basis})",
+            f"=YIELDDISC({_settle},{_mature},97.5,100,{_basis})",
+            f"=INTRATE({_settle},{_mature},1000,1050,{_basis})",
+            f"=RECEIVED({_settle},{_mature},1000,0.05,{_basis})",
+        ]
+CASES += [
+    "=DISC(DATE(2024,3,15),DATE(2024,9,30),0,100)",
+    "=DISC(DATE(2024,3,15),DATE(2024,9,30),97.5,100,7)",
+    "=DISC(DATE(2024,9,30),DATE(2024,3,15),97.5,100)",
+    "=RECEIVED(DATE(2024,3,15),DATE(2024,9,30),1000,5)",
+    "=INTRATE(DATE(2024,3,15),DATE(2024,9,30),0,100)",
+]
+for _span in (30, 90, 182, 183, 200, 300, 364, 365, 366):
+    CASES += [
+        f"=TBILLPRICE(DATE(2024,3,1),DATE(2024,3,1)+{_span},0.045)",
+        f"=TBILLYIELD(DATE(2024,3,1),DATE(2024,3,1)+{_span},97.5)",
+        f"=TBILLEQ(DATE(2024,3,1),DATE(2024,3,1)+{_span},0.045)",
+    ]

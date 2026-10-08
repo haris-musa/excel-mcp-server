@@ -91,6 +91,7 @@ class Engine:
         self.work = 0
         self.depth = 0
         self.name_depth = 0
+        self.scopes: list[dict[str, Value]] = []
         self.here = Position(next(iter(self.sheets.values())), 1, 1)
 
     # -- cells -----------------------------------------------------------------------------
@@ -132,8 +133,8 @@ class Engine:
         if self.depth >= MAX_DEPTH:
             raise TooDeepError(sheet, row, col)
         self.charge(1)
-        outer = self.here
-        self.here = Position(sheet, row, col)
+        outer, outer_scopes = self.here, self.scopes
+        self.here, self.scopes = Position(sheet, row, col), []
         self.active.add(key)
         self.depth += 1
         try:
@@ -144,7 +145,7 @@ class Engine:
         finally:
             self.depth -= 1
             self.active.discard(key)
-            self.here = outer
+            self.here, self.scopes = outer, outer_scopes
         self.memo[key] = result
         return result
 
@@ -237,6 +238,9 @@ class Engine:
         return VALUE
 
     def name(self, node: Name, array: bool) -> Value:
+        for scope in reversed(self.scopes):
+            if node.name.casefold() in scope:
+                return scope[node.name.casefold()]
         if self.name_depth >= MAX_NAME_DEPTH:
             raise UncalculableError("names nested too deeply")
         scope = self.find_sheet(node.sheet) if node.sheet else self.here.sheet

@@ -259,6 +259,32 @@
     8
    ]
   ],
+  "Sub": [
+   [
+    10
+   ],
+   [
+    20
+   ],
+   [
+    30
+   ],
+   [
+    40
+   ],
+   [
+    50
+   ],
+   [
+    "=SUBTOTAL(9,A1:A5)"
+   ],
+   [
+    "=AGGREGATE(9,0,A1:A5)"
+   ],
+   [
+    5
+   ]
+  ],
   "Jan": [
    [
     1
@@ -280,6 +306,11 @@
   "Rate": "Data!$D$2",
   "Units": "Data!$C$2:$C$11",
   "Tax": "0.2"
+ },
+ "hidden_rows": {
+  "Sub": [
+   3
+  ]
  },
  "cases": [
   {
@@ -4991,6 +5022,5687 @@
   {
    "formula": "=Other!A1/Other!A2*Tax",
    "expected": 0.1
+  },
+  {
+   "formula": "=SUBTOTAL(9,Sub!A1:A8)",
+   "expected": 155.0
+  },
+  {
+   "formula": "=SUBTOTAL(109,Sub!A1:A8)",
+   "expected": 125.0
+  },
+  {
+   "formula": "=SUBTOTAL(9,Sub!A4:A8)",
+   "expected": 95.0
+  },
+  {
+   "formula": "=SUBTOTAL(109,Sub!A4:A8)",
+   "expected": 95.0
+  },
+  {
+   "formula": "=SUBTOTAL(9,Sub!A1:A5)",
+   "expected": 150.0
+  },
+  {
+   "formula": "=SUBTOTAL(109,Sub!A1:A5)",
+   "expected": 120.0
+  },
+  {
+   "formula": "=SUBTOTAL(2,Sub!A4:A8)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=SUBTOTAL(102,Sub!A1:A8)",
+   "expected": 5.0
+  },
+  {
+   "formula": "=SUBTOTAL(3,Sub!A4:A8)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=SUBTOTAL(103,Sub!A1:A8)",
+   "expected": 5.0
+  },
+  {
+   "formula": "=SUBTOTAL(12,Sub!A4:A8)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=SUBTOTAL(0,Sub!A4:A8)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=SUBTOTAL(9,Data!C2:C11,Data!D2:D11)",
+   "expected": 95.5
+  },
+  {
+   "formula": "=SUBTOTAL(1,Data!C2:C11)",
+   "expected": 7.5
+  },
+  {
+   "formula": "=SUBTOTAL(2,Data!C2:C11)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=SUBTOTAL(3,Data!C2:C11)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=SUBTOTAL(4,Data!C2:C11)",
+   "expected": 12.0
+  },
+  {
+   "formula": "=SUBTOTAL(5,Data!C2:C11)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=SUBTOTAL(6,Data!C2:C11)",
+   "expected": 239500800.0
+  },
+  {
+   "formula": "=SUBTOTAL(7,Data!C2:C11)",
+   "expected": 3.0276503540974917
+  },
+  {
+   "formula": "=SUBTOTAL(8,Data!C2:C11)",
+   "expected": 2.8722813232690143
+  },
+  {
+   "formula": "=SUBTOTAL(9,Data!C2:C11)",
+   "expected": 75.0
+  },
+  {
+   "formula": "=SUBTOTAL(10,Data!C2:C11)",
+   "expected": 9.166666666666666
+  },
+  {
+   "formula": "=SUBTOTAL(11,Data!C2:C11)",
+   "expected": 8.25
+  },
+  {
+   "formula": "=SUBTOTAL(101,Data!C2:C11)",
+   "expected": 7.5
+  },
+  {
+   "formula": "=SUBTOTAL(102,Data!C2:C11)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=SUBTOTAL(103,Data!C2:C11)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=SUBTOTAL(104,Data!C2:C11)",
+   "expected": 12.0
+  },
+  {
+   "formula": "=SUBTOTAL(105,Data!C2:C11)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=SUBTOTAL(106,Data!C2:C11)",
+   "expected": 239500800.0
+  },
+  {
+   "formula": "=SUBTOTAL(107,Data!C2:C11)",
+   "expected": 3.0276503540974917
+  },
+  {
+   "formula": "=SUBTOTAL(108,Data!C2:C11)",
+   "expected": 2.8722813232690143
+  },
+  {
+   "formula": "=SUBTOTAL(109,Data!C2:C11)",
+   "expected": 75.0
+  },
+  {
+   "formula": "=SUBTOTAL(110,Data!C2:C11)",
+   "expected": 9.166666666666666
+  },
+  {
+   "formula": "=SUBTOTAL(111,Data!C2:C11)",
+   "expected": 8.25
+  },
+  {
+   "formula": "=AGGREGATE(9,0,Sub!A1:A8)",
+   "expected": 155.0
+  },
+  {
+   "formula": "=AGGREGATE(9,1,Sub!A1:A8)",
+   "expected": 125.0
+  },
+  {
+   "formula": "=AGGREGATE(9,2,Sub!A1:A8)",
+   "expected": 155.0
+  },
+  {
+   "formula": "=AGGREGATE(9,3,Sub!A1:A8)",
+   "expected": 125.0
+  },
+  {
+   "formula": "=AGGREGATE(9,4,Sub!A1:A8)",
+   "expected": 455.0
+  },
+  {
+   "formula": "=AGGREGATE(9,5,Sub!A1:A8)",
+   "expected": 425.0
+  },
+  {
+   "formula": "=AGGREGATE(9,6,Sub!A1:A8)",
+   "expected": 455.0
+  },
+  {
+   "formula": "=AGGREGATE(9,7,Sub!A1:A8)",
+   "expected": 425.0
+  },
+  {
+   "formula": "=AGGREGATE(9,4,Data!G2:G11)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=AGGREGATE(9,6,Data!G2:G11)",
+   "expected": 28.0
+  },
+  {
+   "formula": "=AGGREGATE(4,6,Data!G2:G11)",
+   "expected": 7.0
+  },
+  {
+   "formula": "=AGGREGATE(5,6,Data!G2:G11)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=AGGREGATE(14,6,Data!G2:G11,1)",
+   "expected": 7.0
+  },
+  {
+   "formula": "=AGGREGATE(15,6,Data!G2:G11,2)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=AGGREGATE(14,4,Data!G2:G11,1)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=AGGREGATE(16,4,Data!C2:C11,0.25)",
+   "expected": 5.25
+  },
+  {
+   "formula": "=AGGREGATE(17,4,Data!C2:C11,1)",
+   "expected": 5.25
+  },
+  {
+   "formula": "=AGGREGATE(18,4,Data!C2:C11,0.25)",
+   "expected": 4.75
+  },
+  {
+   "formula": "=AGGREGATE(19,4,Data!C2:C11,3)",
+   "expected": 10.25
+  },
+  {
+   "formula": "=AGGREGATE(14,4,Data!C2:C11)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=AGGREGATE(20,4,Data!C2:C11)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=AGGREGATE(9,8,Data!C2:C11)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=AGGREGATE(1,6,Data!C2:C11)",
+   "expected": 7.5
+  },
+  {
+   "formula": "=AGGREGATE(2,6,Data!C2:C11)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=AGGREGATE(3,6,Data!C2:C11)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=AGGREGATE(4,6,Data!C2:C11)",
+   "expected": 12.0
+  },
+  {
+   "formula": "=AGGREGATE(5,6,Data!C2:C11)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=AGGREGATE(6,6,Data!C2:C11)",
+   "expected": 239500800.0
+  },
+  {
+   "formula": "=AGGREGATE(7,6,Data!C2:C11)",
+   "expected": 3.0276503540974917
+  },
+  {
+   "formula": "=AGGREGATE(8,6,Data!C2:C11)",
+   "expected": 2.8722813232690143
+  },
+  {
+   "formula": "=AGGREGATE(9,6,Data!C2:C11)",
+   "expected": 75.0
+  },
+  {
+   "formula": "=AGGREGATE(10,6,Data!C2:C11)",
+   "expected": 9.166666666666666
+  },
+  {
+   "formula": "=AGGREGATE(11,6,Data!C2:C11)",
+   "expected": 8.25
+  },
+  {
+   "formula": "=AGGREGATE(12,6,Data!C2:C11)",
+   "expected": 7.5
+  },
+  {
+   "formula": "=AGGREGATE(13,6,Data!C2:C11)",
+   "expected": "#N/A"
+  },
+  {
+   "formula": "=AGGREGATE(9,6,Data!C2:C5,Data!C8:C9)",
+   "expected": 40.0
+  },
+  {
+   "formula": "=AGGREGATE(9,0,Data!C2:C5,Data!G5:G6)",
+   "expected": 28.0
+  },
+  {
+   "formula": "=CEILING.MATH(2.1)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=CEILING.MATH(-2.1)",
+   "expected": -2.0
+  },
+  {
+   "formula": "=CEILING.MATH(-2.5,2)",
+   "expected": -2.0
+  },
+  {
+   "formula": "=CEILING.MATH(-2.5,2,1)",
+   "expected": -4.0
+  },
+  {
+   "formula": "=CEILING.MATH(2.5,-2)",
+   "expected": 4.0
+  },
+  {
+   "formula": "=CEILING.MATH(2.5,0)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=CEILING.MATH(4.2,0.5)",
+   "expected": 4.5
+  },
+  {
+   "formula": "=FLOOR.MATH(2.9)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=FLOOR.MATH(-2.1)",
+   "expected": -3.0
+  },
+  {
+   "formula": "=FLOOR.MATH(-2.5,2)",
+   "expected": -4.0
+  },
+  {
+   "formula": "=FLOOR.MATH(-2.5,2,1)",
+   "expected": -2.0
+  },
+  {
+   "formula": "=FLOOR.MATH(2.5,-2)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=FLOOR.MATH(2.5,0)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=SQRTPI(2)",
+   "expected": 2.5066282746310002
+  },
+  {
+   "formula": "=SQRTPI(-1)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=SUMX2MY2(Data!M2:M6,Data!N2:N6)",
+   "expected": 41.28999999999999
+  },
+  {
+   "formula": "=SUMX2PY2(Data!M2:M6,Data!N2:N6)",
+   "expected": 181.17000000000002
+  },
+  {
+   "formula": "=SUMXMY2(Data!M2:M6,Data!N2:N6)",
+   "expected": 6.989999999999999
+  },
+  {
+   "formula": "=SUMXMY2(Data!M2:M6,Data!N2:N5)",
+   "expected": "#N/A"
+  },
+  {
+   "formula": "=PEARSON(Data!M2:M11,Data!N2:N11)",
+   "expected": 0.9828444535283802
+  },
+  {
+   "formula": "=PERCENTRANK(Data!M2:M11,5.2)",
+   "expected": 0.333
+  },
+  {
+   "formula": "=PERCENTRANK(Data!M2:M11,6)",
+   "expected": 0.388
+  },
+  {
+   "formula": "=PERCENTRANK.INC(Data!M2:M11,6,5)",
+   "expected": 0.38888
+  },
+  {
+   "formula": "=PERCENTRANK.INC(Data!M2:M11,2.5)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=PERCENTRANK.INC(Data!M2:M11,11.6)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=PERCENTRANK.INC(Data!M2:M11,1)",
+   "expected": "#N/A"
+  },
+  {
+   "formula": "=PERCENTRANK.EXC(Data!M2:M11,5.2)",
+   "expected": 0.363
+  },
+  {
+   "formula": "=PERCENTRANK.EXC(Data!M2:M11,6)",
+   "expected": 0.409
+  },
+  {
+   "formula": "=PERCENTRANK.EXC(Data!M2:M11,2.5)",
+   "expected": 0.09
+  },
+  {
+   "formula": "=PERCENTRANK.INC(Data!C2:C11,7)",
+   "expected": 0.444
+  },
+  {
+   "formula": "=PERCENTRANK.INC(Data!C2:C11,7.5,2)",
+   "expected": 0.5
+  },
+  {
+   "formula": "=PERCENTRANK.INC(Data!C2:C11,7,0)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=SKEW(Data!M2:M11)",
+   "expected": -0.05094256629000797
+  },
+  {
+   "formula": "=SKEW(Data!C2:C11)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=SKEW(1,2)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=KURT(Data!M2:M11)",
+   "expected": -1.1914019641973197
+  },
+  {
+   "formula": "=KURT(Data!C2:C11)",
+   "expected": -1.1999999999999993
+  },
+  {
+   "formula": "=KURT(1,2,3)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=STANDARDIZE(5,3,2)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=STANDARDIZE(5,3,0)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=BINOM.DIST(3,10,0.5,FALSE)",
+   "expected": 0.11718750000000003
+  },
+  {
+   "formula": "=BINOM.DIST(3,10,0.5,TRUE)",
+   "expected": 0.17187500000000006
+  },
+  {
+   "formula": "=BINOM.DIST(11,10,0.5,TRUE)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=BINOM.DIST(3,10,1.5,TRUE)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=POISSON.DIST(3,2.5,FALSE)",
+   "expected": 0.21376301724973648
+  },
+  {
+   "formula": "=POISSON.DIST(3,2.5,TRUE)",
+   "expected": 0.7575761331330659
+  },
+  {
+   "formula": "=POISSON.DIST(-1,2.5,TRUE)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=EXPON.DIST(1.5,2,TRUE)",
+   "expected": 0.950212931632136
+  },
+  {
+   "formula": "=EXPON.DIST(1.5,2,FALSE)",
+   "expected": 0.09957413673572789
+  },
+  {
+   "formula": "=EXPON.DIST(-1,2,TRUE)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=CONFIDENCE.NORM(0.05,2.5,50)",
+   "expected": 0.6929519121748386
+  },
+  {
+   "formula": "=CONFIDENCE.NORM(0,2.5,50)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=LOOKUP(6,Data!H2:H7)",
+   "expected": 5.0
+  },
+  {
+   "formula": "=LOOKUP(6,Data!H2:H7,Data!I2:I7)",
+   "expected": 7.0
+  },
+  {
+   "formula": "=LOOKUP(0,Data!H2:H7,Data!I2:I7)",
+   "expected": "#N/A"
+  },
+  {
+   "formula": "=LOOKUP(100,Data!H2:H7,Data!I2:I7)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=LOOKUP(\"c\",Data!J2:J6)",
+   "expected": "Banana"
+  },
+  {
+   "formula": "=LOOKUP(6,Data!H2:H7,Data!I2:I6)",
+   "expected": 7.0
+  },
+  {
+   "formula": "=OFFSET(Data!C2,2,0)",
+   "expected": 7.0
+  },
+  {
+   "formula": "=OFFSET(Data!C2,2,1)",
+   "expected": 1.5
+  },
+  {
+   "formula": "=SUM(OFFSET(Data!C2,0,0,3,1))",
+   "expected": 22.0
+  },
+  {
+   "formula": "=SUM(OFFSET(Data!C2:C4,1,0))",
+   "expected": 15.0
+  },
+  {
+   "formula": "=OFFSET(Data!C2,-1,0)",
+   "expected": "Units"
+  },
+  {
+   "formula": "=OFFSET(Data!C2,0,0,0)",
+   "expected": "#REF!"
+  },
+  {
+   "formula": "=SUM(OFFSET(Data!C2,0,0,3,2))",
+   "expected": 27.0
+  },
+  {
+   "formula": "=OFFSET(Data!C2,100,0)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=OFFSET(Data!C2,2,0)+1",
+   "expected": 8.0
+  },
+  {
+   "formula": "=ROWS(OFFSET(Data!C2,0,0,5,1))",
+   "expected": 5.0
+  },
+  {
+   "formula": "=COUNT(OFFSET(Data!A1,1,2,10,1))",
+   "expected": 10.0
+  },
+  {
+   "formula": "=LET(x,5,x*2)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=LET(x,5,y,x+1,x*y)",
+   "expected": 30.0
+  },
+  {
+   "formula": "=LET(x,Data!C2:C11,SUM(x))",
+   "expected": 75.0
+  },
+  {
+   "formula": "=LET(x,Data!C2:C11,MAX(x)-MIN(x))",
+   "expected": 9.0
+  },
+  {
+   "formula": "=LET(a,2,a^a^a)",
+   "expected": 16.0
+  },
+  {
+   "formula": "=LET(s,\"ab\",UPPER(s)&s)",
+   "expected": "ABab"
+  },
+  {
+   "formula": "=LET(x,1/0,IFERROR(x,-1))",
+   "expected": -1.0
+  },
+  {
+   "formula": "=LET(x,SEQUENCE(4),SUM(x))",
+   "expected": 10.0
+  },
+  {
+   "formula": "=LET(r,Data!D2,Data!C2*r)",
+   "expected": 15.0
+  },
+  {
+   "formula": "=LET(x,2,LET(y,x*3,x+y))",
+   "expected": 8.0
+  },
+  {
+   "formula": "=LET(total,SUM(Data!C2:C11),total/COUNT(Data!C2:C11))",
+   "expected": 7.5
+  },
+  {
+   "formula": "=REPLACE(\"abcdef\",2,3,\"XY\")",
+   "expected": "aXYef"
+  },
+  {
+   "formula": "=REPLACE(\"abcdef\",0,3,\"XY\")",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=REPLACE(\"abcdef\",10,3,\"XY\")",
+   "expected": "abcdefXY"
+  },
+  {
+   "formula": "=REPLACE(\"abcdef\",2,0,\"XY\")",
+   "expected": "aXYbcdef"
+  },
+  {
+   "formula": "=REPLACE(\"abcdef\",2,-1,\"XY\")",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=REPLACE(12345,2,2,\"-\")",
+   "expected": "1-45"
+  },
+  {
+   "formula": "=CLEAN(\"a\"&CHAR(7)&\"b\")",
+   "expected": "ab"
+  },
+  {
+   "formula": "=CLEAN(\"plain\")",
+   "expected": "plain"
+  },
+  {
+   "formula": "=ISPMT(0.1,1,12,1200)",
+   "expected": -110.0
+  },
+  {
+   "formula": "=ISPMT(0.1,12,12,1200)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=ISPMT(0.1,0,12,1200)",
+   "expected": -120.0
+  },
+  {
+   "formula": "=ISPMT(0.1,1,0,1200)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=DOLLARDE(1.08,16)",
+   "expected": 1.5000000000000004
+  },
+  {
+   "formula": "=DOLLARDE(1.02,8)",
+   "expected": 1.025
+  },
+  {
+   "formula": "=DOLLARDE(-1.08,16)",
+   "expected": -1.5000000000000004
+  },
+  {
+   "formula": "=DOLLARDE(1.08,0)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=DOLLARDE(1.5,100)",
+   "expected": 1.5
+  },
+  {
+   "formula": "=DOLLARDE(1.08,10)",
+   "expected": 1.08
+  },
+  {
+   "formula": "=DOLLARFR(1.5,16)",
+   "expected": 1.08
+  },
+  {
+   "formula": "=DOLLARFR(1.125,8)",
+   "expected": 1.1
+  },
+  {
+   "formula": "=DOLLARFR(-1.5,16)",
+   "expected": -1.08
+  },
+  {
+   "formula": "=DOLLARFR(1.5,0)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=DOLLARFR(1.5,10)",
+   "expected": 1.5
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2029,11,15),1,0)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2029,11,15),1,0)",
+   "expected": 45245.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2029,11,15),1,0)",
+   "expected": 6.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2029,11,15),1,0)",
+   "expected": 120.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2029,11,15),1,0)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2029,11,15),1,0)",
+   "expected": 240.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,1,0)",
+   "expected": 95.28084864075115
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2029,11,15),0.05,98.5,100,1,0)",
+   "expected": 0.05307431572062957,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,1,0)",
+   "expected": 4.976358461332802
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,1,0)",
+   "expected": 4.69467779371019
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2029,11,15),1,1)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2029,11,15),1,1)",
+   "expected": 45245.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2029,11,15),1,1)",
+   "expected": 6.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2029,11,15),1,1)",
+   "expected": 121.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2029,11,15),1,1)",
+   "expected": 366.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2029,11,15),1,1)",
+   "expected": 245.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,1,1)",
+   "expected": 95.27907657460221
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2029,11,15),0.05,98.5,100,1,1)",
+   "expected": 0.05307328204252604,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,1,1)",
+   "expected": 4.979090701769961
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,1,1)",
+   "expected": 4.697255379028264
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2029,11,15),1,2)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2029,11,15),1,2)",
+   "expected": 45245.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2029,11,15),1,2)",
+   "expected": 6.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2029,11,15),1,2)",
+   "expected": 121.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2029,11,15),1,2)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2029,11,15),1,2)",
+   "expected": 245.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,1,2)",
+   "expected": 95.28265276035448
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2029,11,15),0.05,98.5,100,1,2)",
+   "expected": 0.0530753717345794,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,1,2)",
+   "expected": 4.973580683555023
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,1,2)",
+   "expected": 4.692057248636814
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2029,11,15),1,3)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2029,11,15),1,3)",
+   "expected": 45245.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2029,11,15),1,3)",
+   "expected": 6.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2029,11,15),1,3)",
+   "expected": 121.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2029,11,15),1,3)",
+   "expected": 365.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2029,11,15),1,3)",
+   "expected": 245.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,1,3)",
+   "expected": 95.27966375441716
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2029,11,15),0.05,98.5,100,1,3)",
+   "expected": 0.0530736241396982,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,1,3)",
+   "expected": 4.9781849453510665
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,1,3)",
+   "expected": 4.696400891840629
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2029,11,15),1,4)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2029,11,15),1,4)",
+   "expected": 45245.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2029,11,15),1,4)",
+   "expected": 6.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2029,11,15),1,4)",
+   "expected": 120.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2029,11,15),1,4)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2029,11,15),1,4)",
+   "expected": 240.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,1,4)",
+   "expected": 95.28084864075115
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2029,11,15),0.05,98.5,100,1,4)",
+   "expected": 0.05307431572062957,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,1,4)",
+   "expected": 4.976358461332802
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,1,4)",
+   "expected": 4.69467779371019
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2029,11,15),2,0)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2029,11,15),2,0)",
+   "expected": 45245.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2029,11,15),2,0)",
+   "expected": 12.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2029,11,15),2,0)",
+   "expected": 120.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2029,11,15),2,0)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2029,11,15),2,0)",
+   "expected": 60.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,2,0)",
+   "expected": 95.24741352034563
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2029,11,15),0.05,98.5,100,2,0)",
+   "expected": 0.05308478298214776,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,2,0)",
+   "expected": 4.900459220686824
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,2,0)",
+   "expected": 4.757727398725072
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2029,11,15),2,1)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2029,11,15),2,1)",
+   "expected": 45245.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2029,11,15),2,1)",
+   "expected": 12.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2029,11,15),2,1)",
+   "expected": 121.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2029,11,15),2,1)",
+   "expected": 182.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2029,11,15),2,1)",
+   "expected": 61.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,2,1)",
+   "expected": 95.2467457793385
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2029,11,15),0.05,98.5,100,2,1)",
+   "expected": 0.053084309994505384,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,2,1)",
+   "expected": 4.901374971602574
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,2,1)",
+   "expected": 4.758616477284052
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2029,11,15),2,2)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2029,11,15),2,2)",
+   "expected": 45245.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2029,11,15),2,2)",
+   "expected": 12.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2029,11,15),2,2)",
+   "expected": 121.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2029,11,15),2,2)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2029,11,15),2,2)",
+   "expected": 61.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,2,2)",
+   "expected": 95.24944073898325
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2029,11,15),0.05,98.5,100,2,2)",
+   "expected": 0.05308622169559015,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,2,2)",
+   "expected": 4.897681442909046
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,2,2)",
+   "expected": 4.755030527096161
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2029,11,15),2,3)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2029,11,15),2,3)",
+   "expected": 45245.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2029,11,15),2,3)",
+   "expected": 12.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2029,11,15),2,3)",
+   "expected": 121.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2029,11,15),2,3)",
+   "expected": 182.5
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2029,11,15),2,3)",
+   "expected": 61.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,2,3)",
+   "expected": 95.24608197887788
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2029,11,15),0.05,98.5,100,2,3)",
+   "expected": 0.05308384005390584,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,2,3)",
+   "expected": 4.902285704705089
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,2,3)",
+   "expected": 4.759500684179698
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2029,11,15),2,4)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2029,11,15),2,4)",
+   "expected": 45245.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2029,11,15),2,4)",
+   "expected": 12.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2029,11,15),2,4)",
+   "expected": 120.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2029,11,15),2,4)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2029,11,15),2,4)",
+   "expected": 60.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,2,4)",
+   "expected": 95.24741352034563
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2029,11,15),0.05,98.5,100,2,4)",
+   "expected": 0.05308478298214776,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,2,4)",
+   "expected": 4.900459220686824
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,2,4)",
+   "expected": 4.757727398725072
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2029,11,15),4,0)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2029,11,15),4,0)",
+   "expected": 45337.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2029,11,15),4,0)",
+   "expected": 23.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2029,11,15),4,0)",
+   "expected": 30.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2029,11,15),4,0)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2029,11,15),4,0)",
+   "expected": 60.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,4,0)",
+   "expected": 95.22409484310721
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2029,11,15),0.05,98.5,100,4,0)",
+   "expected": 0.053078709224958734,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,4,0)",
+   "expected": 4.926921988759763
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,4,0)",
+   "expected": 4.854110333753462
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2029,11,15),4,1)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2029,11,15),4,1)",
+   "expected": 45337.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2029,11,15),4,1)",
+   "expected": 23.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2029,11,15),4,1)",
+   "expected": 29.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2029,11,15),4,1)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2029,11,15),4,1)",
+   "expected": 61.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,4,1)",
+   "expected": 95.22216328242715
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2029,11,15),0.05,98.5,100,4,1)",
+   "expected": 0.0530774693309302,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,4,1)",
+   "expected": 4.92969976653754
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,4,1)",
+   "expected": 4.856847060628119
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2029,11,15),4,2)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2029,11,15),4,2)",
+   "expected": 45337.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2029,11,15),4,2)",
+   "expected": 23.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2029,11,15),4,2)",
+   "expected": 29.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2029,11,15),4,2)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2029,11,15),4,2)",
+   "expected": 61.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,4,2)",
+   "expected": 95.22216328242715
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2029,11,15),0.05,98.5,100,4,2)",
+   "expected": 0.05307746929194235,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,4,2)",
+   "expected": 4.92969976653754
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,4,2)",
+   "expected": 4.856847060628119
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2029,11,15),4,3)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2029,11,15),4,3)",
+   "expected": 45337.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2029,11,15),4,3)",
+   "expected": 23.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2029,11,15),4,3)",
+   "expected": 29.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2029,11,15),4,3)",
+   "expected": 91.25
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2029,11,15),4,3)",
+   "expected": 61.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,4,3)",
+   "expected": 95.22139667642801
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2029,11,15),0.05,98.5,100,4,3)",
+   "expected": 0.05307697827348145,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,4,3)",
+   "expected": 4.930803267298576
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,4,3)",
+   "expected": 4.8579342534961345
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2029,11,15),4,4)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2029,11,15),4,4)",
+   "expected": 45337.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2029,11,15),4,4)",
+   "expected": 23.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2029,11,15),4,4)",
+   "expected": 30.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2029,11,15),4,4)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2029,11,15),4,4)",
+   "expected": 60.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,4,4)",
+   "expected": 95.22409484310721
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2029,11,15),0.05,98.5,100,4,4)",
+   "expected": 0.053078709224958734,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,4,4)",
+   "expected": 4.926921988759763
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,4,4)",
+   "expected": 4.854110333753462
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2024,9,30),1,0)",
+   "expected": 45565.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2024,9,30),1,0)",
+   "expected": 45199.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2024,9,30),1,0)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2024,9,30),1,0)",
+   "expected": 165.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2024,9,30),1,0)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2024,9,30),1,0)",
+   "expected": 195.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,100,1,0)",
+   "expected": 99.40324858757062
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2024,9,30),0.05,98.5,100,1,0)",
+   "expected": 0.07708207460171108,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,1,0)",
+   "expected": 0.5416666666666665
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,1,0)",
+   "expected": 0.5110062893081759
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2024,9,30),1,1)",
+   "expected": 45565.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2024,9,30),1,1)",
+   "expected": 45199.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2024,9,30),1,1)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2024,9,30),1,1)",
+   "expected": 167.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2024,9,30),1,1)",
+   "expected": 366.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2024,9,30),1,1)",
+   "expected": 199.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,100,1,1)",
+   "expected": 99.40138602970201
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2024,9,30),0.05,98.5,100,1,1)",
+   "expected": 0.07698635235495391,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,1,1)",
+   "expected": 0.5437158469945356
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,1,1)",
+   "expected": 0.5129394782967316
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2024,9,30),1,2)",
+   "expected": 45565.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2024,9,30),1,2)",
+   "expected": 45199.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2024,9,30),1,2)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2024,9,30),1,2)",
+   "expected": 167.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2024,9,30),1,2)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2024,9,30),1,2)",
+   "expected": 199.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,100,1,2)",
+   "expected": 99.40831270071945
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2024,9,30),0.05,98.5,100,1,2)",
+   "expected": 0.07698635235495391,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,1,2)",
+   "expected": 0.536111111111111
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,1,2)",
+   "expected": 0.5057651991614255
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2024,9,30),1,3)",
+   "expected": 45565.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2024,9,30),1,3)",
+   "expected": 45199.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2024,9,30),1,3)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2024,9,30),1,3)",
+   "expected": 167.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2024,9,30),1,3)",
+   "expected": 365.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2024,9,30),1,3)",
+   "expected": 199.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,100,1,3)",
+   "expected": 99.4025219320564
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2024,9,30),0.05,98.5,100,1,3)",
+   "expected": 0.07698635235495391,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,1,3)",
+   "expected": 0.5424657534246576
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,1,3)",
+   "expected": 0.511760144740243
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2024,9,30),1,4)",
+   "expected": 45565.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2024,9,30),1,4)",
+   "expected": 45199.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2024,9,30),1,4)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2024,9,30),1,4)",
+   "expected": 165.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2024,9,30),1,4)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2024,9,30),1,4)",
+   "expected": 195.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,100,1,4)",
+   "expected": 99.40324858757062
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2024,9,30),0.05,98.5,100,1,4)",
+   "expected": 0.07708207460171108,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,1,4)",
+   "expected": 0.5416666666666665
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,1,4)",
+   "expected": 0.5110062893081759
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2024,9,30),2,0)",
+   "expected": 45382.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2024,9,30),2,0)",
+   "expected": 45199.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2024,9,30),2,0)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2024,9,30),2,0)",
+   "expected": 165.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2024,9,30),2,0)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2024,9,30),2,0)",
+   "expected": 15.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,100,2,0)",
+   "expected": 99.47191998245552
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2024,9,30),0.05,98.5,100,2,0)",
+   "expected": 0.0787575840087119,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,2,0)",
+   "expected": 0.5294135141565549
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,2,0)",
+   "expected": 0.5139937030646164
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2024,9,30),2,1)",
+   "expected": 45382.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2024,9,30),2,1)",
+   "expected": 45199.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2024,9,30),2,1)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2024,9,30),2,1)",
+   "expected": 167.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2024,9,30),2,1)",
+   "expected": 182.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2024,9,30),2,1)",
+   "expected": 16.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,100,2,1)",
+   "expected": 99.46983872203994
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2024,9,30),0.05,98.5,100,2,1)",
+   "expected": 0.07864680853901666,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,2,1)",
+   "expected": 0.5314626944844237
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,2,1)",
+   "expected": 0.5159831985285667
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2024,9,30),2,2)",
+   "expected": 45382.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2024,9,30),2,2)",
+   "expected": 45199.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2024,9,30),2,2)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2024,9,30),2,2)",
+   "expected": 167.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2024,9,30),2,2)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2024,9,30),2,2)",
+   "expected": 16.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,100,2,2)",
+   "expected": 99.47757002411397
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2024,9,30),0.05,98.5,100,2,2)",
+   "expected": 0.07906240358477404,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,2,2)",
+   "expected": 0.5238579586009994
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,2,2)",
+   "expected": 0.5085999598067955
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2024,9,30),2,3)",
+   "expected": 45382.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2024,9,30),2,3)",
+   "expected": 45199.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2024,9,30),2,3)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2024,9,30),2,3)",
+   "expected": 167.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2024,9,30),2,3)",
+   "expected": 182.5
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2024,9,30),2,3)",
+   "expected": 16.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,100,2,3)",
+   "expected": 99.47110820830149
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2024,9,30),0.05,98.5,100,2,3)",
+   "expected": 0.07871428163666931,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,2,3)",
+   "expected": 0.5302126009145458
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,2,3)",
+   "expected": 0.5147695154510153
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2024,9,30),2,4)",
+   "expected": 45382.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2024,9,30),2,4)",
+   "expected": 45199.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2024,9,30),2,4)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2024,9,30),2,4)",
+   "expected": 165.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2024,9,30),2,4)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2024,9,30),2,4)",
+   "expected": 15.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,100,2,4)",
+   "expected": 99.47191998245552
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2024,9,30),0.05,98.5,100,2,4)",
+   "expected": 0.0787575840087119,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,2,4)",
+   "expected": 0.5294135141565549
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,2,4)",
+   "expected": 0.5139937030646164
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2024,9,30),4,0)",
+   "expected": 45382.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2024,9,30),4,0)",
+   "expected": 45291.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2024,9,30),4,0)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2024,9,30),4,0)",
+   "expected": 75.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2024,9,30),4,0)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2024,9,30),4,0)",
+   "expected": 15.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,100,4,0)",
+   "expected": 99.46964045389501
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2024,9,30),0.05,98.5,100,4,0)",
+   "expected": 0.07852410991774973,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,4,0)",
+   "expected": 0.5324083077423576
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,4,0)",
+   "expected": 0.5245402046722736
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2024,9,30),4,1)",
+   "expected": 45382.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2024,9,30),4,1)",
+   "expected": 45291.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2024,9,30),4,1)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2024,9,30),4,1)",
+   "expected": 75.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2024,9,30),4,1)",
+   "expected": 91.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2024,9,30),4,1)",
+   "expected": 16.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,100,4,1)",
+   "expected": 99.46738430104686
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2024,9,30),0.05,98.5,100,4,1)",
+   "expected": 0.07840390816572665,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,4,1)",
+   "expected": 0.534697685031735
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,4,1)",
+   "expected": 0.5267957487997389
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2024,9,30),4,2)",
+   "expected": 45382.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2024,9,30),4,2)",
+   "expected": 45291.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2024,9,30),4,2)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2024,9,30),4,2)",
+   "expected": 75.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2024,9,30),4,2)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2024,9,30),4,2)",
+   "expected": 16.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,100,4,2)",
+   "expected": 99.46964045389501
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2024,9,30),0.05,98.5,100,4,2)",
+   "expected": 0.07852410991774998,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,4,2)",
+   "expected": 0.5324083077423576
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,4,2)",
+   "expected": 0.5245402046722736
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2024,9,30),4,3)",
+   "expected": 45382.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2024,9,30),4,3)",
+   "expected": 45291.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2024,9,30),4,3)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2024,9,30),4,3)",
+   "expected": 75.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2024,9,30),4,3)",
+   "expected": 91.25
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2024,9,30),4,3)",
+   "expected": 16.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,100,4,3)",
+   "expected": 99.46682827651127
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2024,9,30),0.05,98.5,100,4,3)",
+   "expected": 0.07837443185324314,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,4,3)",
+   "expected": 0.5352621890208964
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,4,3)",
+   "expected": 0.5273519103654152
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,3,15),DATE(2024,9,30),4,4)",
+   "expected": 45382.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,3,15),DATE(2024,9,30),4,4)",
+   "expected": 45291.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2024,9,30),4,4)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,3,15),DATE(2024,9,30),4,4)",
+   "expected": 75.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,3,15),DATE(2024,9,30),4,4)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,3,15),DATE(2024,9,30),4,4)",
+   "expected": 15.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,100,4,4)",
+   "expected": 99.46964045389501
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2024,9,30),0.05,98.5,100,4,4)",
+   "expected": 0.07852410991774973,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,4,4)",
+   "expected": 0.5324083077423576
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,3,15),DATE(2024,9,30),0.05,0.06,4,4)",
+   "expected": 0.5245402046722736
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,2,29),DATE(2027,8,31),1,0)",
+   "expected": 45535.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,2,29),DATE(2027,8,31),1,0)",
+   "expected": 45169.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,2,29),DATE(2027,8,31),1,0)",
+   "expected": 4.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,2,29),DATE(2027,8,31),1,0)",
+   "expected": 179.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,2,29),DATE(2027,8,31),1,0)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,2,29),DATE(2027,8,31),1,0)",
+   "expected": 181.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,100,1,0)",
+   "expected": 96.88656014863481
+  },
+  {
+   "formula": "=YIELD(DATE(2024,2,29),DATE(2027,8,31),0.05,98.5,100,1,0)",
+   "expected": 0.05471453784300164,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,1,0)",
+   "expected": 3.22050674630799
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,1,0)",
+   "expected": 3.038213911611311
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,2,29),DATE(2027,8,31),1,1)",
+   "expected": 45535.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,2,29),DATE(2027,8,31),1,1)",
+   "expected": 45169.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,2,29),DATE(2027,8,31),1,1)",
+   "expected": 4.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,2,29),DATE(2027,8,31),1,1)",
+   "expected": 182.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,2,29),DATE(2027,8,31),1,1)",
+   "expected": 366.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,2,29),DATE(2027,8,31),1,1)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,100,1,1)",
+   "expected": 96.88659613883216
+  },
+  {
+   "formula": "=YIELD(DATE(2024,2,29),DATE(2027,8,31),0.05,98.5,100,1,1)",
+   "expected": 0.054714593844392374,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,1,1)",
+   "expected": 3.22046120896737
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,1,1)",
+   "expected": 3.038170951856009
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,2,29),DATE(2027,8,31),1,2)",
+   "expected": 45535.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,2,29),DATE(2027,8,31),1,2)",
+   "expected": 45169.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,2,29),DATE(2027,8,31),1,2)",
+   "expected": 4.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,2,29),DATE(2027,8,31),1,2)",
+   "expected": 182.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,2,29),DATE(2027,8,31),1,2)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,2,29),DATE(2027,8,31),1,2)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,100,1,2)",
+   "expected": 96.8931580077888
+  },
+  {
+   "formula": "=YIELD(DATE(2024,2,29),DATE(2027,8,31),0.05,98.5,100,1,2)",
+   "expected": 0.054724840337217716,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,1,2)",
+   "expected": 3.2121734129746566
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,1,2)",
+   "expected": 3.030352276391185
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,2,29),DATE(2027,8,31),1,3)",
+   "expected": 45535.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,2,29),DATE(2027,8,31),1,3)",
+   "expected": 45169.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,2,29),DATE(2027,8,31),1,3)",
+   "expected": 4.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,2,29),DATE(2027,8,31),1,3)",
+   "expected": 182.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,2,29),DATE(2027,8,31),1,3)",
+   "expected": 365.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,2,29),DATE(2027,8,31),1,3)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,100,1,3)",
+   "expected": 96.88767321024544
+  },
+  {
+   "formula": "=YIELD(DATE(2024,2,29),DATE(2027,8,31),0.05,98.5,100,1,3)",
+   "expected": 0.05471627078656227,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,1,3)",
+   "expected": 3.21909883154391
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,1,3)",
+   "expected": 3.036885690135764
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,2,29),DATE(2027,8,31),1,4)",
+   "expected": 45535.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,2,29),DATE(2027,8,31),1,4)",
+   "expected": 45169.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,2,29),DATE(2027,8,31),1,4)",
+   "expected": 4.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,2,29),DATE(2027,8,31),1,4)",
+   "expected": 179.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,2,29),DATE(2027,8,31),1,4)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,2,29),DATE(2027,8,31),1,4)",
+   "expected": 181.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,100,1,4)",
+   "expected": 96.88656014863481
+  },
+  {
+   "formula": "=YIELD(DATE(2024,2,29),DATE(2027,8,31),0.05,98.5,100,1,4)",
+   "expected": 0.05471453784300164,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,1,4)",
+   "expected": 3.22050674630799
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,1,4)",
+   "expected": 3.038213911611311
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,2,29),DATE(2027,8,31),2,0)",
+   "expected": 45535.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,2,29),DATE(2027,8,31),2,0)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,2,29),DATE(2027,8,31),2,0)",
+   "expected": 7.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,2,29),DATE(2027,8,31),2,0)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,2,29),DATE(2027,8,31),2,0)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,2,29),DATE(2027,8,31),2,0)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,100,2,0)",
+   "expected": 96.88485852238924
+  },
+  {
+   "formula": "=YIELD(DATE(2024,2,29),DATE(2027,8,31),0.05,98.5,100,2,0)",
+   "expected": 0.05476782730017957,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,2,0)",
+   "expected": 3.249355160251412
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,2,0)",
+   "expected": 3.154713747816905
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,2,29),DATE(2027,8,31),2,1)",
+   "expected": 45535.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,2,29),DATE(2027,8,31),2,1)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,2,29),DATE(2027,8,31),2,1)",
+   "expected": 7.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,2,29),DATE(2027,8,31),2,1)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,2,29),DATE(2027,8,31),2,1)",
+   "expected": 182.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,2,29),DATE(2027,8,31),2,1)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,100,2,1)",
+   "expected": 96.88485852238924
+  },
+  {
+   "formula": "=YIELD(DATE(2024,2,29),DATE(2027,8,31),0.05,98.5,100,2,1)",
+   "expected": 0.05476782730017981,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,2,1)",
+   "expected": 3.249355160251412
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,2,1)",
+   "expected": 3.154713747816905
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,2,29),DATE(2027,8,31),2,2)",
+   "expected": 45535.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,2,29),DATE(2027,8,31),2,2)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,2,29),DATE(2027,8,31),2,2)",
+   "expected": 7.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,2,29),DATE(2027,8,31),2,2)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,2,29),DATE(2027,8,31),2,2)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,2,29),DATE(2027,8,31),2,2)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,100,2,2)",
+   "expected": 96.88485852238924
+  },
+  {
+   "formula": "=YIELD(DATE(2024,2,29),DATE(2027,8,31),0.05,98.5,100,2,2)",
+   "expected": 0.05476782730017998,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,2,2)",
+   "expected": 3.249355160251412
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,2,2)",
+   "expected": 3.154713747816905
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,2,29),DATE(2027,8,31),2,3)",
+   "expected": 45535.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,2,29),DATE(2027,8,31),2,3)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,2,29),DATE(2027,8,31),2,3)",
+   "expected": 7.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,2,29),DATE(2027,8,31),2,3)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,2,29),DATE(2027,8,31),2,3)",
+   "expected": 182.5
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,2,29),DATE(2027,8,31),2,3)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,100,2,3)",
+   "expected": 96.88485852238924
+  },
+  {
+   "formula": "=YIELD(DATE(2024,2,29),DATE(2027,8,31),0.05,98.5,100,2,3)",
+   "expected": 0.05476782730017981,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,2,3)",
+   "expected": 3.249355160251412
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,2,3)",
+   "expected": 3.154713747816905
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,2,29),DATE(2027,8,31),2,4)",
+   "expected": 45535.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,2,29),DATE(2027,8,31),2,4)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,2,29),DATE(2027,8,31),2,4)",
+   "expected": 7.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,2,29),DATE(2027,8,31),2,4)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,2,29),DATE(2027,8,31),2,4)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,2,29),DATE(2027,8,31),2,4)",
+   "expected": 181.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,100,2,4)",
+   "expected": 96.88485852238924
+  },
+  {
+   "formula": "=YIELD(DATE(2024,2,29),DATE(2027,8,31),0.05,98.5,100,2,4)",
+   "expected": 0.05476782730017982,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,2,4)",
+   "expected": 3.249355160251412
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,2,4)",
+   "expected": 3.154713747816905
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,2,29),DATE(2027,8,31),4,0)",
+   "expected": 45443.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,2,29),DATE(2027,8,31),4,0)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,2,29),DATE(2027,8,31),4,0)",
+   "expected": 14.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,2,29),DATE(2027,8,31),4,0)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,2,29),DATE(2027,8,31),4,0)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,2,29),DATE(2027,8,31),4,0)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,100,4,0)",
+   "expected": 96.86415462472448
+  },
+  {
+   "formula": "=YIELD(DATE(2024,2,29),DATE(2027,8,31),0.05,98.5,100,4,0)",
+   "expected": 0.05473852309262814,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,4,0)",
+   "expected": 3.227180688147103
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,4,0)",
+   "expected": 3.179488362706506
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,2,29),DATE(2027,8,31),4,1)",
+   "expected": 45443.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,2,29),DATE(2027,8,31),4,1)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,2,29),DATE(2027,8,31),4,1)",
+   "expected": 14.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,2,29),DATE(2027,8,31),4,1)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,2,29),DATE(2027,8,31),4,1)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,2,29),DATE(2027,8,31),4,1)",
+   "expected": 92.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,100,4,1)",
+   "expected": 96.86415462472448
+  },
+  {
+   "formula": "=YIELD(DATE(2024,2,29),DATE(2027,8,31),0.05,98.5,100,4,1)",
+   "expected": 0.05473852309262858,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,4,1)",
+   "expected": 3.227180688147103
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,4,1)",
+   "expected": 3.179488362706506
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,2,29),DATE(2027,8,31),4,2)",
+   "expected": 45443.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,2,29),DATE(2027,8,31),4,2)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,2,29),DATE(2027,8,31),4,2)",
+   "expected": 14.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,2,29),DATE(2027,8,31),4,2)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,2,29),DATE(2027,8,31),4,2)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,2,29),DATE(2027,8,31),4,2)",
+   "expected": 92.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,100,4,2)",
+   "expected": 96.86415462472448
+  },
+  {
+   "formula": "=YIELD(DATE(2024,2,29),DATE(2027,8,31),0.05,98.5,100,4,2)",
+   "expected": 0.05473852302540926,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,4,2)",
+   "expected": 3.227180688147103
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,4,2)",
+   "expected": 3.179488362706506
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,2,29),DATE(2027,8,31),4,3)",
+   "expected": 45443.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,2,29),DATE(2027,8,31),4,3)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,2,29),DATE(2027,8,31),4,3)",
+   "expected": 14.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,2,29),DATE(2027,8,31),4,3)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,2,29),DATE(2027,8,31),4,3)",
+   "expected": 91.25
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,2,29),DATE(2027,8,31),4,3)",
+   "expected": 92.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,100,4,3)",
+   "expected": 96.86415462472448
+  },
+  {
+   "formula": "=YIELD(DATE(2024,2,29),DATE(2027,8,31),0.05,98.5,100,4,3)",
+   "expected": 0.05473852309262858,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,4,3)",
+   "expected": 3.227180688147103
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,4,3)",
+   "expected": 3.179488362706506
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,2,29),DATE(2027,8,31),4,4)",
+   "expected": 45443.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,2,29),DATE(2027,8,31),4,4)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,2,29),DATE(2027,8,31),4,4)",
+   "expected": 14.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,2,29),DATE(2027,8,31),4,4)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,2,29),DATE(2027,8,31),4,4)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,2,29),DATE(2027,8,31),4,4)",
+   "expected": 91.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,100,4,4)",
+   "expected": 96.86415462472448
+  },
+  {
+   "formula": "=YIELD(DATE(2024,2,29),DATE(2027,8,31),0.05,98.5,100,4,4)",
+   "expected": 0.054738523092628125,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,4,4)",
+   "expected": 3.227180688147103
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,2,29),DATE(2027,8,31),0.05,0.06,4,4)",
+   "expected": 3.179488362706506
+  },
+  {
+   "formula": "=COUPNCD(DATE(2023,12,31),DATE(2025,2,28),1,0)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2023,12,31),DATE(2025,2,28),1,0)",
+   "expected": 44985.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2023,12,31),DATE(2025,2,28),1,0)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2023,12,31),DATE(2025,2,28),1,0)",
+   "expected": 301.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2023,12,31),DATE(2025,2,28),1,0)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2023,12,31),DATE(2025,2,28),1,0)",
+   "expected": 59.0
+  },
+  {
+   "formula": "=PRICE(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,100,1,0)",
+   "expected": 98.88707617841638
+  },
+  {
+   "formula": "=YIELD(DATE(2023,12,31),DATE(2025,2,28),0.05,98.5,100,1,0)",
+   "expected": 0.06358061921183458,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,1,0)",
+   "expected": 1.1158381182633221
+  },
+  {
+   "formula": "=MDURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,1,0)",
+   "expected": 1.0526774700597379
+  },
+  {
+   "formula": "=COUPNCD(DATE(2023,12,31),DATE(2025,2,28),1,1)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2023,12,31),DATE(2025,2,28),1,1)",
+   "expected": 44985.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2023,12,31),DATE(2025,2,28),1,1)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2023,12,31),DATE(2025,2,28),1,1)",
+   "expected": 306.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2023,12,31),DATE(2025,2,28),1,1)",
+   "expected": 365.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2023,12,31),DATE(2025,2,28),1,1)",
+   "expected": 60.0
+  },
+  {
+   "formula": "=PRICE(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,100,1,1)",
+   "expected": 98.88703038468249
+  },
+  {
+   "formula": "=YIELD(DATE(2023,12,31),DATE(2025,2,28),0.05,98.5,100,1,1)",
+   "expected": 0.06358005722264125,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,1,1)",
+   "expected": 1.1158836556039418
+  },
+  {
+   "formula": "=MDURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,1,1)",
+   "expected": 1.0527204298150394
+  },
+  {
+   "formula": "=COUPNCD(DATE(2023,12,31),DATE(2025,2,28),1,2)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2023,12,31),DATE(2025,2,28),1,2)",
+   "expected": 44985.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2023,12,31),DATE(2025,2,28),1,2)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2023,12,31),DATE(2025,2,28),1,2)",
+   "expected": 306.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2023,12,31),DATE(2025,2,28),1,2)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2023,12,31),DATE(2025,2,28),1,2)",
+   "expected": 60.0
+  },
+  {
+   "formula": "=PRICE(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,100,1,2)",
+   "expected": 98.90107713914516
+  },
+  {
+   "formula": "=YIELD(DATE(2023,12,31),DATE(2025,2,28),0.05,98.5,100,1,2)",
+   "expected": 0.0637544299337983,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,1,2)",
+   "expected": 1.101949229374433
+  },
+  {
+   "formula": "=MDURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,1,2)",
+   "expected": 1.0395747446928614
+  },
+  {
+   "formula": "=COUPNCD(DATE(2023,12,31),DATE(2025,2,28),1,3)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2023,12,31),DATE(2025,2,28),1,3)",
+   "expected": 44985.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2023,12,31),DATE(2025,2,28),1,3)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2023,12,31),DATE(2025,2,28),1,3)",
+   "expected": 306.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2023,12,31),DATE(2025,2,28),1,3)",
+   "expected": 365.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2023,12,31),DATE(2025,2,28),1,3)",
+   "expected": 60.0
+  },
+  {
+   "formula": "=PRICE(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,100,1,3)",
+   "expected": 98.88933477205504
+  },
+  {
+   "formula": "=YIELD(DATE(2023,12,31),DATE(2025,2,28),0.05,98.5,100,1,3)",
+   "expected": 0.06360838925658797,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,1,3)",
+   "expected": 1.1135930649908716
+  },
+  {
+   "formula": "=MDURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,1,3)",
+   "expected": 1.050559495274407
+  },
+  {
+   "formula": "=COUPNCD(DATE(2023,12,31),DATE(2025,2,28),1,4)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2023,12,31),DATE(2025,2,28),1,4)",
+   "expected": 44985.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2023,12,31),DATE(2025,2,28),1,4)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2023,12,31),DATE(2025,2,28),1,4)",
+   "expected": 302.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2023,12,31),DATE(2025,2,28),1,4)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2023,12,31),DATE(2025,2,28),1,4)",
+   "expected": 59.0
+  },
+  {
+   "formula": "=PRICE(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,100,1,4)",
+   "expected": 98.88987096847423
+  },
+  {
+   "formula": "=YIELD(DATE(2023,12,31),DATE(2025,2,28),0.05,98.5,100,1,4)",
+   "expected": 0.06361499699353226,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,1,4)",
+   "expected": 1.1130603404855444
+  },
+  {
+   "formula": "=MDURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,1,4)",
+   "expected": 1.0500569249863625
+  },
+  {
+   "formula": "=COUPNCD(DATE(2023,12,31),DATE(2025,2,28),2,0)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2023,12,31),DATE(2025,2,28),2,0)",
+   "expected": 45169.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2023,12,31),DATE(2025,2,28),2,0)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2023,12,31),DATE(2025,2,28),2,0)",
+   "expected": 120.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2023,12,31),DATE(2025,2,28),2,0)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2023,12,31),DATE(2025,2,28),2,0)",
+   "expected": 60.0
+  },
+  {
+   "formula": "=PRICE(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,100,2,0)",
+   "expected": 98.88101216519644
+  },
+  {
+   "formula": "=YIELD(DATE(2023,12,31),DATE(2025,2,28),0.05,98.5,100,2,0)",
+   "expected": 0.06346335404929555,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,2,0)",
+   "expected": 1.1300951399638128
+  },
+  {
+   "formula": "=MDURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,2,0)",
+   "expected": 1.0971797475376823
+  },
+  {
+   "formula": "=COUPNCD(DATE(2023,12,31),DATE(2025,2,28),2,1)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2023,12,31),DATE(2025,2,28),2,1)",
+   "expected": 45169.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2023,12,31),DATE(2025,2,28),2,1)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2023,12,31),DATE(2025,2,28),2,1)",
+   "expected": 122.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2023,12,31),DATE(2025,2,28),2,1)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2023,12,31),DATE(2025,2,28),2,1)",
+   "expected": 60.0
+  },
+  {
+   "formula": "=PRICE(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,100,2,1)",
+   "expected": 98.88274194490026
+  },
+  {
+   "formula": "=YIELD(DATE(2023,12,31),DATE(2025,2,28),0.05,98.5,100,2,1)",
+   "expected": 0.06348439609796634,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,2,1)",
+   "expected": 1.1282636381323112
+  },
+  {
+   "formula": "=MDURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,2,1)",
+   "expected": 1.0954015904197196
+  },
+  {
+   "formula": "=COUPNCD(DATE(2023,12,31),DATE(2025,2,28),2,2)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2023,12,31),DATE(2025,2,28),2,2)",
+   "expected": 45169.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2023,12,31),DATE(2025,2,28),2,2)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2023,12,31),DATE(2025,2,28),2,2)",
+   "expected": 122.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2023,12,31),DATE(2025,2,28),2,2)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2023,12,31),DATE(2025,2,28),2,2)",
+   "expected": 60.0
+  },
+  {
+   "formula": "=PRICE(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,100,2,2)",
+   "expected": 98.88626279928386
+  },
+  {
+   "formula": "=YIELD(DATE(2023,12,31),DATE(2025,2,28),0.05,98.5,100,2,2)",
+   "expected": 0.0635274173357117,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,2,2)",
+   "expected": 1.1245395844082573
+  },
+  {
+   "formula": "=MDURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,2,2)",
+   "expected": 1.0917860042798615
+  },
+  {
+   "formula": "=COUPNCD(DATE(2023,12,31),DATE(2025,2,28),2,3)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2023,12,31),DATE(2025,2,28),2,3)",
+   "expected": 45169.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2023,12,31),DATE(2025,2,28),2,3)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2023,12,31),DATE(2025,2,28),2,3)",
+   "expected": 122.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2023,12,31),DATE(2025,2,28),2,3)",
+   "expected": 182.5
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2023,12,31),DATE(2025,2,28),2,3)",
+   "expected": 60.0
+  },
+  {
+   "formula": "=PRICE(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,100,2,3)",
+   "expected": 98.88187453813694
+  },
+  {
+   "formula": "=YIELD(DATE(2023,12,31),DATE(2025,2,28),0.05,98.5,100,2,3)",
+   "expected": 0.0634738367330106,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,2,3)",
+   "expected": 1.1291818979546804
+  },
+  {
+   "formula": "=MDURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,2,3)",
+   "expected": 1.0962931048103692
+  },
+  {
+   "formula": "=COUPNCD(DATE(2023,12,31),DATE(2025,2,28),2,4)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2023,12,31),DATE(2025,2,28),2,4)",
+   "expected": 45169.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2023,12,31),DATE(2025,2,28),2,4)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2023,12,31),DATE(2025,2,28),2,4)",
+   "expected": 120.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2023,12,31),DATE(2025,2,28),2,4)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2023,12,31),DATE(2025,2,28),2,4)",
+   "expected": 59.0
+  },
+  {
+   "formula": "=PRICE(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,100,2,4)",
+   "expected": 98.88101216519644
+  },
+  {
+   "formula": "=YIELD(DATE(2023,12,31),DATE(2025,2,28),0.05,98.5,100,2,4)",
+   "expected": 0.06346335404929555,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,2,4)",
+   "expected": 1.1300951399638128
+  },
+  {
+   "formula": "=MDURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,2,4)",
+   "expected": 1.0971797475376823
+  },
+  {
+   "formula": "=COUPNCD(DATE(2023,12,31),DATE(2025,2,28),4,0)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2023,12,31),DATE(2025,2,28),4,0)",
+   "expected": 45260.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2023,12,31),DATE(2025,2,28),4,0)",
+   "expected": 5.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2023,12,31),DATE(2025,2,28),4,0)",
+   "expected": 30.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2023,12,31),DATE(2025,2,28),4,0)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2023,12,31),DATE(2025,2,28),4,0)",
+   "expected": 60.0
+  },
+  {
+   "formula": "=PRICE(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,100,4,0)",
+   "expected": 98.87924405604195
+  },
+  {
+   "formula": "=YIELD(DATE(2023,12,31),DATE(2025,2,28),0.05,98.5,100,4,0)",
+   "expected": 0.06342071700071258,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,4,0)",
+   "expected": 1.1359630233431297
+  },
+  {
+   "formula": "=MDURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,4,0)",
+   "expected": 1.1191753924562855
+  },
+  {
+   "formula": "=COUPNCD(DATE(2023,12,31),DATE(2025,2,28),4,1)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2023,12,31),DATE(2025,2,28),4,1)",
+   "expected": 45260.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2023,12,31),DATE(2025,2,28),4,1)",
+   "expected": 5.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2023,12,31),DATE(2025,2,28),4,1)",
+   "expected": 31.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2023,12,31),DATE(2025,2,28),4,1)",
+   "expected": 92.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2023,12,31),DATE(2025,2,28),4,1)",
+   "expected": 60.0
+  },
+  {
+   "formula": "=PRICE(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,100,4,1)",
+   "expected": 98.88091774810259
+  },
+  {
+   "formula": "=YIELD(DATE(2023,12,31),DATE(2025,2,28),0.05,98.5,100,4,1)",
+   "expected": 0.06344102437722861,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,4,1)",
+   "expected": 1.1341315215116279
+  },
+  {
+   "formula": "=MDURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,4,1)",
+   "expected": 1.1173709571543133
+  },
+  {
+   "formula": "=COUPNCD(DATE(2023,12,31),DATE(2025,2,28),4,2)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2023,12,31),DATE(2025,2,28),4,2)",
+   "expected": 45260.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2023,12,31),DATE(2025,2,28),4,2)",
+   "expected": 5.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2023,12,31),DATE(2025,2,28),4,2)",
+   "expected": 31.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2023,12,31),DATE(2025,2,28),4,2)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2023,12,31),DATE(2025,2,28),4,2)",
+   "expected": 60.0
+  },
+  {
+   "formula": "=PRICE(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,100,4,2)",
+   "expected": 98.88178295189809
+  },
+  {
+   "formula": "=YIELD(DATE(2023,12,31),DATE(2025,2,28),0.05,98.5,100,4,2)",
+   "expected": 0.06345154529600489,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,4,2)",
+   "expected": 1.1331852455653522
+  },
+  {
+   "formula": "=MDURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,4,2)",
+   "expected": 1.1164386655816279
+  },
+  {
+   "formula": "=COUPNCD(DATE(2023,12,31),DATE(2025,2,28),4,3)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2023,12,31),DATE(2025,2,28),4,3)",
+   "expected": 45260.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2023,12,31),DATE(2025,2,28),4,3)",
+   "expected": 5.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2023,12,31),DATE(2025,2,28),4,3)",
+   "expected": 31.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2023,12,31),DATE(2025,2,28),4,3)",
+   "expected": 91.25
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2023,12,31),DATE(2025,2,28),4,3)",
+   "expected": 60.0
+  },
+  {
+   "formula": "=PRICE(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,100,4,3)",
+   "expected": 98.88070445865199
+  },
+  {
+   "formula": "=YIELD(DATE(2023,12,31),DATE(2025,2,28),0.05,98.5,100,4,3)",
+   "expected": 0.0634384331952677,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,4,3)",
+   "expected": 1.1343648498271481
+  },
+  {
+   "formula": "=MDURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,4,3)",
+   "expected": 1.1176008372681263
+  },
+  {
+   "formula": "=COUPNCD(DATE(2023,12,31),DATE(2025,2,28),4,4)",
+   "expected": 45351.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2023,12,31),DATE(2025,2,28),4,4)",
+   "expected": 45260.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2023,12,31),DATE(2025,2,28),4,4)",
+   "expected": 5.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2023,12,31),DATE(2025,2,28),4,4)",
+   "expected": 30.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2023,12,31),DATE(2025,2,28),4,4)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2023,12,31),DATE(2025,2,28),4,4)",
+   "expected": 59.0
+  },
+  {
+   "formula": "=PRICE(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,100,4,4)",
+   "expected": 98.87924405604195
+  },
+  {
+   "formula": "=YIELD(DATE(2023,12,31),DATE(2025,2,28),0.05,98.5,100,4,4)",
+   "expected": 0.06342071700071258,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,4,4)",
+   "expected": 1.1359630233431297
+  },
+  {
+   "formula": "=MDURATION(DATE(2023,12,31),DATE(2025,2,28),0.05,0.06,4,4)",
+   "expected": 1.1191753924562855
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,5,15),DATE(2024,11,15),1,0)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,5,15),DATE(2024,11,15),1,0)",
+   "expected": 45245.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,5,15),DATE(2024,11,15),1,0)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,5,15),DATE(2024,11,15),1,0)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,5,15),DATE(2024,11,15),1,0)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,5,15),DATE(2024,11,15),1,0)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,100,1,0)",
+   "expected": 99.44174757281553
+  },
+  {
+   "formula": "=YIELD(DATE(2024,5,15),DATE(2024,11,15),0.05,98.5,100,1,0)",
+   "expected": 0.07920792079207928,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,1,0)",
+   "expected": 0.5
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,1,0)",
+   "expected": 0.4716981132075471
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,5,15),DATE(2024,11,15),1,1)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,5,15),DATE(2024,11,15),1,1)",
+   "expected": 45245.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,5,15),DATE(2024,11,15),1,1)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,5,15),DATE(2024,11,15),1,1)",
+   "expected": 182.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,5,15),DATE(2024,11,15),1,1)",
+   "expected": 366.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,5,15),DATE(2024,11,15),1,1)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,100,1,1)",
+   "expected": 99.43918634540667
+  },
+  {
+   "formula": "=YIELD(DATE(2024,5,15),DATE(2024,11,15),0.05,98.5,100,1,1)",
+   "expected": 0.07905718483524958,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,1,1)",
+   "expected": 0.5027322404371585
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,1,1)",
+   "expected": 0.4742756985256212
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,5,15),DATE(2024,11,15),1,2)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,5,15),DATE(2024,11,15),1,2)",
+   "expected": 45245.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,5,15),DATE(2024,11,15),1,2)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,5,15),DATE(2024,11,15),1,2)",
+   "expected": 182.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,5,15),DATE(2024,11,15),1,2)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,5,15),DATE(2024,11,15),1,2)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,100,1,2)",
+   "expected": 99.44697133196648
+  },
+  {
+   "formula": "=YIELD(DATE(2024,5,15),DATE(2024,11,15),0.05,98.5,100,1,2)",
+   "expected": 0.07905718483524958,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,1,2)",
+   "expected": 0.49444444444444435
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,1,2)",
+   "expected": 0.46645702306079656
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,5,15),DATE(2024,11,15),1,3)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,5,15),DATE(2024,11,15),1,3)",
+   "expected": 45245.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,5,15),DATE(2024,11,15),1,3)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,5,15),DATE(2024,11,15),1,3)",
+   "expected": 182.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,5,15),DATE(2024,11,15),1,3)",
+   "expected": 365.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,5,15),DATE(2024,11,15),1,3)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,100,1,3)",
+   "expected": 99.44046280514776
+  },
+  {
+   "formula": "=YIELD(DATE(2024,5,15),DATE(2024,11,15),0.05,98.5,100,1,3)",
+   "expected": 0.07905718483524958,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,1,3)",
+   "expected": 0.5013698630136986
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,1,3)",
+   "expected": 0.472990436805376
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,5,15),DATE(2024,11,15),1,4)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,5,15),DATE(2024,11,15),1,4)",
+   "expected": 45245.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,5,15),DATE(2024,11,15),1,4)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,5,15),DATE(2024,11,15),1,4)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,5,15),DATE(2024,11,15),1,4)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,5,15),DATE(2024,11,15),1,4)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,100,1,4)",
+   "expected": 99.44174757281553
+  },
+  {
+   "formula": "=YIELD(DATE(2024,5,15),DATE(2024,11,15),0.05,98.5,100,1,4)",
+   "expected": 0.07920792079207928,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,1,4)",
+   "expected": 0.5
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,1,4)",
+   "expected": 0.4716981132075471
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,5,15),DATE(2024,11,15),2,0)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,5,15),DATE(2024,11,15),2,0)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,5,15),DATE(2024,11,15),2,0)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,5,15),DATE(2024,11,15),2,0)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,5,15),DATE(2024,11,15),2,0)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,5,15),DATE(2024,11,15),2,0)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,100,2,0)",
+   "expected": 99.51456310679612
+  },
+  {
+   "formula": "=YIELD(DATE(2024,5,15),DATE(2024,11,15),0.05,98.5,100,2,0)",
+   "expected": 0.08121827411167497,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,2,0)",
+   "expected": 0.5
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,2,0)",
+   "expected": 0.4854368932038835
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,5,15),DATE(2024,11,15),2,1)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,5,15),DATE(2024,11,15),2,1)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,5,15),DATE(2024,11,15),2,1)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,5,15),DATE(2024,11,15),2,1)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,5,15),DATE(2024,11,15),2,1)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,5,15),DATE(2024,11,15),2,1)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,100,2,1)",
+   "expected": 99.51456310679612
+  },
+  {
+   "formula": "=YIELD(DATE(2024,5,15),DATE(2024,11,15),0.05,98.5,100,2,1)",
+   "expected": 0.08121827411167497,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,2,1)",
+   "expected": 0.5
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,2,1)",
+   "expected": 0.4854368932038835
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,5,15),DATE(2024,11,15),2,2)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,5,15),DATE(2024,11,15),2,2)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,5,15),DATE(2024,11,15),2,2)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,5,15),DATE(2024,11,15),2,2)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,5,15),DATE(2024,11,15),2,2)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,5,15),DATE(2024,11,15),2,2)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,100,2,2)",
+   "expected": 99.51456310679612
+  },
+  {
+   "formula": "=YIELD(DATE(2024,5,15),DATE(2024,11,15),0.05,98.5,100,2,2)",
+   "expected": 0.08121827411167497,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,2,2)",
+   "expected": 0.5
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,2,2)",
+   "expected": 0.4854368932038835
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,5,15),DATE(2024,11,15),2,3)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,5,15),DATE(2024,11,15),2,3)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,5,15),DATE(2024,11,15),2,3)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,5,15),DATE(2024,11,15),2,3)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,5,15),DATE(2024,11,15),2,3)",
+   "expected": 182.5
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,5,15),DATE(2024,11,15),2,3)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,100,2,3)",
+   "expected": 99.51456310679612
+  },
+  {
+   "formula": "=YIELD(DATE(2024,5,15),DATE(2024,11,15),0.05,98.5,100,2,3)",
+   "expected": 0.08121827411167497,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,2,3)",
+   "expected": 0.5
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,2,3)",
+   "expected": 0.4854368932038835
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,5,15),DATE(2024,11,15),2,4)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,5,15),DATE(2024,11,15),2,4)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,5,15),DATE(2024,11,15),2,4)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,5,15),DATE(2024,11,15),2,4)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,5,15),DATE(2024,11,15),2,4)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,5,15),DATE(2024,11,15),2,4)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,100,2,4)",
+   "expected": 99.51456310679612
+  },
+  {
+   "formula": "=YIELD(DATE(2024,5,15),DATE(2024,11,15),0.05,98.5,100,2,4)",
+   "expected": 0.08121827411167497,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,2,4)",
+   "expected": 0.5
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,2,4)",
+   "expected": 0.4854368932038835
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,5,15),DATE(2024,11,15),4,0)",
+   "expected": 45519.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,5,15),DATE(2024,11,15),4,0)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,5,15),DATE(2024,11,15),4,0)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,5,15),DATE(2024,11,15),4,0)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,5,15),DATE(2024,11,15),4,0)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,5,15),DATE(2024,11,15),4,0)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,100,4,0)",
+   "expected": 99.51102914411902
+  },
+  {
+   "formula": "=YIELD(DATE(2024,5,15),DATE(2024,11,15),0.05,98.5,100,4,0)",
+   "expected": 0.08091331293149304,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,4,0)",
+   "expected": 0.4969060537706518
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,4,0)",
+   "expected": 0.4895626145523663
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,5,15),DATE(2024,11,15),4,1)",
+   "expected": 45519.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,5,15),DATE(2024,11,15),4,1)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,5,15),DATE(2024,11,15),4,1)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,5,15),DATE(2024,11,15),4,1)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,5,15),DATE(2024,11,15),4,1)",
+   "expected": 92.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,5,15),DATE(2024,11,15),4,1)",
+   "expected": 92.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,100,4,1)",
+   "expected": 99.51102914411902
+  },
+  {
+   "formula": "=YIELD(DATE(2024,5,15),DATE(2024,11,15),0.05,98.5,100,4,1)",
+   "expected": 0.08091331293149391,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,4,1)",
+   "expected": 0.4969060537706518
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,4,1)",
+   "expected": 0.4895626145523663
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,5,15),DATE(2024,11,15),4,2)",
+   "expected": 45519.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,5,15),DATE(2024,11,15),4,2)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,5,15),DATE(2024,11,15),4,2)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,5,15),DATE(2024,11,15),4,2)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,5,15),DATE(2024,11,15),4,2)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,5,15),DATE(2024,11,15),4,2)",
+   "expected": 92.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,100,4,2)",
+   "expected": 99.51102914411902
+  },
+  {
+   "formula": "=YIELD(DATE(2024,5,15),DATE(2024,11,15),0.05,98.5,100,4,2)",
+   "expected": 0.08091331293149297,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,4,2)",
+   "expected": 0.4969060537706518
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,4,2)",
+   "expected": 0.4895626145523663
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,5,15),DATE(2024,11,15),4,3)",
+   "expected": 45519.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,5,15),DATE(2024,11,15),4,3)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,5,15),DATE(2024,11,15),4,3)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,5,15),DATE(2024,11,15),4,3)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,5,15),DATE(2024,11,15),4,3)",
+   "expected": 91.25
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,5,15),DATE(2024,11,15),4,3)",
+   "expected": 92.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,100,4,3)",
+   "expected": 99.51102914411902
+  },
+  {
+   "formula": "=YIELD(DATE(2024,5,15),DATE(2024,11,15),0.05,98.5,100,4,3)",
+   "expected": 0.08091331293149362,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,4,3)",
+   "expected": 0.4969060537706518
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,4,3)",
+   "expected": 0.4895626145523663
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,5,15),DATE(2024,11,15),4,4)",
+   "expected": 45519.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,5,15),DATE(2024,11,15),4,4)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,5,15),DATE(2024,11,15),4,4)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,5,15),DATE(2024,11,15),4,4)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,5,15),DATE(2024,11,15),4,4)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,5,15),DATE(2024,11,15),4,4)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,100,4,4)",
+   "expected": 99.51102914411902
+  },
+  {
+   "formula": "=YIELD(DATE(2024,5,15),DATE(2024,11,15),0.05,98.5,100,4,4)",
+   "expected": 0.08091331293149304,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,4,4)",
+   "expected": 0.4969060537706518
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,5,15),DATE(2024,11,15),0.05,0.06,4,4)",
+   "expected": 0.4895626145523663
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,11,15),DATE(2026,5,15),1,0)",
+   "expected": 45792.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,11,15),DATE(2026,5,15),1,0)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,11,15),DATE(2026,5,15),1,0)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,11,15),DATE(2026,5,15),1,0)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,11,15),DATE(2026,5,15),1,0)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,11,15),DATE(2026,5,15),1,0)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,100,1,0)",
+   "expected": 98.56870813019455
+  },
+  {
+   "formula": "=YIELD(DATE(2024,11,15),DATE(2026,5,15),0.05,98.5,100,1,0)",
+   "expected": 0.060496590522028826,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,1,0)",
+   "expected": 1.4519492293744334
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,1,0)",
+   "expected": 1.3697634239381447
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,11,15),DATE(2026,5,15),1,1)",
+   "expected": 45792.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,11,15),DATE(2026,5,15),1,1)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,11,15),DATE(2026,5,15),1,1)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,11,15),DATE(2026,5,15),1,1)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,11,15),DATE(2026,5,15),1,1)",
+   "expected": 365.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,11,15),DATE(2026,5,15),1,1)",
+   "expected": 181.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,100,1,1)",
+   "expected": 98.57236512377447
+  },
+  {
+   "formula": "=YIELD(DATE(2024,11,15),DATE(2026,5,15),0.05,98.5,100,1,1)",
+   "expected": 0.060524397103288496,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,1,1)",
+   "expected": 1.4478396403333373
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,1,1)",
+   "expected": 1.3658864531446577
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,11,15),DATE(2026,5,15),1,2)",
+   "expected": 45792.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,11,15),DATE(2026,5,15),1,2)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,11,15),DATE(2026,5,15),1,2)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,11,15),DATE(2026,5,15),1,2)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,11,15),DATE(2026,5,15),1,2)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,11,15),DATE(2026,5,15),1,2)",
+   "expected": 181.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,100,1,2)",
+   "expected": 98.57860890905052
+  },
+  {
+   "formula": "=YIELD(DATE(2024,11,15),DATE(2026,5,15),0.05,98.5,100,1,2)",
+   "expected": 0.06057220850209908,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,1,2)",
+   "expected": 1.4408381182633223
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,1,2)",
+   "expected": 1.3592812436446435
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,11,15),DATE(2026,5,15),1,3)",
+   "expected": 45792.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,11,15),DATE(2026,5,15),1,3)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,11,15),DATE(2026,5,15),1,3)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,11,15),DATE(2026,5,15),1,3)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,11,15),DATE(2026,5,15),1,3)",
+   "expected": 365.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,11,15),DATE(2026,5,15),1,3)",
+   "expected": 181.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,100,1,3)",
+   "expected": 98.57236512377447
+  },
+  {
+   "formula": "=YIELD(DATE(2024,11,15),DATE(2026,5,15),0.05,98.5,100,1,3)",
+   "expected": 0.060524397103288496,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,1,3)",
+   "expected": 1.4478396403333373
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,1,3)",
+   "expected": 1.3658864531446577
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,11,15),DATE(2026,5,15),1,4)",
+   "expected": 45792.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,11,15),DATE(2026,5,15),1,4)",
+   "expected": 45427.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,11,15),DATE(2026,5,15),1,4)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,11,15),DATE(2026,5,15),1,4)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,11,15),DATE(2026,5,15),1,4)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,11,15),DATE(2026,5,15),1,4)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,100,1,4)",
+   "expected": 98.56870813019455
+  },
+  {
+   "formula": "=YIELD(DATE(2024,11,15),DATE(2026,5,15),0.05,98.5,100,1,4)",
+   "expected": 0.060496590522028826,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,1,4)",
+   "expected": 1.4519492293744334
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,1,4)",
+   "expected": 1.3697634239381447
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,11,15),DATE(2026,5,15),2,0)",
+   "expected": 45792.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,11,15),DATE(2026,5,15),2,0)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,11,15),DATE(2026,5,15),2,0)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,11,15),DATE(2026,5,15),2,0)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,11,15),DATE(2026,5,15),2,0)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,11,15),DATE(2026,5,15),2,0)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,100,2,0)",
+   "expected": 98.58569432255265
+  },
+  {
+   "formula": "=YIELD(DATE(2024,11,15),DATE(2026,5,15),0.05,98.5,100,2,0)",
+   "expected": 0.060612152700870246,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,2,0)",
+   "expected": 1.4634284732971463
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,2,0)",
+   "expected": 1.4208043430069381
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,11,15),DATE(2026,5,15),2,1)",
+   "expected": 45792.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,11,15),DATE(2026,5,15),2,1)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,11,15),DATE(2026,5,15),2,1)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,11,15),DATE(2026,5,15),2,1)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,11,15),DATE(2026,5,15),2,1)",
+   "expected": 181.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,11,15),DATE(2026,5,15),2,1)",
+   "expected": 181.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,100,2,1)",
+   "expected": 98.58569432255265
+  },
+  {
+   "formula": "=YIELD(DATE(2024,11,15),DATE(2026,5,15),0.05,98.5,100,2,1)",
+   "expected": 0.06061215273659398,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,2,1)",
+   "expected": 1.4634284732971463
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,2,1)",
+   "expected": 1.4208043430069381
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,11,15),DATE(2026,5,15),2,2)",
+   "expected": 45792.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,11,15),DATE(2026,5,15),2,2)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,11,15),DATE(2026,5,15),2,2)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,11,15),DATE(2026,5,15),2,2)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,11,15),DATE(2026,5,15),2,2)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,11,15),DATE(2026,5,15),2,2)",
+   "expected": 181.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,100,2,2)",
+   "expected": 98.58569432255265
+  },
+  {
+   "formula": "=YIELD(DATE(2024,11,15),DATE(2026,5,15),0.05,98.5,100,2,2)",
+   "expected": 0.06061215273659388,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,2,2)",
+   "expected": 1.4634284732971463
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,2,2)",
+   "expected": 1.4208043430069381
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,11,15),DATE(2026,5,15),2,3)",
+   "expected": 45792.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,11,15),DATE(2026,5,15),2,3)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,11,15),DATE(2026,5,15),2,3)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,11,15),DATE(2026,5,15),2,3)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,11,15),DATE(2026,5,15),2,3)",
+   "expected": 182.5
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,11,15),DATE(2026,5,15),2,3)",
+   "expected": 181.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,100,2,3)",
+   "expected": 98.58569432255265
+  },
+  {
+   "formula": "=YIELD(DATE(2024,11,15),DATE(2026,5,15),0.05,98.5,100,2,3)",
+   "expected": 0.06061215273659398,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,2,3)",
+   "expected": 1.4634284732971463
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,2,3)",
+   "expected": 1.4208043430069381
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,11,15),DATE(2026,5,15),2,4)",
+   "expected": 45792.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,11,15),DATE(2026,5,15),2,4)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,11,15),DATE(2026,5,15),2,4)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,11,15),DATE(2026,5,15),2,4)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,11,15),DATE(2026,5,15),2,4)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,11,15),DATE(2026,5,15),2,4)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,100,2,4)",
+   "expected": 98.58569432255265
+  },
+  {
+   "formula": "=YIELD(DATE(2024,11,15),DATE(2026,5,15),0.05,98.5,100,2,4)",
+   "expected": 0.060612152700870246,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,2,4)",
+   "expected": 1.4634284732971463
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,2,4)",
+   "expected": 1.4208043430069381
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,11,15),DATE(2026,5,15),4,0)",
+   "expected": 45703.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,11,15),DATE(2026,5,15),4,0)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,11,15),DATE(2026,5,15),4,0)",
+   "expected": 6.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,11,15),DATE(2026,5,15),4,0)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,11,15),DATE(2026,5,15),4,0)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,11,15),DATE(2026,5,15),4,0)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,100,4,0)",
+   "expected": 98.57570320863127
+  },
+  {
+   "formula": "=YIELD(DATE(2024,11,15),DATE(2026,5,15),0.05,98.5,100,4,0)",
+   "expected": 0.06053632219558562,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,4,0)",
+   "expected": 1.4540634296011985
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,4,0)",
+   "expected": 1.4325748074888656
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,11,15),DATE(2026,5,15),4,1)",
+   "expected": 45703.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,11,15),DATE(2026,5,15),4,1)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,11,15),DATE(2026,5,15),4,1)",
+   "expected": 6.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,11,15),DATE(2026,5,15),4,1)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,11,15),DATE(2026,5,15),4,1)",
+   "expected": 92.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,11,15),DATE(2026,5,15),4,1)",
+   "expected": 92.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,100,4,1)",
+   "expected": 98.57570320863127
+  },
+  {
+   "formula": "=YIELD(DATE(2024,11,15),DATE(2026,5,15),0.05,98.5,100,4,1)",
+   "expected": 0.06053632219558605,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,4,1)",
+   "expected": 1.4540634296011985
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,4,1)",
+   "expected": 1.4325748074888656
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,11,15),DATE(2026,5,15),4,2)",
+   "expected": 45703.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,11,15),DATE(2026,5,15),4,2)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,11,15),DATE(2026,5,15),4,2)",
+   "expected": 6.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,11,15),DATE(2026,5,15),4,2)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,11,15),DATE(2026,5,15),4,2)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,11,15),DATE(2026,5,15),4,2)",
+   "expected": 92.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,100,4,2)",
+   "expected": 98.57570320863127
+  },
+  {
+   "formula": "=YIELD(DATE(2024,11,15),DATE(2026,5,15),0.05,98.5,100,4,2)",
+   "expected": 0.060536322195586294,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,4,2)",
+   "expected": 1.4540634296011985
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,4,2)",
+   "expected": 1.4325748074888656
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,11,15),DATE(2026,5,15),4,3)",
+   "expected": 45703.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,11,15),DATE(2026,5,15),4,3)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,11,15),DATE(2026,5,15),4,3)",
+   "expected": 6.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,11,15),DATE(2026,5,15),4,3)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,11,15),DATE(2026,5,15),4,3)",
+   "expected": 91.25
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,11,15),DATE(2026,5,15),4,3)",
+   "expected": 92.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,100,4,3)",
+   "expected": 98.57570320863127
+  },
+  {
+   "formula": "=YIELD(DATE(2024,11,15),DATE(2026,5,15),0.05,98.5,100,4,3)",
+   "expected": 0.06053632219558605,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,4,3)",
+   "expected": 1.4540634296011985
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,4,3)",
+   "expected": 1.4325748074888656
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,11,15),DATE(2026,5,15),4,4)",
+   "expected": 45703.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,11,15),DATE(2026,5,15),4,4)",
+   "expected": 45611.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,11,15),DATE(2026,5,15),4,4)",
+   "expected": 6.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,11,15),DATE(2026,5,15),4,4)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,11,15),DATE(2026,5,15),4,4)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,11,15),DATE(2026,5,15),4,4)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,100,4,4)",
+   "expected": 98.57570320863127
+  },
+  {
+   "formula": "=YIELD(DATE(2024,11,15),DATE(2026,5,15),0.05,98.5,100,4,4)",
+   "expected": 0.06053632219558562,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,4,4)",
+   "expected": 1.4540634296011985
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,11,15),DATE(2026,5,15),0.05,0.06,4,4)",
+   "expected": 1.4325748074888656
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,1,31),DATE(2026,7,31),1,0)",
+   "expected": 45504.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,1,31),DATE(2026,7,31),1,0)",
+   "expected": 45138.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,1,31),DATE(2026,7,31),1,0)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,1,31),DATE(2026,7,31),1,0)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,1,31),DATE(2026,7,31),1,0)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,1,31),DATE(2026,7,31),1,0)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,100,1,0)",
+   "expected": 97.70426717046041
+  },
+  {
+   "formula": "=YIELD(DATE(2024,1,31),DATE(2026,7,31),0.05,98.5,100,1,0)",
+   "expected": 0.056449833667388975,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,1,0)",
+   "expected": 2.357347435255957
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,1,0)",
+   "expected": 2.2239126747697706
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,1,31),DATE(2026,7,31),1,1)",
+   "expected": 45504.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,1,31),DATE(2026,7,31),1,1)",
+   "expected": 45138.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,1,31),DATE(2026,7,31),1,1)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,1,31),DATE(2026,7,31),1,1)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,1,31),DATE(2026,7,31),1,1)",
+   "expected": 366.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,1,31),DATE(2026,7,31),1,1)",
+   "expected": 182.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,100,1,1)",
+   "expected": 97.70656022522442
+  },
+  {
+   "formula": "=YIELD(DATE(2024,1,31),DATE(2026,7,31),0.05,98.5,100,1,1)",
+   "expected": 0.056456466661438366,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,1,1)",
+   "expected": 2.3546151948187983
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,1,1)",
+   "expected": 2.2213350894516966
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,1,31),DATE(2026,7,31),1,2)",
+   "expected": 45504.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,1,31),DATE(2026,7,31),1,2)",
+   "expected": 45138.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,1,31),DATE(2026,7,31),1,2)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,1,31),DATE(2026,7,31),1,2)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,1,31),DATE(2026,7,31),1,2)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,1,31),DATE(2026,7,31),1,2)",
+   "expected": 182.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,100,1,2)",
+   "expected": 97.71360810109444
+  },
+  {
+   "formula": "=YIELD(DATE(2024,1,31),DATE(2026,7,31),0.05,98.5,100,1,2)",
+   "expected": 0.05647695575867367,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,1,2)",
+   "expected": 2.346236324144846
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,1,2)",
+   "expected": 2.2134304944762695
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,1,31),DATE(2026,7,31),1,3)",
+   "expected": 45504.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,1,31),DATE(2026,7,31),1,3)",
+   "expected": 45138.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,1,31),DATE(2026,7,31),1,3)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,1,31),DATE(2026,7,31),1,3)",
+   "expected": 184.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,1,31),DATE(2026,7,31),1,3)",
+   "expected": 365.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,1,31),DATE(2026,7,31),1,3)",
+   "expected": 182.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,100,1,3)",
+   "expected": 97.70771713912727
+  },
+  {
+   "formula": "=YIELD(DATE(2024,1,31),DATE(2026,7,31),0.05,98.5,100,1,3)",
+   "expected": 0.0564598193843741,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,1,3)",
+   "expected": 2.353237846214861
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,1,3)",
+   "expected": 2.2200357039762837
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,1,31),DATE(2026,7,31),1,4)",
+   "expected": 45504.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,1,31),DATE(2026,7,31),1,4)",
+   "expected": 45138.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,1,31),DATE(2026,7,31),1,4)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,1,31),DATE(2026,7,31),1,4)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,1,31),DATE(2026,7,31),1,4)",
+   "expected": 360.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,1,31),DATE(2026,7,31),1,4)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,100,1,4)",
+   "expected": 97.70426717046041
+  },
+  {
+   "formula": "=YIELD(DATE(2024,1,31),DATE(2026,7,31),0.05,98.5,100,1,4)",
+   "expected": 0.056449833667388975,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,1,4)",
+   "expected": 2.357347435255957
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,1,4)",
+   "expected": 2.2239126747697706
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,1,31),DATE(2026,7,31),2,0)",
+   "expected": 45504.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,1,31),DATE(2026,7,31),2,0)",
+   "expected": 45322.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,1,31),DATE(2026,7,31),2,0)",
+   "expected": 5.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,1,31),DATE(2026,7,31),2,0)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,1,31),DATE(2026,7,31),2,0)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,1,31),DATE(2026,7,31),2,0)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,100,2,0)",
+   "expected": 97.71014640640274
+  },
+  {
+   "formula": "=YIELD(DATE(2024,1,31),DATE(2026,7,31),0.05,98.5,100,2,0)",
+   "expected": 0.0565181097960646,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,2,0)",
+   "expected": 2.379361898604263
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,2,0)",
+   "expected": 2.310060095732294
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,1,31),DATE(2026,7,31),2,1)",
+   "expected": 45504.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,1,31),DATE(2026,7,31),2,1)",
+   "expected": 45322.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,1,31),DATE(2026,7,31),2,1)",
+   "expected": 5.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,1,31),DATE(2026,7,31),2,1)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,1,31),DATE(2026,7,31),2,1)",
+   "expected": 182.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,1,31),DATE(2026,7,31),2,1)",
+   "expected": 182.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,100,2,1)",
+   "expected": 97.71014640640274
+  },
+  {
+   "formula": "=YIELD(DATE(2024,1,31),DATE(2026,7,31),0.05,98.5,100,2,1)",
+   "expected": 0.05651810979558661,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,2,1)",
+   "expected": 2.379361898604263
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,2,1)",
+   "expected": 2.310060095732294
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,1,31),DATE(2026,7,31),2,2)",
+   "expected": 45504.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,1,31),DATE(2026,7,31),2,2)",
+   "expected": 45322.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,1,31),DATE(2026,7,31),2,2)",
+   "expected": 5.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,1,31),DATE(2026,7,31),2,2)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,1,31),DATE(2026,7,31),2,2)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,1,31),DATE(2026,7,31),2,2)",
+   "expected": 182.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,100,2,2)",
+   "expected": 97.71014640640274
+  },
+  {
+   "formula": "=YIELD(DATE(2024,1,31),DATE(2026,7,31),0.05,98.5,100,2,2)",
+   "expected": 0.056518109796064836,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,2,2)",
+   "expected": 2.379361898604263
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,2,2)",
+   "expected": 2.310060095732294
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,1,31),DATE(2026,7,31),2,3)",
+   "expected": 45504.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,1,31),DATE(2026,7,31),2,3)",
+   "expected": 45322.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,1,31),DATE(2026,7,31),2,3)",
+   "expected": 5.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,1,31),DATE(2026,7,31),2,3)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,1,31),DATE(2026,7,31),2,3)",
+   "expected": 182.5
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,1,31),DATE(2026,7,31),2,3)",
+   "expected": 182.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,100,2,3)",
+   "expected": 97.71014640640274
+  },
+  {
+   "formula": "=YIELD(DATE(2024,1,31),DATE(2026,7,31),0.05,98.5,100,2,3)",
+   "expected": 0.05651810979558661,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,2,3)",
+   "expected": 2.379361898604263
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,2,3)",
+   "expected": 2.310060095732294
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,1,31),DATE(2026,7,31),2,4)",
+   "expected": 45504.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,1,31),DATE(2026,7,31),2,4)",
+   "expected": 45322.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,1,31),DATE(2026,7,31),2,4)",
+   "expected": 5.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,1,31),DATE(2026,7,31),2,4)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,1,31),DATE(2026,7,31),2,4)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,1,31),DATE(2026,7,31),2,4)",
+   "expected": 180.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,100,2,4)",
+   "expected": 97.71014640640274
+  },
+  {
+   "formula": "=YIELD(DATE(2024,1,31),DATE(2026,7,31),0.05,98.5,100,2,4)",
+   "expected": 0.0565181097960646,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,2,4)",
+   "expected": 2.379361898604263
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,2,4)",
+   "expected": 2.310060095732294
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,1,31),DATE(2026,7,31),4,0)",
+   "expected": 45412.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,1,31),DATE(2026,7,31),4,0)",
+   "expected": 45322.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,1,31),DATE(2026,7,31),4,0)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,1,31),DATE(2026,7,31),4,0)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,1,31),DATE(2026,7,31),4,0)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,1,31),DATE(2026,7,31),4,0)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,100,4,0)",
+   "expected": 97.69445386203653
+  },
+  {
+   "formula": "=YIELD(DATE(2024,1,31),DATE(2026,7,31),0.05,98.5,100,4,0)",
+   "expected": 0.056475719975521636,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,4,0)",
+   "expected": 2.3636303771205665
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,4,0)",
+   "expected": 2.328699878936519
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,1,31),DATE(2026,7,31),4,1)",
+   "expected": 45412.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,1,31),DATE(2026,7,31),4,1)",
+   "expected": 45322.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,1,31),DATE(2026,7,31),4,1)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,1,31),DATE(2026,7,31),4,1)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,1,31),DATE(2026,7,31),4,1)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,1,31),DATE(2026,7,31),4,1)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,100,4,1)",
+   "expected": 97.69445386203653
+  },
+  {
+   "formula": "=YIELD(DATE(2024,1,31),DATE(2026,7,31),0.05,98.5,100,4,1)",
+   "expected": 0.0564757199755215,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,4,1)",
+   "expected": 2.3636303771205665
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,4,1)",
+   "expected": 2.328699878936519
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,1,31),DATE(2026,7,31),4,2)",
+   "expected": 45412.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,1,31),DATE(2026,7,31),4,2)",
+   "expected": 45322.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,1,31),DATE(2026,7,31),4,2)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,1,31),DATE(2026,7,31),4,2)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,1,31),DATE(2026,7,31),4,2)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,1,31),DATE(2026,7,31),4,2)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,100,4,2)",
+   "expected": 97.69445386203653
+  },
+  {
+   "formula": "=YIELD(DATE(2024,1,31),DATE(2026,7,31),0.05,98.5,100,4,2)",
+   "expected": 0.05647571997552189,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,4,2)",
+   "expected": 2.3636303771205665
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,4,2)",
+   "expected": 2.328699878936519
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,1,31),DATE(2026,7,31),4,3)",
+   "expected": 45412.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,1,31),DATE(2026,7,31),4,3)",
+   "expected": 45322.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,1,31),DATE(2026,7,31),4,3)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,1,31),DATE(2026,7,31),4,3)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,1,31),DATE(2026,7,31),4,3)",
+   "expected": 91.25
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,1,31),DATE(2026,7,31),4,3)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,100,4,3)",
+   "expected": 97.69445386203653
+  },
+  {
+   "formula": "=YIELD(DATE(2024,1,31),DATE(2026,7,31),0.05,98.5,100,4,3)",
+   "expected": 0.0564757199755215,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,4,3)",
+   "expected": 2.3636303771205665
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,4,3)",
+   "expected": 2.328699878936519
+  },
+  {
+   "formula": "=COUPNCD(DATE(2024,1,31),DATE(2026,7,31),4,4)",
+   "expected": 45412.0
+  },
+  {
+   "formula": "=COUPPCD(DATE(2024,1,31),DATE(2026,7,31),4,4)",
+   "expected": 45322.0
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,1,31),DATE(2026,7,31),4,4)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=COUPDAYBS(DATE(2024,1,31),DATE(2026,7,31),4,4)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=COUPDAYS(DATE(2024,1,31),DATE(2026,7,31),4,4)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=COUPDAYSNC(DATE(2024,1,31),DATE(2026,7,31),4,4)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=PRICE(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,100,4,4)",
+   "expected": 97.69445386203653
+  },
+  {
+   "formula": "=YIELD(DATE(2024,1,31),DATE(2026,7,31),0.05,98.5,100,4,4)",
+   "expected": 0.056475719975521636,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=DURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,4,4)",
+   "expected": 2.3636303771205665
+  },
+  {
+   "formula": "=MDURATION(DATE(2024,1,31),DATE(2026,7,31),0.05,0.06,4,4)",
+   "expected": 2.328699878936519
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,2)",
+   "expected": 95.24741352034563
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0,0.06,100,2,0)",
+   "expected": 71.53382589368333
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0,100,2,0)",
+   "expected": 128.33333333333334
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,3,0)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=PRICE(DATE(2029,11,15),DATE(2024,3,15),0.05,0.06,100,2,0)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,100,2,5)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),-0.05,0.06,100,2,0)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=PRICE(DATE(2024,3,15),DATE(2029,11,15),0.05,0.06,0,2,0)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COUPNUM(DATE(2024,3,15),DATE(2024,3,15),2,0)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=YIELD(DATE(2024,3,15),DATE(2029,11,15),0.05,0,100,2,0)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2029,11,15),0,0.06,2,0)",
+   "expected": 5.666666666666668
+  },
+  {
+   "formula": "=DURATION(DATE(2024,3,15),DATE(2029,11,15),0.05,0,2,0)",
+   "expected": 5.032051282051283
+  },
+  {
+   "formula": "=DISC(DATE(2024,3,15),DATE(2024,9,30),97.5,100,0)",
+   "expected": 0.0461538461538462
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2024,3,15),DATE(2024,9,30),0.05,100,0)",
+   "expected": 97.29166666666667
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2024,3,15),DATE(2024,9,30),97.5,100,0)",
+   "expected": 0.047337278106508875
+  },
+  {
+   "formula": "=INTRATE(DATE(2024,3,15),DATE(2024,9,30),1000,1050,0)",
+   "expected": 0.09230769230769231
+  },
+  {
+   "formula": "=RECEIVED(DATE(2024,3,15),DATE(2024,9,30),1000,0.05,0)",
+   "expected": 1027.8372591006423
+  },
+  {
+   "formula": "=DISC(DATE(2024,3,15),DATE(2024,9,30),97.5,100,1)",
+   "expected": 0.04597989949748748
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2024,3,15),DATE(2024,9,30),0.05,100,1)",
+   "expected": 97.28142076502732
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2024,3,15),DATE(2024,9,30),97.5,100,1)",
+   "expected": 0.04715887127947429
+  },
+  {
+   "formula": "=INTRATE(DATE(2024,3,15),DATE(2024,9,30),1000,1050,1)",
+   "expected": 0.09195979899497488
+  },
+  {
+   "formula": "=RECEIVED(DATE(2024,3,15),DATE(2024,9,30),1000,0.05,1)",
+   "expected": 1027.945513270608
+  },
+  {
+   "formula": "=DISC(DATE(2024,3,15),DATE(2024,9,30),97.5,100,2)",
+   "expected": 0.045226130653266375
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2024,3,15),DATE(2024,9,30),0.05,100,2)",
+   "expected": 97.23611111111111
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2024,3,15),DATE(2024,9,30),97.5,100,2)",
+   "expected": 0.04638577502899111
+  },
+  {
+   "formula": "=INTRATE(DATE(2024,3,15),DATE(2024,9,30),1000,1050,2)",
+   "expected": 0.09045226130653267
+  },
+  {
+   "formula": "=RECEIVED(DATE(2024,3,15),DATE(2024,9,30),1000,0.05,2)",
+   "expected": 1028.4245107841737
+  },
+  {
+   "formula": "=DISC(DATE(2024,3,15),DATE(2024,9,30),97.5,100,3)",
+   "expected": 0.04585427135678396
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2024,3,15),DATE(2024,9,30),0.05,100,3)",
+   "expected": 97.27397260273973
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2024,3,15),DATE(2024,9,30),97.5,100,3)",
+   "expected": 0.047030021904393766
+  },
+  {
+   "formula": "=INTRATE(DATE(2024,3,15),DATE(2024,9,30),1000,1050,3)",
+   "expected": 0.09170854271356785
+  },
+  {
+   "formula": "=RECEIVED(DATE(2024,3,15),DATE(2024,9,30),1000,0.05,3)",
+   "expected": 1028.0242219405718
+  },
+  {
+   "formula": "=DISC(DATE(2024,3,15),DATE(2024,9,30),97.5,100,4)",
+   "expected": 0.0461538461538462
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2024,3,15),DATE(2024,9,30),0.05,100,4)",
+   "expected": 97.29166666666667
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2024,3,15),DATE(2024,9,30),97.5,100,4)",
+   "expected": 0.047337278106508875
+  },
+  {
+   "formula": "=INTRATE(DATE(2024,3,15),DATE(2024,9,30),1000,1050,4)",
+   "expected": 0.09230769230769231
+  },
+  {
+   "formula": "=RECEIVED(DATE(2024,3,15),DATE(2024,9,30),1000,0.05,4)",
+   "expected": 1027.8372591006423
+  },
+  {
+   "formula": "=DISC(DATE(2024,2,29),DATE(2024,12,31),97.5,100,0)",
+   "expected": 0.02990033222591365
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2024,2,29),DATE(2024,12,31),0.05,100,0)",
+   "expected": 95.81944444444444
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2024,2,29),DATE(2024,12,31),97.5,100,0)",
+   "expected": 0.030667007411193457
+  },
+  {
+   "formula": "=INTRATE(DATE(2024,2,29),DATE(2024,12,31),1000,1050,0)",
+   "expected": 0.059800664451827246
+  },
+  {
+   "formula": "=RECEIVED(DATE(2024,2,29),DATE(2024,12,31),1000,0.05,0)",
+   "expected": 1043.629511523409
+  },
+  {
+   "formula": "=DISC(DATE(2024,2,29),DATE(2024,12,31),97.5,100,1)",
+   "expected": 0.02990196078431375
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2024,2,29),DATE(2024,12,31),0.05,100,1)",
+   "expected": 95.81967213114754
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2024,2,29),DATE(2024,12,31),97.5,100,1)",
+   "expected": 0.030668677727501256
+  },
+  {
+   "formula": "=INTRATE(DATE(2024,2,29),DATE(2024,12,31),1000,1050,1)",
+   "expected": 0.059803921568627454
+  },
+  {
+   "formula": "=RECEIVED(DATE(2024,2,29),DATE(2024,12,31),1000,0.05,1)",
+   "expected": 1043.6270316509838
+  },
+  {
+   "formula": "=DISC(DATE(2024,2,29),DATE(2024,12,31),97.5,100,2)",
+   "expected": 0.02941176470588238
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2024,2,29),DATE(2024,12,31),0.05,100,2)",
+   "expected": 95.75
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2024,2,29),DATE(2024,12,31),97.5,100,2)",
+   "expected": 0.030165912518853696
+  },
+  {
+   "formula": "=INTRATE(DATE(2024,2,29),DATE(2024,12,31),1000,1050,2)",
+   "expected": 0.05882352941176471
+  },
+  {
+   "formula": "=RECEIVED(DATE(2024,2,29),DATE(2024,12,31),1000,0.05,2)",
+   "expected": 1044.3864229765013
+  },
+  {
+   "formula": "=DISC(DATE(2024,2,29),DATE(2024,12,31),97.5,100,3)",
+   "expected": 0.029820261437908523
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2024,2,29),DATE(2024,12,31),0.05,100,3)",
+   "expected": 95.8082191780822
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2024,2,29),DATE(2024,12,31),97.5,100,3)",
+   "expected": 0.030584883526059994
+  },
+  {
+   "formula": "=INTRATE(DATE(2024,2,29),DATE(2024,12,31),1000,1050,3)",
+   "expected": 0.059640522875817
+  },
+  {
+   "formula": "=RECEIVED(DATE(2024,2,29),DATE(2024,12,31),1000,0.05,3)",
+   "expected": 1043.751787246211
+  },
+  {
+   "formula": "=DISC(DATE(2024,2,29),DATE(2024,12,31),97.5,100,4)",
+   "expected": 0.02990033222591365
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2024,2,29),DATE(2024,12,31),0.05,100,4)",
+   "expected": 95.81944444444444
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2024,2,29),DATE(2024,12,31),97.5,100,4)",
+   "expected": 0.030667007411193457
+  },
+  {
+   "formula": "=INTRATE(DATE(2024,2,29),DATE(2024,12,31),1000,1050,4)",
+   "expected": 0.059800664451827246
+  },
+  {
+   "formula": "=RECEIVED(DATE(2024,2,29),DATE(2024,12,31),1000,0.05,4)",
+   "expected": 1043.629511523409
+  },
+  {
+   "formula": "=DISC(DATE(2023,12,31),DATE(2024,2,29),97.5,100,0)",
+   "expected": 0.15254237288135605
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2023,12,31),DATE(2024,2,29),0.05,100,0)",
+   "expected": 99.18055555555556
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2023,12,31),DATE(2024,2,29),97.5,100,0)",
+   "expected": 0.15645371577574965
+  },
+  {
+   "formula": "=INTRATE(DATE(2023,12,31),DATE(2024,2,29),1000,1050,0)",
+   "expected": 0.3050847457627119
+  },
+  {
+   "formula": "=RECEIVED(DATE(2023,12,31),DATE(2024,2,29),1000,0.05,0)",
+   "expected": 1008.2621481585212
+  },
+  {
+   "formula": "=DISC(DATE(2023,12,31),DATE(2024,2,29),97.5,100,1)",
+   "expected": 0.15250000000000014
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2023,12,31),DATE(2024,2,29),0.05,100,1)",
+   "expected": 99.18032786885246
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2023,12,31),DATE(2024,2,29),97.5,100,1)",
+   "expected": 0.15641025641025638
+  },
+  {
+   "formula": "=INTRATE(DATE(2023,12,31),DATE(2024,2,29),1000,1050,1)",
+   "expected": 0.305
+  },
+  {
+   "formula": "=RECEIVED(DATE(2023,12,31),DATE(2024,2,29),1000,0.05,1)",
+   "expected": 1008.2644628099174
+  },
+  {
+   "formula": "=DISC(DATE(2023,12,31),DATE(2024,2,29),97.5,100,2)",
+   "expected": 0.15000000000000013
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2023,12,31),DATE(2024,2,29),0.05,100,2)",
+   "expected": 99.16666666666667
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2023,12,31),DATE(2024,2,29),97.5,100,2)",
+   "expected": 0.15384615384615385
+  },
+  {
+   "formula": "=INTRATE(DATE(2023,12,31),DATE(2024,2,29),1000,1050,2)",
+   "expected": 0.30000000000000004
+  },
+  {
+   "formula": "=RECEIVED(DATE(2023,12,31),DATE(2024,2,29),1000,0.05,2)",
+   "expected": 1008.4033613445378
+  },
+  {
+   "formula": "=DISC(DATE(2023,12,31),DATE(2024,2,29),97.5,100,3)",
+   "expected": 0.15208333333333346
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2023,12,31),DATE(2024,2,29),0.05,100,3)",
+   "expected": 99.17808219178082
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2023,12,31),DATE(2024,2,29),97.5,100,3)",
+   "expected": 0.15598290598290596
+  },
+  {
+   "formula": "=INTRATE(DATE(2023,12,31),DATE(2024,2,29),1000,1050,3)",
+   "expected": 0.3041666666666667
+  },
+  {
+   "formula": "=RECEIVED(DATE(2023,12,31),DATE(2024,2,29),1000,0.05,3)",
+   "expected": 1008.2872928176795
+  },
+  {
+   "formula": "=DISC(DATE(2023,12,31),DATE(2024,2,29),97.5,100,4)",
+   "expected": 0.15254237288135605
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2023,12,31),DATE(2024,2,29),0.05,100,4)",
+   "expected": 99.18055555555556
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2023,12,31),DATE(2024,2,29),97.5,100,4)",
+   "expected": 0.15645371577574965
+  },
+  {
+   "formula": "=INTRATE(DATE(2023,12,31),DATE(2024,2,29),1000,1050,4)",
+   "expected": 0.3050847457627119
+  },
+  {
+   "formula": "=RECEIVED(DATE(2023,12,31),DATE(2024,2,29),1000,0.05,4)",
+   "expected": 1008.2621481585212
+  },
+  {
+   "formula": "=DISC(DATE(2024,1,15),DATE(2025,1,15),97.5,100,0)",
+   "expected": 0.025000000000000022
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2024,1,15),DATE(2025,1,15),0.05,100,0)",
+   "expected": 95.0
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2024,1,15),DATE(2025,1,15),97.5,100,0)",
+   "expected": 0.02564102564102564
+  },
+  {
+   "formula": "=INTRATE(DATE(2024,1,15),DATE(2025,1,15),1000,1050,0)",
+   "expected": 0.05
+  },
+  {
+   "formula": "=RECEIVED(DATE(2024,1,15),DATE(2025,1,15),1000,0.05,0)",
+   "expected": 1052.6315789473686
+  },
+  {
+   "formula": "=DISC(DATE(2024,1,15),DATE(2025,1,15),97.5,100,1)",
+   "expected": 0.025000000000000022
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2024,1,15),DATE(2025,1,15),0.05,100,1)",
+   "expected": 95.0
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2024,1,15),DATE(2025,1,15),97.5,100,1)",
+   "expected": 0.02564102564102564
+  },
+  {
+   "formula": "=INTRATE(DATE(2024,1,15),DATE(2025,1,15),1000,1050,1)",
+   "expected": 0.05
+  },
+  {
+   "formula": "=RECEIVED(DATE(2024,1,15),DATE(2025,1,15),1000,0.05,1)",
+   "expected": 1052.6315789473686
+  },
+  {
+   "formula": "=DISC(DATE(2024,1,15),DATE(2025,1,15),97.5,100,2)",
+   "expected": 0.02459016393442625
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2024,1,15),DATE(2025,1,15),0.05,100,2)",
+   "expected": 94.91666666666667
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2024,1,15),DATE(2025,1,15),97.5,100,2)",
+   "expected": 0.025220680958385876
+  },
+  {
+   "formula": "=INTRATE(DATE(2024,1,15),DATE(2025,1,15),1000,1050,2)",
+   "expected": 0.04918032786885246
+  },
+  {
+   "formula": "=RECEIVED(DATE(2024,1,15),DATE(2025,1,15),1000,0.05,2)",
+   "expected": 1053.5557506584723
+  },
+  {
+   "formula": "=DISC(DATE(2024,1,15),DATE(2025,1,15),97.5,100,3)",
+   "expected": 0.02493169398907106
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2024,1,15),DATE(2025,1,15),0.05,100,3)",
+   "expected": 94.98630136986301
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2024,1,15),DATE(2025,1,15),97.5,100,3)",
+   "expected": 0.025570968193919012
+  },
+  {
+   "formula": "=INTRATE(DATE(2024,1,15),DATE(2025,1,15),1000,1050,3)",
+   "expected": 0.049863387978142076
+  },
+  {
+   "formula": "=RECEIVED(DATE(2024,1,15),DATE(2025,1,15),1000,0.05,3)",
+   "expected": 1052.7833862128641
+  },
+  {
+   "formula": "=DISC(DATE(2024,1,15),DATE(2025,1,15),97.5,100,4)",
+   "expected": 0.025000000000000022
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2024,1,15),DATE(2025,1,15),0.05,100,4)",
+   "expected": 95.0
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2024,1,15),DATE(2025,1,15),97.5,100,4)",
+   "expected": 0.02564102564102564
+  },
+  {
+   "formula": "=INTRATE(DATE(2024,1,15),DATE(2025,1,15),1000,1050,4)",
+   "expected": 0.05
+  },
+  {
+   "formula": "=RECEIVED(DATE(2024,1,15),DATE(2025,1,15),1000,0.05,4)",
+   "expected": 1052.6315789473686
+  },
+  {
+   "formula": "=DISC(DATE(2023,6,30),DATE(2025,6,30),97.5,100,0)",
+   "expected": 0.012500000000000011
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2023,6,30),DATE(2025,6,30),0.05,100,0)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2023,6,30),DATE(2025,6,30),97.5,100,0)",
+   "expected": 0.01282051282051282
+  },
+  {
+   "formula": "=INTRATE(DATE(2023,6,30),DATE(2025,6,30),1000,1050,0)",
+   "expected": 0.025
+  },
+  {
+   "formula": "=RECEIVED(DATE(2023,6,30),DATE(2025,6,30),1000,0.05,0)",
+   "expected": 1111.111111111111
+  },
+  {
+   "formula": "=DISC(DATE(2023,6,30),DATE(2025,6,30),97.5,100,1)",
+   "expected": 0.012494300045599645
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2023,6,30),DATE(2025,6,30),0.05,100,1)",
+   "expected": 89.99543795620438
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2023,6,30),DATE(2025,6,30),97.5,100,1)",
+   "expected": 0.012814666713435523
+  },
+  {
+   "formula": "=INTRATE(DATE(2023,6,30),DATE(2025,6,30),1000,1050,1)",
+   "expected": 0.02498860009119927
+  },
+  {
+   "formula": "=RECEIVED(DATE(2023,6,30),DATE(2025,6,30),1000,0.05,1)",
+   "expected": 1111.1674354944998
+  },
+  {
+   "formula": "=DISC(DATE(2023,6,30),DATE(2025,6,30),97.5,100,2)",
+   "expected": 0.012311901504787972
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2023,6,30),DATE(2025,6,30),0.05,100,2)",
+   "expected": 89.84722222222223
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2023,6,30),DATE(2025,6,30),97.5,100,2)",
+   "expected": 0.012627591286962012
+  },
+  {
+   "formula": "=INTRATE(DATE(2023,6,30),DATE(2025,6,30),1000,1050,2)",
+   "expected": 0.024623803009575923
+  },
+  {
+   "formula": "=RECEIVED(DATE(2023,6,30),DATE(2025,6,30),1000,0.05,2)",
+   "expected": 1113.0004637501931
+  },
+  {
+   "formula": "=DISC(DATE(2023,6,30),DATE(2025,6,30),97.5,100,3)",
+   "expected": 0.012482900136798916
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2023,6,30),DATE(2025,6,30),0.05,100,3)",
+   "expected": 89.98630136986301
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2023,6,30),DATE(2025,6,30),97.5,100,3)",
+   "expected": 0.012802974499280927
+  },
+  {
+   "formula": "=INTRATE(DATE(2023,6,30),DATE(2025,6,30),1000,1050,3)",
+   "expected": 0.02496580027359781
+  },
+  {
+   "formula": "=RECEIVED(DATE(2023,6,30),DATE(2025,6,30),1000,0.05,3)",
+   "expected": 1111.2802557466891
+  },
+  {
+   "formula": "=DISC(DATE(2023,6,30),DATE(2025,6,30),97.5,100,4)",
+   "expected": 0.012500000000000011
+  },
+  {
+   "formula": "=PRICEDISC(DATE(2023,6,30),DATE(2025,6,30),0.05,100,4)",
+   "expected": 90.0
+  },
+  {
+   "formula": "=YIELDDISC(DATE(2023,6,30),DATE(2025,6,30),97.5,100,4)",
+   "expected": 0.01282051282051282
+  },
+  {
+   "formula": "=INTRATE(DATE(2023,6,30),DATE(2025,6,30),1000,1050,4)",
+   "expected": 0.025
+  },
+  {
+   "formula": "=RECEIVED(DATE(2023,6,30),DATE(2025,6,30),1000,0.05,4)",
+   "expected": 1111.111111111111
+  },
+  {
+   "formula": "=DISC(DATE(2024,3,15),DATE(2024,9,30),0,100)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=DISC(DATE(2024,3,15),DATE(2024,9,30),97.5,100,7)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=DISC(DATE(2024,9,30),DATE(2024,3,15),97.5,100)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RECEIVED(DATE(2024,3,15),DATE(2024,9,30),1000,5)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=INTRATE(DATE(2024,3,15),DATE(2024,9,30),0,100)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=TBILLPRICE(DATE(2024,3,1),DATE(2024,3,1)+30,0.045)",
+   "expected": 99.625
+  },
+  {
+   "formula": "=TBILLYIELD(DATE(2024,3,1),DATE(2024,3,1)+30,97.5)",
+   "expected": 0.3076923076923077
+  },
+  {
+   "formula": "=TBILLEQ(DATE(2024,3,1),DATE(2024,3,1)+30,0.045)",
+   "expected": 0.04579673776662485
+  },
+  {
+   "formula": "=TBILLPRICE(DATE(2024,3,1),DATE(2024,3,1)+90,0.045)",
+   "expected": 98.875
+  },
+  {
+   "formula": "=TBILLYIELD(DATE(2024,3,1),DATE(2024,3,1)+90,97.5)",
+   "expected": 0.10256410256410256
+  },
+  {
+   "formula": "=TBILLEQ(DATE(2024,3,1),DATE(2024,3,1)+90,0.045)",
+   "expected": 0.04614412136536031
+  },
+  {
+   "formula": "=TBILLPRICE(DATE(2024,3,1),DATE(2024,3,1)+182,0.045)",
+   "expected": 97.725
+  },
+  {
+   "formula": "=TBILLYIELD(DATE(2024,3,1),DATE(2024,3,1)+182,97.5)",
+   "expected": 0.0507185122569738
+  },
+  {
+   "formula": "=TBILLEQ(DATE(2024,3,1),DATE(2024,3,1)+182,0.045)",
+   "expected": 0.04668713225888974
+  },
+  {
+   "formula": "=TBILLPRICE(DATE(2024,3,1),DATE(2024,3,1)+183,0.045)",
+   "expected": 97.7125
+  },
+  {
+   "formula": "=TBILLYIELD(DATE(2024,3,1),DATE(2024,3,1)+183,97.5)",
+   "expected": 0.05044136191677175
+  },
+  {
+   "formula": "=TBILLEQ(DATE(2024,3,1),DATE(2024,3,1)+183,0.045)",
+   "expected": 0.04669012667339486
+  },
+  {
+   "formula": "=TBILLPRICE(DATE(2024,3,1),DATE(2024,3,1)+200,0.045)",
+   "expected": 97.5
+  },
+  {
+   "formula": "=TBILLYIELD(DATE(2024,3,1),DATE(2024,3,1)+200,97.5)",
+   "expected": 0.046153846153846156
+  },
+  {
+   "formula": "=TBILLEQ(DATE(2024,3,1),DATE(2024,3,1)+200,0.045)",
+   "expected": 0.046699460063673995
+  },
+  {
+   "formula": "=TBILLPRICE(DATE(2024,3,1),DATE(2024,3,1)+300,0.045)",
+   "expected": 96.25
+  },
+  {
+   "formula": "=TBILLYIELD(DATE(2024,3,1),DATE(2024,3,1)+300,97.5)",
+   "expected": 0.030769230769230767
+  },
+  {
+   "formula": "=TBILLEQ(DATE(2024,3,1),DATE(2024,3,1)+300,0.045)",
+   "expected": 0.0469705436418042
+  },
+  {
+   "formula": "=TBILLPRICE(DATE(2024,3,1),DATE(2024,3,1)+364,0.045)",
+   "expected": 95.45
+  },
+  {
+   "formula": "=TBILLYIELD(DATE(2024,3,1),DATE(2024,3,1)+364,97.5)",
+   "expected": 0.0253592561284869
+  },
+  {
+   "formula": "=TBILLEQ(DATE(2024,3,1),DATE(2024,3,1)+364,0.045)",
+   "expected": 0.04724344244732228
+  },
+  {
+   "formula": "=TBILLPRICE(DATE(2024,3,1),DATE(2024,3,1)+365,0.045)",
+   "expected": 95.4375
+  },
+  {
+   "formula": "=TBILLYIELD(DATE(2024,3,1),DATE(2024,3,1)+365,97.5)",
+   "expected": 0.025289778714436245
+  },
+  {
+   "formula": "=TBILLEQ(DATE(2024,3,1),DATE(2024,3,1)+365,0.045)",
+   "expected": 0.04724806104308321
+  },
+  {
+   "formula": "=TBILLPRICE(DATE(2024,3,1),DATE(2024,3,1)+366,0.045)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=TBILLYIELD(DATE(2024,3,1),DATE(2024,3,1)+366,97.5)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=TBILLEQ(DATE(2024,3,1),DATE(2024,3,1)+366,0.045)",
+   "expected": "#NUM!"
   }
  ],
  "uncalculated": [
@@ -5015,6 +10727,40 @@
   769,
   770,
   771,
-  1078
+  1078,
+  1173,
+  1177,
+  1212,
+  1213,
+  1214,
+  1215,
+  1564,
+  1565,
+  1566,
+  1567,
+  1614,
+  1615,
+  1616,
+  1617,
+  1714,
+  1715,
+  1716,
+  1717,
+  1764,
+  1765,
+  1766,
+  1767,
+  1814,
+  1815,
+  1816,
+  1817,
+  1864,
+  1865,
+  1866,
+  1867,
+  1914,
+  1915,
+  1916,
+  1917
  ]
 }

@@ -11,6 +11,7 @@ from excel_mcp.calc.operators import apply_binary
 from excel_mcp.calc.registry import function
 from excel_mcp.calc.values import (
     DIV0,
+    NA,
     NUM,
     VALUE,
     ExcelError,
@@ -297,3 +298,60 @@ def atan2(x: Scalar, y: Scalar) -> float:
     if a == 0 and b == 0:
         raise fail(DIV0)
     return math.atan2(b, a)
+
+
+@function("CEILING.MATH", kind="scalar")
+def ceiling_math(number: Scalar, significance: Scalar = 1, mode: Scalar = 0) -> float:
+    n, s = to_number(number), abs(to_number(significance))
+    if s == 0:
+        return 0.0
+    if n < 0 and to_number(mode) != 0:
+        return -math.ceil(-n / s) * s
+    return math.ceil(n / s) * s
+
+
+@function("FLOOR.MATH", kind="scalar")
+def floor_math(number: Scalar, significance: Scalar = 1, mode: Scalar = 0) -> float:
+    n, s = to_number(number), abs(to_number(significance))
+    if s == 0:
+        return 0.0
+    if n < 0 and to_number(mode) != 0:
+        return -math.floor(-n / s) * s
+    return math.floor(n / s) * s
+
+
+@function("SQRTPI", kind="scalar")
+def sqrtpi(number: Scalar) -> float:
+    n = to_number(number)
+    if n < 0:
+        raise fail(NUM)
+    return math.sqrt(n * math.pi)
+
+
+def _paired_sum(first: Value, second: Value, combine: Callable[[float, float], float]) -> float:
+    xs, ys = as_grid(first), as_grid(second)
+    if xs.height != ys.height or xs.width != ys.width:
+        raise fail(NA)
+    total = 0.0
+    for x, y in zip(xs.flat(), ys.flat(), strict=True):
+        for item in (x, y):
+            if isinstance(item, ExcelError):
+                raise fail(item)
+        if is_number(x) and is_number(y):
+            total += combine(x, y)  # pyright: ignore[reportArgumentType]
+    return total
+
+
+@function("SUMX2MY2", array=True)
+def sumx2my2(first: Value, second: Value) -> float:
+    return _paired_sum(first, second, lambda x, y: x * x - y * y)
+
+
+@function("SUMX2PY2", array=True)
+def sumx2py2(first: Value, second: Value) -> float:
+    return _paired_sum(first, second, lambda x, y: x * x + y * y)
+
+
+@function("SUMXMY2", array=True)
+def sumxmy2(first: Value, second: Value) -> float:
+    return _paired_sum(first, second, lambda x, y: (x - y) ** 2)
