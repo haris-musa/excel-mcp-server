@@ -128,37 +128,6 @@ def test_metadata_gets_the_dynamic_array_entry_once() -> None:
     assert '<rc t="2" v="0"/>' in merged.xml and "valueMetadata count" in merged.xml
 
 
-def test_references_in_extensions_follow_what_the_caller_decides() -> None:
-    sparklines = (
-        f'<ext uri="{ext.SPARKLINES}"><x14:sparklineGroups><x14:sparklineGroup><x14:sparklines>'
-        "<x14:sparkline><xm:f>Data!A1:C1</xm:f><xm:sqref>D1</xm:sqref></x14:sparkline>"
-        "<x14:sparkline><xm:f>Data!A2:C2</xm:f><xm:sqref>D2</xm:sqref></x14:sparkline>"
-        "</x14:sparklines></x14:sparklineGroup></x14:sparklineGroups></ext>"
-    )
-    validations = (
-        f'<ext uri="{ext.DATA_VALIDATIONS}"><x14:dataValidations count="2" xmlns:xm="m">'
-        '<x14:dataValidation type="list"><x14:formula1><xm:f>Lists!$A$1</xm:f></x14:formula1>'
-        "<xm:sqref>B2</xm:sqref></x14:dataValidation>"
-        '<x14:dataValidation type="list"><x14:formula1><xm:f>Lists!$A$2</xm:f></x14:formula1>'
-        "<xm:sqref>B9</xm:sqref></x14:dataValidation></x14:dataValidations></ext>"
-    )
-    found = {ext.SPARKLINES: sparklines, ext.DATA_VALIDATIONS: validations}
-
-    def update(reference: str, kind: str) -> str | None:
-        if kind == "range" and reference == "D2":
-            return None  # the cell was deleted
-        if kind == "range":
-            return reference.replace("2", "3") if reference == "B2" else reference
-        return reference.replace("Data", "Moved")
-
-    ext.rewrite_references(found, update)  # type: ignore[arg-type]
-
-    assert found[ext.SPARKLINES].count("<x14:sparkline>") == 1
-    assert "<xm:f>Moved!A1:C1</xm:f>" in found[ext.SPARKLINES]
-    assert "<xm:sqref>B3</xm:sqref>" in found[ext.DATA_VALIDATIONS]
-    assert 'count="2"' in found[ext.DATA_VALIDATIONS]
-
-
 def test_a_deleted_sheet_takes_the_sparklines_that_read_it() -> None:
     sparklines = (
         f'<ext uri="{ext.SPARKLINES}"><x14:sparklineGroups><x14:sparklineGroup><x14:sparklines>'

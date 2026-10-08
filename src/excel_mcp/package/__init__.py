@@ -36,9 +36,14 @@ Adding content, as a feature that writes sparklines, slicers or comments does::
 - `CellMark` sets the ``cm`` and ``vm`` attributes of a cell (dynamic arrays, linked data
   types); ``cm`` is written while the cell holds an array formula, ``vm`` while it holds the
   value it described.
-- `package.extensions` edits what lives in extension entries (sparklines, conditional
-  formats, validation): `rewrite_references` is for code that moves cells, `forget_sheets`
-  for deleted sheets.
+- `package.references` moves preserved content when rows or columns are inserted or deleted
+  (`rewrite_lines(workbook, LineEdit(...), formula)`) and when formulas change for other
+  reasons, such as a sheet rename (`rewrite_formulas(workbook, formula)`). It covers
+  sparklines, Excel 2010 conditional formats and validations, shape anchors (drawing, VML and
+  form controls), control properties, newer chart data, ignored errors, protected ranges,
+  cell watches and sort state, with Excel's own rules. The caller supplies ``formula(text,
+  host)``, its rewriting of one formula; read the module docstring for the contract.
+  `package.extensions.forget_sheets` handles deleted sheets.
 - `package.guards` refuses edits that would leave content this server cannot store; call
   `check_sheet_removal` and `check_pivot_removal` before deleting.
 - Content that refers to what an edit removed is cleaned up as Excel does it when the file
