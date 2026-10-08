@@ -8,6 +8,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `set_sheet_layout` can hide, show, group and ungroup rows and columns (`rows`, `columns`),
+  hide or show a whole sheet (`visibility`; the last visible sheet cannot be hidden), set
+  up printing (`print_setup`: orientation, paper size, scale or fit to pages, margins in cm,
+  print area, repeated title rows and columns, centering, gridlines, header and footer) and
+  protect or unprotect a sheet (`protection`: optional password, allowed actions).
+- `insert_image` places a PNG or JPEG file at a cell, optionally sized in cm with the
+  aspect ratio kept; `delete_image` removes one. `describe_sheet` lists the images and now
+  also reports hidden rows and columns, the print area and whether the sheet is protected.
 - `create_chart` options: `data_labels`, `grouping` (stacked and 100% stacked column, bar,
   line and area charts), `colors` (per series, or per slice for pie and doughnut),
   `markers` and `smooth` for line charts, `y_axis_min`, `y_axis_max`,
@@ -38,6 +46,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- `set_sheet_layout` no longer writes overlapping column definitions when it changes a
+  column that Excel stored together with its neighbours.
 - Chart titles, axis titles and legends no longer sit on top of the plot in Excel.
 
 ## [1.1.2] - 2026-10-08

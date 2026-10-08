@@ -8,6 +8,8 @@ from pydantic import BaseModel
 
 from excel_mcp.operations.cells import used_range
 from excel_mcp.operations.chart_index import ChartInfo, list_charts
+from excel_mcp.operations.images import ImageInfo, list_images
+from excel_mcp.operations.layout import hidden_lines
 from excel_mcp.operations.names import DefinedNameInfo, list_defined_names
 from excel_mcp.operations.notes import NoteInfo, list_notes
 from excel_mcp.paths import EXCEL_SUFFIXES
@@ -60,6 +62,11 @@ class SheetDetails(BaseModel):
     data_validations: list[DataValidationInfo]
     conditional_formats: list[ConditionalFormatInfo]
     column_widths: dict[str, float]
+    hidden_rows: list[str]
+    hidden_columns: list[str]
+    images: list[ImageInfo]
+    print_area: str | None
+    protected: bool
 
 
 class WorkbookFile(BaseModel):
@@ -121,6 +128,11 @@ def describe_sheet(sheet: Worksheet) -> SheetDetails:
             for letter, dimension in sorted(sheet.column_dimensions.items())
             if dimension.customWidth
         },
+        hidden_rows=hidden_lines(sheet, "rows"),
+        hidden_columns=hidden_lines(sheet, "columns"),
+        images=list_images(sheet),
+        print_area=sheet.print_area or None,
+        protected=bool(sheet.protection.sheet),
     )
 
 

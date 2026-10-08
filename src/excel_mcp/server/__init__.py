@@ -9,6 +9,7 @@ from excel_mcp.server import (
     annotation_tools,
     data_tools,
     format_tools,
+    image_tools,
     object_tools,
     sheet_tools,
     vba_tools,
@@ -24,6 +25,7 @@ TOOL_MODULES = (
     format_tools,
     object_tools,
     annotation_tools,
+    image_tools,
     vba_tools,
 )
 

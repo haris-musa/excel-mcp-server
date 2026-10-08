@@ -54,11 +54,15 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
 
     @tools.writer("Set sheet layout")
     def set_sheet_layout(path: WorkbookPath, sheet: SheetName, layout: SheetLayout) -> str:
-        """Set column widths, row heights, frozen panes, the auto filter and the tab color.
+        """Set column widths, row heights, hidden or grouped lines, frozen panes, the auto
+        filter, the tab color, sheet visibility, print setup and sheet protection.
 
-        `autofit_columns` estimates widths from the text length of the column's values.
-        `freeze_panes` is the first unfrozen cell: 'A2' freezes the top row, 'B2' the top row
-        and first column, and 'A1' unfreezes. `auto_filter` is a range such as 'A1:F100'.
+        Every part is optional and only the parts you give change. `autofit_columns` estimates
+        widths from the text length of the column's values. `freeze_panes` is the first
+        unfrozen cell: 'A2' freezes the top row, 'B2' the top row and first column, and 'A1'
+        unfreezes. `auto_filter` is a range such as 'A1:F100'. `rows` and `columns` take spans
+        like '3:5' and 'B:D'. Sheet protection discourages edits in Excel but is not security:
+        it does not stop this server, and the password is weakly hashed.
         """
         with workspace.edit(path) as workbook:
             apply_layout(get_sheet(workbook, sheet), layout)

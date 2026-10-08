@@ -135,7 +135,7 @@
     },
     {
       "name": "set_sheet_layout",
-      "description": "Set column widths, row heights, frozen panes, the auto filter and the tab color."
+      "description": "Set column widths, row heights, hidden or grouped lines, frozen panes, the auto filter, the tab color, sheet visibility, print setup and sheet protection."
     },
     {
       "name": "add_conditional_format",
@@ -176,6 +176,14 @@
     {
       "name": "delete_note",
       "description": "Remove the note from a cell."
+    },
+    {
+      "name": "insert_image",
+      "description": "Place a PNG or JPEG picture with its top-left corner at a cell."
+    },
+    {
+      "name": "delete_image",
+      "description": "Remove a picture from a sheet."
     },
     {
       "name": "read_vba",
