@@ -37,7 +37,7 @@ def apply_auto_filter(
         (t for t in sheet.tables.values() if t.displayName.casefold() == spec.range.casefold()),
         None,
     )
-    area = _table_area(table) if table else parse_range(spec.range)
+    area = table_area(table) if table else parse_range(spec.range)
     if table is None:
         _check_not_in_table(sheet, area)
     _release_previous(sheet, table, area)
@@ -58,7 +58,7 @@ def apply_auto_filter(
     hide_failing_rows(sheet, area, [(index, test) for _, index, test in columns], values)
 
 
-def _table_area(table: Table) -> CellRange:
+def table_area(table: Table) -> CellRange:
     area = parse_range(table.ref)
     last = area.max_row - 1 if table.totalsRowCount else area.max_row
     return CellRange(area.min_row, area.min_col, last, area.max_col)

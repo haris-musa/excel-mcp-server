@@ -16,7 +16,7 @@ create, read and edit Excel workbooks. It needs no Microsoft Excel installation.
   group rows, columns and sheets; set up printing; protect sheets
 - **Structure** sheets (order, view, workbook settings and protection), rows and columns (inserting or deleting updates every reference, as in Excel), merged cells, tables, charts (column, bar, line, area, pie, doughnut, radar, scatter and
   bubble, with combos, secondary axes, trendlines and error bars; and the Excel 2016 waterfall,
-  histogram, Pareto, box and whisker, treemap, sunburst and funnel), images, hyperlinks and PivotTables
+  histogram, Pareto, box and whisker, treemap, sunburst and funnel), images, hyperlinks, PivotTables, and slicers and timelines that filter them and tables
 - **Data tools**: paste special, fill series, remove duplicates, text to columns, find and
   replace, sheet and table filters with criteria
 - **Rules**: conditional formatting (scales, data bars with borders, negative bars and axis, icon
@@ -159,7 +159,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
 | Sheets | `describe_sheet`, `create_sheet`, `rename_sheet`, `copy_sheet`, `delete_sheet`, `insert_rows_or_columns`, `delete_rows_or_columns` |
 | Cells | `read_range`, `write_range`, `clear_range`, `copy_range`, `sort_range`, `transform_range`, `find_cells`, `replace_cells` |
 | Formatting | `format_range`, `merge_cells`, `set_sheet_layout`, `add_conditional_format`, `add_data_validation` |
-| Objects | `create_table`, `create_chart`, `delete_chart`, `create_pivot_table`, `delete_pivot_table`, `insert_image`, `delete_image`, `add_sparklines`, `delete_sparklines` |
+| Objects | `create_table`, `create_chart`, `delete_chart`, `create_pivot_table`, `delete_pivot_table`, `add_slicer`, `delete_slicer`, `insert_image`, `delete_image`, `add_sparklines`, `delete_sparklines` |
 | Names and notes | `set_defined_name`, `delete_defined_name`, `set_note`, `delete_note` |
 | Macros | `read_vba`; with `--allow-vba-write`: `write_vba_module`, `delete_vba_module` |
 
@@ -218,6 +218,15 @@ Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
   (`tests/fixtures/pivot_golden.json`). The exceptions: items that tie when sorted by value may
   swap places on refresh, and `values_in: "rows"` cannot be combined with rank figures or, with
   subtotals, other figures along a field, because Excel mixes the values fields up there.
+- `add_slicer` adds slicers (Insert > Slicer) for tables and PivotTables, and timelines for date
+  fields of PivotTables: field, caption, position and size, columns, style, sort, selected
+  items (or a period) and "hide items with no data". Selecting items filters as clicking
+  does: table rows are filtered and hidden; PivotTable items are hidden and the figures
+  recalculated from the source, which Excel confirms on refresh (about 200 PivotTables are
+  checked against Excel, and the slicer variants against Excel's own results). One slicer can
+  filter several PivotTables that share a cache, such as those of copied sheets. Limits: a
+  PivotTable that Excel refreshed after this server made it keeps its figures, so only
+  selecting every item works on it; fields grouped in a PivotTable take no slicer.
 - Inserting or deleting rows and columns, and renaming a sheet, update references like
   Excel. Hyperlink targets and 3D references (`Sheet1:Sheet3!A1`) are left alone (Excel does
   the same). An edit that cuts through an array formula, a PivotTable, a table header or two
@@ -228,10 +237,11 @@ Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
   formats and validation, slicers and timelines, newer charts (waterfall, histogram,
   treemap and others), threaded comments, shapes, form controls, linked data types and
   custom XML stay as Excel saved them and move with inserted or deleted rows and columns and
-  renamed sheets. `copy_sheet` copies sparklines, the Excel 2010 half of conditional formats
-  (data bars, icon sets) and the Excel 2016 charts made by `create_chart`, but not the others.
-  Deleting a sheet removes slicers that only
-  it used; slicers that would be left without their PivotTable or table block the deletion.
+  renamed sheets. `copy_sheet` copies sparklines, slicers and timelines (as Excel does), the Excel
+  2010 half of conditional formats (data bars, icon sets) and the Excel 2016 charts made by
+  `create_chart`, but not the others. Deleting a sheet removes slicers that only it used;
+  slicers that would be left without their PivotTable block the deletion, and deleting a
+  table, or the column a table slicer filters, removes the slicer.
   Digital signatures are removed, as Excel does when a signed file changes.
 - Formulas that return several values (`FILTER`, `SORT`, `UNIQUE`, `SEQUENCE`, `A2:A9*2`) are
   stored as dynamic array formulas, as Excel stores them, and spill into the cells next to

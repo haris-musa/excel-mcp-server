@@ -66,24 +66,24 @@ class FieldSetup:
     """How many fields beyond the source's columns the cache has."""
 
 
-def distinct(column: Column) -> Shared:
+def distinct(column_values: list[Value]) -> Shared:
     seen: dict[object, int] = {}
     values: list[Value] = []
     index: list[int] = []
-    for value in column.values:
+    for value in column_values:
         key = value.casefold() if isinstance(value, str) else value
         if key not in seen:
             seen[key] = len(values)
             values.append(value)
         index.append(seen[key])
-    order = sorted(range(len(values)), key=lambda item: _sort_key(values[item]))
+    order = sorted(range(len(values)), key=lambda item: sort_key(values[item]))
     rank = [0] * len(order)
     for position, item in enumerate(order):
         rank[item] = position
     return Shared(values, index, order, rank)
 
 
-def _sort_key(value: Value) -> tuple[bool, object]:
+def sort_key(value: Value) -> tuple[bool, object]:
     if value is None:
         return True, 0
     return False, value.casefold() if isinstance(value, str) else value
@@ -106,7 +106,7 @@ def plan_fields(source: Source, used: list[int], options: dict[int, PivotField])
 
 
 def _plain_field(setup: FieldSetup, index: int, column: Column, option: PivotField) -> None:
-    shared = distinct(column)
+    shared = distinct(column.values)
     setup.shared[index] = shared
     axis = AxisField(
         index,
@@ -127,7 +127,7 @@ def _number_field(setup: FieldSetup, index: int, column: Column, option: PivotFi
         )
     assert option.group_numbers is not None
     grouping = group_numbers([float(value) for value in column.values], option.group_numbers)  # pyright: ignore[reportArgumentType]
-    setup.shared[index] = distinct(column)
+    setup.shared[index] = distinct(column.values)
     setup.number_groups[index] = grouping
     axis = AxisField(
         index,
@@ -154,7 +154,7 @@ def _date_fields(setup: FieldSetup, index: int, column: Column, option: PivotFie
         )
     values = [value for value in column.values if isinstance(value, dt.datetime)]
     groupings = group_dates(values, option.group_dates)
-    setup.shared[index] = distinct(column)
+    setup.shared[index] = distinct(column.values)
     levels = []
     for grouping in reversed(groupings):
         position = len(setup.source.columns) + setup.extra_fields

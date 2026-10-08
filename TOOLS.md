@@ -14,7 +14,7 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`list_workbooks`](#list_workbooks) | List Excel files in a directory as path to size in bytes. |
 | [`export_workbook`](#export_workbook) | Return the workbook file as an embedded base64 resource, for remote servers. |
 | [`import_workbook`](#import_workbook) | Save an uploaded workbook file on the server, e.g. to edit it remotely. |
-| [`describe_sheet`](#describe_sheet) | Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables, images, notes, hyperlinks, validation, conditional formats, sparklines, custom column widths, hidden rows and columns, print area and protection. Empty items are omitted. |
+| [`describe_sheet`](#describe_sheet) | Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables, slicers, timelines, images, notes, hyperlinks, validation, conditional formats, sparklines, custom column widths, hidden rows and columns, print area and protection. Empty items are omitted. |
 | [`create_sheet`](#create_sheet) | Add an empty worksheet. |
 | [`rename_sheet`](#rename_sheet) | Rename a worksheet. References to it are updated as in Excel: formulas, names, rules, charts and PivotTable sources. |
 | [`copy_sheet`](#copy_sheet) | Copy a worksheet to a new sheet at the end, as Excel's "Create a copy" does. |
@@ -41,6 +41,8 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`delete_sparklines`](#delete_sparklines) | Remove the sparklines in a range (Clear Sparklines). The data is left untouched. |
 | [`create_pivot_table`](#create_pivot_table) | Add an Excel PivotTable that summarizes a block of data. |
 | [`delete_pivot_table`](#delete_pivot_table) | Remove a PivotTable and clear the cells it fills. The source data is left untouched. |
+| [`add_slicer`](#add_slicer) | Add a slicer (Insert > Slicer) or timeline to a sheet, to filter a PivotTable or table. |
+| [`delete_slicer`](#delete_slicer) | Remove a slicer or timeline. |
 | [`set_defined_name`](#set_defined_name) | Create a defined name for a range or constant, replacing a name of the same scope. |
 | [`delete_defined_name`](#delete_defined_name) | Delete a defined name. Formulas that use it are not changed and will show #NAME?. |
 | [`set_note`](#set_note) | Add a note to a cell, replacing the cell's existing note. |
@@ -165,8 +167,9 @@ Save an uploaded workbook file on the server, e.g. to edit it remotely.
 **Describe sheet** (read-only)
 
 Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables,
-images, notes, hyperlinks, validation, conditional formats, sparklines, custom column
-widths, hidden rows and columns, print area and protection. Empty items are omitted.
+slicers, timelines, images, notes, hyperlinks, validation, conditional formats, sparklines,
+custom column widths, hidden rows and columns, print area and protection. Empty items are
+omitted.
 
 Loads the whole workbook into memory, so it is slow on very large files.
 
@@ -208,9 +211,9 @@ Copy a worksheet to a new sheet at the end, as Excel's "Create a copy" does.
 
 Copies cells, styles, merges, sizes, hidden rows and columns, freeze panes, filters, data
 validation, conditional formats, images, notes, charts, tables, PivotTables, print setup,
-protection and sheet-scoped names. References to the sheet itself, including chart data,
-point at the copy. Tables get new names (Sales becomes Sales2). PivotTables share the
-original's data. Workbook-scoped names are not duplicated.
+protection, slicers, timelines and sheet-scoped names. References to the sheet itself,
+including chart data, point at the copy. Tables get new names (Sales becomes Sales2).
+PivotTables share the original's data. Workbook-scoped names are not duplicated.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -946,6 +949,66 @@ Fails while slicers or timelines are connected to it.
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
 | `name` | string | yes | PivotTable name, as listed by describe_sheet. |
+
+## add_slicer
+
+**Add slicer** (modifies files)
+
+Add a slicer (Insert > Slicer) or timeline to a sheet, to filter a PivotTable or table.
+
+`selected_items` limits the data as clicking the buttons does: PivotTable items are hidden
+and its figures recalculated from the source; table rows are filtered and hidden.
+A PivotTable Excel refreshed after this server made it cannot be limited here; selecting
+every item works on any. describe_sheet lists slicers; delete_slicer removes one.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
+| `sheet` | string | yes | Sheet to put the slicer on. |
+| `source` | object | yes | The table or PivotTable to filter. |
+| `field` | string | yes | Header of the column or field to filter by. |
+| `cell` | string | yes | Top-left cell of the slicer. |
+| `width_cm` | number | no | Default: 5.1 (timeline: 9.3). |
+| `height_cm` | number | no | Default: 7.4 (timeline: 3.8). |
+| `caption` | string | no | Header text. Default: the field. |
+| `name` | string | no | Default: the field name. |
+| `columns` | integer | no | Columns of buttons. Default: `1`. |
+| `style` | string | no | Built-in style, e.g. SlicerStyleDark2 (timeline: TimeSlicerStyleLight1). Default: Excel's. |
+| `selected_items` | array of string | no | Items to show. Default: all. Default: `[]`. |
+| `sort` | `ascending` \| `descending` | no | Order of the items. Default: `ascending`. |
+| `hide_empty_items` | boolean | no | Hide items that have no data. Default: `False`. |
+| `connect` | array of object | no | More PivotTables that share the source's data cache, as copies of a sheet do; the slicer filters them all. Default: `[]`. |
+| `timeline` | object | no | Make a timeline instead of a slicer, for a date field of a PivotTable: time scale and the period shown. |
+
+`source` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `sheet` | string | yes | Sheet the table or PivotTable is on. |
+| `name` | string | yes | Table or PivotTable name, as describe_sheet lists it. |
+
+`timeline` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `level` | `years` \| `quarters` \| `months` \| `days` | no | Unit of the time scale. Default: `months`. |
+| `start` | string | no | First day of the period shown, e.g. '2025-03-01'. With end. |
+| `end` | string | no | Last day of the period shown. |
+
+## delete_slicer
+
+**Delete slicer** (modifies files, may overwrite data)
+
+Remove a slicer or timeline.
+
+As in Excel, a table and a PivotTable row, column or filter field stay filtered; a
+timeline's period and the hidden items of a field the PivotTable does not show are cleared.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
+| `sheet` | string | yes | Worksheet name. |
+| `name` | string | yes | Slicer or timeline name, from describe_sheet. |
 
 ## set_defined_name
 

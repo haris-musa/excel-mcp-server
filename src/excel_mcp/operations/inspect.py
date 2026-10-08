@@ -1,6 +1,7 @@
 """Read-only descriptions of workbooks, sheets and folders."""
 
 from pathlib import Path
+from typing import cast
 
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
@@ -19,6 +20,7 @@ from excel_mcp.operations.pivot_index import PivotInfo, list_pivots
 from excel_mcp.operations.sheet_view import ViewInfo, read_view
 from excel_mcp.operations.sparkline_style import SparklineInfo
 from excel_mcp.operations.sparklines import list_sparklines
+from excel_mcp.operations.slicer_manage import SlicerInfo, list_slicers
 from excel_mcp.operations.workbook_settings import (
     CalculationInfo,
     PropertiesInfo,
@@ -78,6 +80,7 @@ class SheetDetails(BaseModel):
     tables: dict[str, str] = {}
     charts: list[ChartInfo] = []
     pivot_tables: list[PivotInfo] = []
+    slicers: list[SlicerInfo] = []
     data_validations: list[DataValidationInfo] = []
     conditional_formats: list[ConditionalFormatInfo] = []
     sparklines: list[SparklineInfo] = []
@@ -122,6 +125,7 @@ def describe_sheet(sheet: Worksheet) -> SheetDetails:
         tables=dict(sheet.tables.items()),
         charts=list_charts(sheet),
         pivot_tables=list_pivots(sheet),
+        slicers=list_slicers(cast(Workbook, sheet.parent), sheet),
         data_validations=[
             DataValidationInfo(
                 range=str(rule.sqref),
