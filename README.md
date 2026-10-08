@@ -150,7 +150,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
 | Sheets | `describe_sheet`, `create_sheet`, `rename_sheet`, `copy_sheet`, `delete_sheet`, `insert_rows_or_columns`, `delete_rows_or_columns` |
 | Cells | `read_range`, `write_range`, `clear_range`, `copy_range`, `find_cells` |
 | Formatting | `format_range`, `merge_cells`, `set_sheet_layout`, `add_conditional_format`, `add_data_validation` |
-| Objects | `create_table`, `create_chart`, `create_summary_table` |
+| Objects | `create_table`, `create_chart`, `delete_chart`, `create_summary_table` |
 | Macros | `read_vba` |
 
 Every parameter is documented in [TOOLS.md](TOOLS.md).
