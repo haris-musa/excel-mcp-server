@@ -17,6 +17,7 @@ from excel_mcp.operations.comparison import FormulaResults
 from excel_mcp.operations.filter_stored import stored_test
 from excel_mcp.operations.filters import FormulaValues, hide_failing_rows
 from excel_mcp.operations.pivot_index import pivot_area, sheet_pivots, workbook_pivots
+from excel_mcp.package.guards import check_pivot_removal
 from excel_mcp.package.lines import LineEdit
 from excel_mcp.refs import CellRange, cell_name, parse_cell, parse_range
 
@@ -259,6 +260,7 @@ def update_pivots(workbook: Workbook, sheet: Worksheet, edit: LineEdit) -> None:
             )
         body = edit.range(parse_range(pivot.location.ref))
         if body is None:
+            check_pivot_removal(sheet, pivot.name)
             pivots.remove(pivot)
         else:
             pivot.location.ref = str(body)
@@ -288,10 +290,26 @@ def update_anchors(sheet: Worksheet, edit: LineEdit) -> None:
             row, column = parse_cell(anchor)
             row, column = _moved_cell(row, column, edit)
             drawing.anchor = cell_name(row, column)
-        elif isinstance(anchor, OneCellAnchor | TwoCellAnchor):
+        elif isinstance(anchor, OneCellAnchor):
             _move_marker(anchor._from, edit, end=False)
-            if isinstance(anchor, TwoCellAnchor) and anchor.editAs != "oneCell":
+        elif isinstance(anchor, TwoCellAnchor) and anchor.editAs != "absolute":
+            before = _position(anchor._from, edit)
+            _move_marker(anchor._from, edit, end=False)
+            if anchor.editAs == "oneCell":
+                _shift_marker(anchor.to, edit, _position(anchor._from, edit) - before)
+            else:
                 _move_marker(anchor.to, edit, end=True)
+
+
+def _position(marker, edit: LineEdit) -> int:
+    return marker.row if edit.axis == "rows" else marker.col
+
+
+def _shift_marker(marker, edit: LineEdit, by: int) -> None:
+    if edit.axis == "rows":
+        marker.row += by
+    else:
+        marker.col += by
 
 
 def _moved_cell(row: int, column: int, edit: LineEdit) -> tuple[int, int]:

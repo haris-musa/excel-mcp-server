@@ -1,9 +1,14 @@
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Literal
 
 import pytest
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
+from openpyxl.drawing.spreadsheet_drawing import TwoCellAnchor
 from openpyxl.worksheet.table import TableFormula
 
+from excel_mcp.operations.line_edit_objects import update_anchors
+from excel_mcp.package.lines import LineEdit
 from excel_mcp.rewrite import chart_references
 from tests.conftest import ToolCall
 
@@ -209,8 +214,8 @@ async def test_filter_columns_and_sort_follow_column_edits(call: ToolCall, sampl
     assert not any(dimension.hidden for dimension in saved.row_dimensions.values())
 
 
-async def test_deleting_one_of_several_filtered_columns_is_refused(
-    call: ToolCall, call_error: ToolCall, sample: Path
+async def test_deleting_one_of_several_filtered_columns_applies_the_rest_again(
+    call: ToolCall, sample: Path
 ) -> None:
     filters = [
         {"column": "Units", "type": "values", "values": ["10"]},
@@ -222,10 +227,16 @@ async def test_deleting_one_of_several_filtered_columns_is_refused(
         sheet="Data",
         layout={"auto_filter": {"range": "A1:D5", "filters": filters}},
     )
-    message = await call_error(
-        "delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="columns", at=3
-    )
-    assert "remove the filter first" in message
+    hidden = lambda: {  # noqa: E731
+        row
+        for row, dimension in load_workbook(sample)["Data"].row_dimensions.items()
+        if dimension.hidden
+    }
+    assert hidden() == {3, 4, 5}
+    await call("delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="columns", at=3)
+    assert hidden() == {3, 5}
+    saved = load_workbook(sample)["Data"].auto_filter
+    assert [column.colId for column in saved.filterColumn] == [0]
 
 
 async def test_an_intersection_with_a_deleted_reference_is_kept_like_excel(
@@ -240,3 +251,22 @@ async def test_an_intersection_with_a_deleted_reference_is_kept_like_excel(
     )
     await call("delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="rows", at=3)
     assert load_workbook(sample)["Report"]["A1"].value == "=SUM(Data!C2:D2 Data!#REF!)"
+
+
+@pytest.mark.parametrize(
+    ("edit_as", "expected"),
+    [("twoCell", (3, 9)), ("oneCell", (3, 8)), ("absolute", (2, 7))],
+)
+def test_drawing_anchors_follow_their_setting(
+    edit_as: Literal["twoCell", "oneCell", "absolute"], expected: tuple[int, int]
+) -> None:
+    sheet = Workbook().active
+    assert sheet is not None
+    anchor = TwoCellAnchor(editAs=edit_as)
+    anchor._from.row, anchor.to.row = 2, 7  # zero-based, so rows 3 to 8
+    picture = SimpleNamespace(anchor=anchor)
+    sheet._images = [picture]  # pyright: ignore[reportAttributeAccessIssue]
+    # One row is inserted at row 2, above the picture, and one inside it at row 5.
+    for at in (2, 5):
+        update_anchors(sheet, LineEdit(sheet.title, "rows", at, 1, delete=False))
+    assert (anchor._from.row, anchor.to.row) == expected

@@ -8,14 +8,17 @@ formulas in different parts: such a rule is split into one rule per part.
 
 from copy import copy
 from dataclasses import dataclass, replace
+from typing import cast
 
 from openpyxl.formatting.formatting import ConditionalFormattingList
+from openpyxl.workbook import Workbook
 from openpyxl.worksheet.cell_range import CellRange as SheetRange
 from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.formulas import storable_operand
 from excel_mcp.operations.shifting import Mover, Shifter
 from excel_mcp.operations.workbook_rewrite import rewritten_operand, rule_points
+from excel_mcp.package.model import state_of
 from excel_mcp.refs import CellRange
 from excel_mcp.rewrite import ReferenceRewriter
 
@@ -38,15 +41,24 @@ def update_rules(worksheet: Worksheet, shifter: Shifter, sheet_names: list[str])
             ]
         return groups
 
+    package = state_of(cast(Workbook, worksheet.parent)).sheets.get(worksheet)
+    extensions = package.rule_extensions if package else {}
+    rekeyed: dict[tuple[str, str], str] = {}
     rules = ConditionalFormattingList()
     for entry in worksheet.conditional_formatting:
         for rule in entry.rules:
             for point in rule_points(rule):
                 point.val = rewritten_operand(str(point.val), host, shifter, sheet_names)
-            for group in moved(list(entry.sqref.ranges), list(rule.formula or [])):
+            key = (str(entry.sqref), str(rule.priority))
+            for number, group in enumerate(
+                moved(list(entry.sqref.ranges), list(rule.formula or []))
+            ):
                 clone = copy(rule)
                 clone.formula = group.formulas
                 rules.add(_sqref(group.areas), clone)
+                if number == 0 and key in extensions:
+                    rekeyed[(_sqref(group.areas), key[1])] = extensions.pop(key)
+    extensions.update(rekeyed)
     worksheet.conditional_formatting = rules
 
     validations = []
