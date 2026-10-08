@@ -145,14 +145,14 @@ class _Checker:
         if (
             not continues_range
             and self.previous == _VALUE
-            and not (self.spaced and self.reference_ended and token.subtype == Token.RANGE)
+            and not (self.spaced and self.reference_ended and _is_reference_token(token))
         ):
             raise _ProblemError(f"an operator is missing before {token.value!r}.")
         if token.subtype == Token.RANGE and not _is_reference(text):
             self.invalid_operand = self.invalid_operand or _ProblemError(
                 f"{token.value!r} is not a valid reference, name or number."
             )
-        self._ends_value(reference=token.subtype == Token.RANGE)
+        self._ends_value(reference=_is_reference_token(token))
 
     def _continues_range(self, text: str) -> bool:
         """Whether ``text`` carries on a reference that just ended, as in INDEX(...):A3."""
@@ -244,6 +244,11 @@ class _Checker:
 
 def _arguments(count: int) -> str:
     return f"{count} argument{'' if count == 1 else 's'}"
+
+
+def _is_reference_token(token: Token) -> bool:
+    """A reference, or the #REF! that Excel leaves where one was deleted."""
+    return token.subtype == Token.RANGE or token.value == "#REF!"
 
 
 def _function_name(token_value: str) -> str:

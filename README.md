@@ -14,7 +14,7 @@ create, read and edit Excel workbooks. It needs no Microsoft Excel installation.
 - **Read and write** cells, formulas (with results calculated for you) and dates, with paging and streaming reads for large sheets, and search
 - **Format** fonts, fills, borders, number formats, column widths and frozen panes; hide or
   group rows, columns and sheets; set up printing; protect sheets
-- **Structure** sheets (order, view, workbook settings and protection), rows and columns, merged cells, tables, charts (column, bar, line, area, pie, doughnut, radar, scatter and
+- **Structure** sheets (order, view, workbook settings and protection), rows and columns (inserting or deleting updates every reference, as in Excel), merged cells, tables, charts (column, bar, line, area, pie, doughnut, radar, scatter and
   bubble, with combos, secondary axes, trendlines and error bars), images, hyperlinks and PivotTables
 - **Data tools**: paste special, fill series, remove duplicates, text to columns, find and
   replace, sheet and table filters with criteria
@@ -216,13 +216,17 @@ Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
   (`tests/fixtures/pivot_golden.json`). The exceptions: items that tie when sorted by value may
   swap places on refresh, and `values_in: "rows"` cannot be combined with rank figures or, with
   subtotals, other figures along a field, because Excel mixes the values fields up there.
-- Inserting or deleting rows and columns does not update formulas, charts or tables that
-  refer to the moved cells.
+- Inserting or deleting rows and columns, and renaming a sheet, update references like
+  Excel. Hyperlink targets and 3D references (`Sheet1:Sheet3!A1`) are left alone (Excel does
+  the same). An edit that cuts through an array formula, a PivotTable, a table header or two
+  tables at once is refused. Inserted cells take the formatting, row height and column width
+  of the line above or to the left (nothing at the first row or column), and calculated table
+  columns are filled into rows inserted in a table.
 - Editing a workbook keeps what the tools cannot change: sparklines, extended conditional
   formats and validation, slicers and timelines, newer charts (waterfall, histogram,
   treemap and others), threaded comments, shapes, form controls, linked data types and
-  custom XML stay as Excel saved them. They are not moved when rows or columns are inserted
-  or deleted and `copy_sheet` does not copy them. Deleting a sheet removes slicers that only
+  custom XML stay as Excel saved them and move with inserted or deleted rows and columns and
+  renamed sheets; `copy_sheet` does not copy them. Deleting a sheet removes slicers that only
   it used; slicers that would be left without their PivotTable or table block the deletion.
   Digital signatures are removed, as Excel does when a signed file changes.
 - Formulas that return several values (`FILTER`, `SORT`, `UNIQUE`, `SEQUENCE`, `A2:A9*2`) are

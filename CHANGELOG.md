@@ -186,6 +186,23 @@ All notable changes to this project are documented here. The format follows
   Excel used to show such a formula with `@` and a single value, because the file did not say
   it spills. Results of `=SUM(A1:A5*2)` and the like are now what Excel itself shows.
 - `copy_sheet` carries the dynamic array metadata of the formulas it copies.
+- `insert_rows_or_columns` and `delete_rows_or_columns` update references as Excel does,
+  workbook-wide, instead of only moving cells. Formulas on every sheet (same-sheet and
+  `Sheet!` references, absolute, relative and mixed, ranges that grow or shrink, whole
+  rows and columns; a deleted cell becomes `#REF!`), defined names, conditional formats and
+  data validation (including their relative formulas, which are split into parts when the
+  edit cuts between a cell and what it refers to), merged cells, tables (columns, structured
+  references), the sheet filter, print area and titles, freeze panes, row heights and column
+  widths, page breaks, pictures, charts (on sheets and chart sheets, with their series,
+  categories and titles), filters with their criteria and sort, and PivotTable locations and
+  sources all follow the move. Like Excel, an edit fails (and nothing is saved) when it
+  would cut through an array formula, a PivotTable, a table's header row or two tables at
+  once. Inserted cells take the formatting of the line above or to the left, and rows
+  inserted into a table get its calculated column formulas, as in Excel. Verified against
+  Excel's own results for each edit (see the pull request).
+- `rename_sheet` updates every reference to the sheet, as Excel does: formulas on all sheets
+  (quoted only where needed), defined names, conditional formats, data validation, charts
+  (also on chart sheets) and PivotTable sources.
 - **Breaking:** `describe_workbook` returns `defined_names` as objects with `name`,
   `refers_to` and `sheet` (null for workbook scope), and includes sheet-scoped names.
 - **Breaking:** `create_summary_table` is removed; `create_pivot_table` replaces it

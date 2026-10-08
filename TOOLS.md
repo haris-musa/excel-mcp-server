@@ -16,7 +16,7 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`import_workbook`](#import_workbook) | Save an uploaded workbook file on the server, e.g. to edit it remotely. |
 | [`describe_sheet`](#describe_sheet) | Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables, images, notes, hyperlinks, validation, conditional formats, custom column widths, hidden rows and columns, print area and protection. Empty items are omitted. |
 | [`create_sheet`](#create_sheet) | Add an empty worksheet. |
-| [`rename_sheet`](#rename_sheet) | Rename a worksheet. Formulas that refer to the old name are not updated. |
+| [`rename_sheet`](#rename_sheet) | Rename a worksheet. References to it are updated as in Excel: formulas, names, rules, charts and PivotTable sources. |
 | [`copy_sheet`](#copy_sheet) | Copy a worksheet to a new sheet at the end, as Excel's "Create a copy" does. |
 | [`delete_sheet`](#delete_sheet) | Delete a worksheet or chart sheet and everything on it. |
 | [`insert_rows_or_columns`](#insert_rows_or_columns) | Insert empty rows or columns before position `at`. |
@@ -189,7 +189,8 @@ Add an empty worksheet.
 
 **Rename sheet** (modifies files)
 
-Rename a worksheet. Formulas that refer to the old name are not updated.
+Rename a worksheet. References to it are updated as in Excel: formulas, names, rules,
+charts and PivotTable sources.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -234,7 +235,10 @@ Fails while slicers on other sheets use its PivotTables or tables.
 
 Insert empty rows or columns before position `at`.
 
-References in formulas, merged ranges, charts and tables are not updated.
+Like Excel, every reference moves: formulas on all sheets, names, conditional formats,
+validation, merged cells, tables, charts, PivotTables, filters and print settings.
+An edit Excel refuses (through an array formula, a PivotTable or a table header)
+fails.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -250,7 +254,8 @@ References in formulas, merged ranges, charts and tables are not updated.
 
 Delete rows or columns starting at position `at`.
 
-References in formulas, merged ranges, charts and tables are not updated.
+Like Excel, every reference moves, and one to a deleted cell becomes #REF!. See
+insert_rows_or_columns.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
