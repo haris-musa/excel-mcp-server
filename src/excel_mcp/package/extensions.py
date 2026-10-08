@@ -14,7 +14,7 @@ from openpyxl.utils.cell import column_index_from_string, get_column_letter
 
 from excel_mcp.package.lines import LineEdit
 from excel_mcp.package.scan import unescape
-from excel_mcp.refs import parse_range
+from excel_mcp.refs import CellRange, clip_areas, parse_range
 
 SPARKLINES = "{05C60535-1F16-4fd2-B633-F4F36F0B64E0}"
 CONDITIONAL_FORMATS = "{78C0D931-6437-407d-A8EE-F0AAD7539E65}"
@@ -86,6 +86,35 @@ def rewrite_extensions(extensions: dict[str, str], rewriter: Rewriter) -> None:
             del extensions[uri]
         else:
             extensions[uri] = kept
+
+
+def clip_rules(extensions: dict[str, str], uri: str, hole: CellRange) -> None:
+    """Take the cells of ``hole`` out of the ranges of the conditional formats (``uri`` is
+    CONDITIONAL_FORMATS) or validations (DATA_VALIDATIONS) in a sheet's ``<ext>`` entries; one
+    left without cells is deleted."""
+    if uri not in extensions:
+        return
+
+    def clipped(item: str) -> str | None:
+        location = _RANGE.search(item)
+        areas = [parse_range(part) for part in location[1].split()] if location else []
+        found = clip_areas(areas, hole)
+        if found is None:
+            return None
+        kept, rows, columns = found
+        item = _RANGE.sub(lambda _: f"<xm:sqref>{' '.join(map(str, kept))}</xm:sqref>", item)
+        return _FORMULA.sub(lambda m: f"<xm:f>{_shifted(m[1], rows, columns)}</xm:f>", item)
+
+    pattern, marker = (
+        (_RULE_GROUP, "<x14:cfRule")
+        if uri == CONDITIONAL_FORMATS
+        else (_VALIDATION, "<x14:dataValidation ")
+    )
+    kept_xml = _items(extensions[uri], pattern, clipped, marker)
+    if kept_xml is None:
+        del extensions[uri]
+    else:
+        extensions[uri] = kept_xml
 
 
 def forget_sheets(extensions: dict[str, str], names: set[str]) -> None:

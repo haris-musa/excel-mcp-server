@@ -2,7 +2,7 @@
 
 import re
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from openpyxl.utils.cell import column_index_from_string, get_column_letter, range_boundaries
 from openpyxl.worksheet.cell_range import CellRange as SheetRange
@@ -53,6 +53,19 @@ class CellRange:
             or other.max_col < self.min_col
         )
 
+    def minus(self, hole: "CellRange") -> list["CellRange"]:
+        """The parts of this range outside ``hole``, as the bands above, below, left and right."""
+        if not self.overlaps(hole):
+            return [self]
+        top, bottom = max(self.min_row, hole.min_row), min(self.max_row, hole.max_row)
+        parts = [
+            replace(self, max_row=hole.min_row - 1),
+            replace(self, min_row=hole.max_row + 1),
+            replace(self, min_row=top, max_row=bottom, max_col=hole.min_col - 1),
+            replace(self, min_row=top, max_row=bottom, min_col=hole.max_col + 1),
+        ]
+        return [p for p in parts if p.min_row <= p.max_row and p.min_col <= p.max_col]
+
     def within(self, max_cells: int) -> "CellRange":
         """Return the range, or raise if it has more than ``max_cells`` cells."""
         if self.size > max_cells:
@@ -66,6 +79,17 @@ class CellRange:
         start = self.top_left
         end = cell_name(self.max_row, self.max_col)
         return start if start == end else f"{start}:{end}"
+
+
+def clip_areas(areas: list[CellRange], hole: CellRange) -> tuple[list[CellRange], int, int] | None:
+    """The areas without ``hole``, and how far their top-left corner moved down and right;
+    None when nothing is left. A rule's relative formulas follow its corner."""
+    kept = [part for area in areas for part in area.minus(hole)]
+    if not kept:
+        return None
+    rows = min(a.min_row for a in kept) - min(a.min_row for a in areas)
+    cols = min(a.min_col for a in kept) - min(a.min_col for a in areas)
+    return kept, rows, cols
 
 
 def cell_name(row: int, col: int) -> str:
