@@ -147,7 +147,7 @@ class Workspace:
 
                 refresh_spills(workbook, self.limits.max_cells)
                 _pin_hyperlinks(workbook)
-                save_atomically(workbook, path)
+                save_atomically(workbook, path, self.limits.max_file_bytes)
             finally:
                 close_workbook(workbook)
 
@@ -170,7 +170,7 @@ class Workspace:
         with self._write_lock:
             try:
                 self._check_overwrite(path, overwrite)
-                save_atomically(workbook, path)
+                save_atomically(workbook, path, self.limits.max_file_bytes)
             finally:
                 close_workbook(workbook)
         return path
@@ -217,8 +217,11 @@ class Workspace:
         )
 
 
-def save_atomically(workbook: Workbook, path: Path) -> None:
-    """Serialize the workbook in memory, then write it atomically."""
+def save_atomically(workbook: Workbook, path: Path, max_bytes: int) -> None:
+    """Serialize the workbook in memory, then write it atomically.
+
+    A result larger than the size limit is refused, because the server could not open it again.
+    """
     buffer = io.BytesIO()
     try:
         package.prepare(workbook)
@@ -226,7 +229,13 @@ def save_atomically(workbook: Workbook, path: Path) -> None:
     except Exception as error:
         # openpyxl reports invalid workbook states with many exception types.
         raise WorkbookError(f"Could not save the workbook: {error}") from None
-    write_atomically(path, package.apply(workbook, buffer.getvalue()))
+    content = package.apply(workbook, buffer.getvalue())
+    if len(content) > max_bytes:
+        raise LimitExceededError(
+            f"The saved workbook would be {len(content):,} bytes; the limit is "
+            f"{max_bytes:,}. The file was not changed."
+        )
+    write_atomically(path, content)
 
 
 def write_atomically(path: Path, content: bytes) -> None:

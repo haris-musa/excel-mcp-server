@@ -50,7 +50,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         Self-references point at the copy; tables get new names (Sales2); PivotTables share
         the original's data."""
         with workspace.edit(path) as workbook:
-            skipped = sheet_copy.copy_sheet(workbook, sheet, new_name)
+            skipped = sheet_copy.copy_sheet(
+                workbook, sheet, new_name, workspace.limits.max_copy_cells
+            )
         note = f"Not copied: {', '.join(skipped)}." if skipped else None
         return Changed(sheet=new_name, note=note)
 

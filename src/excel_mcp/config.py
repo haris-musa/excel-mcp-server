@@ -12,6 +12,7 @@ class Limits:
     max_file_bytes: int = 100 * 1024 * 1024
     max_read_cells: int = 10_000
     max_cells: int = 100_000
+    max_copy_cells: int = 1_000_000
     max_unpack_factor: int = 5
     max_compression_ratio: int = 500
 

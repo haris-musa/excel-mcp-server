@@ -9,6 +9,7 @@ from openpyxl.worksheet.copier import WorksheetCopy
 from openpyxl.worksheet.formula import ArrayFormula
 from openpyxl.worksheet.worksheet import Worksheet
 
+from excel_mcp.errors import LimitExceededError
 from excel_mcp.formulas import storable_formula, storable_operand
 from excel_mcp.operations import chartex
 from excel_mcp.operations.cells import stored_cells
@@ -22,9 +23,14 @@ from excel_mcp.rewrite import chart_references
 from excel_mcp.workspace import get_sheet
 
 
-def copy_sheet(workbook: Workbook, name: str, new_name: str) -> list[str]:
+def copy_sheet(workbook: Workbook, name: str, new_name: str, max_cells: int) -> list[str]:
     """Add a copy of a sheet at the end of the workbook. Returns what could not be copied."""
     source = get_sheet(workbook, name)
+    cells = len(source._cells)  # pyright: ignore[reportAttributeAccessIssue]
+    if cells > max_cells:
+        raise LimitExceededError(
+            f"Sheet {name!r} has {cells:,} cells; at most {max_cells:,} can be copied."
+        )
     validate_sheet_name(new_name, workbook.sheetnames)
     target = workbook.create_sheet(new_name)
     WorksheetCopy(source, target).copy_worksheet()
