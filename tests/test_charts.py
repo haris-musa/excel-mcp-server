@@ -276,7 +276,7 @@ async def add_combo(call: ToolCall, **options: Any) -> None:
         ("column", {"y_axis": {"log": True, "min": 0}}, "above zero"),
         ("column", {"secondary_y_axis": {"title": "t"}}, "no series has secondary_axis"),
         ("column", {"legend": "middle"}, "legend"),
-        ("column", {"title_font": 3}, "Unknown field"),
+        ("column", {"title_font": 3}, "unknown field"),
     ],
 )
 async def test_options_that_do_not_fit_are_rejected(
