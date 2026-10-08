@@ -233,3 +233,16 @@ def unicode_(text: Scalar) -> float:
     if not first:
         raise FormulaError(VALUE)
     return float(ord(first))
+
+
+@function("REPLACE", kind="scalar")
+def replace(text: Scalar, start: Scalar, count: Scalar, new: Scalar) -> str:
+    source, first = to_text(text), to_int(start)
+    if first < 1 or to_int(count) < 0:
+        raise FormulaError(VALUE)
+    return _limited(source[: first - 1] + to_text(new) + source[first - 1 + to_int(count) :])
+
+
+@function("CLEAN", kind="scalar")
+def clean(text: Scalar) -> str:
+    return "".join(c for c in to_text(text) if ord(c) >= 32)

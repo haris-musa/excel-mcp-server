@@ -108,10 +108,10 @@ def rate_(
         growth = (1 + r) ** n
         return present * growth + payment * (1 + r * due) * (growth - 1) / r + future
 
-    return _newton(balance, to_number(guess))
+    return newton(balance, to_number(guess))
 
 
-def _newton(function_: Callable[[float], float], start: float) -> float:
+def newton(function_: Callable[[float], float], start: float) -> float:
     """A root of ``function_`` by Newton's method; no convergence is #NUM! like in Excel."""
     x = start
     for _ in range(100):
@@ -409,3 +409,36 @@ def vdb(
     if c < 0 or s < 0 or n <= 0 or a < 0 or b < a or b > n or f <= 0:
         raise FormulaError(NUM)
     return _declining(c, s, n, a, b, f, switch=not to_number(no_switch))
+
+
+@function("ISPMT", kind="scalar")
+def ispmt(rate: Scalar, per: Scalar, nper: Scalar, pv: Scalar) -> float:
+    r, p, n, present = to_number(rate), to_number(per), to_number(nper), to_number(pv)
+    if n == 0:
+        raise FormulaError(DIV0)
+    return -present * r * (1 - p / n)
+
+
+def _fraction_digits(fraction: Scalar) -> tuple[int, int]:
+    n = to_int(fraction)
+    if n < 0:
+        raise FormulaError(NUM)
+    if n == 0:
+        raise FormulaError(DIV0)
+    return n, math.ceil(math.log10(n))
+
+
+@function("DOLLARDE", kind="scalar")
+def dollarde(fractional_dollar: Scalar, fraction: Scalar) -> float:
+    n, digits = _fraction_digits(fraction)
+    value = to_number(fractional_dollar)
+    whole = math.trunc(value)
+    return whole + (value - whole) * 10**digits / n
+
+
+@function("DOLLARFR", kind="scalar")
+def dollarfr(decimal_dollar: Scalar, fraction: Scalar) -> float:
+    n, digits = _fraction_digits(fraction)
+    value = to_number(decimal_dollar)
+    whole = math.trunc(value)
+    return whole + (value - whole) * n / 10**digits

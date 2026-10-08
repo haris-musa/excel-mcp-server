@@ -525,3 +525,121 @@ def averageif(engine: "Engine", cells: Node, crit: Node, total: Node | None = No
     if not values:
         raise FormulaError(DIV0)
     return naive_sum(values) / len(values)
+
+
+@function("PEARSON", array=True)
+def pearson(first: Value, second: Value) -> float:
+    return correl(first, second)
+
+
+def _percent_rank(array: Value, x: Value, significance: Value, exclusive: bool) -> float:
+    values = sorted(array_numbers(array))
+    target, digits = to_number(scalar(x)), to_int(scalar(significance))
+    n = len(values)
+    if digits < 1 or not n:
+        raise FormulaError(NUM)
+    if target < values[0] or target > values[-1]:
+        raise FormulaError(NA)
+    below = sum(v < target for v in values)
+    if target in values:
+        position = float(below)
+    else:
+        low, high = values[below - 1], values[below]
+        position = below - 1 + (target - low) / (high - low)
+    if exclusive:
+        rank = (position + 1) / (n + 1)
+    elif n == 1:
+        raise FormulaError(DIV0)
+    else:
+        rank = position / (n - 1)
+    scale = 10**digits
+    return math.floor(rank * scale + 1e-9) / scale
+
+
+@function("PERCENTRANK.INC", "PERCENTRANK")
+def percentrank_inc(array: Value, x: Value, significance: Value = 3) -> float:
+    return _percent_rank(array, x, significance, exclusive=False)
+
+
+@function("PERCENTRANK.EXC")
+def percentrank_exc(array: Value, x: Value, significance: Value = 3) -> float:
+    return _percent_rank(array, x, significance, exclusive=True)
+
+
+def _standardized(values: list[float], power: int) -> tuple[int, float]:
+    n = len(values)
+    mean = naive_sum(values) / n
+    sd = math.sqrt(naive_sum((v - mean) ** 2 for v in values) / (n - 1))
+    if sd == 0:
+        raise FormulaError(DIV0)
+    return n, naive_sum(((v - mean) / sd) ** power for v in values)
+
+
+@function("SKEW")
+def skew(*args: Value) -> float:
+    values = numbers(args)
+    if len(values) < 3:
+        raise FormulaError(DIV0)
+    n, total = _standardized(values, 3)
+    return n / ((n - 1) * (n - 2)) * total
+
+
+@function("KURT")
+def kurt(*args: Value) -> float:
+    values = numbers(args)
+    if len(values) < 4:
+        raise FormulaError(DIV0)
+    n, total = _standardized(values, 4)
+    return n * (n + 1) / ((n - 1) * (n - 2) * (n - 3)) * total - 3 * (n - 1) ** 2 / (
+        (n - 2) * (n - 3)
+    )
+
+
+@function("STANDARDIZE", kind="scalar")
+def standardize(x: Scalar, mean: Scalar, sd: Scalar) -> float:
+    deviation = to_number(sd)
+    if deviation <= 0:
+        raise FormulaError(NUM)
+    return (to_number(x) - to_number(mean)) / deviation
+
+
+@function("BINOM.DIST", kind="scalar")
+def binom_dist(successes: Scalar, trials: Scalar, p: Scalar, cumulative: Scalar) -> float:
+    k, n, probability = to_int(successes), to_int(trials), to_number(p)
+    if not (0 <= k <= n and 0 <= probability <= 1):
+        raise FormulaError(NUM)
+
+    def mass(i: int) -> float:
+        return math.comb(n, i) * probability**i * (1 - probability) ** (n - i)
+
+    return naive_sum(mass(i) for i in range(k + 1)) if to_bool(cumulative) else mass(k)
+
+
+@function("POISSON.DIST", kind="scalar")
+def poisson_dist(x: Scalar, mean: Scalar, cumulative: Scalar) -> float:
+    k, rate = to_int(x), to_number(mean)
+    if k < 0 or rate < 0:
+        raise FormulaError(NUM)
+
+    def mass(i: int) -> float:
+        return math.exp(-rate) * rate**i / math.factorial(i)
+
+    return naive_sum(mass(i) for i in range(k + 1)) if to_bool(cumulative) else mass(k)
+
+
+@function("EXPON.DIST", kind="scalar")
+def expon_dist(x: Scalar, rate: Scalar, cumulative: Scalar) -> float:
+    value, lam = to_number(x), to_number(rate)
+    if value < 0 or lam <= 0:
+        raise FormulaError(NUM)
+    if to_bool(cumulative):
+        return 1 - math.exp(-lam * value)
+    return lam * math.exp(-lam * value)
+
+
+@function("CONFIDENCE.NORM", kind="scalar")
+def confidence_norm(alpha: Scalar, sd: Scalar, size: Scalar) -> float:
+    a, deviation, n = to_number(alpha), to_number(sd), to_int(size)
+    if not 0 < a < 1 or deviation <= 0 or n < 1:
+        raise FormulaError(NUM)
+    return _normal(0, 1).inv_cdf(1 - a / 2) * deviation / math.sqrt(n)

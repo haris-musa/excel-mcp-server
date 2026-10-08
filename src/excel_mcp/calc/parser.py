@@ -237,7 +237,7 @@ def parse_reference(text: str) -> Node:
         return Ref(sheets, int(match[2]), None, int(match[4]), None, relative)
     if text.upper() in ERRORS:
         return ErrorLiteral(text.upper())
-    return Name(sheets[0] if sheets else None, body)
+    return Name(sheets[0] if sheets else None, body.removeprefix("_xlpm."))
 
 
 def _ref(sheets: tuple[str, ...], first: tuple[str, ...], last: tuple[str, ...]) -> Ref:

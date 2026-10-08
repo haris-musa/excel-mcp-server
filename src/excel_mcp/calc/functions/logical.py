@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING
 
-from excel_mcp.calc.parser import Node
+from excel_mcp.calc.parser import Name, Node
 from excel_mcp.calc.registry import function
 from excel_mcp.calc.values import (
     NA,
@@ -11,6 +11,7 @@ from excel_mcp.calc.values import (
     FormulaError,
     Grid,
     Scalar,
+    UncalculableError,
     Value,
     compare,
     is_number,
@@ -127,3 +128,19 @@ def true() -> bool:
 @function("FALSE")
 def false() -> bool:
     return False
+
+
+@function("LET", kind="lazy")
+def let(engine: "Engine", *args: Node) -> Value:
+    if len(args) < 3 or len(args) % 2 == 0:
+        raise UncalculableError("LET: wrong number of arguments")
+    scope: dict[str, Value] = {}
+    engine.scopes.append(scope)
+    try:
+        for name, value in zip(args[:-1:2], args[1:-1:2], strict=True):
+            if not isinstance(name, Name):
+                raise UncalculableError("LET: not a name")
+            scope[name.name.casefold()] = engine.eval(value)
+        return engine.eval(args[-1])
+    finally:
+        engine.scopes.pop()

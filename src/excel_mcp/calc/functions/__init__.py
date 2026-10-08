@@ -8,7 +8,9 @@ from excel_mcp.calc.functions import (
     logical,
     lookup,
     math,
+    securities,
     statistical,
+    subtotals,
     text,
 )
 
@@ -20,6 +22,8 @@ CATEGORIES = (
     logical,
     lookup,
     math,
+    securities,
     statistical,
+    subtotals,
     text,
 )

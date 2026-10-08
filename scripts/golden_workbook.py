@@ -16,7 +16,11 @@ DEFAULT_TOLERANCE = 1e-12
 
 
 def build_workbook(
-    path: Path, inputs: dict[str, list[list[Any]]], names: dict[str, str], formulas: list[str]
+    path: Path,
+    inputs: dict[str, list[list[Any]]],
+    names: dict[str, str],
+    formulas: list[str],
+    hidden_rows: dict[str, list[int]],
 ) -> None:
     """Write the inputs and one formula per row of 'Cases' column A, as the server would."""
     workbook = Workbook()
@@ -29,6 +33,9 @@ def build_workbook(
     cases = workbook["Cases"]
     for row, formula in enumerate(formulas, start=1):
         write_range(cases, f"A{row}", [[formula]], MAX_CELLS)  # pyright: ignore[reportArgumentType]
+    for title, rows_hidden in hidden_rows.items():
+        for row in rows_hidden:
+            workbook[title].row_dimensions[row].hidden = True
     for name, target in names.items():
         workbook.defined_names[name] = DefinedName(name, attr_text=target)
     workbook.save(path)
