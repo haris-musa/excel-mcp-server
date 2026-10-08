@@ -30,11 +30,19 @@ All notable changes to this project are documented here. The format follows
 - `set_defined_name` and `delete_defined_name` manage workbook- and sheet-scoped names
   for ranges and constants. The reference passes the formula safety check.
 - `set_note` and `delete_note` manage cell notes; `describe_sheet` lists them.
+- `create_pivot_table` adds a real Excel PivotTable (rows, columns, filters, and sum, count,
+  average, min or max values, with subtotals and grand totals). Excel shows it at once,
+  refreshes it from the source data and lets you rearrange it. The results are also written
+  into the cells.
+- `delete_pivot_table` removes a PivotTable and the cells it fills; `describe_sheet` lists
+  each sheet's `pivot_tables` with their name, range and source.
 
 ### Changed
 
 - **Breaking:** `describe_workbook` returns `defined_names` as objects with `name`,
   `refers_to` and `sheet` (null for workbook scope), and includes sheet-scoped names.
+- **Breaking:** `create_summary_table` is removed; `create_pivot_table` replaces it
+  (`group_by` is now `rows`, `aggregation` is `function`, and the result is a PivotTable).
 - **Breaking:** `create_chart`'s `show_legend` option is replaced by `legend`: `right`
   (default), `left`, `top`, `bottom` or `none`.
 - **Breaking:** `describe_sheet` no longer returns `chart_count`; use the length of `charts`.

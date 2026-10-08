@@ -13,7 +13,7 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`list_workbooks`](#list_workbooks) | List Excel files in a directory. |
 | [`export_workbook`](#export_workbook) | Return the workbook file itself as an embedded base64 resource. |
 | [`import_workbook`](#import_workbook) | Save an uploaded workbook file on the server, e.g. to edit it remotely. |
-| [`describe_sheet`](#describe_sheet) | Describe a sheet's structure: used range, frozen panes, merged ranges, tables, charts, images, data validation, conditional formats, custom column widths, hidden rows and columns, print area and whether it is protected. |
+| [`describe_sheet`](#describe_sheet) | Describe a sheet's structure: used range, frozen panes, merged ranges, tables, charts, PivotTables, images, data validation, conditional formats, custom column widths, hidden rows and columns, print area and whether it is protected. |
 | [`create_sheet`](#create_sheet) | Add an empty worksheet. |
 | [`rename_sheet`](#rename_sheet) | Rename a worksheet. Formulas that refer to the old name are not updated. |
 | [`copy_sheet`](#copy_sheet) | Duplicate a worksheet (values, styles and dimensions) within the workbook. |
@@ -34,7 +34,8 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`create_table`](#create_table) | Turn a range with a header row of unique text labels into an Excel table. |
 | [`create_chart`](#create_chart) | Add a chart that plots a block of data. |
 | [`delete_chart`](#delete_chart) | Remove a chart from a sheet. The data it plotted is left untouched. |
-| [`create_summary_table`](#create_summary_table) | Group rows and aggregate columns, like a pivot table, writing the result as cells. |
+| [`create_pivot_table`](#create_pivot_table) | Add a real Excel PivotTable that summarizes a block of data. |
+| [`delete_pivot_table`](#delete_pivot_table) | Remove a PivotTable and clear the cells it fills. The source data is left untouched. |
 | [`set_defined_name`](#set_defined_name) | Create a defined name for a range or constant, replacing a name of the same scope. |
 | [`delete_defined_name`](#delete_defined_name) | Delete a defined name. Formulas that use it are not changed and will show #NAME?. |
 | [`set_note`](#set_note) | Add a note to a cell, replacing the cell's existing note. |
@@ -108,8 +109,8 @@ Save an uploaded workbook file on the server, e.g. to edit it remotely.
 **Describe sheet** (read-only)
 
 Describe a sheet's structure: used range, frozen panes, merged ranges, tables,
-charts, images, data validation, conditional formats, custom column widths, hidden
-rows and columns, print area and whether it is protected.
+charts, PivotTables, images, data validation, conditional formats, custom column
+widths, hidden rows and columns, print area and whether it is protected.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -576,25 +577,43 @@ before deleting another.
 | `sheet` | string | yes | Worksheet name, e.g. 'Sheet1'. |
 | `index` | integer | yes | 1-based chart number, as listed under 'charts' by describe_sheet. |
 
-## create_summary_table
+## create_pivot_table
 
-**Create summary table** (modifies files, may overwrite data)
+**Create pivot table** (modifies files)
 
-Group rows and aggregate columns, like a pivot table, writing the result as cells.
+Add a real Excel PivotTable that summarizes a block of data.
 
-The result is a static table (not an Excel PivotTable) and does not update when the
-source changes. Only numeric values are summed, averaged or compared; 'count' counts
-non-empty cells. Formula cells are not evaluated.
+Excel shows it at once and can refresh it (Data > Refresh All) after the source
+changes, and you can drag fields or change summaries there. Values are also
+written into the cells so other tools can read them: with subtotals for outer
+row fields and grand totals. Filters start out showing everything. A field can
+be used only once among rows, columns and filters. Remove a PivotTable with
+delete_pivot_table; describe_sheet lists them.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Path to an .xlsx, .xlsm, .xltx or .xltm file. Relative paths are resolved in the server's workbook directory when one is configured; otherwise use an absolute path. |
+| `source_sheet` | string | yes | Worksheet name, e.g. 'Sheet1'. |
+| `source_range` | string | yes | Data to summarize: a header row of unique text labels, then one record per row, e.g. 'A1:E200'. Columns must hold only text, only numbers or only dates (blanks are fine), not formulas. |
+| `rows` | array of string | yes | Headers to group by down the side, outermost first. |
+| `values` | array of object | yes | Headers to summarize, with how. |
+| `target_sheet` | string | yes | Worksheet name, e.g. 'Sheet1'. |
+| `target_cell` | string | yes | Top-left cell of the PivotTable; the area must be empty. |
+| `columns` | array of string | no | Headers to spread across the top, outermost first. Default: `[]`. |
+| `filters` | array of string | no | Headers to offer as page filters above the table. Default: `[]`. |
+| `name` | string | no | PivotTable name. Default: PivotTableN. |
+
+## delete_pivot_table
+
+**Delete pivot table** (modifies files, may overwrite data)
+
+Remove a PivotTable and clear the cells it fills. The source data is left untouched.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path` | string | yes | Path to an .xlsx, .xlsm, .xltx or .xltm file. Relative paths are resolved in the server's workbook directory when one is configured; otherwise use an absolute path. |
 | `sheet` | string | yes | Worksheet name, e.g. 'Sheet1'. |
-| `source_range` | string | yes | A cell or rectangular range in A1 notation, e.g. 'A1:D20'. |
-| `group_by` | array of string | yes | Header names to group by. |
-| `values` | array of object | yes | Header names to aggregate. |
-| `target_sheet` | string | yes | Worksheet name, e.g. 'Sheet1'. |
-| `target_cell` | string | no | A single cell in A1 notation, e.g. 'B2'. Default: `A1`. |
+| `name` | string | yes | PivotTable name, as listed by describe_sheet. |
 
 ## set_defined_name
 

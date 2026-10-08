@@ -1,13 +1,12 @@
-"""Tools for tables, charts and summary tables."""
+"""Tools for tables and charts."""
 
 from typing import Annotated
 
 from pydantic import Field
 
-from excel_mcp.operations import chart_index, charts, summary, tables
+from excel_mcp.operations import chart_index, charts, tables
 from excel_mcp.operations.charts_options import ChartOptions, ChartType
-from excel_mcp.operations.summary import SummaryValue
-from excel_mcp.server.params import CellRef, RangeRef, SheetName, WorkbookPath
+from excel_mcp.server.params import SheetName, WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
 from excel_mcp.workspace import Workspace, get_sheet
 
@@ -96,35 +95,3 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             removed = chart_index.delete_chart(get_sheet(workbook, sheet), index)
         label = f" {removed.title!r}" if removed.title else ""
         return f"Deleted {removed.type} chart {index}{label} from {sheet}."
-
-    @tools.destroyer("Create summary table")
-    def create_summary_table(
-        path: WorkbookPath,
-        sheet: SheetName,
-        source_range: RangeRef,
-        group_by: Annotated[
-            list[str], Field(min_length=1, description="Header names to group by.")
-        ],
-        values: Annotated[
-            list[SummaryValue], Field(min_length=1, description="Header names to aggregate.")
-        ],
-        target_sheet: SheetName,
-        target_cell: CellRef = "A1",
-    ) -> str:
-        """Group rows and aggregate columns, like a pivot table, writing the result as cells.
-
-        The result is a static table (not an Excel PivotTable) and does not update when the
-        source changes. Only numeric values are summed, averaged or compared; 'count' counts
-        non-empty cells. Formula cells are not evaluated.
-        """
-        with workspace.edit(path) as workbook:
-            area = summary.create_summary(
-                get_sheet(workbook, sheet),
-                source_range,
-                group_by,
-                values,
-                get_sheet(workbook, target_sheet),
-                target_cell,
-                workspace.limits.max_cells,
-            )
-        return f"Wrote the summary to {target_sheet}!{area}."

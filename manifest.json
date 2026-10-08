@@ -158,8 +158,12 @@
       "description": "Remove a chart from a sheet. The data it plotted is left untouched."
     },
     {
-      "name": "create_summary_table",
-      "description": "Group rows and aggregate columns, like a pivot table, writing the result as cells."
+      "name": "create_pivot_table",
+      "description": "Add a real Excel PivotTable that summarizes a block of data."
+    },
+    {
+      "name": "delete_pivot_table",
+      "description": "Remove a PivotTable and clear the cells it fills. The source data is left untouched."
     },
     {
       "name": "set_defined_name",

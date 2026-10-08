@@ -48,36 +48,3 @@ async def test_chart_needs_labels_and_a_series(call_error: ToolCall, sample: Pat
         anchor_cell="F2",
     )
     assert "header row" in message
-
-
-async def test_create_summary_table(call: ToolCall, sample: Path) -> None:
-    await call(
-        "create_summary_table",
-        path="sales.xlsx",
-        sheet="Data",
-        source_range="A1:D5",
-        group_by=["region"],
-        values=[{"field": "Units"}, {"field": "Price", "aggregation": "average"}],
-        target_sheet="Report",
-        target_cell="B3",
-    )
-    sheet = load_workbook(sample)["Report"]
-    rows = [[cell.value for cell in row] for row in sheet["B3:D5"]]
-    assert rows == [
-        ["region", "Units (sum)", "Price (average)"],
-        ["North", 17, 1.75],
-        ["South", 8, 1.75],
-    ]
-
-
-async def test_summary_reports_unknown_fields(call_error: ToolCall, sample: Path) -> None:
-    message = await call_error(
-        "create_summary_table",
-        path="sales.xlsx",
-        sheet="Data",
-        source_range="A1:D5",
-        group_by=["Country"],
-        values=[{"field": "Units"}],
-        target_sheet="Report",
-    )
-    assert "Available fields" in message

@@ -12,6 +12,7 @@ from excel_mcp.operations.images import ImageInfo, list_images
 from excel_mcp.operations.layout import hidden_lines
 from excel_mcp.operations.names import DefinedNameInfo, list_defined_names
 from excel_mcp.operations.notes import NoteInfo, list_notes
+from excel_mcp.operations.pivot_index import PivotInfo, list_pivots
 from excel_mcp.paths import EXCEL_SUFFIXES
 from excel_mcp.workspace import worksheets
 
@@ -59,6 +60,7 @@ class SheetDetails(BaseModel):
     notes: list[NoteInfo]
     tables: list[NamedRange]
     charts: list[ChartInfo]
+    pivot_tables: list[PivotInfo]
     data_validations: list[DataValidationInfo]
     conditional_formats: list[ConditionalFormatInfo]
     column_widths: dict[str, float]
@@ -108,6 +110,7 @@ def describe_sheet(sheet: Worksheet) -> SheetDetails:
         notes=list_notes(sheet),
         tables=[NamedRange(name=name, range=ref) for name, ref in sheet.tables.items()],
         charts=charts,
+        pivot_tables=list_pivots(sheet),
         data_validations=[
             DataValidationInfo(
                 range=str(rule.sqref),
