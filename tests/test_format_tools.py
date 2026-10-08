@@ -139,3 +139,13 @@ async def test_data_validation(call: ToolCall, sample: Path) -> None:
     details = await call("describe_sheet", path="sales.xlsx", sheet="Data")
     assert details["data_validations"][0]["formula1"] == '"North,South"'
     assert details["data_validations"][1]["operator"] == "between"
+
+
+async def test_font_name_replaces_the_theme_font(call: ToolCall, sample: Path) -> None:
+    await call(
+        "format_range", path="sales.xlsx", sheet="Data", range="A1", style={"font_name": "Arial"}
+    )
+    await call("format_range", path="sales.xlsx", sheet="Data", range="B1", style={"bold": True})
+    sheet = load_workbook(sample)["Data"]
+    assert (sheet["A1"].font.name, sheet["A1"].font.scheme) == ("Arial", None)
+    assert (sheet["B1"].font.name, sheet["B1"].font.scheme) == ("Calibri", "minor")
