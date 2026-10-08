@@ -6,9 +6,10 @@ from typing import Literal
 
 from openpyxl.styles import Alignment, Border, PatternFill, Side
 from openpyxl.worksheet.worksheet import Worksheet
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from excel_mcp.errors import InvalidArgumentError
+from excel_mcp.inputs import InputModel
 from excel_mcp.refs import parse_range
 
 HorizontalAlignment = Literal["general", "left", "center", "right", "fill", "justify"]
@@ -18,7 +19,7 @@ BorderStyle = Literal["none", "thin", "medium", "thick", "double", "dashed", "do
 _HEX_COLOR = re.compile(r"#?([0-9A-Fa-f]{6})")
 
 
-class CellFormat(BaseModel):
+class CellFormat(InputModel):
     """Fields left out keep the cell's current setting."""
 
     bold: bool | None = None

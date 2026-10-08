@@ -6,9 +6,10 @@ from typing import Annotated, Literal, cast
 from openpyxl.utils.cell import column_index_from_string, get_column_letter
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from excel_mcp.errors import InvalidArgumentError
+from excel_mcp.inputs import InputModel
 from excel_mcp.operations.cells import stored_cells
 from excel_mcp.operations.formatting import parse_color
 from excel_mcp.operations.print_setup import PrintSetup, apply_print_setup
@@ -25,14 +26,14 @@ Width = Annotated[float, Field(gt=0, le=255)]
 Height = Annotated[float, Field(gt=0, le=409)]
 
 
-class LineAction(BaseModel):
+class LineAction(InputModel):
     span: str = Field(description="Rows '3' or '3:5'; columns 'B' or 'B:D'.")
     action: Literal["hide", "show", "group", "ungroup"] = Field(
         description="Group adds one outline level (max 7), ungroup removes one."
     )
 
 
-class SheetLayout(BaseModel):
+class SheetLayout(InputModel):
     """Every field is optional; fields left out are not changed."""
 
     column_widths: dict[str, Width] | None = Field(

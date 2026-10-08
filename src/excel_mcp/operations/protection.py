@@ -7,9 +7,10 @@ from typing import Literal
 from openpyxl.utils.protection import hash_password
 from openpyxl.worksheet.protection import SheetProtection
 from openpyxl.worksheet.worksheet import Worksheet
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from excel_mcp.errors import InvalidArgumentError
+from excel_mcp.inputs import InputModel
 
 AllowedAction = Literal[
     "select_locked_cells",
@@ -29,7 +30,7 @@ AllowedAction = Literal[
 ALLOWED_ACTIONS = AllowedAction.__args__
 
 
-class Protection(BaseModel):
+class Protection(InputModel):
     enabled: bool = Field(description="False unprotects.")
     password: str | None = Field(
         default=None, max_length=255, description="To set; to unprotect, the current one."

@@ -16,7 +16,7 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`describe_sheet`](#describe_sheet) | Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables, images, notes, validation, conditional formats, custom column widths, hidden rows and columns, print area and protection. Empty items are omitted. |
 | [`create_sheet`](#create_sheet) | Add an empty worksheet. |
 | [`rename_sheet`](#rename_sheet) | Rename a worksheet. Formulas that refer to the old name are not updated. |
-| [`copy_sheet`](#copy_sheet) | Duplicate a worksheet (values, styles, dimensions). |
+| [`copy_sheet`](#copy_sheet) | Copy a worksheet to a new sheet at the end, as Excel's "Create a copy" does. |
 | [`delete_sheet`](#delete_sheet) | Delete a worksheet and everything on it. |
 | [`insert_rows_or_columns`](#insert_rows_or_columns) | Insert empty rows or columns before position `at`. |
 | [`delete_rows_or_columns`](#delete_rows_or_columns) | Delete rows or columns starting at position `at`. |
@@ -145,7 +145,13 @@ Rename a worksheet. Formulas that refer to the old name are not updated.
 
 **Copy sheet** (modifies files)
 
-Duplicate a worksheet (values, styles, dimensions).
+Copy a worksheet to a new sheet at the end, as Excel's "Create a copy" does.
+
+Copies cells, styles, merges, sizes, hidden rows and columns, freeze panes, filters, data
+validation, conditional formats, images, notes, charts, tables, PivotTables, print setup,
+protection and sheet-scoped names. References to the sheet itself, including chart data,
+point at the copy. Tables get new names (Sales becomes Sales2). PivotTables share the
+original's data. Workbook-scoped names are not duplicated.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |

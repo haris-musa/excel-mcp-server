@@ -12,6 +12,7 @@ from mcp.types import CallToolResult, TextContent, ToolAnnotations
 from pydantic import BaseModel
 
 from excel_mcp.errors import ExcelMCPError
+from excel_mcp.inputs import InputModel
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -59,6 +60,8 @@ class ToolRegistry:
             # The SDK's schemas carry generated titles and nullable unions that only cost tokens.
             tool = self.server._tool_manager.get_tool(function.__name__)  # pyright: ignore[reportPrivateUsage]
             assert tool is not None
+            arguments = tool.fn_metadata.arg_model
+            tool.fn_metadata.arg_model = type(arguments.__name__, (InputModel, arguments), {})
             _slim_schema(tool.parameters)
             if tool.output_schema:
                 _slim_schema(tool.output_schema)

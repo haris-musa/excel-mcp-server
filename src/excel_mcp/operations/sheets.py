@@ -3,7 +3,6 @@
 from typing import Literal
 
 from openpyxl.workbook import Workbook
-from openpyxl.worksheet.copier import WorksheetCopy
 from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.errors import InvalidArgumentError
@@ -37,12 +36,6 @@ def rename_sheet(workbook: Workbook, name: str, new_name: str) -> None:
     sheet = get_sheet(workbook, name)
     validate_sheet_name(new_name, workbook.sheetnames)
     sheet.title = new_name
-
-
-def copy_sheet(workbook: Workbook, name: str, new_name: str) -> None:
-    source = get_sheet(workbook, name)
-    validate_sheet_name(new_name, workbook.sheetnames)
-    WorksheetCopy(source, workbook.create_sheet(new_name)).copy_worksheet()
 
 
 def delete_sheet(workbook: Workbook, name: str) -> None:
