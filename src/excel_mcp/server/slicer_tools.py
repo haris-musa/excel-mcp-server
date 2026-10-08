@@ -11,6 +11,11 @@ from excel_mcp.server.params import CellRef, SheetName, WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
 from excel_mcp.workspace import Workspace, get_sheet
 
+_STALE = (
+    " The PivotTable was not made by create_pivot_table, so its figures are not recalculated "
+    "here: Excel recalculates them when the file is opened."
+)
+
 
 def register(tools: ToolRegistry, workspace: Workspace) -> None:
     @tools.writer("Add slicer")
@@ -68,8 +73,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
 
         `selected_items` limits the data as clicking the buttons does: PivotTable items are hidden
         and its figures recalculated from the source; table rows are filtered and hidden.
-        A PivotTable Excel refreshed after this server made it cannot be limited here; selecting
-        every item works on any. describe_sheet lists slicers; delete_slicer removes one.
+        On a PivotTable Excel made or refreshed, the cells keep their old figures and Excel
+        recalculates them when the file is opened. describe_sheet lists slicers; delete_slicer
+        removes one.
         """
         request = SlicerRequest(
             source, connect, field, cell, width_cm, height_cm, caption, name, columns, style,
@@ -80,10 +86,11 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             def results(owner, area):
                 return formula_values(workspace, path, owner, area)
 
-            made = slicers.add_slicer(
+            made, stale = slicers.add_slicer(
                 workbook, get_sheet(workbook, sheet), request, results, workspace.limits.max_cells
             )
-        return f"Added {'timeline' if timeline else 'slicer'} {made!r} to {sheet}!{cell}."
+        added = f"Added {'timeline' if timeline else 'slicer'} {made!r} to {sheet}!{cell}."
+        return added + (_STALE if stale else "")
 
     @tools.destroyer("Delete slicer")
     def delete_slicer(

@@ -273,15 +273,21 @@ def _without_refresh_mark(path: str) -> None:
             archive.writestr(part, data)
 
 
-async def test_a_pivot_table_excel_refreshed_takes_a_slicer_but_is_not_recalculated(
-    call: ToolCall, call_error: CallError, book: str
+async def test_a_pivot_table_excel_made_is_filtered_for_excel_to_recalculate(
+    call: ToolCall, book: str
 ) -> None:
     _without_refresh_mark(book)
-    error = await call_error(
-        "add_slicer", path=book, sheet="Pivot", source=PIVOT, field="Region", cell="E3",
-        selected_items=["East"],
-    )  # fmt: skip
-    assert "was not made by create_pivot_table" in error
-    await add(call, book, field="Region")
-    assert grand_total(book) == 360
-    assert len(await slicers_of(call, book, "Pivot")) == 1
+    message = await add(call, book, field="Region", selected_items=["East"])
+    assert "Excel recalculates them when the file is opened" in message
+    assert grand_total(book) == 360  # the cells keep their figures
+    parts = parts_of(book)
+    assert 'h="1"' in text(parts, "xl/pivotTables/pivotTable1.xml")
+    assert 'refreshOnLoad="1"' in text(parts, "xl/pivotCache/pivotCacheDefinition1.xml")
+    info = await slicers_of(call, book, "Pivot")
+    assert info[0]["selected_items"] == ["East"]
+    await add(
+        call, book, field="Date", cell="H3", timeline={"start": "2025-01-01", "end": "2025-02-28"}
+    )
+    assert 'type="dateBetween"' in text(parts_of(book), "xl/pivotTables/pivotTable1.xml")
+    await call("delete_slicer", path=book, sheet="Pivot", name="Date")
+    assert "dateBetween" not in text(parts_of(book), "xl/pivotTables/pivotTable1.xml")

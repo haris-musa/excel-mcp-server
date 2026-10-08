@@ -71,15 +71,16 @@ class SlicerRequest:
 
 def add_slicer(
     workbook: Workbook, sheet: Worksheet, request: SlicerRequest, results: Results, max_cells: int
-) -> str:
-    """Add the slicer or timeline to ``sheet``; returns its name."""
+) -> tuple[str, bool]:
+    """Add the slicer or timeline to ``sheet``; returns its name, and whether the figures of
+    PivotTables it limits were left for Excel to recalculate when it opens the file."""
     owner, target = find_source(workbook, request.source.sheet, request.source.name)
     if isinstance(target, Table):
         if request.timeline or request.connect:
             raise InvalidArgumentError(
                 "A table slicer connects to its table only, and tables have no timelines."
             )
-        return _table_slicer(workbook, sheet, owner, target, request, results)
+        return _table_slicer(workbook, sheet, owner, target, request, results), False
     pivots.share_caches(workbook)
     group = _connected(workbook, owner, target, request)
     if request.timeline:
@@ -119,16 +120,17 @@ def _pivot_slicer(
     group: list[pivots.Connected],
     request: SlicerRequest,
     max_cells: int,
-) -> str:
+) -> tuple[str, bool]:
     _check_style(request.style, "slicer")
     cache = group[0].pivot.cache
     position = pivots.source_field(cache, request.field)
     field = cache.cacheFields[position].name
     _check_free(workbook, group, field, "pivot")
+    recalculated = True
     if request.selected:
         pivots.ensure_items(cache, position)
         chosen = pivots.choose_items(cache, position, request.selected)
-        pivots.show_only(workbook, group, position, chosen, max_cells)
+        recalculated = pivots.show_only(workbook, group, position, chosen, max_cells)
     else:
         pivots.prepare(group, position)
     name, cache_name = _names(workbook, request, "Slicer_")
@@ -146,7 +148,7 @@ def _pivot_slicer(
         name, cache_name, request.caption or field, request.columns, True, request.style
     )
     _add(workbook, sheet, "pivot", request, (name, cache_name), (text, entry))
-    return name
+    return name, not recalculated and bool(request.selected)
 
 
 def _timeline(
@@ -155,7 +157,7 @@ def _timeline(
     group: list[pivots.Connected],
     request: SlicerRequest,
     max_cells: int,
-) -> str:
+) -> tuple[str, bool]:
     timeline = request.timeline
     assert timeline is not None
     _check_style(request.style, "timeline")
@@ -179,12 +181,13 @@ def _timeline(
     first, last = pivots.data_dates(cache, position)
     bounds = xml.timeline_bounds(first.date(), last.date())
     selection = None
+    recalculated = True
     if timeline.start is not None and timeline.end is not None:
         if timeline.start > timeline.end:
             raise InvalidArgumentError("timeline.start is after timeline.end.")
         selection = (timeline.start, timeline.end)
         period = tuple(dt.datetime.combine(day, dt.time()) for day in selection)
-        pivots.limit_dates(workbook, group, position, period, max_cells)  # pyright: ignore[reportArgumentType]
+        recalculated = pivots.limit_dates(workbook, group, position, period, max_cells)  # pyright: ignore[reportArgumentType]
     name, cache_name = _names(workbook, request, "NativeTimeline_")
     text = xml.timeline_cache(
         cache_name,
@@ -203,7 +206,7 @@ def _timeline(
         request.style,
     )
     _add(workbook, sheet, "timeline", request, (name, cache_name), (text, entry))
-    return name
+    return name, not recalculated
 
 
 def _connected(

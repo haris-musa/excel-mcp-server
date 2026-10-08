@@ -15,10 +15,11 @@ from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.errors import InvalidArgumentError
+from excel_mcp.operations.pivot_definition import date_filter
 from excel_mcp.operations.pivot_fields import distinct, item_text
 from excel_mcp.operations.pivot_index import sheet_pivots
 from excel_mcp.operations.pivot_options import DatePeriod
-from excel_mcp.operations.pivot_rebuild import field_labels, rebuild
+from excel_mcp.operations.pivot_rebuild import can_rebuild, field_labels, rebuild
 from excel_mcp.operations.pivot_source import Value
 from excel_mcp.text import quoted
 from excel_mcp.workspace import worksheets
@@ -120,8 +121,10 @@ def prepare(group: list[Connected], position: int) -> None:
 
 def show_only(
     workbook: Workbook, group: list[Connected], position: int, chosen: set[int], max_cells: int
-) -> None:
-    """Limit the field to the chosen items in every PivotTable of the group."""
+) -> bool:
+    """Limit the field to the chosen items in every PivotTable of the group.
+
+    Returns whether the figures in the cells were recalculated; see `_apply`."""
     prepare(group, position)
     changed = False
     for connected in group:
@@ -130,8 +133,7 @@ def show_only(
                 hide = item.x not in chosen
                 changed |= bool(item.h) != hide
                 item.h = True if hide else None
-    if changed:
-        _rebuild_all(workbook, group, lambda request: request, max_cells)
+    return changed and _apply(workbook, group, lambda request: request, max_cells)
 
 
 def limit_dates(
@@ -140,17 +142,46 @@ def limit_dates(
     position: int,
     period: tuple[dt.datetime, dt.datetime] | None,
     max_cells: int,
-) -> None:
-    """Keep the records dated within the period in every PivotTable of the group."""
+) -> bool:
+    """Keep the records dated within the period in every PivotTable of the group.
+
+    Returns whether the figures in the cells were recalculated; see `_apply`."""
     prepare(group, position)
     name = group[0].pivot.cache.cacheFields[position].name
+    if not all(can_rebuild(c.pivot) for c in group):
+        _set_period(group, position, name, period)
+        return _apply(workbook, group, lambda request: request, max_cells)
 
     def change(request):
         others = [p for p in request.periods if p.field != name]
         kept = [DatePeriod(name, *period)] if period else []
         return type(request)(**{**vars(request), "periods": [*others, *kept]})
 
+    return _apply(workbook, group, change, max_cells)
+
+
+def _set_period(
+    group: list[Connected], position: int, name: str, period: tuple[dt.datetime, dt.datetime] | None
+) -> None:
+    """Put the date filter on PivotTables that cannot be made again, as Excel stores it."""
+    for connected in group:
+        pivot = connected.pivot
+        pivot.filters = [
+            f for f in pivot.filters if not (f.fld == position and f.type == "dateBetween")
+        ]
+        if period:
+            number = max((f.id or 0 for f in pivot.filters), default=0) + 1
+            pivot.filters.append(date_filter(position, DatePeriod(name, *period), number))
+
+
+def _apply(workbook, group, change, max_cells) -> bool:
+    """Recalculate the cells of the PivotTables, or for PivotTables this server did not make,
+    leave them and ask Excel to refresh when the file is opened. True when recalculated."""
+    if not all(can_rebuild(c.pivot) for c in group):
+        group[0].pivot.cache.refreshOnLoad = True
+        return False
     _rebuild_all(workbook, group, change, max_cells)
+    return True
 
 
 def _rebuild_all(workbook, group, change, max_cells) -> None:

@@ -958,8 +958,9 @@ Add a slicer (Insert > Slicer) or timeline to a sheet, to filter a PivotTable or
 
 `selected_items` limits the data as clicking the buttons does: PivotTable items are hidden
 and its figures recalculated from the source; table rows are filtered and hidden.
-A PivotTable Excel refreshed after this server made it cannot be limited here; selecting
-every item works on any. describe_sheet lists slicers; delete_slicer removes one.
+On a PivotTable Excel made or refreshed, the cells keep their old figures and Excel
+recalculates them when the file is opened. describe_sheet lists slicers; delete_slicer
+removes one.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
