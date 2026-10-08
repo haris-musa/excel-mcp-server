@@ -119,7 +119,7 @@ async def test_series_in_rows(call: ToolCall, sample: Path) -> None:
         ({"series": [], "data_range": None}, "either data_range"),
         ({"series": [{"values": "Data!C2:D5"}]}, "one row or one column"),
         ({"series": [{"values": "Nope!C2:C5"}]}, "'Nope' not found"),
-        ({"series": [{"values": "C2:C5", "extra": 1}]}, "Unknown field"),
+        ({"series": [{"values": "C2:C5", "extra": 1}]}, "unknown field"),
         ({"categories": "Data!A2:B5"}, "one row or one column"),
         ({"series": [{"values": "Data!C2:C5", "sizes": "Data!D2:D5"}]}, "bubble charts"),
     ],
