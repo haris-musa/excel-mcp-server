@@ -40,6 +40,7 @@ from excel_mcp.calc.parser import (
     parse,
 )
 from excel_mcp.calc.registry import FUNCTIONS, Function
+from excel_mcp.calc.tablerefs import bind
 from excel_mcp.calc.values import (
     ERRORS,
     NUM,
@@ -216,7 +217,8 @@ class Engine:
     def tree(self, cell: Any) -> Node:
         key = (cell.parent.title, cell.row, cell.column)
         if key not in self.trees:
-            self.trees[key] = parse(str(cell.value))
+            tree = parse(str(cell.value))
+            self.trees[key] = bind(tree, self.workbook, cell.parent, cell.row, cell.column)
         return self.trees[key]
 
     def cell_value(self, sheet: Worksheet, row: int, col: int) -> Scalar:
@@ -314,7 +316,7 @@ class Engine:
 
     def spill(self, sheet: Worksheet, row: int, col: int, formula: str) -> Grid:
         """The array that a formula entered as a dynamic array formula in this cell produces."""
-        tree = parse(formula)
+        tree = bind(parse(formula), self.workbook, sheet, row, col)
         outer = self.here
         self.here = Position(sheet, row, col)
         try:
@@ -408,7 +410,7 @@ class Engine:
             raise UncalculableError("names nested too deeply")
         scope = self.find_sheet(node.sheet) if node.sheet else self.here.sheet
         defined = self._lookup_name(scope, node.name)
-        tree = parse(defined)
+        tree = bind(parse(defined), self.workbook, self.here.sheet, self.here.row, self.here.col)
         if _has_relative_reference(tree):
             raise UncalculableError(f"name {node.name} uses relative references")
         self.name_depth += 1

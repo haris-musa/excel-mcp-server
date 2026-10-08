@@ -22,6 +22,7 @@ def test_calculator_matches_excel(tmp_path: Path) -> None:
         golden["names"],
         [c["formula"] for c in cases],
         golden["hidden_rows"],
+        golden["tables"],
     )
 
     actual = calculate_cases(path, len(cases))

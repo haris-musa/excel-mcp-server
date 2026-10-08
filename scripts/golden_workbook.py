@@ -10,6 +10,8 @@ from openpyxl.workbook.defined_name import DefinedName
 from excel_mcp.calc.engine import Engine
 from excel_mcp.calc.values import ExcelError, UncalculableError
 from excel_mcp.operations.cells import write_range
+from excel_mcp.operations.table_options import TableOptions
+from excel_mcp.operations.tables import create_table
 from excel_mcp.workspace import save_atomically
 
 MAX_CELLS = 1_000_000
@@ -28,6 +30,7 @@ def build_workbook(
     names: dict[str, str],
     formulas: list[str],
     hidden_rows: dict[str, list[int]],
+    tables: list[dict[str, Any]],
 ) -> None:
     """Write the inputs and the formulas into 'Cases' column A, as the server would."""
     workbook = Workbook()
@@ -37,6 +40,10 @@ def build_workbook(
     for title, rows in inputs.items():
         if rows:
             write_range(workbook[title], "A1", rows, [], MAX_CELLS)  # pyright: ignore[reportArgumentType]
+    for table in tables:
+        sheet = workbook[table["sheet"]]
+        options = TableOptions(**table["options"])
+        create_table(workbook, sheet, table["range"], table["name"], options, MAX_CELLS)
     cases = workbook["Cases"]
     for index, formula in enumerate(formulas):
         write_range(cases, f"A{case_row(index)}", [[formula]], [], MAX_CELLS)  # pyright: ignore[reportArgumentType]

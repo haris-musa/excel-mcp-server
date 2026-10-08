@@ -142,7 +142,11 @@ async def test_invalid_tables_are_rejected(
         "create_table", path="sales.xlsx", sheet="Data", range="F1:G2", name="AB12"
     )
     assert "Unknown table style" in await call_error(
-        "create_table", path="sales.xlsx", sheet="Data", range="F1:G2", style="NoSuchStyle"
+        "create_table",
+        path="sales.xlsx",
+        sheet="Data",
+        range="F1:G2",
+        options={"style": "NoSuchStyle"},
     )
 
 

@@ -19,6 +19,7 @@ from excel_mcp.calc.parser import (
     Node,
     Percent,
     Ref,
+    TableRef,
     Unary,
     parse,
 )
@@ -111,6 +112,10 @@ class _Analysis:
         match node:
             case Ref():
                 return _is_range(node)
+            case TableRef(ref):
+                return not (
+                    ref.items == ("#This Row",) and ref.first is not None and ref.last is None
+                )
             case ArrayLiteral(rows):
                 return len(rows) > 1 or any(len(row) > 1 for row in rows)
             case Name():

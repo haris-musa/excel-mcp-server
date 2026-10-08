@@ -8,6 +8,7 @@ from openpyxl.formula.tokenizer import Token, TokenizerError
 from openpyxl.utils.cell import column_index_from_string
 
 from excel_mcp.calc.values import ERRORS, REF, UncalculableError
+from excel_mcp.structured import StructuredRef, parse_structured
 
 
 @dataclass(frozen=True)
@@ -30,6 +31,13 @@ class Ref:
     bottom: int | None
     right: int | None
     relative: bool
+
+
+@dataclass(frozen=True)
+class TableRef:
+    """A part of a table; the engine replaces it by the cells it covers."""
+
+    ref: StructuredRef
 
 
 @dataclass(frozen=True)
@@ -68,7 +76,9 @@ class ArrayLiteral:
     rows: tuple[tuple["Node", ...], ...]
 
 
-Node = Literal | ErrorLiteral | Ref | Name | Unary | Percent | Binary | Call | ArrayLiteral
+Node = (
+    Literal | ErrorLiteral | Ref | TableRef | Name | Unary | Percent | Binary | Call | ArrayLiteral
+)
 
 _PRECEDENCE = {
     "=": 1, "<>": 1, "<": 1, ">": 1, "<=": 1, ">=": 1,
@@ -211,8 +221,13 @@ def _operand(token: Token) -> Node:
 
 
 def parse_reference(text: str) -> Node:
+    if "[" in text:
+        found = parse_structured(text)
+        if found is None:
+            raise UncalculableError("structured reference")
+        return TableRef(found)
     qualifier, body = _split_sheet(text)
-    if "[" in body or "#" in body.replace("#REF!", ""):
+    if "#" in body.replace("#REF!", ""):
         raise UncalculableError("structured reference")
     if body.upper() == "#REF!":
         return ErrorLiteral(REF.code)

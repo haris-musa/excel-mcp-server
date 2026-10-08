@@ -115,7 +115,7 @@
     },
     {
       "name": "clear_range",
-      "description": "Clear the values and/or formatting of a range without shifting other cells."
+      "description": "Clear the values, formatting and/or rules (conditional formats, data validation) of a range without shifting other cells."
     },
     {
       "name": "copy_range",
@@ -159,7 +159,11 @@
     },
     {
       "name": "create_table",
-      "description": "Turn a range with a header row of unique text labels into an Excel table."
+      "description": "Turn a range with a header row of unique text labels into an Excel table, with totals row, calculated columns, banding and filter buttons."
+    },
+    {
+      "name": "edit_table",
+      "description": "Change a table's options, add calculated columns and totals, or resize it."
     },
     {
       "name": "create_chart",

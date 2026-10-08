@@ -23,7 +23,7 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`delete_rows_or_columns`](#delete_rows_or_columns) | Delete rows or columns starting at position `at`. |
 | [`read_range`](#read_range) | Read cell values as rows, without trailing empty cells or rows. Dates are ISO 8601. |
 | [`write_range`](#write_range) | Write values into cells, overwriting them. |
-| [`clear_range`](#clear_range) | Clear a range's values and/or formatting; other cells do not move. |
+| [`clear_range`](#clear_range) | Clear a range's values, formatting and/or rules; other cells do not move. |
 | [`copy_range`](#copy_range) | Copy and paste a range, overwriting the destination. |
 | [`sort_range`](#sort_range) | Sort a range's rows by one or more columns, like Data > Sort in Excel. |
 | [`transform_range`](#transform_range) | Remove duplicate rows, split text into columns, or fill down or right or with a series (like Excel's Data and Fill commands). |
@@ -35,6 +35,7 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`add_conditional_format`](#add_conditional_format) | Add a conditional format rule to a range: scales, data bars, icon sets, cell value or formula rules, top/bottom, average, duplicates, text, dates, blanks and errors. |
 | [`add_data_validation`](#add_data_validation) | Restrict what can be entered in a range: a dropdown list (typed in, or from cells or a name), whole numbers, decimals, dates, times, text length or a custom formula, with an optional input message and error alert. |
 | [`create_table`](#create_table) | Turn a range with a header row of unique text labels into an Excel table. |
+| [`edit_table`](#edit_table) | Change a table's options, add calculated columns and totals, or resize it. |
 | [`create_chart`](#create_chart) | Add a chart to `sheet`, or replace one. |
 | [`delete_chart`](#delete_chart) | Remove a chart from a sheet. The data it plotted is left untouched. |
 | [`add_sparklines`](#add_sparklines) | Add a group of sparklines (Insert > Sparklines): a line, column or win/loss chart in each cell of `location`, one per row of `data` (or per column when the cell count matches the columns). Sparklines already in those cells are replaced. |
@@ -320,14 +321,17 @@ spill because a cell in the way holds data (Excel shows #SPILL!).
 
 **Clear range** (modifies files, may overwrite data)
 
-Clear a range's values and/or formatting; other cells do not move.
+Clear a range's values, formatting and/or rules; other cells do not move.
+
+A conditional format or validation that covers more than the range keeps the rest.
+To clear a whole sheet's rules, use its whole range, e.g. 'A1:XFD1048576'.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
 | `range` | string | yes | Cell or range, e.g. 'A1:D20'. |
-| `clear` | `contents` \| `formats` \| `all` | no | Clear values, formatting, or both. Default: `contents`. |
+| `clear` | `contents` \| `formats` \| `rules` \| `all` | no | What to clear. 'formats' includes conditional formats, as Excel's Clear Formats does; 'rules': conditional formats and data validation only; 'all': everything. Default: `contents`. |
 
 ## copy_range
 
@@ -700,14 +704,58 @@ optional input message and error alert.
 
 Turn a range with a header row of unique text labels into an Excel table.
 
+Options set the style, banding, header and totals rows, filter buttons, calculated
+columns and totals. Defaults are Excel's: striped rows, filter buttons.
+
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
 | `range` | string | yes | Including the header row, e.g. 'A1:D20'. |
+| `options` | object | no | Fields left out keep the table's setting; a new table gets Excel's defaults. |
 | `name` | string | no | Unique in the workbook. Default: TableN. |
-| `style` | string | no | Excel table style. Default: `TableStyleMedium9`. |
-| `striped_rows` | boolean | no | Shade alternate rows. Default: `True`. |
+
+`options` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `style` | string | no | Built-in style, e.g. 'TableStyleMedium9' (Light1-21, Medium1-28, Dark1-11). |
+| `header_row` | boolean | no | Turning it off deletes the header cells and the table shrinks to its data; turning it on needs empty cells above the table. |
+| `totals_row` | boolean | no | A row below the table, which must be empty; its first cell says 'Total'. |
+| `striped_rows` | boolean | no |  |
+| `striped_columns` | boolean | no |  |
+| `first_column` | boolean | no | Emphasize the first column. |
+| `last_column` | boolean | no | Emphasize the last column. |
+| `filter_button` | boolean | no | Filter buttons in the header row. |
+| `columns` | array of object | no | Calculated columns and totals, by header text. Default: `[]`. |
+
+## edit_table
+
+**Edit table** (modifies files, may overwrite data)
+
+Change a table's options, add calculated columns and totals, or resize it.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
+| `sheet` | string | yes | Worksheet name. |
+| `table` | string | yes | Table name (describe_sheet lists them). |
+| `options` | object | no | Fields left out keep the table's setting; a new table gets Excel's defaults. |
+| `range` | string | no | Resize: the new range, with the same top-left cell. Not with a totals row. New columns take their header cell's text, or 'ColumnN'. |
+
+`options` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `style` | string | no | Built-in style, e.g. 'TableStyleMedium9' (Light1-21, Medium1-28, Dark1-11). |
+| `header_row` | boolean | no | Turning it off deletes the header cells and the table shrinks to its data; turning it on needs empty cells above the table. |
+| `totals_row` | boolean | no | A row below the table, which must be empty; its first cell says 'Total'. |
+| `striped_rows` | boolean | no |  |
+| `striped_columns` | boolean | no |  |
+| `first_column` | boolean | no | Emphasize the first column. |
+| `last_column` | boolean | no | Emphasize the last column. |
+| `filter_button` | boolean | no | Filter buttons in the header row. |
+| `columns` | array of object | no | Calculated columns and totals, by header text. Default: `[]`. |
 
 ## create_chart
 
