@@ -16,49 +16,32 @@ _GROUPED = ("column", "bar", "line", "area")
 
 
 class ChartOptions(BaseModel):
-    """Chart titles, size, legend, labels, colors and axes."""
-
-    title: str | None = Field(default=None, description="Chart title.")
-    x_axis_title: str | None = Field(default=None, description="Horizontal axis title.")
-    y_axis_title: str | None = Field(default=None, description="Vertical axis title.")
-    width_cm: float = Field(default=15, gt=0, le=100, description="Chart width in cm.")
-    height_cm: float = Field(default=7.5, gt=0, le=100, description="Chart height in cm.")
-    legend: LegendPosition = Field(
-        default="right", description="Where the series legend sits, or 'none' to hide it."
-    )
-    data_labels: bool = Field(
-        default=False, description="Print each value on its bar, point or slice."
-    )
+    title: str | None = None
+    x_axis_title: str | None = None
+    y_axis_title: str | None = None
+    width_cm: float = Field(default=15, gt=0, le=100)
+    height_cm: float = Field(default=7.5, gt=0, le=100)
+    legend: LegendPosition = Field(default="right", description="'none' hides it.")
+    data_labels: bool = Field(default=False, description="Show each value.")
     grouping: Grouping = Field(
         default="standard",
-        description="How series combine: 'standard' (side by side), 'stacked', or "
-        "'percent_stacked' (each category sums to 100%). Stacking works for column, bar, "
+        description="'stacked' and 'percent_stacked' (categories sum to 100%) fit column, bar, "
         "line and area charts.",
     )
     colors: list[str] = Field(
         default_factory=list,
-        description="Hex colors such as ['#1F4E78', '#C00000'], one per series in the order "
-        "of the data columns; series without a color use Excel's palette. For pie and "
-        "doughnut charts, one color per slice.",
+        description="Hex, e.g. ['#1F4E78', '#C00000']: one per series in column order, or per "
+        "slice in pie and doughnut charts.",
     )
-    markers: bool = Field(default=False, description="Mark each point. Line charts only.")
-    smooth: bool = Field(default=False, description="Draw curved lines. Line charts only.")
-    y_axis_min: float | None = Field(
-        default=None, description="Lowest value on the vertical axis. Default: automatic."
-    )
-    y_axis_max: float | None = Field(
-        default=None, description="Highest value on the vertical axis. Default: automatic."
-    )
-    y_axis_number_format: str | None = Field(
-        default=None,
-        description="Excel number format for the vertical axis labels, e.g. '0%' or '#,##0'. "
-        "Default: the data's format.",
-    )
+    markers: bool = Field(default=False, description="Line charts only.")
+    smooth: bool = Field(default=False, description="Line charts only.")
+    y_axis_min: float | None = None
+    y_axis_max: float | None = None
+    y_axis_number_format: str | None = Field(default=None, description="e.g. '0%' or '#,##0'.")
     secondary_line_columns: list[str] = Field(
         default_factory=list,
-        description="Header names of data columns to draw as lines on a second vertical axis "
-        "on the right, while the other columns stay as columns (a combo chart). Column "
-        "charts only.",
+        description="Header names of columns drawn as lines on a second axis (combo chart). "
+        "Column charts only.",
     )
 
 

@@ -14,49 +14,37 @@ PAPER_SIZES = {"letter": 1, "legal": 5, "tabloid": 3, "a3": 8, "a4": 9, "a5": 11
 
 
 class FitToPages(BaseModel):
-    """Shrink the printout to this many pages."""
-
-    wide: int = Field(default=1, ge=0, le=100, description="Pages across; 0 = as many as needed.")
-    tall: int = Field(default=1, ge=0, le=100, description="Pages down; 0 = as many as needed.")
+    wide: int = Field(default=1, ge=0, le=100, description="Pages across; 0 = any number.")
+    tall: int = Field(default=1, ge=0, le=100, description="Pages down; 0 = any number.")
 
 
 class Margins(BaseModel):
-    """Page margins in centimetres. Fields left as null are not changed."""
-
-    left: float | None = Field(default=None, ge=0, le=50, description="Left margin in cm.")
-    right: float | None = Field(default=None, ge=0, le=50, description="Right margin in cm.")
-    top: float | None = Field(default=None, ge=0, le=50, description="Top margin in cm.")
-    bottom: float | None = Field(default=None, ge=0, le=50, description="Bottom margin in cm.")
-    header: float | None = Field(default=None, ge=0, le=50, description="Header distance in cm.")
-    footer: float | None = Field(default=None, ge=0, le=50, description="Footer distance in cm.")
+    left: float | None = Field(default=None, ge=0, le=50)
+    right: float | None = Field(default=None, ge=0, le=50)
+    top: float | None = Field(default=None, ge=0, le=50)
+    bottom: float | None = Field(default=None, ge=0, le=50)
+    header: float | None = Field(default=None, ge=0, le=50, description="Distance from the edge.")
+    footer: float | None = Field(default=None, ge=0, le=50, description="Distance from the edge.")
 
 
 class HeaderFooterText(BaseModel):
-    """Text in the left, center and right of a header or footer. Fields left as null are kept."""
+    """'' clears a part."""
 
-    left: str | None = Field(default=None, description="Left text; '' clears it.")
-    center: str | None = Field(default=None, description="Center text; '' clears it.")
-    right: str | None = Field(default=None, description="Right text; '' clears it.")
+    left: str | None = None
+    center: str | None = None
+    right: str | None = None
 
 
 class PrintSetup(BaseModel):
-    """Print settings. Fields left as null are not changed."""
-
-    orientation: Literal["portrait", "landscape"] | None = Field(
-        default=None, description="Page orientation."
-    )
-    paper_size: Literal["letter", "legal", "tabloid", "a3", "a4", "a5"] | None = Field(
-        default=None, description="Paper size."
-    )
+    orientation: Literal["portrait", "landscape"] | None = None
+    paper_size: Literal["letter", "legal", "tabloid", "a3", "a4", "a5"] | None = None
     scale: int | None = Field(
-        default=None, ge=10, le=400, description="Print at this percent; not with fit_to_pages."
+        default=None, ge=10, le=400, description="Percent; not with fit_to_pages."
     )
-    fit_to_pages: FitToPages | None = Field(
-        default=None, description="Fit the printout to a number of pages."
-    )
-    margins_cm: Margins | None = Field(default=None, description="Page margins.")
+    fit_to_pages: FitToPages | None = None
+    margins_cm: Margins | None = None
     print_area: str | None = Field(
-        default=None, description="Range to print, e.g. 'A1:H40'; '' prints the whole sheet."
+        default=None, description="Range, e.g. 'A1:H40'; '' prints the whole sheet."
     )
     title_rows: str | None = Field(
         default=None, description="Rows repeated on every page, e.g. '1:2'; '' clears."
@@ -64,18 +52,13 @@ class PrintSetup(BaseModel):
     title_columns: str | None = Field(
         default=None, description="Columns repeated on every page, e.g. 'A:B'; '' clears."
     )
-    center_horizontally: bool | None = Field(
-        default=None, description="Center the data between the left and right margins."
-    )
-    center_vertically: bool | None = Field(
-        default=None, description="Center the data between the top and bottom margins."
-    )
-    gridlines: bool | None = Field(default=None, description="Print cell gridlines.")
+    center_horizontally: bool | None = None
+    center_vertically: bool | None = None
+    gridlines: bool | None = None
     header: HeaderFooterText | None = Field(
-        default=None,
-        description="Page header. Codes: &P page, &N page count, &D date, &A sheet, &F file.",
+        default=None, description="Codes: &P page, &N pages, &D date, &A sheet, &F file."
     )
-    footer: HeaderFooterText | None = Field(default=None, description="Page footer, same codes.")
+    footer: HeaderFooterText | None = None
 
     @model_validator(mode="after")
     def _scale_or_fit(self) -> "PrintSetup":

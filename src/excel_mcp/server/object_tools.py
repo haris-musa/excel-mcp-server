@@ -10,21 +10,17 @@ from excel_mcp.server.params import SheetName, WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
 from excel_mcp.workspace import Workspace, get_sheet
 
-DEFAULT_CHART_OPTIONS = ChartOptions()
-
 
 def register(tools: ToolRegistry, workspace: Workspace) -> None:
     @tools.writer("Create table")
     def create_table(
         path: WorkbookPath,
         sheet: SheetName,
-        range: Annotated[str, Field(description="Range including the header row, e.g. 'A1:D20'.")],
+        range: Annotated[str, Field(description="Including the header row, e.g. 'A1:D20'.")],
         name: Annotated[
-            str | None, Field(description="Table name, unique in the workbook. Default: TableN.")
+            str | None, Field(description="Unique in the workbook. Default: TableN.")
         ] = None,
-        style: Annotated[
-            str, Field(description="Excel table style, e.g. 'TableStyleMedium9'.")
-        ] = "TableStyleMedium9",
+        style: Annotated[str, Field(description="Excel table style.")] = "TableStyleMedium9",
         striped_rows: Annotated[bool, Field(description="Shade alternate rows.")] = True,
     ) -> str:
         """Turn a range with a header row of unique text labels into an Excel table."""
@@ -41,30 +37,20 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         data_range: Annotated[
             str,
             Field(
-                description="Data with a header row, labels in the first column and one "
-                "series per further column, e.g. 'A1:C13'."
+                description="Header row, labels in the first column, one series per further "
+                "column, e.g. 'A1:C13'."
             ),
         ],
-        chart_type: Annotated[ChartType, Field(description="Kind of chart to draw.")],
-        anchor_cell: Annotated[str, Field(description="Cell where the chart's top-left sits.")],
-        options: Annotated[
-            ChartOptions,
-            Field(
-                description="Titles, size, legend, data labels, stacking, colors, markers, "
-                "axis range and number format, and secondary-axis lines. Every field is "
-                "optional."
-            ),
-        ] = DEFAULT_CHART_OPTIONS,
-        data_sheet: Annotated[
-            str | None, Field(description="Sheet holding the data. Default: `sheet`.")
-        ] = None,
+        chart_type: Annotated[ChartType, Field(description="Kind of chart.")],
+        anchor_cell: Annotated[str, Field(description="Top-left cell of the chart.")],
+        options: Annotated[ChartOptions, Field(default_factory=ChartOptions)],
+        data_sheet: Annotated[str | None, Field(description="Default: `sheet`.")] = None,
     ) -> str:
-        """Add a chart that plots a block of data.
+        """Add a chart of a block of data to `sheet`.
 
-        'column' draws vertical bars, 'bar' horizontal bars. 'scatter' plots points, with the
-        x values in the first column. 'doughnut' is a pie with a hole; 'radar' draws one
-        polygon per series. Options that do not fit the chart type are rejected. List a
-        sheet's charts with describe_sheet and remove one with delete_chart.
+        'column' draws vertical bars, 'bar' horizontal ones. 'scatter' takes x values from
+        the first column. Options that do not fit the chart type are rejected. Charts are
+        listed by describe_sheet and removed by delete_chart.
         """
         with workspace.edit(path) as workbook:
             area = charts.create_chart(
@@ -83,13 +69,12 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         sheet: SheetName,
         index: Annotated[
             int,
-            Field(description="1-based chart number, as listed under 'charts' by describe_sheet."),
+            Field(description="Chart number from describe_sheet."),
         ],
     ) -> str:
         """Remove a chart from a sheet. The data it plotted is left untouched.
 
-        Charts after the removed one move up by one index, so call describe_sheet again
-        before deleting another.
+        Later charts move up one index; call describe_sheet again before deleting another.
         """
         with workspace.edit(path) as workbook:
             removed = chart_index.delete_chart(get_sheet(workbook, sheet), index)

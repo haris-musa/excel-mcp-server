@@ -11,10 +11,10 @@ from excel_mcp.server.params import LineCount, LineIndex, SheetName, WorkbookPat
 from excel_mcp.server.registry import ToolRegistry
 from excel_mcp.workspace import Workspace, get_sheet
 
+AxisParam = Annotated[Axis, Field(description="Rows or columns.")]
 NewSheetName = Annotated[
     str, Field(description="New sheet name: 1-31 characters, none of [ ] : * ? / \\.")
 ]
-AxisParam = Annotated[Axis, Field(description="Whether to act on rows or columns.")]
 
 
 def register(tools: ToolRegistry, workspace: Workspace) -> None:

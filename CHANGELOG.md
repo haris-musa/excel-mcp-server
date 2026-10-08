@@ -84,6 +84,14 @@ All notable changes to this project are documented here. The format follows
   bottom-up default.
 - Line charts draw straight lines without markers unless `smooth` or `markers` is set;
   Excel used to curve them.
+- Tool descriptions and input schemas are about 26% smaller (about 37,000 to 27,500
+  characters across the 35 tools), without losing information a model needs: shorter
+  parameter descriptions, no repetition between docstrings and fields, and `create_chart`
+  no longer embeds the default options in its schema. The workbook directory is explained
+  once in the server instructions instead of in every `path` description.
+- **Breaking:** `set_sheet_layout` takes `column_widths` and `row_heights` as objects,
+  `{"A": 20}` and `{"1": 30}`, instead of lists of `{column, width}` and `{row, height}`;
+  this matches what `describe_sheet` returns for column widths.
 
 ### Fixed
 

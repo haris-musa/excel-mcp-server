@@ -40,10 +40,6 @@ async def test_every_tool_is_documented_and_typed(client: Client) -> None:
         assert _untyped_schemas(tool.input_schema) == [], tool.name
         for name, prop in tool.input_schema["properties"].items():
             assert "description" in prop or "$ref" in prop, (tool.name, name)
-        for model_name, model in tool.input_schema.get("$defs", {}).items():
-            assert "description" in model, (tool.name, model_name)
-            for name, prop in model["properties"].items():
-                assert "description" in prop, (tool.name, model_name, name)
 
 
 async def test_tool_order_is_stable(files: Path) -> None:

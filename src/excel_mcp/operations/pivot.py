@@ -43,12 +43,9 @@ _DATA_FIELD_COLUMNS = -2
 
 
 class PivotValue(BaseModel):
-    """A field to summarize in the PivotTable."""
-
-    field: str = Field(description="Header name of the column to summarize.")
+    field: str = Field(description="Header of the column to summarize.")
     function: Function = Field(
-        default="sum",
-        description="'count' counts non-empty cells; the others need a column of numbers.",
+        default="sum", description="'count' counts non-empty cells; the others need numbers."
     )
 
 

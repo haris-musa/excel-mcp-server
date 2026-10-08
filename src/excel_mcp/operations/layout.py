@@ -1,7 +1,7 @@
 """Sheet layout: sizes, hidden and grouped lines, panes, filters, tab color, visibility."""
 
 from copy import copy
-from typing import Literal, cast
+from typing import Annotated, Literal, cast
 
 from openpyxl.utils.cell import column_index_from_string, get_column_letter
 from openpyxl.workbook import Workbook
@@ -21,64 +21,52 @@ MAX_AUTOFIT_WIDTH = 80
 MAX_OUTLINE_LEVEL = 7
 
 
-class ColumnWidth(BaseModel):
-    """The width of one column."""
-
-    column: str = Field(description="Column letter, e.g. 'B'.")
-    width: float = Field(gt=0, le=255, description="Width in characters.")
-
-
-class RowHeight(BaseModel):
-    """The height of one row."""
-
-    row: int = Field(ge=1, le=MAX_ROW, description="1-based row number.")
-    height: float = Field(gt=0, le=409, description="Height in points.")
+Width = Annotated[float, Field(gt=0, le=255)]
+Height = Annotated[float, Field(gt=0, le=409)]
 
 
 class LineAction(BaseModel):
-    """A change to a span of rows or columns."""
-
-    span: str = Field(description="Rows like '3' or '3:5'; columns like 'B' or 'B:D'.")
+    span: str = Field(description="Rows '3' or '3:5'; columns 'B' or 'B:D'.")
     action: Literal["hide", "show", "group", "ungroup"] = Field(
-        description="Group adds one outline level (up to 7), ungroup removes one."
+        description="Group adds one outline level (max 7), ungroup removes one."
     )
 
 
 class SheetLayout(BaseModel):
-    """Layout changes. Fields left as null are not changed."""
+    """Every field is optional; fields left out are not changed."""
 
-    column_widths: list[ColumnWidth] | None = Field(default=None, description="Widths to set.")
-    row_heights: list[RowHeight] | None = Field(default=None, description="Heights to set.")
+    column_widths: dict[str, Width] | None = Field(
+        default=None, description="Column letter to width in characters, e.g. {'A': 20}."
+    )
+    row_heights: dict[int, Height] | None = Field(
+        default=None, description="Row number to height in points, e.g. {'1': 30}."
+    )
     autofit_columns: list[str] | None = Field(
-        default=None, description="Column letters to size to their content, e.g. ['A', 'C']."
+        default=None, description="Column letters sized to their text, e.g. ['A', 'C']."
     )
     freeze_panes: str | None = Field(
         default=None, description="First unfrozen cell: 'A2' freezes row 1, 'A1' unfreezes."
     )
-    auto_filter: str | None = Field(
-        default=None, description="Range with filter buttons, e.g. 'A1:F100'."
-    )
-    tab_color: str | None = Field(default=None, description="Sheet tab hex color.")
-    rows: list[LineAction] | None = Field(default=None, description="Hide, show or group rows.")
-    columns: list[LineAction] | None = Field(
-        default=None, description="Hide, show or group columns."
-    )
+    auto_filter: str | None = Field(default=None, description="Range, e.g. 'A1:F100'.")
+    tab_color: str | None = Field(default=None, description="Hex color.")
+    rows: list[LineAction] | None = None
+    columns: list[LineAction] | None = None
     visibility: Literal["visible", "hidden"] | None = Field(
-        default=None, description="Show or hide the whole sheet; one sheet must stay visible."
+        default=None, description="One sheet must stay visible."
     )
-    print_setup: PrintSetup | None = Field(default=None, description="Page setup for printing.")
-    protection: Protection | None = Field(
-        default=None, description="Protect or unprotect the sheet."
-    )
+    print_setup: PrintSetup | None = None
+    protection: Protection | None = None
 
 
 def apply_layout(sheet: Worksheet, layout: SheetLayout) -> None:
     if layout.column_widths or layout.autofit_columns or layout.columns:
         split_column_dimensions(sheet)
-    for column_width in layout.column_widths or []:
-        sheet.column_dimensions[column_letter(column_width.column)].width = column_width.width
-    for row_height in layout.row_heights or []:
-        sheet.row_dimensions[row_height.row].height = row_height.height
+    for column, width in (layout.column_widths or {}).items():
+        sheet.column_dimensions[column_letter(column)].width = width
+    for row, height in (layout.row_heights or {}).items():
+        if not 1 <= row <= MAX_ROW:
+            raise InvalidArgumentError(f"Row {row} is outside 1 to {MAX_ROW}.")
+        sheet.row_dimensions[row].height = height
     for column in layout.autofit_columns or []:
         letter = column_letter(column)
         sheet.column_dimensions[letter].width = estimate_width(sheet, letter)
