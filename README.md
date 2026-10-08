@@ -11,7 +11,7 @@
 A [Model Context Protocol](https://modelcontextprotocol.io) server that lets AI assistants
 create, read and edit Excel workbooks. It needs no Microsoft Excel installation.
 
-- **Read and write** cells, formulas and dates, with paging and streaming reads for large sheets, and search
+- **Read and write** cells, formulas (with results calculated for you) and dates, with paging and streaming reads for large sheets, and search
 - **Format** fonts, fills, borders, number formats, column widths and frozen panes; hide or
   group rows, columns and sheets; set up printing; protect sheets
 - **Structure** sheets, rows and columns, merged cells, tables, charts, images and PivotTables
@@ -187,9 +187,20 @@ Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
 
 ## Limitations
 
-- Formulas are stored, not calculated. `read_range` in `values` mode returns the results
-  Excel last saved, so formulas written by this server read as empty until the file is
-  opened and saved in Excel or LibreOffice.
+- Formulas are stored in the file, and Excel calculates them when it opens it. So that
+  `read_range` is useful before that, `values` mode calculates formulas that have no saved
+  result with a built-in calculator (about 260 functions: math, statistics, financial and
+  bond, dates, text, lookup, logical, LET, sorting and filtering). Results Excel saved are
+  always preferred. A formula the calculator cannot reproduce exactly as Excel does (an
+  unsupported function, a circular reference, or an Excel quirk it does not replicate) is
+  returned as null and listed in `uncalculated` with the reason; it is never guessed.
+  Ranges in a formula are reduced to the formula's own row or column where Excel's ordinary
+  (not array-entered) formulas do the same, and volatile functions such as `RAND` are not
+  calculated. The calculator is checked against more than 2,500 formulas recorded from real
+  Excel (`tests/fixtures/formula_golden.json`).
+- Functions Excel added after 2007 (`IFS`, `XLOOKUP`, `STDEV.S`, `SORT`, ...) are written
+  with the `_xlfn.` prefix Excel expects; formulas in conditional formats and data
+  validation are not prefixed.
 - Legacy `.xls` and `.csv` files are not supported.
 - PivotTables are created from a snapshot and can use text, number and date columns of up to
   100,000 cells; Excel refreshes them from the live source data. Filters start with all items
