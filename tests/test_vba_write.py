@@ -175,6 +175,13 @@ async def test_xlsx_is_refused(vba_error: ToolCall, sample: Path) -> None:
     ("module", "code", "expected"),
     [
         ("Module1", 'Attribute VB_Name = "x"\nSub A()\nEnd Sub', "cannot start with 'Attribute'"),
+        ("Module1", 'Sub A()\rAttribute VB_Name = "x"\rEnd Sub', "cannot start with 'Attribute'"),
+        (
+            "Module1",
+            'Sub A()\r\nAttribute VB_Name = "x"\r\nEnd Sub',
+            "cannot start with 'Attribute'",
+        ),
+        ("Module1", 'Sub A()\n  attribute VB_Name = "x"\nEnd Sub', "cannot start with 'Attribute'"),
         ("Module1", "Sub A()\0End Sub", "NUL"),
         ("Module1", "x = 1 中", "ChrW"),
         ("1bad", MACRO, "not a valid module name"),

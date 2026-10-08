@@ -155,7 +155,7 @@ class Project:
 
     def set_code(self, name: str, code: str, kind: ModuleKind) -> bool:
         """Replace a module's code, creating the module if needed. Returns True if created."""
-        body = code.replace("\r\n", "\n").replace("\r", "\n").strip("\n").replace("\n", "\r\n")
+        body = normalize_newlines(code).strip("\n").replace("\n", "\r\n")
         self._check_encodable(body)
         existing = self.find(name)
         header = (
@@ -245,6 +245,11 @@ class Project:
         if "[Workspace]" in lines:
             lines.append(f"{workspace_key}={_NEW_WORKSPACE_ENTRY}")
         self.text = _join_lines(lines)
+
+
+def normalize_newlines(code: str) -> str:
+    """Line ends are CR, LF or CRLF in what callers send; this makes them all LF."""
+    return code.replace("\r\n", "\n").replace("\r", "\n")
 
 
 def _attributes(name: str) -> str:

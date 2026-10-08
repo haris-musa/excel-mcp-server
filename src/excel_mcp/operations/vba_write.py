@@ -9,12 +9,12 @@ from pydantic import BaseModel
 from excel_mcp import macros
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.ovba import ModuleKind
-from excel_mcp.ovba_write import Module, Project
+from excel_mcp.ovba_write import Module, Project, normalize_newlines
 
 MAX_CODE_CHARS = 200_000
 
 _MODULE_NAME = re.compile(r"[A-Za-z][A-Za-z0-9_]{0,30}")
-_ATTRIBUTE_LINE = re.compile(r"^attribute\b", re.IGNORECASE | re.MULTILINE)
+_ATTRIBUTE_LINE = re.compile(r"^[ \t]*attribute\b",re.IGNORECASE | re.MULTILINE)
 
 
 class VbaChange(BaseModel):
@@ -26,7 +26,7 @@ class VbaChange(BaseModel):
 def write_module(
     workbook: Workbook, name: str, code: str, kind: Literal["standard", "class"]
 ) -> VbaChange:
-    if _ATTRIBUTE_LINE.search(code):
+    if _ATTRIBUTE_LINE.search(normalize_newlines(code)):
         raise InvalidArgumentError(
             "Code lines cannot start with 'Attribute': the server writes module attributes itself."
         )
