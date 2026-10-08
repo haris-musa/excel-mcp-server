@@ -15,7 +15,12 @@ All notable changes to this project are documented here. The format follows
   Excel has them, axis titles and scale. They are written as Excel writes them (chartex
   parts, hidden `_xlchart` names, style and colour parts) and are listed by `describe_sheet`
   after the other charts, removed by `delete_chart`, replaced with `index` and copied by
-  `copy_sheet`. Checked against the same charts made in Excel; Excel opens them without repair.
+  `copy_sheet`. Checked against the same charts made in Excel; Excel opens them without repair. A new
+  chart looks like an inserted one: labels on waterfall and funnel bars (values) and on treemap
+  and sunburst tiles (categories), overlapping treemap group labels; `data_labels` with
+  `show: []` hides them. Data blocks are read as Excel reads them (leading text columns are
+  labels, a single column of numbers is enough for box and whisker, histogram, funnel,
+  waterfall, treemap and sunburst, and a Pareto of numbers is binned).
 - `read_range` in `values` mode calculates formulas that have no stored result, which used
   to read as null until Excel saved the file. A built-in calculator covers about 260
   functions (math, statistics, financial and securities, dates, text, lookup, logical,

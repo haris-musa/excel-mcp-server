@@ -1,6 +1,7 @@
 """Series and option checks for the Excel 2016 chart types (waterfall, histogram and so on)."""
 
 from openpyxl import Workbook
+from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
 
 from excel_mcp.errors import InvalidArgumentError
@@ -13,6 +14,7 @@ from excel_mcp.operations.charts_data import (
     split_sheet,
 )
 from excel_mcp.operations.charts_options import (
+    Bins,
     ChartOptions,
     ChartType,
     DataLabels,
@@ -20,14 +22,14 @@ from excel_mcp.operations.charts_options import (
 )
 from excel_mcp.refs import CellRange, parse_range
 
-_MANY = ("histogram", "box_whisker")
+_MANY = ("box_whisker",)
 _HIERARCHIES = ("treemap", "sunburst")
 _LABELLED = ("waterfall", "histogram", "pareto")
 _VALUE_AXIS = ("waterfall", "histogram", "pareto", "box_whisker")
 _ONLY = {
     "totals": ("waterfall",),
     "connector_lines": ("waterfall",),
-    "bins": ("histogram",),
+    "bins": ("histogram", "pareto"),
     "box": ("box_whisker",),
     "parent_labels": ("treemap",),
 }
@@ -79,34 +81,42 @@ def _plot(
 
 
 def _block(workbook: Workbook, default: str, chart_type: str, data_range: str) -> list[SeriesSpec]:
-    """Series for a block with a header row: see the `data_range` description of create_chart."""
+    """Series for a block with a header row, read as Excel reads it: leading text columns are
+    labels (one, or the levels of a treemap or sunburst), the number columns are the series."""
     sheet, cells = split_sheet(workbook, default, data_range)
     area = parse_range(cells)
-    first = 0 if chart_type == "histogram" else 1
-    if area.rows < 2 or area.cols < 1 + first:
-        raise InvalidArgumentError(
-            f"data_range for a {chart_type} chart needs a header row and "
-            f"{'a column of values' if first == 0 else 'a label column and a value column'}."
-        )
+    if area.rows < 2:
+        raise InvalidArgumentError("data_range needs a header row and at least one row of data.")
+    labels = _text_columns(workbook[sheet], area)
+    if labels == area.cols:
+        raise InvalidArgumentError(f"data_range {data_range!r} holds no column of numbers.")
+    if chart_type not in _HIERARCHIES:
+        labels = min(labels, 1)
 
     def column(offset: int, header: bool) -> str:
         top = area.min_row + (0 if header else 1)
         col = area.min_col + offset
         return qualified(sheet, CellRange(top, col, top if header else area.max_row, col))
 
-    if chart_type in _HIERARCHIES:
-        rows = (area.min_row + 1, area.max_row)
-        levels = qualified(sheet, CellRange(rows[0], area.min_col, rows[1], area.max_col - 1))
-        last = area.cols - 1
-        return [SeriesSpec(values=column(last, False), name=column(last, True), categories=levels)]
+    levels = None
+    if labels:
+        body = CellRange(area.min_row + 1, area.min_col, area.max_row, area.min_col + labels - 1)
+        levels = qualified(sheet, body)
     return [
-        SeriesSpec(
-            values=column(offset, False),
-            name=column(offset, True),
-            categories=column(0, False) if first else None,
-        )
-        for offset in range(first, area.cols)
+        SeriesSpec(values=column(offset, False), name=column(offset, True), categories=levels)
+        for offset in range(labels, area.cols)
     ]
+
+
+def _text_columns(sheet: Worksheet, area: CellRange) -> int:
+    """How many columns from the left of the block hold text below the header row."""
+    count = 0
+    for col in range(area.min_col, area.max_col + 1):
+        values = (sheet.cell(row, col).value for row in range(area.min_row + 1, area.max_row + 1))
+        if not any(isinstance(v, str) and not v.startswith("=") for v in values):
+            break
+        count += 1
+    return count
 
 
 def check_modern(plots: list[Plot], chart_type: ChartType, options: ChartOptions) -> None:
@@ -122,6 +132,10 @@ def check_modern(plots: list[Plot], chart_type: ChartType, options: ChartOptions
     if chart_type == "waterfall" and any(not 1 <= n <= plot.points for n in options.totals):
         raise InvalidArgumentError(
             f"totals are positions from 1 to {plot.points} (the points of the series)."
+        )
+    if plots[0].categories and chart_type == "pareto" and options.bins != Bins():
+        raise InvalidArgumentError(
+            "bins apply to a pareto chart of numbers; with categories it adds them up."
         )
     if options.bins.width is not None and options.bins.count is not None:
         raise InvalidArgumentError("bins: give a width or a count, not both.")
@@ -168,10 +182,6 @@ def _check_series(plot: Plot, chart_type: ChartType) -> None:
             raise InvalidArgumentError(f"{name} does not apply to {chart_type} charts.")
     if spec.data_labels:
         _check_labels(spec.data_labels, chart_type)
-    if chart_type == "histogram" and plot.categories:
-        raise InvalidArgumentError("A histogram has values only; leave out categories.")
-    if chart_type in ("pareto", *_HIERARCHIES) and not plot.categories:
-        raise InvalidArgumentError(f"A {chart_type} chart needs categories.")
 
 
 def _check_labels(labels: DataLabels, chart_type: str) -> None:
