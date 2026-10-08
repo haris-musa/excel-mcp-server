@@ -88,6 +88,19 @@ async def test_data_labels_are_off_by_default(call: ToolCall, sample: Path) -> N
     assert elements(chart_xml(sample), "dLbls") == []
 
 
+async def test_bar_charts_list_rows_top_down(call: ToolCall, sample: Path) -> None:
+    await add_chart(call, "bar")
+    root = chart_xml(sample)
+    category_axis, value_axis = elements(root, "catAx")[0], elements(root, "valAx")[0]
+    assert values(category_axis, "orientation") == ["maxMin"]
+    assert values(value_axis, "crosses") == ["max"]
+
+
+async def test_column_charts_keep_their_order(call: ToolCall, sample: Path) -> None:
+    await add_chart(call, "column")
+    assert values(elements(chart_xml(sample), "catAx")[0], "orientation") == ["minMax"]
+
+
 @pytest.mark.parametrize(
     ("chart_type", "grouping", "expected"),
     [

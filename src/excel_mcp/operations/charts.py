@@ -69,6 +69,10 @@ def _categorical(sheet: Worksheet, area: CellRange, chart_type: ChartType, optio
     chart = _CATEGORICAL[chart_type]()
     if chart_type == "bar":
         chart.type = "bar"
+        # Excel draws the first category at the bottom; list rows top-down as in the sheet,
+        # with the value axis kept below the bars.
+        chart.x_axis.scaling.orientation = "maxMin"
+        chart.y_axis.crosses = "max"
     secondary = _secondary_columns(sheet, area, options)
     line = LineChart() if secondary else None
     series: list[Series] = []
