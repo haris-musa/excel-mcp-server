@@ -43,6 +43,7 @@ excel-mcp-server = "excel_mcp.cli:main"
 dev = [
     "pyright>=1.1.414",
     "pytest>=9.1",
+    "pytest-timeout>=2.4.0",
     "ruff>=0.16",
 ]
 
@@ -72,6 +73,8 @@ filterwarnings = [
     # openpyxl says it drops sheet extensions; the package layer keeps them.
     "ignore:.* extension is not supported and will be removed:UserWarning",
 ]
+faulthandler_timeout = 60
+timeout = 120
 
 [tool.uv.build-backend]
 module-name = "excel_mcp"

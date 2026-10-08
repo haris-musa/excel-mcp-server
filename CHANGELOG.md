@@ -238,6 +238,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- CI: a stuck test now dumps every thread's stack after 60 seconds and fails after 120,
+  and the test job times out after 8 minutes instead of 15.
 - Editing a workbook no longer damages its charts: openpyxl dropped the chart style
   number, the rounded-corners flag, the plot area fill, the axes of area charts, and turned
   the empty text of chart labels into the word "None".
