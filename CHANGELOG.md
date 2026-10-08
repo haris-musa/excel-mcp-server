@@ -21,6 +21,9 @@ All notable changes to this project are documented here. The format follows
 ### Fixed
 
 - The `options` description of `create_chart` no longer says the default is "none".
+- Chart titles, axis titles and legends no longer sit on top of the plot in Excel.
+- Line and scatter charts draw straight lines unless `smooth` is set; Excel used to curve
+  them.
 
 ## [1.1.2] - 2026-10-08
 

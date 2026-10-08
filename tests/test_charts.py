@@ -48,6 +48,24 @@ def values(root: ElementTree.Element, tag: str) -> list[str | None]:
     return [node.get("val") for node in elements(root, tag)]
 
 
+async def test_title_and_legend_sit_beside_the_plot(call: ToolCall, sample: Path) -> None:
+    await add_chart(call, title="Sales", x_axis_title="Month", y_axis_title="Units")
+    assert values(chart_xml(sample), "overlay") == ["0", "0", "0", "0"]
+
+
+@pytest.mark.parametrize("chart_type", ["line", "scatter"])
+async def test_lines_are_straight_by_default(call: ToolCall, sample: Path, chart_type: str) -> None:
+    await add_chart(call, chart_type)
+    assert set(values(chart_xml(sample), "smooth")) == {"0"}
+
+
+async def test_combo_secondary_axis_has_no_extra_gridlines(call: ToolCall, sample: Path) -> None:
+    await add_chart(call, secondary_line_columns=["Price"])
+    root = chart_xml(sample)
+    assert len(elements(root, "majorGridlines")) == 1
+    assert values(elements(root, "lineChart")[0], "smooth") == ["0"]
+
+
 async def test_legend_position(call: ToolCall, sample: Path) -> None:
     await add_chart(call, legend_position="bottom")
     assert values(chart_xml(sample), "legendPos") == ["b"]

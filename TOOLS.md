@@ -460,7 +460,7 @@ charts with describe_sheet and remove one with delete_chart.
 | `grouping` | `standard` \| `stacked` \| `percent_stacked` | no | How series combine: 'standard' (side by side for column/bar), 'stacked' or 'percent_stacked' (each category sums to 100%). For column, bar, line and area charts only. Default: standard. |
 | `colors` | array of string | no | Hex colors such as ['#1F4E78', '#C00000'], one per series in the order of the data columns (fewer colors leave the remaining series on the default palette). For pie and doughnut charts, one color per slice instead. |
 | `markers` | boolean | no | Show (true) or hide (false) point markers. Line and scatter charts only. Default: the chart type's own style. |
-| `smooth` | boolean | no | Draw curved (true) or straight (false) lines. Line and scatter charts only. Default: the chart type's own style. |
+| `smooth` | boolean | no | Draw curved (true) or straight (false) lines. Line and scatter charts only. Default: straight. |
 | `y_axis_min` | number | no | Lowest value on the (primary) vertical axis. Default: automatic. |
 | `y_axis_max` | number | no | Highest value on the (primary) vertical axis. Default: automatic. |
 | `y_axis_number_format` | string | no | Excel number format for the (primary) vertical axis labels, e.g. '0%' or '#,##0'. Default: taken from the data. |
