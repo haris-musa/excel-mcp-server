@@ -138,8 +138,7 @@ def _check_token(token: Token, sheets: dict[str, str]) -> None:
     name = normalize_function_name(token.value)
     if name in BLOCKED_FUNCTIONS:
         raise UnsafeFormulaError(
-            f"Function {name} is not allowed because it can access the network, "
-            "other programs or host information."
+            f"Function {name} is not allowed because it can access the network or other programs."
         )
     _check_qualifiers(token.value, sheets)
 

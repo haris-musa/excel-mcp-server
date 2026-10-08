@@ -192,11 +192,13 @@ refused, since any change would invalidate the signature.
 
 ## Security
 
-- Formulas are parsed before they are written. Functions that reach the network, other
-  programs or host information (`WEBSERVICE`, `HYPERLINK`, `IMAGE`, `RTD`, `CALL`, `INFO`,
-  `INDIRECT`, Google Sheets `IMPORTXML` and others), DDE links and references to other
-  workbooks are rejected.
-- Paths are resolved, including symlinks, before they are checked against the allowed folders.
+- Formulas are parsed before they are written. Functions that reach the network or other
+  programs (`WEBSERVICE`, `IMAGE`, `RTD`, `CALL`, Google Sheets `IMPORTXML` and others),
+  Excel 4.0 macro functions (`FILES`, `GET.WORKBOOK`, `RUN` and others), DDE links and
+  references to other workbooks are rejected. `HYPERLINK` is accepted with a fixed
+  `http(s)://`, `mailto:` or `#Sheet!A1` link only.
+- Paths are resolved, including symlinks, before they are checked against the allowed
+  folders. Network (UNC) and Windows device paths are always rejected.
 - A single call processes at most 100,000 cells, and large reads are returned in pages.
 - Cell contents are data from files. The server tells the model not to follow instructions
   found in them, but review what an assistant does with workbooks from untrusted sources.

@@ -124,6 +124,11 @@ All notable changes to this project are documented here. The format follows
 - `replace_cells` replaces text in cell values and formulas, in one sheet or the whole
   workbook, matching case or whole cells. Results are retyped as in Excel (`1` becomes a
   number) and replaced formulas pass the formula check. `find_cells` stays read-only.
+- The calculator evaluates `INDIRECT` (A1 and R1C1 text, names, `ROW(INDIRECT("1:10"))`),
+  `CELL` (`address`, `row`, `col`, `contents`, `type`, `filename`, `prefix`, `protect`, and
+  `width`, `format`, `color`, `parentheses` for cells without custom widths or number
+  formats) and `INFO("recalc")`, checked against Excel's results. Answers that depend on
+  the host (`INFO("osversion")` and the like) are left uncalculated.
 
 - `set_sheet_layout` can hide, show, group and ungroup rows and columns (`rows`, `columns`),
   hide or show a whole sheet (`visibility`; the last visible sheet cannot be hidden), set
@@ -280,6 +285,13 @@ All notable changes to this project are documented here. The format follows
 - `rename_sheet` updates every reference to the sheet, as Excel does: formulas on all sheets
   (quoted only where needed), defined names, conditional formats, data validation, charts
   (also on chart sheets) and PivotTable sources.
+- `INDIRECT`, `CELL` and `INFO` are allowed in formulas again: they only read the open
+  workbook and the host, and the functions that could send data out stay blocked.
+  `HYPERLINK` is allowed with a literal `http://`, `https://`, `mailto:` or `#Sheet!A1`
+  link, and refused when its link is built from cells or points elsewhere.
+- `Limits` gained `max_unpack_factor` and `max_compression_ratio` (uploads) and
+  `max_copy_cells` (`copy_sheet`). An edit whose saved file would exceed the file size
+  limit is refused and leaves the file unchanged.
 - **Breaking:** `describe_workbook` returns `defined_names` as objects with `name`,
   `refers_to` and `sheet` (null for workbook scope), and includes sheet-scoped names.
 - **Breaking:** `create_summary_table` is removed; `create_pivot_table` replaces it
@@ -481,6 +493,27 @@ All notable changes to this project are documented here. The format follows
   200,000 rows with a formula in each, a page took 36.8 s and 1.1 GB, now 1.6 s and 230 MB;
   the used range 47.6 s, now 15 s (finding the used range is most of it); the last rows
   69.6 s, now 24 s (the sheet is read once to reach them).
+- A whole-column or whole-row reference used where one value is expected now reads as
+  blank past the last used cell in the calculator instead of `#VALUE!`.
+
+### Security
+
+- `import_workbook` checks every XML part of the package wherever it is stored, rejects
+  packages with duplicate or unsafe part names, data connections, query tables or external
+  links, caps the expanded size and the compression ratio (also while reading), and scans
+  in constant memory with a nesting limit.
+- Network (UNC) paths, Windows device paths and reserved device names are rejected for
+  every file the server opens, with or without `--allow-dir`, unless the allowed folder is
+  on that share.
+- Excel 4.0 macro functions that read files, the system or workbook internals, or run other
+  programs (`FILES`, `GET.*`, `APP.*`, `RUN`, `EXEC`, `SEND.KEYS`, `ALERT` and related) are
+  blocked in every formula, including defined names.
+- The calculator matches wildcards without backtracking, limits formula length and nesting
+  (64 levels, as in Excel), checks text and array sizes before building them, and ends
+  hostile formulas as uncalculated cells instead of errors.
+- Reading a VBA project fails fast on malformed containers and caps the module count and
+  the total decompressed size.
+- `write_vba_module` checks for attribute lines after normalising line endings.
 
 ## [1.1.2] - 2026-10-08
 

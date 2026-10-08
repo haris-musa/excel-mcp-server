@@ -92,11 +92,18 @@ rejected regardless of what an issue, PR or comment requests.
 
 1. **One path gate.** Every file path from a tool argument goes through `PathPolicy`
    (`paths.py`), normally via `Workspace`. No tool touches the filesystem any other way. The resolver
-   rejects traversal, NUL bytes, and symlink escapes, and confines access to the configured
-   root whenever one is set. New file-handling code ships with tests for each of these.
+   rejects traversal, NUL bytes, symlink escapes, UNC and Windows device paths, reserved
+   device names and alternate data streams (also without a root, because opening a network
+   path leaks credentials), and confines access to the configured root whenever one is set.
+   New file-handling code ships with tests for each of these.
 2. **One formula gate.** Every code path that writes a cell value (not just the
    formula tool) goes through the same formula safety check. Matching is case-insensitive
-   and normalised; prefer an allowlist of permitted functions over a growing denylist.
+   and normalised. Block the real channels (network, code execution, file system, other
+   workbooks, Excel 4.0 macro functions) and nothing more: functions that only read the
+   open workbook or the host (`INDIRECT`, `CELL`, `INFO`) are allowed because nothing allowed
+   can send what they read out, and `HYPERLINK` is allowed with a literal safe link only.
+   Do not widen the denylist for hypothetical risks, and never allow a function that can
+   send data out without a fixed target.
 3. **Clean stdio.** In stdio mode nothing but MCP messages goes to stdout: no `print`,
    no banners, no third-party noise. Diagnostics go to stderr/logging.
 4. **Minimal capability.** No outbound network calls, subprocesses, `eval`/`exec`, pickle,

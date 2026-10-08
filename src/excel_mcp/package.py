@@ -162,7 +162,11 @@ def _scan_xml(source: _Entry, part: str) -> Iterator[str]:
             if stack:
                 stack[-1].remove(element)
     except ElementTree.ParseError:
-        raise InvalidArgumentError(f"The uploaded workbook part {part} is not valid XML.") from None
+        # Excel reads legacy drawings (.vml) as lenient HTML, so those may not be well-formed.
+        if part.casefold().endswith((".xml", ".rels")):
+            raise InvalidArgumentError(
+                f"The uploaded workbook part {part} is not valid XML."
+            ) from None
 
 
 def _check_declaration(name: str, element: ElementTree.Element) -> None:

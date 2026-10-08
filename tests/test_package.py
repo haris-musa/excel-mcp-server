@@ -164,3 +164,9 @@ async def test_import_reports_unsafe_packages(call_error: ToolCall, files: Path)
     message = await call_error("import_workbook", path="up.xlsx", content_base64=content)
     assert "fetch data" in message
     assert not (files / "up.xlsx").exists()
+
+
+def test_lenient_legacy_drawings_are_accepted_but_broken_xml_parts_are_not() -> None:
+    vml = b"<xml><v:textbox><div>line<br>next</div></v:textbox></xml>"
+    _decode(_package([("xl/drawings/vmlDrawing1.vml", vml)]))
+    assert "not valid XML" in _rejected(_package([("xl/extra.xml", vml)]))
