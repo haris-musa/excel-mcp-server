@@ -487,3 +487,27 @@ async def test_extended_rules_follow_row_edits(call: ToolCall, sample: Path) -> 
     assert 'conditionalFormatting sqref="C1:C3"' in _sheet_xml(sample)
     assert "<xm:sqref>C1:C3</xm:sqref>" in _x14_rules(sample)[0]
     assert_package_is_consistent(read_parts(sample))
+
+
+async def test_deleting_a_sheet_that_sparklines_and_rules_read_is_what_excel_does(
+    call: ToolCall, sample: Path
+) -> None:
+    await call("add_sparklines", **BOOK, sheet="Data", location="F2:F3", data="Report!A1:B2")
+    await call(
+        "add_sparklines",
+        **BOOK,
+        sheet="Data",
+        location="G2:G3",
+        data="C2:D3",
+        style={"dates": "Report!A4:B4"},
+    )
+    rule = {"type": "data_bar", "colors": ["#638EC6"], "max_type": "formula"}
+    rule["max_value"] = "=Report!$A$1"
+    await call("add_conditional_format", **BOOK, sheet="Data", range="C2:C5", rule=rule)
+    await call("delete_sheet", **BOOK, sheet="Report")
+    groups = _groups(sample)
+    assert "<x14:sparkline><xm:sqref>F2</xm:sqref></x14:sparkline>" in "".join(groups)
+    assert "dateAxis" not in "".join(groups) and "Report" not in "".join(groups)
+    assert "<xm:f>Data!C2:D2</xm:f><xm:sqref>G2</xm:sqref>" in "".join(groups)
+    assert '<x14:cfvo type="formula"><xm:f>#REF!</xm:f>' in _x14_rules(sample)[0]
+    assert_package_is_consistent(read_parts(sample))

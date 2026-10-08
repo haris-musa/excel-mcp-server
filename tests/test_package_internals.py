@@ -128,20 +128,21 @@ def test_metadata_gets_the_dynamic_array_entry_once() -> None:
     assert '<rc t="2" v="0"/>' in merged.xml and "valueMetadata count" in merged.xml
 
 
-def test_a_deleted_sheet_takes_the_sparklines_that_read_it() -> None:
+def test_a_deleted_sheet_takes_the_data_of_the_sparklines_that_read_it() -> None:
     sparklines = (
-        f'<ext uri="{ext.SPARKLINES}"><x14:sparklineGroups><x14:sparklineGroup><x14:sparklines>'
+        f'<ext uri="{ext.SPARKLINES}"><x14:sparklineGroups><x14:sparklineGroup>'
+        "<xm:f>'My Sheet'!A4:C4</xm:f><x14:sparklines>"
         "<x14:sparkline><xm:f>'My Sheet'!A1:C1</xm:f><xm:sqref>D1</xm:sqref></x14:sparkline>"
         "<x14:sparkline><xm:f>Data!A1:C1</xm:f><xm:sqref>D2</xm:sqref></x14:sparkline>"
         "</x14:sparklines></x14:sparklineGroup></x14:sparklineGroups></ext>"
     )
     found = {ext.SPARKLINES: sparklines}
 
-    ext.forget_sheets(found, {"My Sheet"})
-    assert found[ext.SPARKLINES].count("<x14:sparkline>") == 1
-
-    ext.forget_sheets(found, {"Data"})
-    assert ext.SPARKLINES not in found
+    ext.forget_sheets(found, {"My Sheet"})  # as Excel: the cell keeps its sparkline, without data
+    assert found[ext.SPARKLINES].count("<x14:sparkline>") == 2
+    assert "A4:C4" not in found[ext.SPARKLINES]  # the date range went
+    assert "<x14:sparkline><xm:sqref>D1</xm:sqref></x14:sparkline>" in found[ext.SPARKLINES]
+    assert "Data!A1:C1" in found[ext.SPARKLINES]
 
 
 def test_notes_are_numbered_above_the_shapes_that_other_parts_name() -> None:
