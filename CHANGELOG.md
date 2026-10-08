@@ -33,6 +33,36 @@ All notable changes to this project are documented here. The format follows
   `_xlfn.ANCHORARRAY(A1)` as Excel's file format does, and shown as `A1#` by `read_range` in
   `formulas` mode.
 
+- `add_data_validation`: dropdown lists can come from cells or a name (`source`, e.g.
+  `=$A$2:$A$20`, `=Sheet2!$A:$A`, `=Regions`), the `time` type is supported, and rules take an
+  input message title and text (`prompt_title`, `prompt`), an alert style (`error_style`:
+  `stop`, `warning` or `information`), an alert title and message. Date and time limits can be
+  written as `2026-01-31` and `09:30`; titles and messages are limited to Excel's 32 and 255
+  characters. All of it passes the formula check.
+- `add_conditional_format` offers the rule types of Excel's menu: `top` and `bottom` (N items
+  or percent), `above_average` and `below_average` (equal, standard deviations),
+  `duplicate`, `unique`, `contains_text`, `not_contains_text`, `begins_with`, `ends_with`,
+  `date` (yesterday, last 7 days, this week, next month and others), `blanks`, `no_blanks`,
+  `errors`, `no_errors` and `icon_set` (the 17 standard 3, 4 and 5 icon sets, with
+  thresholds as percent, number or percentile, `reverse` and `icon_only`), plus
+  `stop_if_true` and `priority`. Rules write the formulas Excel writes. Fields that do not
+  fit the rule type are rejected.
+- `set_sheet_layout`'s `auto_filter` applies criteria: values to show, comparisons (equals,
+  greater than, begins with, contains and their negations, one or two joined by and/or),
+  top or bottom N items or percent, above or below average, and fill color. Rows that fail
+  are hidden, as Excel does, so the file opens filtered. Tables can be filtered by passing
+  the table's name as `range`, and `remove` removes a filter and shows its rows.
+- `copy_range` takes `paste` (`all`, `values`, `formulas`, `formats`, as in Paste Special),
+  `transpose` (formula references swap their offsets as in Excel) and `skip_blanks`.
+- `transform_range` runs `remove_duplicates` (chosen columns, header option, Excel's
+  comparison: text ignores case, text and numbers differ), `text_to_columns` (delimiters,
+  fixed widths, text qualifier, merged delimiters, Excel's type conversion) and `fill` (Fill
+  Down and Right, and series: linear, growth and date with step and stop, as in
+  Fill > Series).
+- `replace_cells` replaces text in cell values and formulas, in one sheet or the whole
+  workbook, matching case or whole cells. Results are retyped as in Excel (`1` becomes a
+  number) and replaced formulas pass the formula check. `find_cells` stays read-only.
+
 - `set_sheet_layout` can hide, show, group and ungroup rows and columns (`rows`, `columns`),
   hide or show a whole sheet (`visibility`; the last visible sheet cannot be hidden), set
   up printing (`print_setup`: orientation, paper size, scale or fit to pages, margins in cm,
@@ -138,12 +168,22 @@ All notable changes to this project are documented here. The format follows
 - **Breaking:** `set_sheet_layout` takes `column_widths` and `row_heights` as objects,
   `{"A": 20}` and `{"1": 30}`, instead of lists of `{column, width}` and `{row, height}`;
   this matches what `describe_sheet` returns for column widths.
+- **Breaking:** `set_sheet_layout`'s `auto_filter` is an object (`range`, `filters`,
+  `remove`) instead of a range string, and a range inside a table now points to the table's
+  name instead of failing with "has its own filter".
+- **Breaking:** `add_conditional_format` rules that format cells (`cell_value`, `formula` and
+  the new types) need a `fill_color` or `font_color`, and fields that do not apply to the
+  rule type are rejected. New rules take the next free priority instead of a count-based one.
+- **Breaking:** `add_data_validation`'s `error_message` and `prompt` are limited to Excel's
+  255 characters, and a list needs either `options` or `source`.
 
 ### Fixed
 
 - Editing a workbook no longer damages its charts: openpyxl dropped the chart style
   number, the rounded-corners flag, the plot area fill, the axes of area charts, and turned
   the empty text of chart labels into the word "None".
+- Date and time limits in data validation (`2026-01-31`) were stored as the formula
+  `2026-01-31`, a wrong number, instead of a date.
 - `copy_sheet` now copies what Excel's "Create a copy" does: data validation, conditional
   formats, images, charts (re-pointed at the copy's own data), tables (renamed, as Excel
   does), PivotTables, freeze panes, filters, print setup, protection and sheet-scoped

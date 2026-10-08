@@ -4,14 +4,25 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
-from excel_mcp.operations import cells, sorting
-from excel_mcp.operations.calculated import read_calculated
+from excel_mcp.operations import cells, replace, sorting
+from excel_mcp.operations.calculated import formula_values, read_calculated
 from excel_mcp.operations.cells import FindResult, RangeData
+from excel_mcp.operations.paste import PasteMode
+from excel_mcp.operations.paste import copy_range as paste_cells
+from excel_mcp.operations.replace import ReplaceResult
 from excel_mcp.operations.sorting import SortKey
+from excel_mcp.operations.transform import Transform, apply_transform
+from excel_mcp.refs import parse_range
 from excel_mcp.server.params import CellRef, RangeRef, SheetName, WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
 from excel_mcp.values import CellValue
-from excel_mcp.workspace import Workspace, get_sheet, get_streamed_sheet, streamed_worksheets
+from excel_mcp.workspace import (
+    Workspace,
+    get_sheet,
+    get_streamed_sheet,
+    streamed_worksheets,
+    worksheets,
+)
 
 ReadMode = Annotated[
     Literal["values", "formulas"],
@@ -104,18 +115,38 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         target_sheet: Annotated[
             str | None, Field(description="Destination sheet. Default: the same sheet.")
         ] = None,
+        paste: Annotated[
+            PasteMode,
+            Field(
+                description="Like Paste Special. 'values': formula results; 'formulas': "
+                "formulas and values; 'formats': formatting only. All but 'all' leave the "
+                "destination's formatting, so dates paste as serial numbers."
+            ),
+        ] = "all",
+        transpose: Annotated[bool, Field(description="Swap rows and columns.")] = False,
+        skip_blanks: Annotated[
+            bool, Field(description="Leave destination cells unchanged under empty source cells.")
+        ] = False,
     ) -> str:
-        """Copy values and formatting, overwriting the destination.
+        """Copy and paste a range, overwriting the destination.
 
-        Relative references in copied formulas shift as when pasting in Excel.
+        Relative references in copied formulas shift as when pasting in Excel (and swap rows
+        and columns when transposing).
         """
         with workspace.edit(path) as workbook:
-            copied = cells.copy_range(
-                get_sheet(workbook, sheet),
+            source = get_sheet(workbook, sheet)
+            area = parse_range(range).within(limits.max_cells)
+            results = formula_values(workspace, path, source, area) if paste == "values" else {}
+            copied = paste_cells(
+                source,
                 range,
                 get_sheet(workbook, target_sheet or sheet),
                 target_cell,
-                limits.max_cells,
+                paste=paste,
+                transpose=transpose,
+                skip_blanks=skip_blanks,
+                results=results,
+                max_cells=limits.max_cells,
             )
         return f"Copied {sheet}!{range} to {target_sheet or sheet}!{copied}."
 
@@ -146,6 +177,26 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             )
         return f"Sorted {count} rows of {sheet}!{range}."
 
+    @tools.destroyer("Transform range")
+    def transform_range(
+        path: WorkbookPath, sheet: SheetName, range: RangeRef, transform: Transform
+    ) -> str:
+        """Remove duplicate rows, split text into columns, or fill down or right or with a
+        series (like Excel's Data and Fill commands).
+
+        Rows and cells move or change in place, with their formatting; formulas in them
+        must have a calculable result when they are compared (remove_duplicates).
+        """
+        with workspace.edit(path) as workbook:
+            target = get_sheet(workbook, sheet)
+            area = parse_range(range).within(limits.max_cells)
+            results = (
+                formula_values(workspace, path, target, area)
+                if transform.operation == "remove_duplicates"
+                else {}
+            )
+            return apply_transform(target, area, transform, results, limits.max_cells)
+
     @tools.reader("Find cells")
     def find_cells(
         path: WorkbookPath,
@@ -173,3 +224,37 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 else [get_streamed_sheet(workbook, sheet)]
             )
             return cells.find_cells(targets, query, exact, case_sensitive, max_results)
+
+    @tools.destroyer("Replace in cells")
+    def replace_cells(
+        path: WorkbookPath,
+        query: Annotated[str, Field(min_length=1, description="Text to find.")],
+        replacement: Annotated[str, Field(description="Text to put in its place; '' deletes.")],
+        sheet: Annotated[
+            str | None, Field(description="Sheet to change. Default: all sheets.")
+        ] = None,
+        exact: Annotated[bool, Field(description="Match whole cells only.")] = False,
+        case_sensitive: Annotated[
+            bool, Field(description="Distinguish upper and lower case.")
+        ] = False,
+        in_formulas: Annotated[
+            bool, Field(description="Also replace inside formulas (their text, as in Excel).")
+        ] = True,
+    ) -> ReplaceResult:
+        """Find and replace text in cells, like Excel's Replace All; find_cells only reads.
+
+        Matches text and numbers (as shown without formatting) as literal text, no wildcards.
+        The result is retyped as in Excel: '1' makes a number, '=...' a formula (which must
+        pass the formula check). Dates and booleans are not touched. Returns cells changed
+        per sheet.
+        """
+        with workspace.edit(path) as workbook:
+            targets = worksheets(workbook) if sheet is None else [get_sheet(workbook, sheet)]
+            return replace.replace_cells(
+                targets,
+                query,
+                replacement,
+                exact=exact,
+                case_sensitive=case_sensitive,
+                in_formulas=in_formulas,
+            )

@@ -58,7 +58,7 @@ async def test_set_sheet_layout(call: ToolCall, sample: Path) -> None:
             "row_heights": {"1": 24},
             "autofit_columns": ["B"],
             "freeze_panes": "A2",
-            "auto_filter": "A1:D5",
+            "auto_filter": {"range": "A1:D5"},
             "tab_color": "#00B050",
         },
     )

@@ -23,14 +23,16 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`read_range`](#read_range) | Read cell values as rows, without trailing empty cells or rows. Dates are ISO 8601. |
 | [`write_range`](#write_range) | Write values into cells, overwriting them. |
 | [`clear_range`](#clear_range) | Clear a range's values and/or formatting; other cells do not move. |
-| [`copy_range`](#copy_range) | Copy values and formatting, overwriting the destination. |
+| [`copy_range`](#copy_range) | Copy and paste a range, overwriting the destination. |
 | [`sort_range`](#sort_range) | Sort a range's rows by one or more columns, like Data > Sort in Excel. |
+| [`transform_range`](#transform_range) | Remove duplicate rows, split text into columns, or fill down or right or with a series (like Excel's Data and Fill commands). |
 | [`find_cells`](#find_cells) | Find cells whose value contains (or equals) the query. |
+| [`replace_cells`](#replace_cells) | Find and replace text in cells, like Excel's Replace All; find_cells only reads. |
 | [`format_range`](#format_range) | Change the font, fill, borders, alignment or number format of a range. |
 | [`merge_cells`](#merge_cells) | Merge a range into one cell, or split a merged range again. |
-| [`set_sheet_layout`](#set_sheet_layout) | Set column widths, row heights, hidden or grouped rows and columns, frozen panes, auto filter, tab color, sheet visibility, print setup and sheet protection. |
-| [`add_conditional_format`](#add_conditional_format) | Add a conditional format rule to a range. |
-| [`add_data_validation`](#add_data_validation) | Restrict what can be entered in a range, e.g. a dropdown list. |
+| [`set_sheet_layout`](#set_sheet_layout) | Set column widths, row heights, hidden or grouped rows and columns, frozen panes, auto filter (on a range or a table, with criteria), tab color, sheet visibility, print setup and sheet protection. |
+| [`add_conditional_format`](#add_conditional_format) | Add a conditional format rule to a range: scales, data bars, icon sets, cell value or formula rules, top/bottom, average, duplicates, text, dates, blanks and errors. |
+| [`add_data_validation`](#add_data_validation) | Restrict what can be entered in a range: a dropdown list (typed in, or from cells or a name), whole numbers, decimals, dates, times, text length or a custom formula, with an optional input message and error alert. |
 | [`create_table`](#create_table) | Turn a range with a header row of unique text labels into an Excel table. |
 | [`create_chart`](#create_chart) | Add a chart to `sheet`, or replace one. |
 | [`delete_chart`](#delete_chart) | Remove a chart from a sheet. The data it plotted is left untouched. |
@@ -256,9 +258,10 @@ Clear a range's values and/or formatting; other cells do not move.
 
 **Copy range** (modifies files, may overwrite data)
 
-Copy values and formatting, overwriting the destination.
+Copy and paste a range, overwriting the destination.
 
-Relative references in copied formulas shift as when pasting in Excel.
+Relative references in copied formulas shift as when pasting in Excel (and swap rows
+and columns when transposing).
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -267,6 +270,9 @@ Relative references in copied formulas shift as when pasting in Excel.
 | `range` | string | yes | Cell or range, e.g. 'A1:D20'. |
 | `target_cell` | string | yes | Top-left cell of the destination. |
 | `target_sheet` | string | no | Destination sheet. Default: the same sheet. |
+| `paste` | `all` \| `values` \| `formulas` \| `formats` | no | Like Paste Special. 'values': formula results; 'formulas': formulas and values; 'formats': formatting only. All but 'all' leave the destination's formatting, so dates paste as serial numbers. Default: `all`. |
+| `transpose` | boolean | no | Swap rows and columns. Default: `False`. |
+| `skip_blanks` | boolean | no | Leave destination cells unchanged under empty source cells. Default: `False`. |
 
 ## sort_range
 
@@ -286,6 +292,40 @@ columns must hold values, not formulas, and the range cannot contain merged cell
 | `sort_by` | array of object | yes | Columns to sort by, most important first. |
 | `has_header` | boolean | no | The first row holds headers and stays in place. Default: `True`. |
 
+## transform_range
+
+**Transform range** (modifies files, may overwrite data)
+
+Remove duplicate rows, split text into columns, or fill down or right or with a
+series (like Excel's Data and Fill commands).
+
+Rows and cells move or change in place, with their formatting; formulas in them
+must have a calculable result when they are compared (remove_duplicates).
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
+| `sheet` | string | yes | Worksheet name. |
+| `range` | string | yes | Cell or range, e.g. 'A1:D20'. |
+| `transform` | object | yes | Only the fields named for the ``operation`` apply. |
+
+`transform` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `operation` | `remove_duplicates` \| `text_to_columns` \| `fill` | yes | remove_duplicates keeps the first of equal rows and moves the rest of the range up. text_to_columns splits one column into the columns to its right. fill fills the range from its first row or column. |
+| `columns` | array of string | no | remove_duplicates: columns that must match (header text or letter). Default: all. |
+| `has_header` | boolean | no | remove_duplicates: first row is a header. Default: `True`. |
+| `delimiters` | array of string | no | text_to_columns: 'tab', 'semicolon', 'comma', 'space' or a character. |
+| `fixed_widths` | array of integer | no | text_to_columns instead of delimiters: widths of all fields but the last. |
+| `text_qualifier` | `"` \| `'` \| `` | no | text_to_columns: quote that protects delimiters; '' for none. Default: `"`. |
+| `merge_delimiters` | boolean | no | text_to_columns: consecutive delimiters count as one. Default: `False`. |
+| `direction` | `down` \| `right` | no | fill: down from the first row, or right from the first column. |
+| `series` | `copy` \| `linear` \| `growth` \| `date` | no | fill: copy repeats the first line; the others continue each seed cell. Default: `copy`. |
+| `step` | number | no | fill series: amount added (linear, date) or multiplied by (growth). Default: `1`. |
+| `stop` | string \| number | no | fill series: last value; dates as '2026-12-31'. |
+| `unit` | `day` \| `weekday` \| `month` \| `year` | no | fill date series: step unit. Default: `day`. |
+
 ## find_cells
 
 **Find cells** (read-only)
@@ -303,6 +343,27 @@ Returns matching cell values grouped by sheet. Streams the file, one pass per sh
 | `case_sensitive` | boolean | no | Distinguish upper and lower case. Default: `False`. |
 | `mode` | `values` \| `formulas` | no | 'values': formula results (saved by Excel, else calculated here; ones it cannot calculate read as null and are listed in `uncalculated`). 'formulas': formula text. Default: `values`. |
 | `max_results` | integer | no | Stop after this many matches. Default: `100`. |
+
+## replace_cells
+
+**Replace in cells** (modifies files, may overwrite data)
+
+Find and replace text in cells, like Excel's Replace All; find_cells only reads.
+
+Matches text and numbers (as shown without formatting) as literal text, no wildcards.
+The result is retyped as in Excel: '1' makes a number, '=...' a formula (which must
+pass the formula check). Dates and booleans are not touched. Returns cells changed
+per sheet.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
+| `query` | string | yes | Text to find. |
+| `replacement` | string | yes | Text to put in its place; '' deletes. |
+| `sheet` | string | no | Sheet to change. Default: all sheets. |
+| `exact` | boolean | no | Match whole cells only. Default: `False`. |
+| `case_sensitive` | boolean | no | Distinguish upper and lower case. Default: `False`. |
+| `in_formulas` | boolean | no | Also replace inside formulas (their text, as in Excel). Default: `True`. |
 
 ## format_range
 
@@ -356,7 +417,8 @@ Merging keeps only the top-left value.
 **Set sheet layout** (modifies files)
 
 Set column widths, row heights, hidden or grouped rows and columns, frozen panes,
-auto filter, tab color, sheet visibility, print setup and sheet protection.
+auto filter (on a range or a table, with criteria), tab color, sheet visibility, print
+setup and sheet protection.
 
 Protection discourages edits in Excel but is not security: it does not stop this
 server, and the password is weakly hashed.
@@ -375,13 +437,21 @@ server, and the password is weakly hashed.
 | `row_heights` | object | no | Row number to height in points, e.g. {'1': 30}. |
 | `autofit_columns` | array of string | no | Column letters sized to their text, e.g. ['A', 'C']. |
 | `freeze_panes` | string | no | First unfrozen cell: 'A2' freezes row 1, 'A1' unfreezes. |
-| `auto_filter` | string | no | Range, e.g. 'A1:F100'. |
+| `auto_filter` | object | no | Filter dropdowns and criteria; rows that fail them are hidden, as in Excel. |
 | `tab_color` | string | no | Hex color. |
 | `rows` | array of object | no |  |
 | `columns` | array of object | no |  |
 | `visibility` | `visible` \| `hidden` | no | One sheet must stay visible. |
 | `print_setup` | object | no |  |
 | `protection` | object | no |  |
+
+`auto_filter` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `range` | string | yes | Header row and data, e.g. 'A1:F100', or the name of a table on the sheet. |
+| `filters` | array of object | no | Criteria; they replace earlier ones. A row must meet all. Default: `[]`. |
+| `remove` | boolean | no | Remove the filter and show its rows. Default: `False`. |
 
 `print_setup` fields:
 
@@ -447,32 +517,51 @@ server, and the password is weakly hashed.
 
 **Add conditional format** (modifies files)
 
-Add a conditional format rule to a range.
+Add a conditional format rule to a range: scales, data bars, icon sets, cell value or
+formula rules, top/bottom, average, duplicates, text, dates, blanks and errors.
+
+Rules are evaluated in priority order (default: added last); formats that conflict
+go to the first rule met.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
 | `range` | string | yes | Cell or range, e.g. 'A1:D20'. |
-| `rule` | object | yes | Which fields apply depends on ``type``. |
+| `rule` | object | yes | Only the fields named for the ``type`` apply; others are rejected. |
 
 `rule` fields:
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
-| `type` | `color_scale` \| `data_bar` \| `cell_value` \| `formula` | yes |  |
+| `type` | `color_scale` \| `data_bar` \| `icon_set` \| `cell_value` \| `formula` \| `top` \| `bottom` \| `above_average` \| `below_average` \| `duplicate` \| `unique` \| `contains_text` \| `not_contains_text` \| `begins_with` \| `ends_with` \| `date` \| `blanks` \| `no_blanks` \| `errors` \| `no_errors` | yes | top/bottom: highest or lowest `count` values (or percent). above_average/below_average: compared with the range's average. date: dates in a `period`. |
 | `colors` | array of string | no | color_scale: 2 or 3, lowest to highest. data_bar: 1. |
 | `operator` | `between` \| `notBetween` \| `equal` \| `notEqual` \| `greaterThan` \| `lessThan` \| `greaterThanOrEqual` \| `lessThanOrEqual` | no | cell_value. |
 | `values` | array of string | no | cell_value: 1, or 2 for between/notBetween. Numbers, quoted text such as '"Done"', or formulas. |
 | `formula` | string | no | formula: true for highlighted cells, written for the range's top-left cell, e.g. '=$C2>100'. |
-| `fill_color` | string | no | cell_value, formula. |
-| `font_color` | string | no | cell_value, formula. |
+| `count` | integer | no | top, bottom: how many (1-100 if percent). |
+| `percent` | boolean | no | top, bottom: `count` is a percentage. Default: `False`. |
+| `std_dev` | integer | no | above/below_average: standard deviations. |
+| `include_equal` | boolean | no | above/below_average. Default: `False`. |
+| `text` | string | no | contains_text etc. |
+| `period` | `yesterday` \| `today` \| `tomorrow` \| `last7Days` \| `lastWeek` \| `thisWeek` \| `nextWeek` \| `lastMonth` \| `thisMonth` \| `nextMonth` | no | date. |
+| `icon_set` | `3Arrows` \| `3ArrowsGray` \| `3Flags` \| `3TrafficLights1` \| `3TrafficLights2` \| `3Signs` \| `3Symbols` \| `3Symbols2` \| `4Arrows` \| `4ArrowsGray` \| `4RedToBlack` \| `4Rating` \| `4TrafficLights` \| `5Arrows` \| `5ArrowsGray` \| `5Rating` \| `5Quarters` | no | icon_set. |
+| `thresholds` | array of number | no | icon_set: where icons 2..n start, lowest first (n-1 values). Default: equal shares as in Excel. |
+| `threshold_type` | `percent` \| `number` \| `percentile` | no | icon_set: what `thresholds` mean. Default: `percent`. |
+| `reverse` | boolean | no | icon_set: reverse the icon order. Default: `False`. |
+| `icon_only` | boolean | no | icon_set: hide the cell values. Default: `False`. |
+| `fill_color` | string | no | Every type but the scales/icons. |
+| `font_color` | string | no | Like fill_color. |
+| `stop_if_true` | boolean | no | Skip lower-priority rules if met. Default: `False`. |
+| `priority` | integer | no | 1 is evaluated first; rules at or below it move down. Default: last. |
 
 ## add_data_validation
 
 **Add data validation** (modifies files)
 
-Restrict what can be entered in a range, e.g. a dropdown list.
+Restrict what can be entered in a range: a dropdown list (typed in, or from cells or a
+name), whole numbers, decimals, dates, times, text length or a custom formula, with an
+optional input message and error alert.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -485,15 +574,19 @@ Restrict what can be entered in a range, e.g. a dropdown list.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
-| `type` | `list` \| `whole` \| `decimal` \| `date` \| `text_length` \| `custom` | yes |  |
-| `options` | array of string | no | list: allowed values. |
-| `operator` | `between` \| `notBetween` \| `equal` \| `notEqual` \| `greaterThan` \| `lessThan` \| `greaterThanOrEqual` \| `lessThanOrEqual` | no | whole, decimal, date, text_length. |
-| `minimum` | string | no | Number or formula; dates as 'DATE(2026,1,31)'. |
+| `type` | `list` \| `whole` \| `decimal` \| `date` \| `time` \| `text_length` \| `custom` | yes |  |
+| `options` | array of string | no | list: allowed values, typed in. |
+| `source` | string | no | list: cells or a name holding the allowed values, instead of options, e.g. '=$A$2:$A$20', '=Sheet2!$A:$A' or '=Regions'. |
+| `operator` | `between` \| `notBetween` \| `equal` \| `notEqual` \| `greaterThan` \| `lessThan` \| `greaterThanOrEqual` \| `lessThanOrEqual` | no | whole, decimal, date, time, text_length. |
+| `minimum` | string | no | Number or formula; dates as '2026-01-31', times as '09:30'. |
 | `maximum` | string | no | For between/notBetween. |
 | `formula` | string | no | custom: for the range's top-left cell, e.g. '=A2>B2'. |
 | `allow_blank` | boolean | no | Default: `True`. |
-| `error_message` | string | no | Shown for rejected input. |
-| `prompt` | string | no | Shown when a cell is selected. |
+| `prompt_title` | string | no | Input message title. |
+| `prompt` | string | no | Input message, shown when a cell is selected. |
+| `error_style` | `stop` \| `warning` \| `information` | no | stop rejects bad input; the others let the user keep it. Default: `stop`. |
+| `error_title` | string | no |  |
+| `error_message` | string | no |  |
 
 ## create_table
 

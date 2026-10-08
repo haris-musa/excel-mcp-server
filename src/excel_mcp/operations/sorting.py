@@ -10,7 +10,6 @@ from openpyxl.cell.cell import Cell, MergedCell
 from openpyxl.comments import Comment
 from openpyxl.formula.translate import Translator
 from openpyxl.styles.cell_style import StyleArray
-from openpyxl.utils.cell import column_index_from_string, get_column_letter
 from openpyxl.utils.datetime import to_excel
 from openpyxl.worksheet.hyperlink import Hyperlink
 from openpyxl.worksheet.worksheet import Worksheet
@@ -19,6 +18,7 @@ from pydantic import Field
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.formulas import storable_formula
 from excel_mcp.inputs import InputModel
+from excel_mcp.operations.columns import find_column
 from excel_mcp.refs import CellRange, parse_range
 from excel_mcp.workspace import sheet_names
 
@@ -36,7 +36,7 @@ class SortKey(InputModel):
 
 
 @dataclass
-class _Saved:
+class Saved:
     """A cell as it was before sorting."""
 
     value: Any  # whatever openpyxl stored: text, number, date, formula
@@ -49,7 +49,7 @@ class _Saved:
 
 @dataclass
 class _Row:
-    cells: list[_Saved]
+    cells: list[Saved]
     keys: list[SortValue]
 
 
@@ -71,7 +71,7 @@ def sort_range(
     first_row = area.min_row + has_header
     if first_row >= area.max_row:
         raise InvalidArgumentError(f"{area} has fewer than two rows to sort.")
-    key_offsets = [_key_column(sheet, area, key.column, has_header) - area.min_col for key in keys]
+    key_offsets = [find_column(sheet, area, key.column, has_header) - area.min_col for key in keys]
 
     rows = [
         _snapshot(cells, key_offsets)
@@ -82,7 +82,7 @@ def sort_range(
     # Sorting is stable: sorting by the last key first lets earlier keys take precedence.
     for index in reversed(range(len(keys))):
         _sort_by_key(rows, index, descending=keys[index].order == "descending")
-    _write_rows(sheet, area.min_col, first_row, rows)
+    write_rows(sheet, area.min_col, first_row, [row.cells for row in rows])
     return len(rows)
 
 
@@ -91,35 +91,9 @@ def _sort_by_key(rows: list[_Row], index: int, *, descending: bool) -> None:
     rows.sort(key=lambda row: row.keys[index][0] == _BLANK)
 
 
-def _key_column(sheet: Worksheet, area: CellRange, key: str, has_header: bool) -> int:
-    headers = [sheet.cell(area.min_row, col).value for col in range(area.min_col, area.max_col + 1)]
-    if has_header:
-        wanted = key.strip().casefold()
-        matches = [
-            area.min_col + index
-            for index, header in enumerate(headers)
-            if str(header).strip().casefold() == wanted
-        ]
-        if len(matches) > 1:
-            raise InvalidArgumentError(
-                f"Several columns are headed {key!r}; use the column letter instead."
-            )
-        if matches:
-            return matches[0]
-    if key.isalpha() and len(key) <= 3:
-        column = column_index_from_string(key.upper())
-        if area.min_col <= column <= area.max_col:
-            return column
-    where = f"a header ({', '.join(repr(header) for header in headers)}) or " if has_header else ""
-    raise InvalidArgumentError(
-        f"Sort column {key!r} is not in {area}. Use {where}a column letter from "
-        f"{get_column_letter(area.min_col)} to {get_column_letter(area.max_col)}."
-    )
-
-
-def _snapshot(row: tuple[Cell | MergedCell, ...], key_offsets: list[int]) -> _Row:
-    cells = [
-        _Saved(
+def save_cells(row: tuple[Cell | MergedCell, ...]) -> list[Saved]:
+    return [
+        Saved(
             cell.value,
             cell.data_type,
             copy(cell._style),
@@ -129,7 +103,10 @@ def _snapshot(row: tuple[Cell | MergedCell, ...], key_offsets: list[int]) -> _Ro
         )
         for cell in row
     ]
-    return _Row(cells, [_sort_value(row[offset]) for offset in key_offsets])
+
+
+def _snapshot(row: tuple[Cell | MergedCell, ...], key_offsets: list[int]) -> _Row:
+    return _Row(save_cells(row), [_sort_value(row[offset]) for offset in key_offsets])
 
 
 def _sort_value(cell: Cell | MergedCell) -> SortValue:
@@ -165,10 +142,11 @@ def _text_key(text: str) -> tuple[object, ...]:
     )
 
 
-def _write_rows(sheet: Worksheet, first_col: int, first_row: int, rows: list[_Row]) -> None:
+def write_rows(sheet: Worksheet, first_col: int, first_row: int, rows: list[list[Saved]]) -> None:
+    """Put saved rows back, relative references in formulas shifting as in a move."""
     names = sheet_names(sheet)
     for row_offset, row in enumerate(rows):
-        for col_offset, saved in enumerate(row.cells):
+        for col_offset, saved in enumerate(row):
             # Merged cells are rejected before sorting, so this is always a real cell.
             cell = cast(Cell, sheet.cell(first_row + row_offset, first_col + col_offset))
             if saved.data_type == "f":

@@ -199,14 +199,17 @@ async def test_list_workbooks_skips_links_outside(
     assert await call("list_workbooks") == {}
 
 
-async def test_tables_and_sheet_filters_cannot_overlap(
+async def test_sheet_filters_cannot_overlap_tables(
     call: ToolCall, call_error: ToolCall, sample: Path
 ) -> None:
     await call("create_table", path="sales.xlsx", sheet="Data", range="A1:D5")
     message = await call_error(
-        "set_sheet_layout", path="sales.xlsx", sheet="Data", layout={"auto_filter": "A1:D5"}
+        "set_sheet_layout",
+        path="sales.xlsx",
+        sheet="Data",
+        layout={"auto_filter": {"range": "A1:D5"}},
     )
-    assert "own filter" in message
+    assert "table's name" in message
 
 
 async def test_area_chart_axes_survive_later_edits(call: ToolCall, sample: Path) -> None:

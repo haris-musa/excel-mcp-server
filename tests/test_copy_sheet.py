@@ -43,7 +43,12 @@ async def _decorate_data_sheet(call: ToolCall) -> None:
         **BOOK,
         sheet="Data",
         range="C2:C5",
-        rule={"type": "cell_value", "operator": "greaterThan", "values": ["6"]},
+        rule={
+            "type": "cell_value",
+            "operator": "greaterThan",
+            "values": ["6"],
+            "fill_color": "#FFC7CE",
+        },
     )
     await call("set_note", **BOOK, sheet="Data", cell="A2", text="check")
     await call("insert_image", **BOOK, sheet="Data", image_path="logo.png", cell="G2")
