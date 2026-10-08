@@ -70,7 +70,7 @@ async def test_unsupported_functions_are_listed_not_guessed(call: ToolCall, file
 
 async def test_blocked_functions_are_never_calculated(call: ToolCall, files: Path) -> None:
     make_workbook(
-        files / "calc.xlsx", {"B1": '=WEBSERVICE("http://example.com")', "B2": '=INDIRECT("A1")'}
+        files / "calc.xlsx", {"B1": '=WEBSERVICE("http://example.com")', "B2": '=EXEC("calc.exe")'}
     )
 
     data = await read_values(call, "B1:B2")

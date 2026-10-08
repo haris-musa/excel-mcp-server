@@ -245,7 +245,7 @@ def parse_reference(text: str) -> Node:
         if found is None:
             raise UncalculableError("structured reference")
         return TableRef(found)
-    qualifier, body = _split_sheet(text)
+    qualifier, body = split_sheet(text)
     if "#" in body.replace("#REF!", ""):
         raise UncalculableError("structured reference")
     if body.upper() == "#REF!":
@@ -286,7 +286,7 @@ def _ref(sheets: tuple[str, ...], first: tuple[str, ...], last: tuple[str, ...])
     return Ref(sheets, rows[0], cols[0], rows[1], cols[1], relative)
 
 
-def _split_sheet(text: str) -> tuple[str | None, str]:
+def split_sheet(text: str) -> tuple[str | None, str]:
     quoted = False
     cut = -1
     for index, character in enumerate(text):

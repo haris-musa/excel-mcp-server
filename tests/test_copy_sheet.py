@@ -165,10 +165,10 @@ async def test_copy_keeps_the_source_untouched_and_names_unique(
 
 async def test_copy_refuses_unsafe_formulas(call_error: ToolCall, files: Path) -> None:
     workbook = Workbook()
-    workbook.worksheets[0]["A1"] = '=INDIRECT("B1")'
+    workbook.worksheets[0]["A1"] = '=WEBSERVICE("https://x.example")'
     workbook.save(files / "unsafe.xlsx")
     message = await call_error("copy_sheet", path="unsafe.xlsx", sheet="Sheet", new_name="Copy")
-    assert "INDIRECT" in message
+    assert "WEBSERVICE" in message
 
 
 @pytest.mark.parametrize(

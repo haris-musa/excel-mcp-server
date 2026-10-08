@@ -372,7 +372,7 @@ async def test_uploads_with_rules_and_names_on_own_sheets_are_accepted(
         r"='\203.0.113.7\share\book.xlsx'!Sales",
         "=SUM(Budget.xlsx!Sales)",
         "=SUM([1]Sheet1!A1:OFFSET(A1,0,0))",
-        '=SUM(A1:INDIRECT("B2"))',
+        "=SUM(A1:INDEX([1]Sheet1!B:B,3))",
     ],
 )
 async def test_written_formulas_cannot_reach_other_workbooks(

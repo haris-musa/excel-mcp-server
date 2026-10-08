@@ -116,7 +116,7 @@ async def test_rule_formulas_are_checked(call_error: ToolCall, sample: Path) -> 
         path="sales.xlsx",
         sheet="Data",
         range="C2:C5",
-        rule={"type": "whole", "operator": "greaterThan", "minimum": 'INDIRECT("A1")'},
+        rule={"type": "whole", "operator": "greaterThan", "minimum": 'WEBSERVICE("A1")'},
     )
     assert "not allowed" in message
 

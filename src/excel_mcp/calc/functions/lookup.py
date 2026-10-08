@@ -4,7 +4,7 @@ from itertools import pairwise
 from typing import TYPE_CHECKING
 
 from excel_mcp.calc.criteria import has_wildcard
-from excel_mcp.calc.parser import Name, Node, Ref
+from excel_mcp.calc.parser import Node, Ref
 from excel_mcp.calc.registry import function
 from excel_mcp.calc.values import (
     NA,
@@ -248,33 +248,6 @@ def xlookup(
         return Grid([[v] for v in column]) if len(column) > 1 else column[0]
     line = list(results.rows[found])
     return Grid([line]) if len(line) > 1 else line[0]
-
-
-def _origin(engine: "Engine", node: Node | None) -> Ref:
-    if node is None:
-        here = engine.here
-        return Ref((), here.row, here.col, here.row, here.col, False)
-    if isinstance(node, Name):
-        raise UncalculableError("ROW or COLUMN of a name")
-    if not isinstance(node, Ref) or node.top is None or node.left is None:
-        raise UncalculableError("ROW or COLUMN of a computed range")
-    return node
-
-
-@function("ROW", kind="lazy")
-def row(engine: "Engine", reference: Node | None = None) -> Value:
-    ref = _origin(engine, reference)
-    assert ref.top is not None and ref.bottom is not None
-    rows = [[float(r)] for r in range(ref.top, ref.bottom + 1)]
-    return rows[0][0] if len(rows) == 1 else Grid(rows)  # pyright: ignore[reportReturnType]
-
-
-@function("COLUMN", kind="lazy")
-def column(engine: "Engine", reference: Node | None = None) -> Value:
-    ref = _origin(engine, reference)
-    assert ref.left is not None and ref.right is not None
-    cols = [float(c) for c in range(ref.left, ref.right + 1)]
-    return cols[0] if len(cols) == 1 else Grid([cols])
 
 
 @function("ROWS")

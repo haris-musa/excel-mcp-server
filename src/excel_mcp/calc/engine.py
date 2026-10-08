@@ -88,8 +88,9 @@ class Position:
 class Engine:
     """Calculates formula cells of ``formulas``; ``cached`` holds Excel's stored results."""
 
-    def __init__(self, cached: Workbook, formulas: Workbook) -> None:
+    def __init__(self, cached: Workbook, formulas: Workbook, filename: str | None = None) -> None:
         self.workbook = formulas
+        self.filename = filename
         self.sheets = {ws.title.casefold(): ws for ws in worksheets(formulas)}
         self.cached_sheets = {ws.title.casefold(): ws for ws in worksheets(cached)}
         self.memo: dict[CellKey, Scalar | UncalculableError] = {}
@@ -411,8 +412,15 @@ class Engine:
             col = 0
         if value.height == 1:
             row = 0
-        if 0 <= row < value.height and 0 <= col < value.width:
+        # A whole row or column stops at the last used cell; beyond it the cells are blank.
+        rows_in = 0 <= row < value.height
+        cols_in = 0 <= col < value.width
+        past_rows = value.clipped_rows and row >= value.height and cols_in
+        past_cols = value.clipped_cols and col >= value.width and rows_in
+        if rows_in and cols_in:
             return value.rows[row][col]
+        if past_rows or past_cols:
+            return None
         return VALUE
 
     def name(self, node: Name, array: bool) -> Value:
@@ -431,6 +439,14 @@ class Engine:
             return self.eval(tree, array)
         finally:
             self.name_depth -= 1
+
+    def is_defined(self, node: Name) -> bool:
+        scope = self.find_sheet(node.sheet) if node.sheet else self.here.sheet
+        try:
+            self._lookup_name(scope, node.name)
+        except UncalculableError:
+            return False
+        return True
 
     def _lookup_name(self, scope: Worksheet, name: str) -> str:
         for names in (scope.defined_names, self.workbook.defined_names):

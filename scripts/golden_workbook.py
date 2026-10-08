@@ -68,7 +68,7 @@ def calculate_cases(path: Path, count: int, *, lazy: bool = False) -> list[objec
     else:
         formulas = load_workbook(path)
         cached = load_workbook(path, data_only=True)
-    engine = Engine(cached, formulas)
+    engine = Engine(cached, formulas, str(path))
     sheet = formulas["Cases"]
     results: list[object] = []
     for index in range(count):

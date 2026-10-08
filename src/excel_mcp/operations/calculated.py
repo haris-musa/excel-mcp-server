@@ -108,7 +108,7 @@ def _fill(
     unresolved: dict[str, str] = {}
     with workspace.read_lazy(path) as (stored, formulas):
         target = get_sheet(formulas, sheet)
-        engine = Engine(stored, formulas)
+        engine = Engine(stored, formulas, str(workspace.resolve(path)))
         for row, col in missing:
             if _is_empty_text(get_sheet(stored, sheet), row, col):
                 _put(data, area, row, col, "")

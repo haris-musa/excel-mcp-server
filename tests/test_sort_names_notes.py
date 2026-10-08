@@ -151,7 +151,7 @@ async def test_defined_names_roundtrip(call: ToolCall, sample: Path) -> None:
         ("ok", 'WEBSERVICE("http://x")', "WEBSERVICE"),
         ("ok", "[1]Sheet1!A1", "other workbooks"),
         ("ok", "Missing!A1", "not a sheet"),
-        ("ok", 'INDIRECT("A1")', "INDIRECT"),
+        ("ok", 'WEBSERVICE("A1")', "WEBSERVICE"),
         ("ok", " ", "empty"),
     ],
 )

@@ -133,7 +133,7 @@ def main() -> None:
         for f in accepted
     ]
     with tempfile.TemporaryDirectory() as temp:
-        path = Path(temp) / "check.xlsx"
+        path = Path(temp) / "golden.xlsx"
         build_workbook(path, INPUTS, NAMES, accepted, HIDDEN_ROWS, TABLES)
         actual = calculate_cases(path, len(accepted))
     uncalculated = [i for i, value in enumerate(actual) if value is None]
