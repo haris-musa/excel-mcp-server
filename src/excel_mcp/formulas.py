@@ -18,6 +18,7 @@ from openpyxl.formula.tokenizer import Token, TokenizerError
 
 from excel_mcp.errors import InvalidFormulaError, UnsafeFormulaError
 from excel_mcp.formula_syntax import check_syntax, invalid_formula
+from excel_mcp.spill import store_spills
 from excel_mcp.text import quoted
 from excel_mcp.xlfn import add_prefixes
 
@@ -111,7 +112,7 @@ def check_formula(formula: str, sheet_names: Iterable[str]) -> None:
 
 def _tokenize(formula: str) -> list[Token]:
     try:
-        return Tokenizer(formula).items
+        return Tokenizer(store_spills(formula)).items
     except TokenizerError as error:
         reason = str(error).removesuffix(f" in {formula!r}").removesuffix(f" in {formula}")
         if "parsing string" in reason:
@@ -127,7 +128,7 @@ def storable_formula(formula: str, sheet_names: Iterable[str]) -> str:
     Every formula that is written anywhere in a workbook goes through here.
     """
     check_formula(formula, sheet_names)
-    return add_prefixes(formula)
+    return add_prefixes(store_spills(formula))
 
 
 def storable_operand(operand: str, sheet_names: Iterable[str]) -> str:

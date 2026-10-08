@@ -21,6 +21,7 @@ from excel_mcp.refs import (
     parse_clamped_range,
     parse_range,
 )
+from excel_mcp.spill import show_spills
 from excel_mcp.values import CellValue, date_number_format, to_cell, to_json
 from excel_mcp.workspace import sheet_names
 
@@ -114,6 +115,10 @@ def read_window(sheet: ReadOnlyWorksheet, ref: str | None) -> CellRange:
     return parse_clamped_range(ref, lambda: streamed_used_range(sheet))
 
 
+def _displayed(value: CellValue) -> CellValue:
+    return show_spills(value) if isinstance(value, str) and value.startswith("=") else value
+
+
 def read_range(sheet: ReadOnlyWorksheet, ref: str | None, max_cells: int) -> RangeData:
     target = read_window(sheet, ref)
     if target.cols > max_cells:
@@ -129,7 +134,7 @@ def read_range(sheet: ReadOnlyWorksheet, ref: str | None, max_cells: int) -> Ran
         max_col=target.max_col,
         values_only=True,
     )
-    values = [[to_json(value) for value in row] for row in rows]
+    values = [[_displayed(to_json(value)) for value in row] for row in rows]
     for row in values:
         while row and row[-1] is None:
             row.pop()
