@@ -23,6 +23,8 @@ All notable changes to this project are documented here. The format follows
   (default), `left`, `top`, `bottom` or `none`.
 - **Breaking:** `describe_sheet` no longer returns `chart_count`; use the length of `charts`.
 - Scatter charts plot points instead of joining them with lines.
+- Horizontal bar charts list the rows top-down in sheet order, instead of Excel's
+  bottom-up default.
 - Line charts draw straight lines without markers unless `smooth` or `markers` is set;
   Excel used to curve them.
 
