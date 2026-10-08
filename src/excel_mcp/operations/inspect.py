@@ -53,7 +53,6 @@ class SheetDetails(BaseModel):
     auto_filter: str | None
     merged_ranges: list[str]
     tables: list[NamedRange]
-    chart_count: int
     charts: list[ChartInfo]
     data_validations: list[DataValidationInfo]
     conditional_formats: list[ConditionalFormatInfo]
@@ -97,7 +96,6 @@ def describe_sheet(sheet: Worksheet) -> SheetDetails:
         auto_filter=sheet.auto_filter.ref,
         merged_ranges=sorted(str(merged) for merged in sheet.merged_cells.ranges),
         tables=[NamedRange(name=name, range=ref) for name, ref in sheet.tables.items()],
-        chart_count=len(charts),
         charts=charts,
         data_validations=[
             DataValidationInfo(

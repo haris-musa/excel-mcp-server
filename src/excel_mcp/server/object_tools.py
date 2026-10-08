@@ -11,6 +11,8 @@ from excel_mcp.server.params import CellRef, RangeRef, SheetName, WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
 from excel_mcp.workspace import Workspace, get_sheet
 
+DEFAULT_CHART_OPTIONS = ChartOptions()
+
 
 def register(tools: ToolRegistry, workspace: Workspace) -> None:
     @tools.writer("Create table")
@@ -47,23 +49,23 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         chart_type: Annotated[ChartType, Field(description="Kind of chart to draw.")],
         anchor_cell: Annotated[str, Field(description="Cell where the chart's top-left sits.")],
         options: Annotated[
-            ChartOptions | None,
+            ChartOptions,
             Field(
                 description="Titles, size, legend, data labels, stacking, colors, markers, "
                 "axis range and number format, and secondary-axis lines. Every field is "
-                "optional; omitted fields keep the chart type's defaults."
+                "optional."
             ),
-        ] = None,
+        ] = DEFAULT_CHART_OPTIONS,
         data_sheet: Annotated[
             str | None, Field(description="Sheet holding the data. Default: `sheet`.")
         ] = None,
     ) -> str:
         """Add a chart that plots a block of data.
 
-        'column' draws vertical bars, 'bar' horizontal bars. For 'scatter', the first column
-        holds the x values. 'doughnut' is a pie with a hole; 'radar' draws one polygon per
-        series. Options that do not apply to the chart type are rejected. List a sheet's
-        charts with describe_sheet and remove one with delete_chart.
+        'column' draws vertical bars, 'bar' horizontal bars. 'scatter' plots points, with the
+        x values in the first column. 'doughnut' is a pie with a hole; 'radar' draws one
+        polygon per series. Options that do not fit the chart type are rejected. List a
+        sheet's charts with describe_sheet and remove one with delete_chart.
         """
         with workspace.edit(path) as workbook:
             area = charts.create_chart(
@@ -72,7 +74,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 data_range,
                 chart_type,
                 anchor_cell,
-                options or ChartOptions(),
+                options,
             )
         return f"Added a {chart_type} chart of {data_sheet or sheet}!{area} at {anchor_cell}."
 

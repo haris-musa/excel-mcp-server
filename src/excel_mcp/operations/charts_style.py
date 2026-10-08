@@ -11,19 +11,19 @@ from openpyxl.chart.title import Title, title_maker
 from excel_mcp.operations.charts_options import ROUND_TYPES, ChartOptions, ChartType
 
 _LEGEND_POSITIONS = {"right": "r", "left": "l", "top": "t", "bottom": "b"}
+_GROUPINGS = {"stacked": "stacked", "percent_stacked": "percentStacked"}
 
 
 def style_chart(chart, options: ChartOptions, chart_type: ChartType) -> None:
     chart.width = options.width_cm
     chart.height = options.height_cm
-    # Without an explicit overlay flag, Excel draws the title and legend over the plot.
     chart.title = _title(options.title)
-    if not options.show_legend:
+    if options.legend == "none":
         chart.legend = None
     else:
+        # Without an explicit overlay flag, Excel draws the legend over the plot.
         chart.legend.overlay = False
-        if options.legend_position:
-            chart.legend.position = _LEGEND_POSITIONS[options.legend_position]
+        chart.legend.position = _LEGEND_POSITIONS[options.legend]
     if options.data_labels:
         for part in chart._charts:
             part.dataLabels = DataLabelList(
@@ -33,26 +33,23 @@ def style_chart(chart, options: ChartOptions, chart_type: ChartType) -> None:
                 showLegendKey=False,
                 showPercent=False,
             )
-    if options.grouping in ("stacked", "percent_stacked"):
-        chart.grouping = "stacked" if options.grouping == "stacked" else "percentStacked"
+    if options.grouping != "standard":
+        chart.grouping = _GROUPINGS[options.grouping]
         if isinstance(chart, BarChart):
             chart.overlap = 100
     if chart_type not in ROUND_TYPES:
         _style_axes(chart, options)
     if isinstance(chart, DoughnutChart):
         chart.holeSize = 50
-    if isinstance(chart, ScatterChart) and (
-        options.markers is not None or options.smooth is not None
-    ):
-        chart.scatterStyle = ("smooth" if options.smooth else "line") + (
-            "" if options.markers is False else "Marker"
-        )
+    if isinstance(chart, ScatterChart):
+        chart.scatterStyle = "lineMarker"
 
 
 def _title(text: str | None) -> Title | None:
     if text is None:
         return None
     title = title_maker(text)
+    # Without an explicit overlay flag, Excel draws titles over the plot.
     title.overlay = False
     return title
 
@@ -72,27 +69,32 @@ def _style_axes(chart, options: ChartOptions) -> None:
 def style_series(
     series: list[Series], colors: list[str], chart_type: ChartType, options: ChartOptions
 ) -> None:
-    """Apply colors, markers and smoothing; `series` is in data column order."""
-    for index, item in enumerate(series):
-        if options.markers is not None:
+    """Apply markers, line shape and colors; `series` is in data column order."""
+    for item in series:
+        if chart_type == "line":
             item.marker = Marker(symbol="circle" if options.markers else "none")
-        if chart_type in ("line", "scatter"):
             # Excel curves lines that carry no smooth flag.
-            item.smooth = bool(options.smooth)
-        if index < len(colors) and chart_type not in ROUND_TYPES:
-            _color_series(item, colors[index], chart_type)
+            item.smooth = options.smooth
+        elif chart_type == "scatter":
+            # A scatter chart plots points, not a connecting line.
+            item.marker = Marker(symbol="circle")
+            item.graphicalProperties.line.noFill = True
+            item.smooth = False
     if chart_type in ROUND_TYPES:
         series[0].dPt = [
             DataPoint(idx=index, spPr=GraphicalProperties(solidFill=color))
             for index, color in enumerate(colors)
         ]
+        return
+    for item, color in zip(series, colors, strict=False):
+        _color_series(item, color, chart_type)
 
 
 def _color_series(series: Series, color: str, chart_type: ChartType) -> None:
-    if chart_type in ("line", "scatter", "radar"):
+    if chart_type in ("line", "radar"):
         series.graphicalProperties.line.solidFill = color
-        if series.marker is not None and series.marker.symbol != "none":
-            series.marker.graphicalProperties = GraphicalProperties(solidFill=color)
-            series.marker.graphicalProperties.line.solidFill = color
     else:
         series.graphicalProperties.solidFill = color
+    if series.marker is not None and series.marker.symbol != "none":
+        series.marker.graphicalProperties = GraphicalProperties(solidFill=color)
+        series.marker.graphicalProperties.line.solidFill = color

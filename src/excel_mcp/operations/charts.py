@@ -93,7 +93,7 @@ def _categorical(sheet: Worksheet, area: CellRange, chart_type: ChartType, optio
 
 def _secondary_columns(sheet: Worksheet, area: CellRange, options: ChartOptions) -> set[int]:
     """Column numbers of the headers named in secondary_line_columns."""
-    names = options.secondary_line_columns or []
+    names = options.secondary_line_columns
     headers = {
         str(sheet.cell(area.min_row, col).value): col
         for col in range(area.min_col + 1, area.max_col + 1)
