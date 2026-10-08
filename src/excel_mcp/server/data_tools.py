@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
-from excel_mcp.operations import cells, replace, sorting
+from excel_mcp.operations import cells, replace, rule_clear, sorting
 from excel_mcp.operations.calculated import formula_values, read_calculated
 from excel_mcp.operations.cells import FindResult, RangeData
 from excel_mcp.operations.hyperlinks import Link
@@ -105,19 +105,35 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         sheet: SheetName,
         range: RangeRef,
         clear: Annotated[
-            Literal["contents", "formats", "all"],
-            Field(description="Clear values, formatting, or both."),
+            Literal["contents", "formats", "rules", "all"],
+            Field(
+                description="What to clear. 'formats' includes conditional formats, as Excel's "
+                "Clear Formats does; 'rules': conditional formats and data validation only; "
+                "'all': everything."
+            ),
         ] = "contents",
     ) -> str:
-        """Clear a range's values and/or formatting; other cells do not move."""
+        """Clear a range's values, formatting and/or rules; other cells do not move.
+
+        A conditional format or validation that covers more than the range keeps the rest.
+        To clear a whole sheet's rules, use its whole range, e.g. 'A1:XFD1048576'.
+        """
         with workspace.edit(path) as workbook:
-            cleared = cells.clear_range(
-                get_sheet(workbook, sheet),
-                range,
-                contents=clear in ("contents", "all"),
-                formats=clear in ("formats", "all"),
-                max_cells=limits.max_cells,
-            )
+            target = get_sheet(workbook, sheet)
+            area = parse_range(range)
+            cleared = str(area)
+            if clear != "rules":
+                cleared = cells.clear_range(
+                    target,
+                    range,
+                    contents=clear in ("contents", "all"),
+                    formats=clear in ("formats", "all"),
+                    max_cells=limits.max_cells,
+                )
+            if clear != "contents":
+                rule_clear.clear_conditional_formats(target, area)
+            if clear in ("rules", "all"):
+                rule_clear.clear_validation(target, area)
         return f"Cleared {clear} of {sheet}!{cleared}."
 
     @tools.destroyer("Copy range")
