@@ -32,7 +32,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         sheet: SheetName,
         range: Annotated[
             str | None,
-            Field(description="Range to read, e.g. 'A1:D20'. Default: the used range."),
+            Field(
+                description="Range to read, e.g. 'A1:D20', 'B:B' or '2:3'. Default: the used range."
+            ),
         ] = None,
         mode: ReadMode = "values",
         max_cells: Annotated[

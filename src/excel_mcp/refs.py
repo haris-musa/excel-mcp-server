@@ -1,13 +1,18 @@
 """Parsing and formatting of A1-style cell references."""
 
+import re
+from collections.abc import Callable
 from dataclasses import dataclass
 
-from openpyxl.utils.cell import get_column_letter, range_boundaries
+from openpyxl.utils.cell import column_index_from_string, get_column_letter, range_boundaries
 
 from excel_mcp.errors import InvalidArgumentError, LimitExceededError
 
 MAX_ROW = 1_048_576
 MAX_COLUMN = 16_384
+
+_COLUMN_SPAN = re.compile(r"([A-Za-z]{1,3}):([A-Za-z]{1,3})")
+_ROW_SPAN = re.compile(r"(\d+):(\d+)")
 
 
 @dataclass(frozen=True)
@@ -80,9 +85,47 @@ def parse_range(ref: str) -> CellRange:
         max_row=max(min_row, max_row),
         max_col=max(min_col, max_col),
     )
-    if cell_range.min_row < 1 or cell_range.max_row > MAX_ROW or cell_range.max_col > MAX_COLUMN:
-        raise InvalidArgumentError(f"Range {ref!r} is outside the worksheet limits.")
+    _check_rows(cell_range.min_row, cell_range.max_row)
+    if cell_range.max_col > MAX_COLUMN:
+        raise InvalidArgumentError(
+            f"Column {get_column_letter(cell_range.max_col)} is past "
+            f"{get_column_letter(MAX_COLUMN)}, the last column."
+        )
     return cell_range
+
+
+def parse_clamped_range(ref: str, used: Callable[[], CellRange]) -> CellRange:
+    """`parse_range`, also accepting whole columns ('B:D') or rows ('2:3') limited to the
+    used range, which is only looked up for those."""
+    text = ref.strip().replace("$", "")
+    column_span = _COLUMN_SPAN.fullmatch(text)
+    if column_span:
+        first, last = sorted(_column_number(letters) for letters in column_span.groups())
+        area = used()
+        return CellRange(area.min_row, first, area.max_row, last)
+    row_span = _ROW_SPAN.fullmatch(text)
+    if row_span:
+        first, last = sorted(int(number) for number in row_span.groups())
+        _check_rows(first, last)
+        area = used()
+        return CellRange(first, area.min_col, last, area.max_col)
+    return parse_range(ref)
+
+
+def _check_rows(first: int, last: int) -> None:
+    if first < 1:
+        raise InvalidArgumentError("Row 0 is not valid; rows start at 1.")
+    if last > MAX_ROW:
+        raise InvalidArgumentError(f"Row {last} is past {MAX_ROW}, the last row.")
+
+
+def _column_number(letters: str) -> int:
+    number = column_index_from_string(letters.upper())
+    if number > MAX_COLUMN:
+        raise InvalidArgumentError(
+            f"Column {letters.upper()} is past {get_column_letter(MAX_COLUMN)}, the last column."
+        )
+    return number
 
 
 def parse_cell(ref: str) -> tuple[int, int]:

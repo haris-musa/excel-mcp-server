@@ -9,6 +9,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.refs import parse_range
+from excel_mcp.text import quoted
 
 Value = str | int | float | dt.datetime | None
 Kind = Literal["text", "number", "date"]
@@ -36,8 +37,10 @@ class Source:
     def field_index(self, name: str) -> int:
         folded = [column.name.strip().casefold() for column in self.columns]
         if name.strip().casefold() not in folded:
-            available = [column.name for column in self.columns]
-            raise InvalidArgumentError(f"Field {name!r} not found. Available fields: {available}.")
+            raise InvalidArgumentError(
+                f"Field {name!r} not found. "
+                f"Available fields: {quoted(column.name for column in self.columns)}."
+            )
         return folded.index(name.strip().casefold())
 
 

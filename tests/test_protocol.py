@@ -85,16 +85,14 @@ async def test_unknown_nested_field_is_rejected(client: Client) -> None:
     )
     assert result.is_error
     message = error_text(result)
-    assert "Unknown field(s): print" in message
-    assert "print_setup" in message
+    assert "layout.print: unknown field; did you mean 'print_setup'?" in message
 
 
 async def test_unknown_top_level_argument_is_rejected(client: Client) -> None:
     result = await client.call_tool("read_range", {"path": "a.xlsx", "sheet": "S", "rnge": "A1"})
     assert result.is_error
     message = error_text(result)
-    assert "Unknown field(s): rnge" in message
-    assert "range" in message
+    assert "rnge: unknown field; did you mean 'range'?" in message
 
 
 async def test_instructions_describe_path_mode(files: Path, tmp_path: Path) -> None:

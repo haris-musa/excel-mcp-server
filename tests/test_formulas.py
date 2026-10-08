@@ -1,6 +1,6 @@
 import pytest
 
-from excel_mcp.errors import UnsafeFormulaError
+from excel_mcp.errors import InvalidFormulaError, UnsafeFormulaError
 from excel_mcp.formulas import check_formula
 
 SHEETS = ["Sheet1", "Sheet2", "Sheet3", "My Sheet", "Data", "Q1.Sales", "Report.v2", "Wow!", "It's"]
@@ -107,15 +107,15 @@ def test_external_workbook_references_are_rejected(formula: str) -> None:
 
 @pytest.mark.parametrize("formula", ["=cmd|' /C calc'!A0", "=cmd|'/c calc'!'A0'"])
 def test_dde_is_rejected(formula: str) -> None:
-    with pytest.raises(UnsafeFormulaError):
+    with pytest.raises((UnsafeFormulaError, InvalidFormulaError)):
         check_formula(formula, SHEETS)
 
 
 def test_formula_must_start_with_equals() -> None:
-    with pytest.raises(UnsafeFormulaError, match="start with"):
+    with pytest.raises(InvalidFormulaError, match="start with"):
         check_formula("SUM(A1)", SHEETS)
 
 
 def test_unknown_sheet_error_lists_the_sheets() -> None:
-    with pytest.raises(UnsafeFormulaError, match=r"'Q3' .* Sheets: Q1, Q2"):
+    with pytest.raises(UnsafeFormulaError, match=r"'Q3' .* Sheets: 'Q1', 'Q2'"):
         check_formula("=Q3!A1", ["Q1", "Q2"])

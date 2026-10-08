@@ -16,7 +16,9 @@ from collections.abc import Iterable, Iterator
 from openpyxl.formula import Tokenizer
 from openpyxl.formula.tokenizer import Token, TokenizerError
 
-from excel_mcp.errors import UnsafeFormulaError
+from excel_mcp.errors import InvalidFormulaError, UnsafeFormulaError
+from excel_mcp.formula_syntax import check_syntax, invalid_formula
+from excel_mcp.text import quoted
 from excel_mcp.xlfn import add_prefixes
 
 BLOCKED_FUNCTIONS = frozenset(
@@ -93,20 +95,30 @@ def normalize_function_name(token_value: str) -> str:
 
 
 def check_formula(formula: str, sheet_names: Iterable[str]) -> None:
-    """Raise `UnsafeFormulaError` unless ``formula`` (starting with ``=``) is allowed.
+    """Raise unless ``formula`` (starting with ``=``) is valid Excel syntax and allowed.
 
+    Raises `InvalidFormulaError` for syntax and `UnsafeFormulaError` for the safety policy.
     ``sheet_names`` are the sheets of the workbook the formula is written to.
     """
     if not formula.startswith("="):
-        raise UnsafeFormulaError(f"Formula must start with '=': {formula!r}.")
-    try:
-        tokens = Tokenizer(formula).items
-    except TokenizerError as error:
-        raise UnsafeFormulaError(f"Formula could not be parsed: {error}.") from None
-
+        raise InvalidFormulaError(f"Formula must start with '=': {formula!r}.")
+    tokens = _tokenize(formula)
     sheets = {name.casefold(): name for name in sheet_names}
     for token in tokens:
         _check_token(token, sheets)
+    check_syntax(formula, tokens)
+
+
+def _tokenize(formula: str) -> list[Token]:
+    try:
+        return Tokenizer(formula).items
+    except TokenizerError as error:
+        reason = str(error).removesuffix(f" in {formula!r}").removesuffix(f" in {formula}")
+        if "parsing string" in reason:
+            reason = "unterminated text, close it with a quote"
+        raise invalid_formula(formula, reason) from None
+    except IndexError:
+        raise invalid_formula(formula, "unmatched ')'") from None
 
 
 def storable_formula(formula: str, sheet_names: Iterable[str]) -> str:
@@ -144,7 +156,7 @@ def _check_token(token: Token, sheets: dict[str, str]) -> None:
                 raise UnsafeFormulaError(
                     f"{sheet!r} in {token.value!r} is not a sheet of this workbook, and "
                     "references to other workbooks are not allowed. "
-                    f"Sheets: {', '.join(sheets.values())}."
+                    f"Sheets: {quoted(sheets.values())}."
                 )
 
 

@@ -12,7 +12,15 @@ from pydantic import BaseModel
 
 from excel_mcp.errors import InvalidArgumentError, LimitExceededError
 from excel_mcp.formulas import storable_formula
-from excel_mcp.refs import MAX_COLUMN, MAX_ROW, CellRange, cell_name, parse_cell, parse_range
+from excel_mcp.refs import (
+    MAX_COLUMN,
+    MAX_ROW,
+    CellRange,
+    cell_name,
+    parse_cell,
+    parse_clamped_range,
+    parse_range,
+)
 from excel_mcp.values import CellValue, date_number_format, to_cell, to_json
 from excel_mcp.workspace import sheet_names
 
@@ -99,8 +107,15 @@ def store_value(cell: Cell, value: CellValue) -> None:
         cell.data_type = "s"
 
 
+def read_window(sheet: ReadOnlyWorksheet, ref: str | None) -> CellRange:
+    """The range to read: ``ref`` (whole columns and rows allowed), else the used range."""
+    if ref is None:
+        return streamed_used_range(sheet)
+    return parse_clamped_range(ref, lambda: streamed_used_range(sheet))
+
+
 def read_range(sheet: ReadOnlyWorksheet, ref: str | None, max_cells: int) -> RangeData:
-    target = parse_range(ref) if ref else streamed_used_range(sheet)
+    target = read_window(sheet, ref)
     if target.cols > max_cells:
         raise LimitExceededError(
             f"Range {target} has {target.cols} columns; at most {max_cells} cells can be "

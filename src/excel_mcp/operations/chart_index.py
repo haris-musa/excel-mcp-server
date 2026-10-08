@@ -31,11 +31,12 @@ def list_charts(sheet: Worksheet) -> list[ChartInfo]:
 
 def delete_chart(sheet: Worksheet, index: int) -> ChartInfo:
     charts = list_charts(sheet)
+    if not charts:
+        raise InvalidArgumentError(f"Sheet {sheet.title!r} has no charts.")
     if not 1 <= index <= len(charts):
-        valid = f"1 to {len(charts)}" if charts else "none: the sheet has no charts"
         raise InvalidArgumentError(
-            f"Sheet {sheet.title!r} has no chart {index}. Valid chart indices: {valid}. "
-            "describe_sheet lists them."
+            f"Sheet {sheet.title!r} has no chart {index}. Valid chart indices: 1 to "
+            f"{len(charts)}. describe_sheet lists them."
         )
     del sheet._charts[index - 1]  # pyright: ignore[reportAttributeAccessIssue]
     return charts[index - 1]

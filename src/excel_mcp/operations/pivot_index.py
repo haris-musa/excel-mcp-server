@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.operations.cells import clear_range
 from excel_mcp.refs import CellRange, parse_range
+from excel_mcp.text import quoted
 from excel_mcp.workspace import worksheets
 
 
@@ -54,9 +55,11 @@ def delete_pivot(sheet: Worksheet, name: str, max_cells: int) -> PivotInfo:
                 sheet, str(pivot_area(pivot)), contents=True, formats=False, max_cells=max_cells
             )
             return info
-    available = [pivot.name for pivot in pivots] or "none: the sheet has no PivotTables"
+    if not pivots:
+        raise InvalidArgumentError(f"Sheet {sheet.title!r} has no PivotTables.")
     raise InvalidArgumentError(
-        f"Sheet {sheet.title!r} has no PivotTable {name!r}. Available: {available}."
+        f"Sheet {sheet.title!r} has no PivotTable {name!r}. "
+        f"Available: {quoted(pivot.name for pivot in pivots)}."
     )
 
 

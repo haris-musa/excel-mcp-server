@@ -79,7 +79,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         """
         with workspace.edit(path) as workbook:
             sheets.insert_lines(get_sheet(workbook, sheet), axis, at, count)
-        return f"Inserted {count} {axis} at {at} in {sheet!r}."
+        return f"Inserted {sheets.describe_lines(axis, at, count)}."
 
     @tools.destroyer("Delete rows or columns")
     def delete_rows_or_columns(
@@ -91,4 +91,4 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         """
         with workspace.edit(path) as workbook:
             sheets.delete_lines(get_sheet(workbook, sheet), axis, at, count)
-        return f"Deleted {count} {axis} starting at {at} in {sheet!r}."
+        return f"Deleted {sheets.describe_lines(axis, at, count)}."
