@@ -16,7 +16,9 @@ import olefile
 from excel_mcp import cfb
 from excel_mcp.errors import WorkbookError
 
-MAX_DECOMPRESSED_BYTES = 16 * 1024 * 1024
+MAX_DECOMPRESSED_BYTES = 16 * 1024 * 1024  # in total, over all streams of a project
+MAX_DIRECTORY_BYTES = 1024 * 1024
+MAX_MODULES = 1000
 
 ModuleKind = Literal["standard", "class", "document", "form"]
 Record = tuple[int, bytes]
@@ -53,8 +55,9 @@ class ProjectData:
 
 def read_project(content: bytes) -> ProjectData:
     """Read the project's modules, the directory records before them and the PROJECT stream."""
+    budget = _Budget(MAX_DECOMPRESSED_BYTES)
     with cfb.reading(content) as ole:
-        directory = decompress(_read_stream(ole, "VBA/dir"))
+        directory = budget.decompress(_read_stream(ole, "VBA/dir"), MAX_DIRECTORY_BYTES)
         code_page, header, entries = _parse_directory(directory)
         text = _read_stream(ole, "PROJECT").decode(encoding(code_page), errors="replace")
         kinds = module_kinds(text)
@@ -63,7 +66,7 @@ def read_project(content: bytes) -> ProjectData:
                 name=name,
                 stream=stream,
                 kind="standard" if procedural else kinds.get(name.casefold(), "class"),
-                source=decompress(_read_stream(ole, f"VBA/{stream}")[offset:])
+                source=budget.decompress(_read_stream(ole, f"VBA/{stream}")[offset:])
                 .decode(encoding(code_page), errors="replace")
                 .rstrip("\0"),
                 records=records,
@@ -85,7 +88,19 @@ def module_kinds(project_text: str) -> dict[str, ModuleKind]:
     return kinds
 
 
-def decompress(data: bytes) -> bytes:
+class _Budget:
+    """The decompressed bytes a project may still produce; a few KB of input can expand to MB."""
+
+    def __init__(self, total: int) -> None:
+        self.remaining = total
+
+    def decompress(self, data: bytes, limit: int | None = None) -> bytes:
+        result = decompress(data, min(self.remaining, limit or self.remaining))
+        self.remaining -= len(result)
+        return result
+
+
+def decompress(data: bytes, limit: int = MAX_DECOMPRESSED_BYTES) -> bytes:
     """Decompress an MS-OVBA compressed container (section 2.4.1)."""
     if not data or data[0] != 0x01:
         raise WorkbookError("The VBA project contains a stream that is not compressed.")
@@ -103,7 +118,7 @@ def decompress(data: bytes) -> bytes:
         else:
             output += data[position : position + _CHUNK_SIZE]
             position += _CHUNK_SIZE
-        if len(output) > MAX_DECOMPRESSED_BYTES:
+        if len(output) > limit:
             raise WorkbookError("The VBA project is too large to read.")
     return bytes(output)
 
@@ -169,6 +184,8 @@ def _parse_directory(data: bytes) -> tuple[int, list[Record], list[_ModuleEntry]
         elif current is not None:
             current.append((record_id, value))
             if record_id == MODULE_END:
+                if len(modules) >= MAX_MODULES:
+                    raise WorkbookError(f"The VBA project has more than {MAX_MODULES} modules.")
                 modules.append(_module_entry(current, code_page))
                 current = None
     return code_page, header, modules
