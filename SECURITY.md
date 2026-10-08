@@ -24,7 +24,10 @@ or anyone who can reach the HTTP endpoint. Its defences are:
   `--allow-dir` folders when they are set (always in HTTP mode), after resolving symlinks.
   Existing files are only replaced when a tool is asked to overwrite them.
 - **Formulas**: every formula is tokenized and rejected if it uses a function that reaches
-  the network, other programs or host information, a DDE link, or another workbook.
+  the network, other programs or host information, a DDE link, or another workbook. A
+  reference can only name sheets of the workbook it is in. Uploaded workbooks are checked
+  the same way, including defined names, conditional formats, data validation, tables and
+  chart references.
 - **Network**: HTTP binds to localhost by default with DNS rebinding protection. A public
   host requires `EXCEL_MCP_AUTH_TOKEN` unless `--allow-unauthenticated` is passed for a
   deployment where a proxy handles authentication.

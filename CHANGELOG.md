@@ -6,6 +6,19 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Security
+
+- `import_workbook` checked only cell formulas, so a blocked function or a link to another
+  workbook could be stored in a defined name (including a print area), a conditional
+  format, a data validation rule or an Excel 2010 extension. It now checks every formula in
+  the uploaded file. GHSA-69rc-6f6g-43xj (@NotAFlightRisk).
+- The formula check missed links to another workbook written without square brackets
+  (`=Budget.xlsx!Sales`, `='\\server\share\book.xlsx'!Sales`), references to another
+  workbook that end in a function call, and blocked functions after a range operator
+  (`=SUM(A1:INDIRECT("B2"))`). A reference can now only name sheets of the workbook it is
+  written to, so a formula that refers to a sheet that does not exist yet is rejected
+  until that sheet is created. GHSA-frr9-2j4w-q923 (@zachary-satterly).
+
 ## [1.1.1] - 2026-09-28
 
 ### Fixed

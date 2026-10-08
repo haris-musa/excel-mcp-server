@@ -13,6 +13,7 @@ from excel_mcp.errors import InvalidArgumentError, LimitExceededError
 from excel_mcp.formulas import check_formula
 from excel_mcp.refs import MAX_COLUMN, MAX_ROW, CellRange, cell_name, parse_cell, parse_range
 from excel_mcp.values import CellValue, date_number_format, to_cell, to_json
+from excel_mcp.workspace import sheet_names
 
 
 class RangeData(BaseModel):
@@ -123,7 +124,8 @@ def write_range(
     if written.max_row > MAX_ROW or written.max_col > MAX_COLUMN:
         raise InvalidArgumentError(f"Writing {written} would go past the worksheet limits.")
 
-    converted = [[to_cell(value) for value in row] for row in rows]
+    names = sheet_names(sheet)
+    converted = [[to_cell(value, names) for value in row] for row in rows]
     for row_offset, row in enumerate(converted):
         for col_offset, value in enumerate(row):
             cell = writable_cell(sheet, start_row + row_offset, start_col + col_offset)
@@ -180,7 +182,7 @@ def copy_range(
                 formula = Translator(str(value), origin=origin).translate_formula(
                     destination.coordinate
                 )
-                check_formula(formula)
+                check_formula(formula, sheet_names(target))
                 destination.value = formula
             else:
                 destination.value = value
