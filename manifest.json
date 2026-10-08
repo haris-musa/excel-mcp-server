@@ -59,7 +59,7 @@
     },
     {
       "name": "describe_workbook",
-      "description": "List a workbook's sheets with their used ranges, plus its defined names."
+      "description": "List a workbook's sheets with their used ranges, plus its defined names with their scope."
     },
     {
       "name": "list_workbooks",
@@ -75,7 +75,7 @@
     },
     {
       "name": "describe_sheet",
-      "description": "Describe a sheet's structure: used range, frozen panes, merged ranges, tables, charts, data validation, conditional formats and custom column widths."
+      "description": "Describe a sheet's structure: used range, frozen panes, merged ranges, tables, charts, data validation, conditional formats, notes and custom column widths."
     },
     {
       "name": "create_sheet",
@@ -118,6 +118,10 @@
       "description": "Copy values and formatting to another place, overwriting the destination."
     },
     {
+      "name": "sort_range",
+      "description": "Sort a range's rows by one or more columns, like Data > Sort in Excel."
+    },
+    {
       "name": "find_cells",
       "description": "Find cells whose value contains (or equals) the query."
     },
@@ -156,6 +160,22 @@
     {
       "name": "create_summary_table",
       "description": "Group rows and aggregate columns, like a pivot table, writing the result as cells."
+    },
+    {
+      "name": "set_defined_name",
+      "description": "Create a defined name for a range or constant, replacing a name of the same scope."
+    },
+    {
+      "name": "delete_defined_name",
+      "description": "Delete a defined name."
+    },
+    {
+      "name": "set_note",
+      "description": "Add a note to a cell, replacing the cell's existing note."
+    },
+    {
+      "name": "delete_note",
+      "description": "Remove the note from a cell."
     },
     {
       "name": "read_vba",

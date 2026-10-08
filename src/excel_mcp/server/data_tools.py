@@ -4,8 +4,9 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
-from excel_mcp.operations import cells
+from excel_mcp.operations import cells, sorting
 from excel_mcp.operations.cells import FindResult, RangeData
+from excel_mcp.operations.sorting import SortKey
 from excel_mcp.server.params import CellRef, RangeRef, SheetName, WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
 from excel_mcp.values import CellValue
@@ -113,6 +114,34 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 limits.max_cells,
             )
         return f"Copied {sheet}!{range} to {target_sheet or sheet}!{copied}."
+
+    @tools.destroyer("Sort range")
+    def sort_range(
+        path: WorkbookPath,
+        sheet: SheetName,
+        range: RangeRef,
+        sort_by: Annotated[
+            list[SortKey],
+            Field(
+                min_length=1, max_length=64, description="Columns to sort by, most important first."
+            ),
+        ],
+        has_header: Annotated[
+            bool, Field(description="The first row holds headers and stays in place.")
+        ] = True,
+    ) -> str:
+        """Sort a range's rows by one or more columns, like Data > Sort in Excel.
+
+        Numbers come before text, then booleans; text ignores case; blank cells always go
+        last. Each row moves as a whole with its formatting, notes and formulas (relative
+        references in a row's formulas shift with it). The key columns must hold values,
+        not formulas, and the range cannot contain merged cells.
+        """
+        with workspace.edit(path) as workbook:
+            count = sorting.sort_range(
+                get_sheet(workbook, sheet), range, sort_by, has_header, limits.max_cells
+            )
+        return f"Sorted {count} rows of {sheet}!{range}."
 
     @tools.reader("Find cells")
     def find_cells(

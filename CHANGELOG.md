@@ -16,9 +16,17 @@ All notable changes to this project are documented here. The format follows
 - `create_chart` draws `doughnut` and `radar` charts.
 - `describe_sheet` lists each chart with its 1-based `index`, `type`, `title` and `anchor`.
 - `delete_chart` removes a chart by the index `describe_sheet` shows.
+- `sort_range` sorts a range's rows by one or more columns (header text or column letter),
+  ascending or descending, in Excel's order. Formatting, notes, links and formulas move
+  with their rows.
+- `set_defined_name` and `delete_defined_name` manage workbook- and sheet-scoped names
+  for ranges and constants. The reference passes the formula safety check.
+- `set_note` and `delete_note` manage cell notes; `describe_sheet` lists them.
 
 ### Changed
 
+- **Breaking:** `describe_workbook` returns `defined_names` as objects with `name`,
+  `refers_to` and `sheet` (null for workbook scope), and includes sheet-scoped names.
 - **Breaking:** `create_chart`'s `show_legend` option is replaced by `legend`: `right`
   (default), `left`, `top`, `bottom` or `none`.
 - **Breaking:** `describe_sheet` no longer returns `chart_count`; use the length of `charts`.

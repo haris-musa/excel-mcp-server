@@ -8,6 +8,8 @@ from pydantic import BaseModel
 
 from excel_mcp.operations.cells import used_range
 from excel_mcp.operations.chart_index import ChartInfo, list_charts
+from excel_mcp.operations.names import DefinedNameInfo, list_defined_names
+from excel_mcp.operations.notes import NoteInfo, list_notes
 from excel_mcp.paths import EXCEL_SUFFIXES
 from excel_mcp.workspace import worksheets
 
@@ -25,7 +27,7 @@ class WorkbookInfo(BaseModel):
     size_bytes: int
     has_vba: bool
     sheets: list[SheetSummary]
-    defined_names: list[str]
+    defined_names: list[DefinedNameInfo]
 
 
 class NamedRange(BaseModel):
@@ -52,6 +54,7 @@ class SheetDetails(BaseModel):
     freeze_panes: str | None
     auto_filter: str | None
     merged_ranges: list[str]
+    notes: list[NoteInfo]
     tables: list[NamedRange]
     charts: list[ChartInfo]
     data_validations: list[DataValidationInfo]
@@ -83,7 +86,7 @@ def describe_workbook(
         size_bytes=size_bytes,
         has_vba=has_vba,
         sheets=[summarize_sheet(sheet) for sheet in worksheets(workbook)],
-        defined_names=sorted(workbook.defined_names),
+        defined_names=list_defined_names(workbook),
     )
 
 
@@ -95,6 +98,7 @@ def describe_sheet(sheet: Worksheet) -> SheetDetails:
         freeze_panes=sheet.freeze_panes,
         auto_filter=sheet.auto_filter.ref,
         merged_ranges=sorted(str(merged) for merged in sheet.merged_cells.ranges),
+        notes=list_notes(sheet),
         tables=[NamedRange(name=name, range=ref) for name, ref in sheet.tables.items()],
         charts=charts,
         data_validations=[

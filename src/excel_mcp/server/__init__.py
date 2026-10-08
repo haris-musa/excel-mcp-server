@@ -6,6 +6,7 @@ from excel_mcp import __version__
 from excel_mcp.config import Settings
 from excel_mcp.paths import PathPolicy
 from excel_mcp.server import (
+    annotation_tools,
     data_tools,
     format_tools,
     object_tools,
@@ -16,7 +17,15 @@ from excel_mcp.server import (
 from excel_mcp.server.registry import ToolRegistry
 from excel_mcp.workspace import Workspace
 
-TOOL_MODULES = (workbook_tools, sheet_tools, data_tools, format_tools, object_tools, vba_tools)
+TOOL_MODULES = (
+    workbook_tools,
+    sheet_tools,
+    data_tools,
+    format_tools,
+    object_tools,
+    annotation_tools,
+    vba_tools,
+)
 
 
 def create_server(settings: Settings) -> MCPServer:
