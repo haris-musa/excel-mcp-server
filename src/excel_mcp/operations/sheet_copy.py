@@ -1,12 +1,8 @@
 """Copying a worksheet the way Excel's Move or Copy > Create a copy does."""
 
-from collections.abc import Iterator
 from copy import copy, deepcopy
 from io import BytesIO
-from typing import Any
 
-from openpyxl.chart.data_source import MultiLevelStrRef, NumRef, StrRef
-from openpyxl.descriptors.serialisable import Serialisable
 from openpyxl.drawing.image import Image
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.copier import WorksheetCopy
@@ -19,6 +15,7 @@ from excel_mcp.operations.sheet_refs import SheetCopyRefs
 from excel_mcp.operations.sheets import validate_sheet_name
 from excel_mcp.operations.tables import table_names
 from excel_mcp.package import arrays
+from excel_mcp.rewrite import chart_references
 from excel_mcp.workspace import get_sheet
 
 
@@ -61,15 +58,15 @@ def _copy_formulas(workbook: Workbook, target: Worksheet, refs: SheetCopyRefs) -
         value = cell.value
         if isinstance(value, ArrayFormula):
             cell.value = ArrayFormula(
-                value.ref, storable_formula(refs.formula(str(value.text)), names)
+                value.ref, storable_formula(refs.formula(str(value.text), target.title), names)
             )
         elif cell.data_type == "f" and isinstance(value, str):
-            cell.value = storable_formula(refs.formula(value), names)
+            cell.value = storable_formula(refs.formula(value, target.title), names)
     for table in target.tables.values():
         for column in table.tableColumns:
             for formula in (column.calculatedColumnFormula, column.totalsRowFormula):
                 if formula is not None and formula.attr_text:
-                    formula.attr_text = refs.operand(formula.attr_text)
+                    formula.attr_text = refs.operand(formula.attr_text, target.title)
 
 
 def _copy_rules(
@@ -81,12 +78,14 @@ def _copy_rules(
         for field in ("formula1", "formula2"):
             operand = getattr(clone, field)
             if operand:
-                setattr(clone, field, storable_operand(refs.operand(operand), names))
+                setattr(clone, field, storable_operand(refs.operand(operand, target.title), names))
         target.add_data_validation(clone)
     for entry in source.conditional_formatting:
         for rule in entry.rules:
             clone = deepcopy(rule)
-            clone.formula = [storable_operand(refs.operand(f), names) for f in rule.formula]
+            clone.formula = [
+                storable_operand(refs.operand(f, target.title), names) for f in rule.formula
+            ]
             target.conditional_formatting.add(str(entry.sqref), clone)
 
 
@@ -96,7 +95,7 @@ def _copy_names(
     for name, defined in source.defined_names.items():
         clone = copy(defined)
         clone.attr_text = storable_operand(
-            refs.operand(defined.attr_text or ""), workbook.sheetnames
+            refs.operand(defined.attr_text or "", target.title), workbook.sheetnames
         )
         target.defined_names[name] = clone
 
@@ -126,22 +125,9 @@ def _copy_drawings(source: Worksheet, target: Worksheet, refs: SheetCopyRefs) ->
     for chart in source._charts:  # pyright: ignore[reportAttributeAccessIssue]
         clone = deepcopy(chart)
         for plot in clone._charts:  # pyright: ignore[reportAttributeAccessIssue]
-            for reference in _references(plot):
-                reference.f = refs.operand(str(reference.f))
+            for reference in chart_references(plot):
+                reference.f = refs.operand(str(reference.f), target.title)
         target.add_chart(clone)
-
-
-def _references(node: Any) -> Iterator[NumRef | StrRef | MultiLevelStrRef]:
-    """Every cell reference inside a chart: series values, categories, titles."""
-    if isinstance(node, NumRef | StrRef | MultiLevelStrRef):
-        yield node
-    elif isinstance(node, Serialisable):
-        for field, value in vars(node).items():
-            if field != "_charts":
-                yield from _references(value)
-    elif isinstance(node, list | tuple):
-        for item in node:
-            yield from _references(item)
 
 
 def _copy_pivots(source: Worksheet, target: Worksheet) -> None:

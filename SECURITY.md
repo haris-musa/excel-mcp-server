@@ -30,7 +30,8 @@ or anyone who can reach the HTTP endpoint. Its defences are:
   reference can only name sheets of the workbook it is in. Uploaded workbooks are checked
   the same way, including defined names (also when created by `set_defined_name`), conditional formats, data validation, tables and
   chart references. Formulas written by `copy_range`, `transform_range` (text to columns) and
-  `replace_cells` pass the same check, as do list sources and rule operands.
+  `replace_cells` pass the same check, as do list sources and rule operands. Formulas that `insert_rows_or_columns`,
+  `delete_rows_or_columns` and `rename_sheet` rewrite pass the same check.
 - **Calculator**: `read_range` evaluates formulas with a built-in interpreter that has no
   access to files, the network or other programs. It never evaluates the functions the
   formula check rejects, and its work (cells evaluated, nesting depth) is bounded per call.

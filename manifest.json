@@ -87,7 +87,7 @@
     },
     {
       "name": "rename_sheet",
-      "description": "Rename a worksheet. Formulas that refer to the old name are not updated."
+      "description": "Rename a worksheet, updating every reference to it like Excel."
     },
     {
       "name": "copy_sheet",
@@ -99,11 +99,11 @@
     },
     {
       "name": "insert_rows_or_columns",
-      "description": "Insert empty rows or columns before position `at`, shifting the rest down or right."
+      "description": "Insert empty rows or columns before position `at`, updating every reference like Excel."
     },
     {
       "name": "delete_rows_or_columns",
-      "description": "Delete rows or columns starting at position `at`, shifting the rest up or left."
+      "description": "Delete rows or columns starting at position `at`, updating every reference like Excel."
     },
     {
       "name": "read_range",

@@ -7,7 +7,8 @@ from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import Field, model_validator
 
 from excel_mcp.inputs import InputModel
-from excel_mcp.operations.spans import Axis, format_span, parse_span
+from excel_mcp.operations.spans import format_span, parse_span
+from excel_mcp.package.lines import Axis
 from excel_mcp.refs import parse_range
 
 CM_PER_INCH = 2.54

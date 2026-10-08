@@ -4,9 +4,10 @@ from typing import Annotated
 
 from pydantic import Field
 
-from excel_mcp.operations import inspect, sheet_copy, sheets
+from excel_mcp.operations import inspect, line_edits, sheet_copy, sheets
+from excel_mcp.operations.calculated import formula_values
 from excel_mcp.operations.inspect import SheetDetails
-from excel_mcp.operations.sheets import Axis
+from excel_mcp.package.lines import Axis
 from excel_mcp.server.params import LineCount, LineIndex, SheetName, WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
 from excel_mcp.workspace import Workspace, get_sheet
@@ -43,7 +44,8 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
 
     @tools.writer("Rename sheet")
     def rename_sheet(path: WorkbookPath, sheet: SheetName, new_name: NewSheetName) -> str:
-        """Rename a worksheet. Formulas that refer to the old name are not updated."""
+        """Rename a worksheet. References to it are updated as in Excel: formulas, names, rules,
+        charts and PivotTable sources."""
         with workspace.edit(path) as workbook:
             sheets.rename_sheet(workbook, sheet, new_name)
         return f"Renamed sheet {sheet!r} to {new_name!r}."
@@ -78,10 +80,22 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     ) -> str:
         """Insert empty rows or columns before position `at`.
 
-        References in formulas, merged ranges, charts and tables are not updated.
+        Like Excel, every reference moves: formulas on all sheets, names, conditional formats,
+        validation, merged cells, tables, charts, PivotTables, filters and print settings.
+        An edit Excel refuses (through an array formula, a PivotTable or a table header)
+        fails.
         """
         with workspace.edit(path) as workbook:
-            sheets.insert_lines(get_sheet(workbook, sheet), axis, at, count)
+            target = get_sheet(workbook, sheet)
+            line_edits.edit_lines(
+                workbook,
+                target,
+                axis,
+                at,
+                count,
+                delete=False,
+                formula_values=lambda area: formula_values(workspace, path, target, area),
+            )
         return f"Inserted {sheets.describe_lines(axis, at, count)}."
 
     @tools.destroyer("Delete rows or columns")
@@ -90,8 +104,18 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     ) -> str:
         """Delete rows or columns starting at position `at`.
 
-        References in formulas, merged ranges, charts and tables are not updated.
+        Like Excel, every reference moves, and one to a deleted cell becomes #REF!. See
+        insert_rows_or_columns.
         """
         with workspace.edit(path) as workbook:
-            sheets.delete_lines(get_sheet(workbook, sheet), axis, at, count)
+            target = get_sheet(workbook, sheet)
+            line_edits.edit_lines(
+                workbook,
+                target,
+                axis,
+                at,
+                count,
+                delete=True,
+                formula_values=lambda area: formula_values(workspace, path, target, area),
+            )
         return f"Deleted {sheets.describe_lines(axis, at, count)}."

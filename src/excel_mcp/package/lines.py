@@ -56,6 +56,27 @@ class LineEdit:
             return self._pushed(first), min(self._pushed(last), self.limit)
         return self._after(first, self.at), self._after(last, self.at - 1)
 
+    def start(self, line: int) -> int:
+        """Where the first line of a span goes; a deleted one gives way to the next."""
+        return self._pushed(line) if not self.delete else self._after(line, self.at)
+
+    def stop(self, line: int) -> int:
+        """Where the last line of a span goes; a deleted one gives way to the previous."""
+        if not self.delete:
+            return min(self._pushed(line), self.limit)
+        return self._after(line, self.at - 1)
+
+    def cuts(self, first: int, last: int) -> bool:
+        """Whether the edit would split the lines ``first`` to ``last`` into separate parts."""
+        if not self.delete:
+            return first < self.at <= last
+        overlaps = first <= self.end and self.at <= last
+        return overlaps and not (self.at <= first and last <= self.end)
+
+    def range(self, area: CellRange) -> CellRange | None:
+        """Where a block of cells ends up; it does not grow over inserted lines."""
+        return self.area(area, grow=False)
+
     def source(self, line: int) -> int:
         """The line of the old sheet that a line of the new one is, or takes its size from.
 

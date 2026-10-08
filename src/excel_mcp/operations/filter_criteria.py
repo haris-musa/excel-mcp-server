@@ -103,15 +103,15 @@ def column_filter(
     ]
     match item.type:
         case "values":
-            xml.filters, test = _values_filter(item.values)
+            xml.filters, test = values_filter(item.values)
         case "compare":
-            xml.customFilters, test = _compare_filter(item.conditions, item.combine)
+            xml.customFilters, test = compare_filter(item.conditions, item.combine)
         case "top" | "bottom":
-            xml.top10, test = _top_filter(item, numbers)
+            xml.top10, test = top_filter(item, numbers)
         case "color":
             xml.colorFilter, test = _color_filter(sheet, item.color)
         case _:
-            xml.dynamicFilter, test = _average_filter(item.type, numbers)
+            xml.dynamicFilter, test = average_filter(item.type, numbers)
     return xml, index, test
 
 
@@ -130,7 +130,7 @@ def _stored(number: float) -> str:
     return str(int(number)) if number == int(number) else repr(number)
 
 
-def _values_filter(wanted: list[str] | None) -> tuple[xl.Filters, Test]:
+def values_filter(wanted: list[str] | None) -> tuple[xl.Filters, Test]:
     if not wanted:
         raise InvalidArgumentError("A values filter needs values.")
     dates = {date for text in wanted if (date := parse_iso_date(text))}
@@ -157,7 +157,7 @@ def _values_filter(wanted: list[str] | None) -> tuple[xl.Filters, Test]:
     return xml, test
 
 
-def _compare_filter(
+def compare_filter(
     conditions: list[FilterCondition] | None, combine: str
 ) -> tuple[xl.CustomFilters, Test]:
     if not conditions:
@@ -226,7 +226,7 @@ def _text_check(compare: Callable[[str, str], bool], wanted: str, name: str):
     return check
 
 
-def _top_filter(item: FilterColumn, numbers: list[float]) -> tuple[xl.Top10, Test]:
+def top_filter(item: FilterColumn, numbers: list[float]) -> tuple[xl.Top10, Test]:
     if item.count is None or (item.percent and item.count > 100):
         raise InvalidArgumentError("top and bottom need a count (1-100 when percent).")
     if not numbers:
@@ -246,7 +246,7 @@ def _top_filter(item: FilterColumn, numbers: list[float]) -> tuple[xl.Top10, Tes
     return xml, test
 
 
-def _average_filter(kind: str, numbers: list[float]) -> tuple[xl.DynamicFilter, Test]:
+def average_filter(kind: str, numbers: list[float]) -> tuple[xl.DynamicFilter, Test]:
     if not numbers:
         raise InvalidArgumentError("The column has no numbers to average.")
     average = float(f"{sum(numbers) / len(numbers):.15g}")

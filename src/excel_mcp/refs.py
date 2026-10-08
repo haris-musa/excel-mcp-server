@@ -5,6 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from openpyxl.utils.cell import column_index_from_string, get_column_letter, range_boundaries
+from openpyxl.worksheet.cell_range import CellRange as SheetRange
 
 from excel_mcp.errors import InvalidArgumentError, LimitExceededError
 
@@ -39,6 +40,10 @@ class CellRange:
     @property
     def top_left(self) -> str:
         return cell_name(self.min_row, self.min_col)
+
+    @classmethod
+    def of(cls, area: SheetRange) -> "CellRange":
+        return cls(area.min_row, area.min_col, area.max_row, area.max_col)
 
     def overlaps(self, other: "CellRange") -> bool:
         return not (

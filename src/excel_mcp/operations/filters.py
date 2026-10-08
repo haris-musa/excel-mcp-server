@@ -55,7 +55,7 @@ def apply_auto_filter(
     else:
         auto_filter = table.autoFilter = xl.AutoFilter(ref=str(area))
     auto_filter.filterColumn = [column for column, _, _ in columns]
-    _hide_failing_rows(sheet, area, [(index, test) for _, index, test in columns], values)
+    hide_failing_rows(sheet, area, [(index, test) for _, index, test in columns], values)
 
 
 def _table_area(table: Table) -> CellRange:
@@ -86,7 +86,7 @@ def _release_previous(sheet: Worksheet, table: Table | None, area: CellRange) ->
         sheet.auto_filter = xl.AutoFilter()
 
 
-def _hide_failing_rows(
+def hide_failing_rows(
     sheet: Worksheet,
     area: CellRange,
     tests: list[tuple[int, Test]],

@@ -2,14 +2,12 @@
 
 import re
 from itertools import groupby
-from typing import Literal
 
 from openpyxl.utils.cell import column_index_from_string, get_column_letter
 
 from excel_mcp.errors import InvalidArgumentError
+from excel_mcp.package.lines import Axis
 from excel_mcp.refs import MAX_COLUMN, MAX_ROW
-
-Axis = Literal["rows", "columns"]
 
 MAX_ROW_SPAN = 10_000
 
