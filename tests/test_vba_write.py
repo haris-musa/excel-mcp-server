@@ -315,3 +315,16 @@ def test_vba_write_flag_comes_from_the_command_line_or_environment(
     assert cli._settings(cli._parser().parse_args(["stdio", "--allow-vba-write"])).allow_vba_write
     monkeypatch.setenv("EXCEL_MCP_ALLOW_VBA_WRITE", "1")
     assert cli._settings(cli._parser().parse_args(["stdio"])).allow_vba_write
+
+
+@pytest.mark.parametrize("tool", ["write_vba_module", "delete_vba_module"])
+async def test_signed_projects_are_refused_and_left_untouched(
+    vba_error: ToolCall, macro_workbook: Path, tool: str
+) -> None:
+    with zipfile.ZipFile(macro_workbook, "a") as archive:
+        archive.writestr("xl/vbaProjectSignature.bin", b"signature")
+    before = macro_workbook.read_bytes()
+    arguments = {"code": MACRO} if tool == "write_vba_module" else {}
+    message = await vba_error(tool, path="macros.xlsm", module="Module1", **arguments)
+    assert "digitally signed" in message
+    assert macro_workbook.read_bytes() == before

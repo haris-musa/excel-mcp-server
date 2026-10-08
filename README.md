@@ -164,7 +164,8 @@ Every parameter is documented in [TOOLS.md](TOOLS.md).
 With `--allow-vba-write` (or `EXCEL_MCP_ALLOW_VBA_WRITE=1`) the server can set the code of
 standard, class, workbook and sheet modules in `.xlsm` and `.xltm` files, delete standard and
 class modules, and create new `.xlsm`/`.xltm` workbooks. The server only stores the code; it
-never runs it, and Excel asks before enabling macros.
+never runs it, and Excel asks before enabling macros. Digitally signed VBA projects are
+refused, since any change would invalidate the signature.
 
 > **Warning:** macro code runs with your user's rights once you enable macros in Excel. A
 > model that reads untrusted content could be tricked into writing harmful code. Enable this
