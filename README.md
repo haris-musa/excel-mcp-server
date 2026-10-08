@@ -14,7 +14,7 @@ create, read and edit Excel workbooks. It needs no Microsoft Excel installation.
 - **Read and write** cells, formulas and dates, with paging for large sheets and search
 - **Format** fonts, fills, borders, number formats, column widths and frozen panes; hide or
   group rows, columns and sheets; set up printing; protect sheets
-- **Structure** sheets, rows and columns, merged cells, tables, charts, images and summary tables
+- **Structure** sheets, rows and columns, merged cells, tables, charts, images and PivotTables
 - **Rules**: conditional formatting and data validation (dropdowns, number limits)
 - **Macros**: read the VBA code in `.xlsm` files, module by module (read-only, never run)
 - **Safe by design**: optional folder confinement, a formula safety check, read-only mode,
@@ -151,7 +151,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
 | Sheets | `describe_sheet`, `create_sheet`, `rename_sheet`, `copy_sheet`, `delete_sheet`, `insert_rows_or_columns`, `delete_rows_or_columns` |
 | Cells | `read_range`, `write_range`, `clear_range`, `copy_range`, `sort_range`, `find_cells` |
 | Formatting | `format_range`, `merge_cells`, `set_sheet_layout`, `add_conditional_format`, `add_data_validation` |
-| Objects | `create_table`, `create_chart`, `delete_chart`, `create_summary_table`, `insert_image`, `delete_image` |
+| Objects | `create_table`, `create_chart`, `delete_chart`, `create_pivot_table`, `delete_pivot_table`, `insert_image`, `delete_image` |
 | Names and notes | `set_defined_name`, `delete_defined_name`, `set_note`, `delete_note` |
 | Macros | `read_vba` |
 
@@ -176,7 +176,9 @@ Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
   Excel last saved, so formulas written by this server read as empty until the file is
   opened and saved in Excel or LibreOffice.
 - Legacy `.xls` and `.csv` files are not supported.
-- `create_summary_table` writes a static summary; openpyxl cannot create real PivotTables.
+- PivotTables are created from a snapshot and can use text, number and date columns of up to
+  100,000 cells; Excel refreshes them from the live source data. Filters start with all items
+  shown.
 - Inserting or deleting rows and columns does not update formulas, charts or tables that
   refer to the moved cells.
 - Workbook features openpyxl does not understand, such as shapes, slicers and some

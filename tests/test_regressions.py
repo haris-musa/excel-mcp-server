@@ -37,14 +37,14 @@ async def test_copied_text_stays_text(call: ToolCall, files: Path) -> None:
     assert load_workbook(files / "t.xlsx")["Data"]["D2"].data_type == "s"
 
 
-async def test_summary_text_stays_text(call: ToolCall, files: Path) -> None:
+async def test_pivot_text_stays_text(call: ToolCall, files: Path) -> None:
     _text_formula_workbook(files / "t.xlsx")
     await call(
-        "create_summary_table",
+        "create_pivot_table",
         path="t.xlsx",
-        sheet="Data",
+        source_sheet="Data",
         source_range="A1:B2",
-        group_by=["Group"],
+        rows=["Group"],
         values=[{"field": "Value"}],
         target_sheet="Data",
         target_cell="F1",

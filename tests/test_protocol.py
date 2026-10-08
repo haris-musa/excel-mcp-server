@@ -31,7 +31,7 @@ def _untyped_schemas(schema: Any, where: str = "") -> list[str]:
 
 async def test_every_tool_is_documented_and_typed(client: Client) -> None:
     tools = (await client.list_tools()).tools
-    assert len(tools) == 34
+    assert len(tools) == 35
     for tool in tools:
         assert tool.title, tool.name
         assert tool.description and not tool.description.startswith(" "), tool.name
