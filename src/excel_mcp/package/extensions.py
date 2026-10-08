@@ -6,14 +6,36 @@ in the sheet proper. They hold ranges and formulas that must follow the cells th
 
 import re
 from collections.abc import Callable
-from typing import Literal
+from typing import Protocol
+from xml.sax.saxutils import escape
+
+from openpyxl.utils.cell import column_index_from_string, get_column_letter
+
+from excel_mcp.package.lines import LineEdit
+from excel_mcp.package.scan import unescape
+from excel_mcp.refs import parse_range
 
 SPARKLINES = "{05C60535-1F16-4fd2-B633-F4F36F0B64E0}"
 CONDITIONAL_FORMATS = "{78C0D931-6437-407d-A8EE-F0AAD7539E65}"
 DATA_VALIDATIONS = "{CCE6A557-97BC-4b89-ADB6-D9C93CAAB3DF}"
 
-Kind = Literal["range", "formula"]
-Update = Callable[[str, Kind], str | None]
+
+class Rewriter(Protocol):
+    """What the rewriting of references needs to know; see `package.references`."""
+
+    edit: LineEdit | None
+
+    def ranges(self, text: str, *, grow: bool = True) -> str | None:
+        """A list of ranges of this sheet moved by the edit, None when nothing is left.
+
+        Ranges that end just above inserted lines grow over them unless ``grow`` is False.
+        """
+        ...
+
+    def formula(self, text: str) -> str:
+        """A formula or operand, without the leading "=", with its references updated."""
+        ...
+
 
 _SPARKLINE = re.compile(r"<x14:sparkline>.*?</x14:sparkline>", re.S)
 _EMPTY_GROUP = re.compile(
@@ -23,24 +45,30 @@ _RULE_GROUP = re.compile(r"<x14:conditionalFormatting\b[^>]*>.*?</x14:conditiona
 _VALIDATION = re.compile(r"<x14:dataValidation\b[^>]*>.*?</x14:dataValidation>", re.S)
 _RANGE = re.compile(r"<xm:sqref>([^<]*)</xm:sqref>")
 _FORMULA = re.compile(r"<xm:f>([^<]*)</xm:f>")
+_FORMULA_ITEM = re.compile(
+    r"<x14:cfRule\b.*?</x14:cfRule>|<x14:dataValidation\b.*?</x14:dataValidation>", re.S
+)
+_CELL = re.compile(r"(\$?)\b([A-Z]{1,3})(\$?)(\d+)\b(?![!(\w])")
 
 
-def rewrite_references(extensions: dict[str, str], update: Update) -> None:
-    """Pass the ranges and formulas of sparklines, conditional formats and validations on.
+def rewrite_extensions(extensions: dict[str, str], rewriter: Rewriter) -> None:
+    """Move the ranges and update the formulas of the sparklines, conditional formats and
+    validations in a sheet's ``<ext>`` entries (`SheetPackage.extensions`), as Excel does.
 
-    ``extensions`` is the sheet's ``<ext>`` entries by uri (`SheetPackage.extensions`).
-    ``update(text, kind)`` returns the new text, or None when what the text refers to is
-    gone. As in Excel, a sparkline is deleted when its location or its data is gone; a
-    conditional format or validation is deleted when its range is gone, and gets ``#REF!``
-    for a formula that is gone.
+    A sparkline whose location is deleted is deleted; one whose data is deleted loses its
+    data. After an insertion just below or to the right of a sparkline, the inserted lines
+    get copies of it that read the data of their own line. A conditional format or
+    validation is deleted when its range is, and a formula it holds follows the edit.
     """
     for uri, xml in list(extensions.items()):
         if uri == SPARKLINES:
-            kept = _sparklines(xml, update)
+            kept = _sparklines(xml, lambda item: _moved_sparkline(item, rewriter))
         elif uri == CONDITIONAL_FORMATS:
-            kept = _items(xml, _RULE_GROUP, update, "<x14:cfRule")
+            kept = _items(xml, _RULE_GROUP, lambda item: _moved_item(item, rewriter), "<x14:cfRule")
         elif uri == DATA_VALIDATIONS:
-            kept = _items(xml, _VALIDATION, update, "<x14:dataValidation ")
+            kept = _items(
+                xml, _VALIDATION, lambda item: _moved_item(item, rewriter), "<x14:dataValidation "
+            )
         else:
             continue
         if kept is None:
@@ -50,13 +78,34 @@ def rewrite_references(extensions: dict[str, str], update: Update) -> None:
 
 
 def forget_sheets(extensions: dict[str, str], names: set[str]) -> None:
-    """Drop what reads the deleted sheets ``names``: Excel deletes such sparklines."""
+    """Drop what reads the deleted sheets ``names``: Excel deletes such sparklines and puts
+    ``#REF!`` into the formulas of validations and conditional formats."""
 
-    def update(text: str, kind: Kind) -> str | None:
-        gone = kind == "formula" and any(refers_to(text, name) for name in names)
-        return None if gone else text
+    def gone(text: str) -> bool:
+        return any(refers_to(text, name) for name in names)
 
-    rewrite_references(extensions, update)
+    def sparkline(item: str) -> list[str]:
+        source = _FORMULA.search(item)
+        return [] if source and gone(unescape(source[1])) else [item]
+
+    def rule(item: str) -> str:
+        return _FORMULA.sub(lambda m: "<xm:f>#REF!</xm:f>" if gone(unescape(m[1])) else m[0], item)
+
+    for uri, xml in list(extensions.items()):
+        if uri == SPARKLINES:
+            kept = _sparklines(xml, sparkline)
+        elif uri in (CONDITIONAL_FORMATS, DATA_VALIDATIONS):
+            kept = rule_sub(xml, rule)
+        else:
+            continue
+        if kept is None:
+            del extensions[uri]
+        else:
+            extensions[uri] = kept
+
+
+def rule_sub(xml: str, rule: Callable[[str], str]) -> str:
+    return _FORMULA_ITEM.sub(lambda m: rule(m[0]), xml)
 
 
 def without_rules(extensions: dict[str, str], identifiers: set[str]) -> None:
@@ -87,33 +136,73 @@ def refers_to(formula: str, sheet: str) -> bool:
     return re.search(pattern, formula, re.IGNORECASE) is not None
 
 
-def _sparklines(xml: str, update: Update) -> str | None:
-    def rewrite(match: re.Match[str]) -> str:
-        item = match.group(0)
-        location = _RANGE.search(item)
-        source = _FORMULA.search(item)
-        moved = update(location[1], "range") if location else None
-        read = update(source[1], "formula") if source else None
-        if moved is None or read is None:
-            return ""
-        item = _RANGE.sub(lambda _: f"<xm:sqref>{moved}</xm:sqref>", item)
-        return _FORMULA.sub(lambda _: f"<xm:f>{read}</xm:f>", item)
-
-    xml = _EMPTY_GROUP.sub("", _SPARKLINE.sub(rewrite, xml))
+def _sparklines(xml: str, handle: Callable[[str], list[str]]) -> str | None:
+    xml = _SPARKLINE.sub(lambda match: "".join(handle(match.group(0))), xml)
+    xml = _EMPTY_GROUP.sub("", xml)
     return xml if re.search(r"<x14:sparklineGroup\b", xml) else None
 
 
-def _items(xml: str, pattern: re.Pattern[str], update: Update, marker: str) -> str | None:
-    def rewrite(match: re.Match[str]) -> str:
-        item = match.group(0)
-        location = _RANGE.search(item)
-        moved = update(location[1], "range") if location else None
-        if moved is None:
-            return ""
-        item = _RANGE.sub(lambda _: f"<xm:sqref>{moved}</xm:sqref>", item)
-        return _FORMULA.sub(lambda m: f"<xm:f>{update(m[1], 'formula') or '#REF!'}</xm:f>", item)
+def _moved_sparkline(item: str, rewriter: Rewriter) -> list[str]:
+    location = _RANGE.search(item)
+    source = _FORMULA.search(item)
+    assert location is not None
+    moved = rewriter.ranges(location[1], grow=False)
+    if moved is None:
+        return []
+    item = _RANGE.sub(lambda _: f"<xm:sqref>{moved}</xm:sqref>", item)
+    if source is not None:
+        read = rewriter.formula(unescape(source[1]))
+        if "#REF!" in read and "#REF!" not in source[1]:
+            item = item.replace(source[0], "")
+        else:
+            item = item.replace(source[0], f"<xm:f>{escape(read)}</xm:f>")
+    return [item, *_inserted_copies(item, location[1], rewriter)]
 
-    xml = pattern.sub(rewrite, xml)
+
+def _inserted_copies(item: str, old: str, rewriter: Rewriter) -> list[str]:
+    """Excel fills new lines below or to the right of a sparkline with copies of it."""
+    edit = rewriter.edit
+    if edit is None or edit.delete:
+        return []
+    cell = parse_range(old)
+    line = cell.min_row if edit.axis == "rows" else cell.min_col
+    if line != edit.at - 1:
+        return []
+    steps = range(1, edit.count + 1)
+    return [_copy(item, *((n, 0) if edit.axis == "rows" else (0, n))) for n in steps]
+
+
+def _copy(item: str, rows: int, columns: int) -> str:
+    item = _RANGE.sub(lambda m: f"<xm:sqref>{_shifted(m[1], rows, columns)}</xm:sqref>", item)
+    return _FORMULA.sub(lambda m: f"<xm:f>{_shifted(m[1], rows, columns)}</xm:f>", item)
+
+
+def _shifted(text: str, rows: int, columns: int) -> str:
+    """The relative cell references of ``text`` moved, as when the text is copied."""
+
+    def move(match: re.Match[str]) -> str:
+        column_fixed, letters, row_fixed, number = match.groups()
+        column = column_index_from_string(letters)
+        column += 0 if column_fixed else columns
+        row = int(number) + (0 if row_fixed else rows)
+        return f"{column_fixed}{get_column_letter(column)}{row_fixed}{row}"
+
+    return _CELL.sub(move, text)
+
+
+def _moved_item(item: str, rewriter: Rewriter) -> str | None:
+    location = _RANGE.search(item)
+    moved = rewriter.ranges(location[1]) if location else None
+    if moved is None:
+        return None
+    item = _RANGE.sub(lambda _: f"<xm:sqref>{moved}</xm:sqref>", item)
+    return _FORMULA.sub(lambda m: f"<xm:f>{escape(rewriter.formula(unescape(m[1])))}</xm:f>", item)
+
+
+def _items(
+    xml: str, pattern: re.Pattern[str], handle: Callable[[str], str | None], marker: str
+) -> str | None:
+    xml = pattern.sub(lambda match: handle(match.group(0)) or "", xml)
     if marker not in xml:
         return None
     if marker == "<x14:dataValidation ":
