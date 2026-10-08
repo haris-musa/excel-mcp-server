@@ -6,7 +6,7 @@ from pydantic import Field
 
 WorkbookPath = Annotated[
     str,
-    Field(description="Workbook file path."),
+    Field(description="Workbook path: relative to the server's workbook folder, or absolute."),
 ]
 SheetName = Annotated[str, Field(description="Worksheet name.")]
 CellRef = Annotated[str, Field(description="Cell, e.g. 'B2'.")]
