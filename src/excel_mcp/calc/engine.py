@@ -9,6 +9,7 @@ import datetime as dt
 import logging
 import math
 from collections.abc import Iterator
+from contextlib import suppress
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
@@ -93,6 +94,7 @@ class Engine:
         self.work = 0
         self.depth = 0
         self.name_depth = 0
+        self.array_mode = False  # whether the lazy function being called is in an array context
         self.scopes: list[dict[str, Value]] = []
         self.here = Position(next(iter(self.sheets.values())), 1, 1)
 
@@ -259,7 +261,8 @@ class Engine:
 
     def evaluate_cell(self, cell: Any) -> Scalar:
         if isinstance(cell.value, ArrayFormula):
-            raise UncalculableError("array formula")
+            text = str(cell.value.text)
+            return self.spill(cell.parent, cell.row, cell.column, text).rows[0][0]
         node = self.tree(cell)
         shown = self.eval(node, array=False)
         if isinstance(shown, RefGrid):
@@ -277,6 +280,32 @@ class Engine:
             left if not isinstance(left, Grid) else None,
             right if not isinstance(right, Grid) else None,
         )
+
+    def spill(self, sheet: Worksheet, row: int, col: int, formula: str) -> Grid:
+        """The array that a formula entered as a dynamic array formula in this cell produces."""
+        tree = parse(formula)
+        outer = self.here
+        self.here = Position(sheet, row, col)
+        try:
+            for target, top, left, bottom, right in list(self._references(tree, sheet, 0)):
+                self.charge(1)
+                for position, other in _stored_in(target, top, left, bottom, right):
+                    if other.data_type == "f" and self._is_unfinished(target, *position):
+                        self._calculate_quietly(target, *position)
+            try:
+                value = self.eval(tree, array=True)
+            except FormulaError as error:
+                value = error.error
+        finally:
+            self.here = outer
+        rows = value.rows if isinstance(value, Grid) else [[value]]
+        return Grid([[0 if item is None else item for item in line] for line in rows])
+
+    def _calculate_quietly(self, sheet: Worksheet, row: int, col: int) -> None:
+        """Calculate a cell a formula uses. A failure is remembered, and the formula reports it
+        if it needs the cell."""
+        with suppress(UncalculableError):
+            self.calculate(sheet, row, col)
 
     def charge(self, units: int) -> None:
         self.work += units
@@ -430,7 +459,11 @@ class Engine:
 
     def dispatch(self, spec: Function, args: tuple[Node, ...], array: bool) -> Value:
         if spec.kind == "lazy":
-            return spec.call(self, *args)
+            outer, self.array_mode = self.array_mode, array
+            try:
+                return spec.call(self, *args)
+            finally:
+                self.array_mode = outer
         values = [self.eval(arg, array or spec.array_at(index)) for index, arg in enumerate(args)]
         if spec.kind in ("scalar", "check"):
             return self.call_scalar(spec, values, array)

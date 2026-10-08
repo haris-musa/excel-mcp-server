@@ -6,11 +6,11 @@ from urllib.parse import quote
 from mcp.types import BlobResourceContents, CallToolResult, EmbeddedResource, TextContent
 from pydantic import Field
 
-from excel_mcp import app_properties
 from excel_mcp.operations import files, inspect, vba, workbook_settings
 from excel_mcp.operations.inspect import WorkbookInfo
 from excel_mcp.operations.sheets import validate_sheet_name
 from excel_mcp.operations.workbook_settings import WorkbookSettings
+from excel_mcp.package.properties import read_company
 from excel_mcp.server.params import WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
 from excel_mcp.workspace import Workspace
@@ -48,7 +48,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         with workspace.stream(path) as workbook:
             resolved = workspace.resolve(path)
             return inspect.describe_workbook(
-                workbook, vba.has_vba(resolved), app_properties.read_company(resolved)
+                workbook, vba.has_vba(resolved), read_company(resolved)
             )
 
     @tools.writer("Set workbook settings")

@@ -67,7 +67,11 @@ extraPaths = ["scripts"]
 testpaths = ["tests"]
 pythonpath = ["scripts"]
 addopts = ["--strict-markers", "--strict-config"]
-filterwarnings = ["error"]
+filterwarnings = [
+    "error",
+    # openpyxl says it drops sheet extensions; the package layer keeps them.
+    "ignore:.* extension is not supported and will be removed:UserWarning",
+]
 
 [tool.uv.build-backend]
 module-name = "excel_mcp"

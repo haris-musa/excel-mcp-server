@@ -10,7 +10,8 @@ import re
 from collections.abc import Iterable
 from decimal import Decimal
 
-from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
+from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE, Cell
+from openpyxl.worksheet.formula import ArrayFormula
 
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.formulas import storable_formula
@@ -40,6 +41,8 @@ def to_json(value: object) -> CellValue:
             return value.total_seconds()
         case Decimal():
             return float(value)
+        case ArrayFormula():
+            return str(value.text)
         case _:
             return str(value)
 
@@ -64,6 +67,13 @@ def to_cell(value: CellValue, sheet_names: Iterable[str]) -> CellValue | dt.date
     except ValueError:
         raise InvalidArgumentError(f"{value!r} looks like a date but is not valid.") from None
     return value
+
+
+def store_value(cell: Cell, value: CellValue) -> None:
+    """Store a computed value, keeping text as text even if it starts with '='."""
+    cell.value = value
+    if isinstance(value, str):
+        cell.data_type = "s"
 
 
 def date_number_format(value: object) -> str | None:

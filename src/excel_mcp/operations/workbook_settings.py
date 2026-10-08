@@ -7,10 +7,10 @@ from openpyxl.workbook.properties import CalcProperties
 from openpyxl.workbook.protection import WorkbookProtection
 from pydantic import BaseModel, Field
 
-from excel_mcp.app_properties import attach_company
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.inputs import InputModel
 from excel_mcp.operations.protection import password_matches
+from excel_mcp.package import state_of
 
 CalcMode = Literal["auto", "manual", "auto_except_tables"]
 StoredMode = Literal["auto", "manual", "autoNoTable"]
@@ -133,7 +133,7 @@ def _set_properties(workbook: Workbook, change: Properties) -> None:
     if change.keywords is not None:
         properties.keywords = change.keywords
     if change.company is not None:
-        attach_company(workbook, change.company)
+        state_of(workbook).workbook.company = change.company
 
 
 def _set_calculation(workbook: Workbook, change: Calculation) -> None:

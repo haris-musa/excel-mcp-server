@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+from excel_mcp.calc.operators import elementwise
 from excel_mcp.calc.parser import Name, Node
 from excel_mcp.calc.registry import function
 from excel_mcp.calc.values import (
@@ -25,12 +26,35 @@ if TYPE_CHECKING:
 
 @function("IF", kind="lazy")
 def if_(engine: "Engine", condition: Node, then: Node, otherwise: Node | None = None) -> Value:
+    if engine.array_mode:
+        return _if_for_arrays(engine, condition, then, otherwise)
     test = engine.scalar(condition)
     if isinstance(test, ExcelError):
         return test
     if to_bool(test):
         return engine.eval(then)
     return engine.eval(otherwise) if otherwise is not None else False
+
+
+def _if_for_arrays(engine: "Engine", condition: Node, then: Node, otherwise: Node | None) -> Value:
+    """IF where a range or array can be the condition: it picks per element."""
+    test = engine.eval(condition, True)
+    if not isinstance(test, Grid):
+        if isinstance(test, ExcelError):
+            return test
+        branch = then if to_bool(test) else otherwise
+        return False if branch is None else engine.eval(branch, True)
+    branches = (
+        engine.eval(then, True),
+        False if otherwise is None else engine.eval(otherwise, True),
+    )
+
+    def pick(flag: Scalar, yes: Scalar, no: Scalar) -> Scalar:
+        if isinstance(flag, ExcelError):
+            return flag
+        return yes if to_bool(flag) else no
+
+    return elementwise(pick, test, *branches)
 
 
 @function("IFS", kind="lazy")

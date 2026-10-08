@@ -38,6 +38,13 @@ or anyone who can reach the HTTP endpoint. Its defences are:
   host requires `EXCEL_MCP_AUTH_TOKEN` unless `--allow-unauthenticated` is passed for a
   deployment where a proxy handles authentication.
 - **Resources**: limits on file size and on the cells read or written per call.
+- **Preserved content**: parts of a workbook that the server cannot edit (extensions,
+  slicers, newer charts, comments, form controls, custom XML, embedded objects and data
+  connections that are part of the file) are carried over unchanged when it is edited, as
+  the file already contained them. They are never run or fetched. Only their structure is
+  read (XML with a DOCTYPE declaration is refused), and the amount of such content is
+  limited by the file size limit, which also bounds a compressed bomb. Thumbnails and
+  digital signatures are dropped, because they no longer match an edited file.
 - **Macros**: VBA code is parsed as text by the server's own [MS-OVBA] reader with size
   limits, and is never run. Macros in `.xlsm` files are kept intact. Writing macros is off by
   default: the `write_vba_module` and `delete_vba_module` tools exist only when the server is

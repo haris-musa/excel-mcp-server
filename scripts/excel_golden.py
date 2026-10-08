@@ -16,7 +16,7 @@ from pathlib import Path
 
 import win32com.client  # pyright: ignore[reportMissingImports]
 from golden_cases import CASES, HIDDEN_ROWS, INPUTS, NAMES
-from golden_workbook import build_workbook, calculate_cases, same
+from golden_workbook import build_workbook, calculate_cases, case_row, same
 
 from excel_mcp.errors import UnsafeFormulaError
 from excel_mcp.formulas import check_formula
@@ -57,8 +57,8 @@ def excel_values(excel: object, formulas: list[str], directory: Path) -> list[ob
         excel.CalculateFull()  # pyright: ignore[reportAttributeAccessIssue]
         sheet = workbook.Worksheets("Cases")
         values = []
-        for row in range(1, len(formulas) + 1):
-            value = sheet.Cells(row, 1).Value2
+        for index in range(len(formulas)):
+            value = sheet.Cells(case_row(index), 1).Value2
             values.append(ERROR_CODES.get(value, value) if isinstance(value, int) else value)
         return values
     finally:

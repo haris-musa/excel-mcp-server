@@ -13,7 +13,12 @@ from excel_mcp.operations.cells import stored_cells, writable_cell
 from excel_mcp.operations.pivot_axis import Axis, Path, Ranker, build_axis
 from excel_mcp.operations.pivot_cache import build_cache
 from excel_mcp.operations.pivot_calc import CalcField, compile_calculated
-from excel_mcp.operations.pivot_definition import Definition, PageFilter, build_definition
+from excel_mcp.operations.pivot_definition import (
+    Definition,
+    PageFilter,
+    build_definition,
+    data_field_extensions,
+)
 from excel_mcp.operations.pivot_fields import AxisField, plan_fields
 from excel_mcp.operations.pivot_index import pivot_area, sheet_pivots, workbook_pivots
 from excel_mcp.operations.pivot_options import (
@@ -33,6 +38,7 @@ from excel_mcp.operations.pivot_specs import (
     sorted_by,
 )
 from excel_mcp.operations.pivot_values import Aggregator, DataSpec
+from excel_mcp.package import state_of
 from excel_mcp.refs import CellRange, parse_cell, parse_range
 
 
@@ -95,25 +101,28 @@ def create_pivot(
 
     pivot_name = _pivot_name(workbook, request.name)
     page_filters = [_page_filter(axis) for axis in pages]
-    pivot = build_definition(
-        Definition(
-            name=pivot_name,
-            cache_id=max((pivot.cacheId for pivot in workbook_pivots(workbook)), default=0) + 1,
-            setup=setup,
-            calculated=calculated,
-            rows=rows,
-            columns=columns,
-            pages=page_filters,
-            specs=specs,
-            format_ids=[_format_id(workbook, fmt) for fmt in formats],
-            table=table,
-            body=body,
-            layout=request.layout,
-            subtotals=request.subtotals,
-        )
+    plan = Definition(
+        name=pivot_name,
+        cache_id=max((pivot.cacheId for pivot in workbook_pivots(workbook)), default=0) + 1,
+        setup=setup,
+        calculated=calculated,
+        rows=rows,
+        columns=columns,
+        pages=page_filters,
+        specs=specs,
+        format_ids=[_format_id(workbook, fmt) for fmt in formats],
+        table=table,
+        body=body,
+        layout=request.layout,
+        subtotals=request.subtotals,
     )
+    pivot = build_definition(plan)
     pivot.cache = build_cache(setup, calculated)
     target_sheet.add_pivot(pivot)
+    for position, extension in data_field_extensions(plan).items():
+        state_of(workbook).sheet(target_sheet).pivot_fields[pivot_name, "dataField", position] = (
+            extension
+        )
     for (row, column), shown in table.cells.items():
         _write(target_sheet, body.min_row + row, body.min_col + column, shown)
     for position, page in enumerate(page_filters):

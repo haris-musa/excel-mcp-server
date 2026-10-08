@@ -112,6 +112,33 @@ All notable changes to this project are documented here. The format follows
   whole VBA project if needed) and `delete_vba_module`. The tools are absent by default and
   in `--read-only` mode; code is stored, never run. `create_workbook` can then also create
   `.xlsm`/`.xltm` files.
+- Editing a workbook through any tool keeps content that openpyxl cannot model, instead of
+  deleting it: worksheet extensions (sparklines, Excel 2010 conditional formats and
+  validation, slicer and timeline lists), newer chart types and their style parts (waterfall,
+  histogram, treemap, sunburst, box and whisker, funnel), slicers and timelines with their
+  caches, threaded comments and persons, cell and value metadata (dynamic arrays, linked data
+  types, images in cells), shapes and text boxes, form controls with their VML, header and
+  footer pictures, background pictures, custom XML, and the extension lists of PivotTables
+  and their caches. It is read from the file when the workbook is opened for editing and put
+  back, byte for byte, into the file openpyxl writes. Relationship ids, sheet and table
+  numbers (which slicer caches use) and content types are kept consistent.
+  `excel_mcp.package` documents the API that later features use to add such content.
+- Content that would be left without what it refers to follows what Excel does: a slicer
+  or timeline cache that no slicer uses is removed with its name, sparklines that read a
+  deleted sheet are deleted, validation and conditional format formulas that refer to a
+  deleted sheet become `#REF!`, threaded comments follow their notes when rows are inserted
+  and go with a deleted note. `delete_sheet` and `delete_pivot_table` refuse when slicers
+  would be left disconnected, which this server cannot store.
+- Formulas that return several values are stored as dynamic array formulas, exactly as
+  Excel stores them (an array formula over the spill range with the dynamic array metadata
+  in `xl/metadata.xml`), with the results in the spilled cells. This covers `FILTER`, `SORT`,
+  `SORTBY`, `UNIQUE`, `SEQUENCE`, `RANDARRAY`, `TRANSPOSE`, `TAKE`, `XLOOKUP` returning a
+  range, operators and single-value functions applied to ranges (`=A2:A9*2`, `=SUM(B2:B9*C2:C9)`),
+  and every other formula Excel itself saves that way. `write_range` reports formulas that a
+  non-empty cell blocks in `blocked`; `read_range` shows spilled results, and the metadata
+  survives later edits, moves with inserted rows, and is cleared with the formula.
+- `read_range` in `formulas` mode returns the text of array formulas instead of an object
+  description.
 
 - `create_pivot_table` reproduces what Excel's PivotTable dialogs offer: `number_format` and
   `show_as` per values field (percent of total, row, column or parent, difference from, percent
@@ -152,6 +179,10 @@ All notable changes to this project are documented here. The format follows
   `Deleted 3 columns at column C.`.
 - Formulas that are not valid syntax fail with `InvalidFormulaError`; the formula safety
   policy still raises `UnsafeFormulaError`.
+- `write_range` stores a formula that returns several values as a dynamic array formula.
+  Excel used to show such a formula with `@` and a single value, because the file did not say
+  it spills. Results of `=SUM(A1:A5*2)` and the like are now what Excel itself shows.
+- `copy_sheet` carries the dynamic array metadata of the formulas it copies.
 - **Breaking:** `describe_workbook` returns `defined_names` as objects with `name`,
   `refers_to` and `sheet` (null for workbook scope), and includes sheet-scoped names.
 - **Breaking:** `create_summary_table` is removed; `create_pivot_table` replaces it
@@ -211,9 +242,9 @@ All notable changes to this project are documented here. The format follows
   `2026-01-31`, a wrong number, instead of a date.
 - Inserting or deleting rows or columns moves hyperlinks with their cells (they stayed in
   place before), and `copy_range` copies them.
-- Editing a workbook keeps the extension data Excel stores in PivotTables (rank and
-  percent-of-parent figures, a hidden "Values" row) and the Company property, which were
-  dropped.
+- Editing a workbook no longer silently deletes sparklines, slicers, timelines, threaded
+  comments, newer chart types, shapes, form controls and everything else listed under
+  Added. Array formulas keep their range when rows are inserted above them.
 - `copy_sheet` now copies what Excel's "Create a copy" does: data validation, conditional
   formats, images, charts (re-pointed at the copy's own data), tables (renamed, as Excel
   does), PivotTables, freeze panes, filters, print setup, protection and sheet-scoped

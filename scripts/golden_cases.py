@@ -2,8 +2,9 @@
 """Inputs and formula cases for the Excel golden fixture (see excel_golden.py).
 
 Each case is a formula, or ``(formula, tolerance)`` for iterative or transcendental results.
-Formulas are written to Cases!A{n}, so a range used where one value is expected is reduced
-to the value in row n of that range, as Excel does.
+Formulas are written with the server's write path, which stores them as dynamic array
+formulas where Excel would, so a range used where one value is expected is not reduced to
+one value of it: the formula returns an array, and its cell shows the first element.
 """
 
 DATES = [
@@ -483,7 +484,7 @@ CASES: list[str | tuple[str, float]] = [
     "=SUMPRODUCT(--(Data!A2:A11=\"North\"),Data!C2:C11)", "=GEOMEAN(Data!C2:C11*1)", "=MAX(Data!C2:C11+0)", "=COUNTA(Data!C2:C11&\"\")", "=LEN(Data!A2:A11)",
     "=ROUND(Data!D2:D11,0)", "=SUM(ROUND(Data!D2:D11,0))", "=SUM(LEN(Data!A2:A11))", "=SUMPRODUCT(LEN(Data!A2:A11)*1)", "=SUMPRODUCT(--ISNUMBER(Data!F2:F11))",
     "=INDEX(Data!A2:D11,2,0)", "=INDEX(Data!C2:C11,0)", "=INDEX(Data!C2:C11,0)+1", "=SUM(INDEX(Data!C2:C11,0))", "=INDEX(Data!C2:E2,0,2)",
-    "=HLOOKUP(2,Data!H1:J3*1,2,TRUE)", "=XIRR(Data!K2:K6*1,Data!L2:L6)", "=DEVSQ(Data!C2:C11*1)", "=AVEDEV(Data!C2:C11*1)", "=HARMEAN(Data!C2:C11*1)", "=VAR(Data!C2:C11*1)", "=LARGE(Data!C2:C11*1,2)", ("=IRR(Data!K2:K6+0,0.2)", 1e-8), "=SUMIFS(Data!C2:C11,Data!A2:A11,\"North\")",
+    "=HLOOKUP(2,Data!H1:J3*1,2,TRUE)", ("=XIRR(Data!K2:K6*1,Data!L2:L6)", 1e-8), "=DEVSQ(Data!C2:C11*1)", "=AVEDEV(Data!C2:C11*1)", "=HARMEAN(Data!C2:C11*1)", "=VAR(Data!C2:C11*1)", "=LARGE(Data!C2:C11*1,2)", ("=IRR(Data!K2:K6+0,0.2)", 1e-8), "=SUMIFS(Data!C2:C11,Data!A2:A11,\"North\")",
     # ---- number to text
     '="x"&10^-16', '="x"&10^-17', '="x"&10^-18', '="x"&1.5*10^-16', '="x"&1.5*10^-17', '="x"&1.5*10^-18', '="x"&123.45*10^-15', '="x"&1.5*10^19',
     '="x"&12345.6789*10^15', '="x"&2^70', '="x"&2^-40', '="x"&1/7', '="x"&100/7', '="x"&1E+15/7', '="x"&-1/3', '="x"&1E+19+1', '="x"&0.1*3',

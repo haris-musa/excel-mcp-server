@@ -221,6 +221,8 @@ original's data. Workbook-scoped names are not duplicated.
 
 Delete a worksheet or chart sheet and everything on it.
 
+Fails while slicers on other sheets use its PivotTables or tables.
+
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
@@ -291,6 +293,10 @@ a date. Send long numeric IDs as text.
 `links` makes written cells clickable, with their value as the display text, e.g.
 [{"cell": "B2", "target": "https://example.com"}]. Only http, https, mailto and places in
 this workbook are allowed. clear_range with clear='all' removes a link.
+
+A formula that returns several values (`=SORT(A2:A9)`, `=A2:A9*2`) spills into the
+cells below and to the right, as in Excel. `blocked` lists formulas that cannot
+spill because a cell in the way holds data (Excel shows #SPILL!).
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -830,6 +836,8 @@ delete_pivot_table removes one.
 **Delete pivot table** (modifies files, may overwrite data)
 
 Remove a PivotTable and clear the cells it fills. The source data is left untouched.
+
+Fails while slicers or timelines are connected to it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |

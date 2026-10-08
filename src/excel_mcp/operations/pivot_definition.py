@@ -18,7 +18,6 @@ from openpyxl.pivot.table import (
     TableDefinition,
 )
 
-from excel_mcp import pivot_ext
 from excel_mcp.operations.pivot_axis import Axis, axis_items
 from excel_mcp.operations.pivot_calc import CalcField
 from excel_mcp.operations.pivot_fields import AxisField, FieldSetup
@@ -39,7 +38,9 @@ _SHOW_DATA_AS: dict[ShowAs, str] = {
     "percent_of": "percent",
     "running_total": "runTotal",
 }
-_SHOW_AS_EXTENSION: dict[ShowAs, str] = {
+X14 = "http://schemas.microsoft.com/office/spreadsheetml/2009/9/main"
+SHOW_VALUES_AS = "{E15A36E0-9728-4e99-A89B-3F7291B0FE68}"
+SHOW_AS_EXTENSION: dict[ShowAs, str] = {
     "percent_of_parent_row": "percentOfParentRow",
     "percent_of_parent_column": "percentOfParentCol",
     "percent_of_parent": "percentOfParent",
@@ -75,7 +76,6 @@ class Definition:
 
 
 def build_definition(plan: Definition) -> TableDefinition:
-    pivot_ext.keep_extensions()
     tabular, compact = plan.layout == "tabular", plan.layout == "compact"
     return TableDefinition(
         name=plan.name,
@@ -223,12 +223,9 @@ def _sort_scope(plan: Definition, axis: AxisField | None) -> AutoSortScope | Non
 
 def _data_field(plan: Definition, position: int) -> DataField:
     spec = plan.specs[position]
-    extension = None
     show_as = None
     if spec.show_as in _SHOW_DATA_AS:
         show_as = _SHOW_DATA_AS[spec.show_as]
-    elif spec.show_as is not None:
-        extension = pivot_ext.show_values_as(_SHOW_AS_EXTENSION[spec.show_as])
     base_item = (
         PREVIOUS_ITEM
         if spec.show_as in _PREVIOUS_BY_DEFAULT and spec.base_item is None
@@ -242,8 +239,20 @@ def _data_field(plan: Definition, position: int) -> DataField:
         baseField=spec.base_field or 0,
         baseItem=base_item or 0,
         numFmtId=plan.format_ids[position],
-        extLst=extension,
     )
 
 
 _PREVIOUS_BY_DEFAULT = ("difference_from", "percent_difference_from", "percent_of")
+
+
+def data_field_extensions(plan: Definition) -> dict[int, str]:
+    """The ``<extLst>`` of the data fields whose "show values as" has no attribute of its own
+    (rank, percent of parent), by position, for `SheetPackage.pivot_fields`."""
+    return {
+        position: (
+            f'<extLst><ext uri="{SHOW_VALUES_AS}" xmlns:x14="{X14}">'
+            f'<x14:dataField pivotShowAs="{SHOW_AS_EXTENSION[spec.show_as]}"/></ext></extLst>'
+        )
+        for position, spec in enumerate(plan.specs)
+        if spec.show_as in SHOW_AS_EXTENSION
+    }
