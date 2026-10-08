@@ -3,9 +3,10 @@ from pathlib import Path
 import pytest
 from openpyxl import load_workbook
 
-from excel_mcp.errors import InvalidArgumentError, InvalidFormulaError
-from excel_mcp.formulas import check_formula
+from excel_mcp.errors import ExcelMCPError, InvalidArgumentError, InvalidFormulaError
+from excel_mcp.formulas import check_formula, storable_formula
 from excel_mcp.refs import CellRange, parse_clamped_range, parse_range
+from excel_mcp.spill import show_spills
 from excel_mcp.text import quoted
 from tests.conftest import ToolCall
 
@@ -283,3 +284,74 @@ async def test_every_formula_sink_rejects_invalid_formulas(
         "set_defined_name", path="sales.xlsx", name="Total", refers_to="=SUM(A1:"
     )
     assert load_workbook(sample)["Data"]["F1"].value is None
+
+
+@pytest.mark.parametrize(
+    ("formula", "reason"),
+    [
+        ("=SUM()", "SUM needs at least 1 argument, got 0."),
+        ("=IF(1)", "IF needs at least 2 arguments, got 1."),
+        ("=IF(1,2,3,)", "IF takes at most 3 arguments, got 4."),
+        ("=PI(1)", "PI takes at most 0 arguments, got 1."),
+        ("=IFS(A1,1,A1)", "IFS takes 2, 4, 6... arguments, got 3."),
+        ("=_xlfn.XLOOKUP(1,A1)", "XLOOKUP needs at least 3 arguments, got 2."),
+    ],
+)
+def test_argument_counts_are_checked(formula: str, reason: str) -> None:
+    with pytest.raises(InvalidFormulaError) as raised:
+        check_formula(formula, SHEETS)
+    assert reason in str(raised.value)
+
+
+@pytest.mark.parametrize(
+    "formula",
+    [
+        "=PI()",
+        "=NOW()",
+        "=SUM(A1)",
+        "=SUM(,)",
+        "=IF(1,2)",
+        "=IFS(A1,1)",
+        "=MyUdf()",
+        "=MyUdf(1,2,3)",
+        "=LET(x,1,x+1)",
+        "=LAMBDA(x,x)",
+        "=FILTER(A1:A3,A1:A3>1)",
+        "=ROW()",
+        "=ROW(A1)",
+    ],
+)
+def test_valid_argument_counts_and_unknown_functions_pass(formula: str) -> None:
+    check_formula(formula, SHEETS)
+
+
+@pytest.mark.parametrize(
+    ("typed", "stored"),
+    [
+        ("=SUM(A1#)", "=SUM(_xlfn.ANCHORARRAY(A1))"),
+        ("=Sheet1!A1#", "=_xlfn.ANCHORARRAY(Sheet1!A1)"),
+        ("='Sheet 2'!$A$1#+1", "=_xlfn.ANCHORARRAY('Sheet 2'!$A$1)+1"),
+        ("=MyName#", "=_xlfn.ANCHORARRAY(MyName)"),
+        ('=IF(A1#="#",A1#,"x#")', '=IF(_xlfn.ANCHORARRAY(A1)="#",_xlfn.ANCHORARRAY(A1),"x#")'),
+        ("=Table1[[#This Row],[Col]]", "=Table1[[#This Row],[Col]]"),
+        ("=IFERROR(A1,#N/A)", "=IFERROR(A1,#N/A)"),
+    ],
+)
+def test_spill_references_are_stored_as_excel_stores_them(typed: str, stored: str) -> None:
+    assert storable_formula(typed, SHEETS) == stored
+    assert show_spills(stored) == typed
+
+
+@pytest.mark.parametrize("formula", ["=A1 #", "=@+1", "=Other!A1#", "=#", "=A1##"])
+def test_stray_hashes_and_other_workbooks_stay_rejected(formula: str) -> None:
+    with pytest.raises(ExcelMCPError):
+        check_formula(formula, SHEETS)
+
+
+async def test_spill_reference_round_trips_through_the_tools(call: ToolCall, sample: Path) -> None:
+    await call(
+        "write_range", path="sales.xlsx", sheet="Data", start_cell="F1", rows=[["=SUM(C2#)"]]
+    )
+    assert load_workbook(sample)["Data"]["F1"].value == "=SUM(_xlfn.ANCHORARRAY(C2))"
+    read = await call("read_range", path="sales.xlsx", sheet="Data", range="F1", mode="formulas")
+    assert read["values"] == [["=SUM(C2#)"]]

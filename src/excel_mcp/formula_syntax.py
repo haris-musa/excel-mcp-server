@@ -3,12 +3,15 @@
 Excel's parser forgives a person typing (it closes a missing ")" for them), but a file
 that holds such a formula is reported as damaged. The checks follow the grammar:
 balanced brackets, operators with operands on both sides, arrays of constants, and
-references or names that can exist. They do not check that functions exist or get the
-right number of arguments.
+references or names that can exist. A function Excel knows must get a number of arguments
+it accepts (`function_arguments.json`, made by `scripts/probe_function_arguments.py`);
+other names, such as user-defined functions, are not checked.
 """
 
+import json
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from openpyxl.formula.tokenizer import Token
 
@@ -24,6 +27,13 @@ _REFERENCE = re.compile(
     rf"@*(?:{_QUALIFIER}(?:{_CELL}|{_NAME}|#REF!)|{_QUALIFIED_PART}(?::{_QUALIFIED_PART})+)"
 )
 _TABLE_REFERENCE = re.compile(rf"@*(?:(?:{_SHEET}!)?{_NAME})?(\[.*\])")
+_ARGUMENTS: dict[str, tuple[int, int, int]] = {
+    name: (limits[0], limits[1], limits[2])
+    for name, limits in json.loads(
+        Path(__file__).with_name("function_arguments.json").read_text(encoding="utf-8")
+    ).items()
+}
+_FUNCTION_PREFIXES = ("_XLFN.", "_XLWS.")
 _ARRAY_VALUES = {Token.NUMBER, Token.TEXT, Token.LOGICAL, Token.ERROR}
 _TABLE_ITEMS = {"#all", "#data", "#headers", "#totals", "#this row"}
 
@@ -43,6 +53,8 @@ class _Open:
     """A bracket that is not closed yet; arrays also count the elements of each row."""
 
     kind: str
+    function: str = ""
+    separators: int = 0
     row_lengths: list[int] = field(default_factory=lambda: [1])
 
 
@@ -94,7 +106,7 @@ class _Checker:
             _check_function_name(value)
             if not self._continues_range(value):
                 self._begin_value(value)
-            self._open("function", _EMPTY_OK)
+            self._open("function", _EMPTY_OK, _function_name(value))
         elif kind == Token.PAREN and subtype == Token.OPEN:
             self._begin_value(value)
             self._open("paren", _NEEDS_VALUE)
@@ -155,8 +167,8 @@ class _Checker:
         self.previous = _VALUE
         self.reference_ended = reference
 
-    def _open(self, kind: str, next_previous: str) -> None:
-        self.stack.append(_Open(kind))
+    def _open(self, kind: str, next_previous: str, function: str = "") -> None:
+        self.stack.append(_Open(kind, function))
         self.previous = next_previous
 
     def _close(self, token_type: str, value: str) -> None:
@@ -167,10 +179,29 @@ class _Checker:
         if self.previous == _NEEDS_VALUE:
             what = "an array element" if top.kind == "array" else "an expression"
             raise _ProblemError(f"{what} is missing before {value!r}.")
+        if top.kind == "function":
+            self._check_argument_count(top)
         if len(set(top.row_lengths)) > 1:
             raise _ProblemError("every row of an array constant needs the same number of elements.")
         self.stack.pop()
         self._ends_value(reference=top.kind != "array")
+
+    def _check_argument_count(self, call: _Open) -> None:
+        if call.function not in _ARGUMENTS:
+            return
+        count = 0 if call.separators == 0 and self.previous == _EMPTY_OK else call.separators + 1
+        fewest, most, step = _ARGUMENTS[call.function]
+        if count < fewest:
+            raise _ProblemError(
+                f"{call.function} needs at least {_arguments(fewest)}, got {count}."
+            )
+        if count > most:
+            raise _ProblemError(f"{call.function} takes at most {_arguments(most)}, got {count}.")
+        if (count - fewest) % step:
+            raise _ProblemError(
+                f"{call.function} takes {fewest}, {fewest + step}, {fewest + 2 * step}... "
+                f"arguments, got {count}."
+            )
 
     def _separator(self, subtype: str, value: str) -> None:
         top = self.stack[-1] if self.stack else None
@@ -179,6 +210,7 @@ class _Checker:
             raise _ProblemError(f"unexpected {value!r}.")
         self._needs_no_more()
         if not in_array:
+            top.separators += 1
             self.previous = _EMPTY_OK
             return
         if self.previous != _VALUE:
@@ -208,6 +240,18 @@ class _Checker:
         if value == "," and not self.reference_ended:
             raise _ProblemError("',' can only join references or separate function arguments.")
         self.previous, self.previous_text = _OPERATOR, value
+
+
+def _arguments(count: int) -> str:
+    return f"{count} argument{'' if count == 1 else 's'}"
+
+
+def _function_name(token_value: str) -> str:
+    """The bare, upper-case name of a function token such as ``A1:@_xlfn.IFS(``."""
+    name = token_value.removesuffix("(").rpartition(":")[2].rpartition("!")[2].lstrip("@").upper()
+    while name.startswith(_FUNCTION_PREFIXES):
+        name = name.split(".", 1)[1]
+    return name
 
 
 def _check_function_name(token_value: str) -> None:
