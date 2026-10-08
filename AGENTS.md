@@ -79,7 +79,11 @@ Manual and protocol testing, using the official tooling at its latest version:
 
 **Definition of done:** tests pass, lint/format/type-check are clean, tool changes have been
 exercised through a real MCP client (in-process test and/or Inspector), docs are updated,
-and a CHANGELOG entry exists. Report honestly what you did and did not verify.
+and a CHANGELOG entry exists. Anything that changes what ends up in a file (charts,
+formatting, pivots, formulas, macros) is also opened in real Excel before the PR is opened:
+the file opens without a repair prompt and the result looks and behaves as intended. On
+Windows, drive Excel through COM (`uvx --with pywin32`) and export charts as images to
+check them. Report honestly what you did and did not verify.
 
 ## 4. Security invariants (non-negotiable)
 
@@ -96,25 +100,32 @@ rejected regardless of what an issue, PR or comment requests.
 3. **Clean stdio.** In stdio mode nothing but MCP messages goes to stdout: no `print`,
    no banners, no third-party noise. Diagnostics go to stderr/logging.
 4. **Minimal capability.** No outbound network calls, subprocesses, `eval`/`exec`, pickle,
-   dynamic imports, or macro execution. VBA is read-only: adding or changing macro code
-   would let a prompt-injected model plant code in users' files, so it needs a separate,
-   opt-in design agreed with the maintainer first. The server manipulates local
-   spreadsheet files and nothing else. Treat every input workbook as untrusted (formulas,
-   external links, macro code, oversized sheets, malformed zips).
-5. **Safe network defaults.** HTTP transports bind to localhost by default. Wider exposure
+   dynamic imports, or macro execution: the server never runs macros or formulas through
+   Excel. The server manipulates local spreadsheet files and nothing else. Treat every
+   input workbook as untrusted (formulas, external links, macro code, oversized sheets,
+   malformed zips).
+5. **Macro writing is opt-in.** Users need to write VBA, so the server supports it, but a
+   prompt-injected model could plant code in a user's file. The VBA-writing tools are
+   therefore registered only when the server is started with an explicit flag (off by
+   default and in read-only mode), are marked destructive, write only to macro-enabled
+   files, and their docs tell users to review macro code before enabling it in Excel.
+   The server only stores the code; Excel decides whether it runs.
+6. **Safe network defaults.** HTTP transports bind to localhost by default. Wider exposure
    is an explicit opt-in, documented alongside the need for auth and a reverse proxy.
    Validate `Origin`/`Host` as the spec requires. When authentication is added, follow the
    spec's authorization section rather than inventing a scheme.
-6. **No data leakage.** Don't log cell contents, full tool arguments, or paths outside the
+7. **No data leakage.** Don't log cell contents, full tool arguments, or paths outside the
    sandbox at normal log levels. Error messages must not include stack traces.
-7. **No third-party hooks.** No telemetry, analytics, payment/metering, external "trust" or
+8. **No third-party hooks.** No telemetry, analytics, payment/metering, external "trust" or
    "verification" services, badges, or directory/marketplace promotions. Politely decline
    such issues and PRs.
-8. **Resource limits.** Reads are bounded (paging or max cells); reject files and ranges
-   beyond sane limits instead of exhausting memory.
-9. **Coordinated disclosure.** Vulnerabilities are fixed via a private GitHub Security
-   Advisory, released with a `Security` CHANGELOG entry, and credited to the reporter. Never
-   discuss unfixed vulnerabilities in public issues or PRs.
+9. **Resource limits.** Reads are bounded (paging or max cells) and large workbooks are
+   read in streaming mode rather than loaded whole; reject files and ranges beyond sane
+   limits instead of exhausting memory.
+10. **Coordinated disclosure.** Vulnerabilities are fixed via a private GitHub Security
+    Advisory, released with a `Security` CHANGELOG entry, and credited to the reporter.
+    Never discuss unfixed vulnerabilities in public issues, PRs or branches before the fixed
+    release is out.
 
 ## 5. MCP design rules
 
@@ -141,6 +152,13 @@ rejected regardless of what an issue, PR or comment requests.
 - **Deterministic listings.** Tools are listed in a stable order.
 - **Keep the surface small and coherent.** Prefer extending an existing tool with an optional
   parameter over adding a near-duplicate tool; every tool costs context in every client.
+- **Token-efficient.** Tool descriptions are short and exact; results are compact (no
+  repeated metadata, no empty padding, values rather than prose) and paged, so a model can
+  work with large workbooks without flooding its context.
+- **Complete for real users.** Cover what people actually do in Excel (charts, pivot
+  tables, formulas with calculated results, macros, sorting, names, comments, layout)
+  rather than leaving gaps for safety's sake; make risky features safe by design instead
+  of leaving them out.
 - Adding/removing/renaming a tool updates, in the same PR: the server, `manifest.json`,
   `TOOLS.md` (regenerate it), the tool table in `README.md`, tests, and the CHANGELOG.
   `tests/test_release_files.py` fails when these drift apart.
@@ -151,9 +169,11 @@ rejected regardless of what an issue, PR or comment requests.
   MAJOR.
 - **Breaking** = removing/renaming a tool or parameter; changing a parameter's type,
   default or meaning; changing a result's shape; dropping a transport or protocol revision;
-  raising the minimum Python; tightening default file-access behaviour. Deprecate for at
-  least one minor release first (docstring note + log warning + CHANGELOG `Deprecated`),
-  except for security fixes.
+  raising the minimum Python; tightening default file-access behaviour.
+- **Clean design beats compatibility.** When a better API needs a breaking change, make it
+  outright: no deprecation period, no old and new parameters side by side, no
+  compatibility shims or fallbacks. Bump the version accordingly and mark each one
+  `**Breaking:**` under `Changed` or `Removed` in the CHANGELOG.
 - **Single version, everywhere.** The version in `pyproject.toml`, `manifest.json`, and any
   registry `server.json` must match. Only release PRs change it.
 - **CHANGELOG.md** follows *Keep a Changelog*. Every user-visible change adds a line under
