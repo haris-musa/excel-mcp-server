@@ -49,6 +49,11 @@ def create_table(
     return table_name, str(area)
 
 
+def is_valid_name(name: str) -> bool:
+    """Whether ``name`` can name a table or a defined name."""
+    return bool(_TABLE_NAME.fullmatch(name)) and not _CELL_LIKE.fullmatch(name)
+
+
 def table_names(workbook: Workbook) -> set[str]:
     return {name.casefold() for sheet in workbook.worksheets for name in sheet.tables}
 
@@ -62,7 +67,7 @@ def _next_table_name(workbook: Workbook) -> str:
 
 
 def _validate_table_name(workbook: Workbook, name: str) -> None:
-    if not _TABLE_NAME.fullmatch(name) or _CELL_LIKE.fullmatch(name):
+    if not is_valid_name(name):
         raise InvalidArgumentError(
             f"Invalid table name {name!r}. Start with a letter or underscore and use only "
             "letters, digits, underscores and periods."

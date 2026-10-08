@@ -24,6 +24,7 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`write_range`](#write_range) | Write values into cells, overwriting what is there. |
 | [`clear_range`](#clear_range) | Clear the values and/or formatting of a range without shifting other cells. |
 | [`copy_range`](#copy_range) | Copy values and formatting to another place, overwriting the destination. |
+| [`sort_range`](#sort_range) | Sort a range's rows by one or more columns, like Data > Sort in Excel. |
 | [`find_cells`](#find_cells) | Find cells whose value contains (or equals) the query. |
 | [`format_range`](#format_range) | Change fonts, fill, borders, alignment or number format of a range. |
 | [`merge_cells`](#merge_cells) | Merge a range into one cell, or split a merged range again. |
@@ -34,6 +35,10 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`create_chart`](#create_chart) | Add a chart that plots a block of data. |
 | [`delete_chart`](#delete_chart) | Remove a chart from a sheet. The data it plotted is left untouched. |
 | [`create_summary_table`](#create_summary_table) | Group rows and aggregate columns, like a pivot table, writing the result as cells. |
+| [`set_defined_name`](#set_defined_name) | Create a defined name for a range or constant, replacing a name of the same scope. |
+| [`delete_defined_name`](#delete_defined_name) | Delete a defined name. Formulas that use it are not changed and will show #NAME?. |
+| [`set_note`](#set_note) | Add a note to a cell, replacing the cell's existing note. |
+| [`delete_note`](#delete_note) | Remove the note from a cell. |
 | [`read_vba`](#read_vba) | Show the VBA macro code in an .xlsm or .xltm workbook, module by module. |
 
 ## create_workbook
@@ -254,6 +259,25 @@ Relative references in copied formulas shift the way they do when pasting in Exc
 | `range` | string | yes | A cell or rectangular range in A1 notation, e.g. 'A1:D20'. |
 | `target_cell` | string | yes | Top-left cell of the destination. |
 | `target_sheet` | string | no | Destination sheet. Default: the same sheet. |
+
+## sort_range
+
+**Sort range** (modifies files, may overwrite data)
+
+Sort a range's rows by one or more columns, like Data > Sort in Excel.
+
+Numbers come before text, then booleans; text ignores case; blank cells always go
+last. Each row moves as a whole with its formatting, notes and formulas (relative
+references in a row's formulas shift with it). The key columns must hold values,
+not formulas, and the range cannot contain merged cells.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Path to an .xlsx, .xlsm, .xltx or .xltm file. Relative paths are resolved in the server's workbook directory when one is configured; otherwise use an absolute path. |
+| `sheet` | string | yes | Worksheet name, e.g. 'Sheet1'. |
+| `range` | string | yes | A cell or rectangular range in A1 notation, e.g. 'A1:D20'. |
+| `sort_by` | array of object | yes | Columns to sort by, most important first. |
+| `has_header` | boolean | no | The first row holds headers and stays in place. Default: `True`. |
 
 ## find_cells
 
@@ -499,6 +523,62 @@ non-empty cells. Formula cells are not evaluated.
 | `values` | array of object | yes | Header names to aggregate. |
 | `target_sheet` | string | yes | Worksheet name, e.g. 'Sheet1'. |
 | `target_cell` | string | no | A single cell in A1 notation, e.g. 'B2'. Default: `A1`. |
+
+## set_defined_name
+
+**Set defined name** (modifies files, may overwrite data)
+
+Create a defined name for a range or constant, replacing a name of the same scope.
+
+Formulas can then use it, e.g. '=SUM(Sales)'. The reference follows the same safety
+rules as formulas. Names are listed by describe_workbook.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Path to an .xlsx, .xlsm, .xltx or .xltm file. Relative paths are resolved in the server's workbook directory when one is configured; otherwise use an absolute path. |
+| `name` | string | yes | Letters, digits, underscores and periods, e.g. 'TaxRate'. |
+| `refers_to` | string | yes | A range with its sheet, e.g. 'Data!$B$2:$B$100', or a constant such as '0.075'. |
+| `sheet` | string | no | Sheet the name belongs to. Default: the whole workbook. |
+
+## delete_defined_name
+
+**Delete defined name** (modifies files, may overwrite data)
+
+Delete a defined name. Formulas that use it are not changed and will show #NAME?.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Path to an .xlsx, .xlsm, .xltx or .xltm file. Relative paths are resolved in the server's workbook directory when one is configured; otherwise use an absolute path. |
+| `name` | string | yes | Letters, digits, underscores and periods, e.g. 'TaxRate'. |
+| `sheet` | string | no | Sheet the name belongs to. Default: the whole workbook. |
+
+## set_note
+
+**Set note** (modifies files, may overwrite data)
+
+Add a note to a cell, replacing the cell's existing note.
+
+Notes are listed by describe_sheet and shown when hovering over the cell in Excel.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Path to an .xlsx, .xlsm, .xltx or .xltm file. Relative paths are resolved in the server's workbook directory when one is configured; otherwise use an absolute path. |
+| `sheet` | string | yes | Worksheet name, e.g. 'Sheet1'. |
+| `cell` | string | yes | A single cell in A1 notation, e.g. 'B2'. |
+| `text` | string | yes | The note's text. |
+| `author` | string | no | Name shown as the note's author. Default: `Claude`. |
+
+## delete_note
+
+**Delete note** (modifies files, may overwrite data)
+
+Remove the note from a cell.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Path to an .xlsx, .xlsm, .xltx or .xltm file. Relative paths are resolved in the server's workbook directory when one is configured; otherwise use an absolute path. |
+| `sheet` | string | yes | Worksheet name, e.g. 'Sheet1'. |
+| `cell` | string | yes | A single cell in A1 notation, e.g. 'B2'. |
 
 ## read_vba
 
