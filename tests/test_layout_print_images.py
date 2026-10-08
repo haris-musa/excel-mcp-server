@@ -91,7 +91,7 @@ async def test_changing_one_column_of_a_shared_definition(call: ToolCall, files:
         path="wide.xlsx",
         sheet="Sheet",
         layout={
-            "column_widths": [{"column": "B", "width": 30}],
+            "column_widths": {"B": 30},
             "columns": [{"span": "C", "action": "hide"}],
         },
     )

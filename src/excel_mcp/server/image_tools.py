@@ -15,22 +15,19 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     def insert_image(
         path: WorkbookPath,
         sheet: SheetName,
-        image_path: Annotated[
-            str, Field(description="PNG or JPEG file, in the same folders as workbooks.")
-        ],
+        image_path: Annotated[str, Field(description="PNG or JPEG file, in a workbook folder.")],
         cell: CellRef,
         width_cm: Annotated[
-            float | None, Field(gt=0, le=100, description="Width in cm. Default: natural size.")
+            float | None, Field(gt=0, le=100, description="Default: natural size.")
         ] = None,
         height_cm: Annotated[
-            float | None,
-            Field(gt=0, le=100, description="Height in cm; with only one size the ratio is kept."),
+            float | None, Field(gt=0, le=100, description="Alone, the ratio is kept.")
         ] = None,
     ) -> str:
-        """Place a PNG or JPEG picture with its top-left corner at a cell.
+        """Place a picture with its top-left corner at a cell.
 
-        Give width_cm or height_cm to resize it; give both only to stretch it. List a
-        sheet's images with describe_sheet and remove one with delete_image.
+        Give width_cm or height_cm to resize it keeping the ratio; give both to stretch it.
+        describe_sheet lists images; delete_image removes one.
         """
         data = workspace.read_image(image_path)
         with workspace.edit(path) as workbook:
@@ -43,16 +40,12 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         sheet: SheetName,
         index: Annotated[
             int,
-            Field(
-                ge=1,
-                description="1-based image number, as listed under 'images' by describe_sheet.",
-            ),
+            Field(ge=1, description="Image number from describe_sheet."),
         ],
     ) -> str:
         """Remove a picture from a sheet.
 
-        Images after the removed one move up by one index, so call describe_sheet again
-        before deleting another.
+        Later images move up one index; call describe_sheet again before deleting another.
         """
         with workspace.edit(path) as workbook:
             removed = images.delete_image(get_sheet(workbook, sheet), index)

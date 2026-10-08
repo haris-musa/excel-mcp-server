@@ -54,8 +54,8 @@ async def test_set_sheet_layout(call: ToolCall, sample: Path) -> None:
         path="sales.xlsx",
         sheet="Data",
         layout={
-            "column_widths": [{"column": "a", "width": 18}],
-            "row_heights": [{"row": 1, "height": 24}],
+            "column_widths": {"a": 18},
+            "row_heights": {"1": 24},
             "autofit_columns": ["B"],
             "freeze_panes": "A2",
             "auto_filter": "A1:D5",
@@ -71,6 +71,16 @@ async def test_set_sheet_layout(call: ToolCall, sample: Path) -> None:
     tab_color = sheet.sheet_properties.tabColor
     assert tab_color is not None
     assert tab_color.rgb == "FF00B050"
+
+
+async def test_row_height_outside_the_sheet_is_rejected(call_error: ToolCall, sample: Path) -> None:
+    message = await call_error(
+        "set_sheet_layout",
+        path="sales.xlsx",
+        sheet="Data",
+        layout={"row_heights": {"0": 24}},
+    )
+    assert "Row 0" in message
 
 
 async def test_conditional_formats(call: ToolCall, sample: Path) -> None:

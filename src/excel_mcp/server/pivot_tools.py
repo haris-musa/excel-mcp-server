@@ -19,9 +19,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         source_range: Annotated[
             RangeRef,
             Field(
-                description="Data to summarize: a header row of unique text labels, then one "
-                "record per row, e.g. 'A1:E200'. Columns must hold only text, only numbers "
-                "or only dates (blanks are fine), not formulas."
+                description="Header row of unique text labels, then one record per row, e.g. "
+                "'A1:E200'. Each column holds only text, only numbers or only dates "
+                "(blanks are fine), not formulas."
             ),
         ],
         rows: Annotated[
@@ -29,7 +29,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             Field(min_length=1, description="Headers to group by down the side, outermost first."),
         ],
         values: Annotated[
-            list[PivotValue], Field(min_length=1, description="Headers to summarize, with how.")
+            list[PivotValue], Field(min_length=1, description="Headers to summarize.")
         ],
         target_sheet: SheetName,
         target_cell: Annotated[
@@ -39,20 +39,19 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             list[str], Field(description="Headers to spread across the top, outermost first.")
         ] = [],  # noqa: B006
         filters: Annotated[
-            list[str], Field(description="Headers to offer as page filters above the table.")
+            list[str], Field(description="Headers offered as page filters above the table.")
         ] = [],  # noqa: B006
         name: Annotated[
             str | None, Field(description="PivotTable name. Default: PivotTableN.")
         ] = None,
     ) -> str:
-        """Add a real Excel PivotTable that summarizes a block of data.
+        """Add an Excel PivotTable that summarizes a block of data.
 
-        Excel shows it at once and can refresh it (Data > Refresh All) after the source
-        changes, and you can drag fields or change summaries there. Values are also
-        written into the cells so other tools can read them: with subtotals for outer
-        row fields and grand totals. Filters start out showing everything. A field can
-        be used only once among rows, columns and filters. Remove a PivotTable with
-        delete_pivot_table; describe_sheet lists them.
+        Excel can refresh it (Data > Refresh All) when the source changes. Its values are
+        also written into the cells, with subtotals for outer row fields and grand totals,
+        so other tools can read them. Filters start out showing everything. A field can be
+        used only once among rows, columns and filters. describe_sheet lists PivotTables;
+        delete_pivot_table removes one.
         """
         with workspace.edit(path) as workbook:
             pivot_name, area = pivot.create_pivot(

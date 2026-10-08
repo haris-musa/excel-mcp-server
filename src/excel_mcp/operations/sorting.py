@@ -30,12 +30,8 @@ SortValue = tuple[int, Any]
 
 
 class SortKey(BaseModel):
-    """A column to sort by; earlier keys take precedence."""
-
-    column: str = Field(
-        description="Header text (when has_header is true) or column letter such as 'C'."
-    )
-    order: Order = Field(default="ascending", description="Sort direction.")
+    column: str = Field(description="Header text (if has_header) or column letter, e.g. 'C'.")
+    order: Order = "ascending"
 
 
 @dataclass

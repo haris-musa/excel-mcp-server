@@ -19,30 +19,26 @@ _HEX_COLOR = re.compile(r"#?([0-9A-Fa-f]{6})")
 
 
 class CellFormat(BaseModel):
-    """Formatting to apply. Fields left as null keep the cell's current setting."""
+    """Fields left out keep the cell's current setting."""
 
-    bold: bool | None = Field(default=None, description="Bold text.")
-    italic: bool | None = Field(default=None, description="Italic text.")
-    underline: bool | None = Field(default=None, description="Single underline.")
-    strikethrough: bool | None = Field(default=None, description="Strike through text.")
-    font_name: str | None = Field(default=None, description="Font family, e.g. 'Calibri'.")
-    font_size: float | None = Field(default=None, gt=0, le=409, description="Size in points.")
-    font_color: str | None = Field(default=None, description="Hex color, e.g. '#1F4E78'.")
-    fill_color: str | None = Field(default=None, description="Background hex color.")
+    bold: bool | None = None
+    italic: bool | None = None
+    underline: bool | None = None
+    strikethrough: bool | None = None
+    font_name: str | None = Field(default=None, description="e.g. 'Calibri'.")
+    font_size: float | None = Field(default=None, gt=0, le=409, description="Points.")
+    font_color: str | None = Field(default=None, description="Hex, e.g. '#1F4E78'.")
+    fill_color: str | None = Field(default=None, description="Hex.")
     number_format: str | None = Field(
-        default=None, description="Excel number format, e.g. '#,##0.00', '0%', '@'."
+        default=None, description="Excel code: '#,##0.00', '0%', 'yyyy-mm-dd' or '@' (text)."
     )
-    horizontal_alignment: HorizontalAlignment | None = Field(
-        default=None, description="Horizontal text alignment."
-    )
-    vertical_alignment: VerticalAlignment | None = Field(
-        default=None, description="Vertical text alignment."
-    )
-    wrap_text: bool | None = Field(default=None, description="Wrap long text onto new lines.")
+    horizontal_alignment: HorizontalAlignment | None = None
+    vertical_alignment: VerticalAlignment | None = None
+    wrap_text: bool | None = None
     border_style: BorderStyle | None = Field(
-        default=None, description="Border on all four sides of every cell; 'none' removes it."
+        default=None, description="On all four sides of every cell; 'none' removes it."
     )
-    border_color: str | None = Field(default=None, description="Border hex color (default black).")
+    border_color: str | None = Field(default=None, description="Hex. Default: black.")
 
 
 def parse_color(value: str) -> str:

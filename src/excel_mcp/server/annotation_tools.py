@@ -14,7 +14,7 @@ DefinedName = Annotated[
 ]
 NameScope = Annotated[
     str | None,
-    Field(description="Sheet the name belongs to. Default: the whole workbook."),
+    Field(description="Sheet the name is scoped to. Default: the workbook."),
 ]
 
 
@@ -25,17 +25,14 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         name: DefinedName,
         refers_to: Annotated[
             str,
-            Field(
-                description="A range with its sheet, e.g. 'Data!$B$2:$B$100', or a constant "
-                "such as '0.075'."
-            ),
+            Field(description="Range with sheet, e.g. 'Data!$B$2:$B$100', or a constant: '0.075'."),
         ],
         sheet: NameScope = None,
     ) -> str:
         """Create a defined name for a range or constant, replacing a name of the same scope.
 
-        Formulas can then use it, e.g. '=SUM(Sales)'. The reference follows the same safety
-        rules as formulas. Names are listed by describe_workbook.
+        Formulas can then use it, e.g. '=SUM(Sales)'. The reference follows the formula
+        safety rules. describe_workbook lists names.
         """
         with workspace.edit(path) as workbook:
             replaced = names.set_defined_name(
@@ -55,12 +52,12 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         path: WorkbookPath,
         sheet: SheetName,
         cell: CellRef,
-        text: Annotated[str, Field(min_length=1, description="The note's text.")],
-        author: Annotated[str, Field(description="Name shown as the note's author.")] = "Claude",
+        text: Annotated[str, Field(min_length=1, description="Note text.")],
+        author: Annotated[str, Field(description="Shown as the note's author.")] = "Claude",
     ) -> str:
         """Add a note to a cell, replacing the cell's existing note.
 
-        Notes are listed by describe_sheet and shown when hovering over the cell in Excel.
+        describe_sheet lists notes; Excel shows them on hover.
         """
         with workspace.edit(path) as workbook:
             notes.set_note(get_sheet(workbook, sheet), cell, text, author)

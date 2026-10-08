@@ -27,44 +27,45 @@ Operator = Literal[
 
 
 class ConditionalFormat(BaseModel):
-    """A conditional format rule. Which fields are used depends on ``type``."""
+    """Which fields apply depends on ``type``."""
 
-    type: Literal["color_scale", "data_bar", "cell_value", "formula"] = Field(
-        description="Kind of rule."
-    )
+    type: Literal["color_scale", "data_bar", "cell_value", "formula"]
     colors: list[str] | None = Field(
-        default=None,
-        description="color_scale: 2 or 3 colors from lowest to highest. data_bar: 1 color.",
+        default=None, description="color_scale: 2 or 3, lowest to highest. data_bar: 1."
     )
-    operator: Operator | None = Field(default=None, description="cell_value only.")
+    operator: Operator | None = Field(default=None, description="cell_value.")
     values: list[str] | None = Field(
         default=None,
-        description="cell_value only: 1 value, or 2 for between/notBetween. "
-        "Numbers, quoted text such as '\"Done\"', or formulas.",
+        description="cell_value: 1, or 2 for between/notBetween. Numbers, quoted text such "
+        "as '\"Done\"', or formulas.",
     )
     formula: str | None = Field(
-        default=None, description="formula only: true for highlighted cells, e.g. '=$C2>100'."
+        default=None,
+        description="formula: true for highlighted cells, written for the range's top-left "
+        "cell, e.g. '=$C2>100'.",
     )
-    fill_color: str | None = Field(default=None, description="cell_value and formula rules.")
-    font_color: str | None = Field(default=None, description="cell_value and formula rules.")
+    fill_color: str | None = Field(default=None, description="cell_value, formula.")
+    font_color: str | None = Field(default=None, description="cell_value, formula.")
 
 
 class DataValidationRule(BaseModel):
-    """A data validation rule. Which fields are used depends on ``type``."""
+    """Which fields apply depends on ``type``."""
 
-    type: Literal["list", "whole", "decimal", "date", "text_length", "custom"] = Field(
-        description="Kind of rule."
-    )
-    options: list[str] | None = Field(default=None, description="list only: allowed values.")
+    type: Literal["list", "whole", "decimal", "date", "text_length", "custom"]
+    options: list[str] | None = Field(default=None, description="list: allowed values.")
     operator: Operator | None = Field(
-        default=None, description="whole, decimal, date and text_length."
+        default=None, description="whole, decimal, date, text_length."
     )
-    minimum: str | None = Field(default=None, description="First bound, number or formula.")
-    maximum: str | None = Field(default=None, description="Second bound for between/notBetween.")
-    formula: str | None = Field(default=None, description="custom only, e.g. '=A2>B2'.")
-    allow_blank: bool = Field(default=True, description="Allow empty cells.")
-    error_message: str | None = Field(default=None, description="Shown when input is rejected.")
-    prompt: str | None = Field(default=None, description="Hint shown when a cell is selected.")
+    minimum: str | None = Field(
+        default=None, description="Number or formula; dates as 'DATE(2026,1,31)'."
+    )
+    maximum: str | None = Field(default=None, description="For between/notBetween.")
+    formula: str | None = Field(
+        default=None, description="custom: for the range's top-left cell, e.g. '=A2>B2'."
+    )
+    allow_blank: bool = True
+    error_message: str | None = Field(default=None, description="Shown for rejected input.")
+    prompt: str | None = Field(default=None, description="Shown when a cell is selected.")
 
 
 def add_conditional_format(sheet: Worksheet, ref: str, rule: ConditionalFormat) -> str:

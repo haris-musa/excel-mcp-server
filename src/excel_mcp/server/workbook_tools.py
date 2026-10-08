@@ -39,8 +39,8 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     def describe_workbook(path: WorkbookPath) -> WorkbookInfo:
         """List a workbook's sheets with their used ranges, and its defined names.
 
-        Start here. Streams the file, so large workbooks are fine, but each sheet is read
-        once in full. `has_vba` (macros) is only present when true; see read_vba.
+        Start here. Reads each sheet once in full. `has_vba` is only present when true; see
+        read_vba.
         """
         with workspace.stream(path) as workbook:
             return inspect.describe_workbook(workbook, vba.has_vba(workspace.resolve(path)))
@@ -49,10 +49,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     def list_workbooks(
         directory: Annotated[
             str,
-            Field(
-                description="Directory to search. Leave empty for the server's workbook "
-                "directory; otherwise use an absolute path."
-            ),
+            Field(description="Default: the server's workbook directory; else an absolute path."),
         ] = "",
         recursive: Annotated[bool, Field(description="Also search subdirectories.")] = False,
     ) -> dict[str, int]:

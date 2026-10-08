@@ -30,17 +30,13 @@ ALLOWED_ACTIONS = AllowedAction.__args__
 
 
 class Protection(BaseModel):
-    """Turn sheet protection on or off."""
-
-    enabled: bool = Field(description="True protects the sheet, false unprotects it.")
+    enabled: bool = Field(description="False unprotects.")
     password: str | None = Field(
-        default=None,
-        max_length=255,
-        description="Password to set; when unprotecting, the password the sheet has.",
+        default=None, max_length=255, description="To set; to unprotect, the current one."
     )
     allow: list[AllowedAction] = Field(
         default=["select_locked_cells", "select_unlocked_cells"],
-        description="Actions users may still do on a protected sheet.",
+        description="What users may still do.",
     )
 
 
