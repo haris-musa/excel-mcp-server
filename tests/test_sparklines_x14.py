@@ -9,15 +9,10 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from openpyxl import load_workbook
 
-from excel_mcp import package
 from excel_mcp.package import extensions as ext
-from excel_mcp.package import state_of
-from excel_mcp.package.references import rewrite_lines
 from tests.conftest import ToolCall
 from tests.package_support import assert_package_is_consistent, read_parts, sheet_part, text
-from tests.test_package_references import _edit, _formula
 
 pytestmark = pytest.mark.anyio
 
@@ -221,17 +216,20 @@ async def test_sparklines_survive_edits_and_sheet_copies(call: ToolCall, sample:
     assert_package_is_consistent(read_parts(sample))
 
 
-async def test_sparklines_follow_inserted_rows(call: ToolCall, sample: Path) -> None:
-    await call("add_sparklines", **BOOK, sheet="Data", location="F3:F4", data="C3:D4")
-    workbook = load_workbook(sample)
-    package.capture(sample, workbook, 50_000_000)
-    edit = _edit("Data", "rows", 2)
-    rewrite_lines(workbook, edit, _formula(edit))
-    xml = state_of(workbook).sheet(workbook["Data"]).extensions[ext.SPARKLINES]
-    assert re.findall(r"<xm:f>(.*?)</xm:f><xm:sqref>(.*?)</xm:sqref>", xml) == [
-        ("Data!C4:D4", "F4"),
-        ("Data!C5:D5", "F5"),
-    ]
+async def test_sparklines_follow_row_edits_and_renames_as_in_excel(
+    call: ToolCall, sample: Path
+) -> None:
+    style = {"dates": "C1:D1"}
+    await call("add_sparklines", **BOOK, sheet="Data", location="F3:F4", data="C3:D4", style=style)
+    await call("insert_rows_or_columns", **BOOK, sheet="Data", axis="rows", at=2, count=2)
+    (group,) = _groups(sample)
+    assert "<xm:f>Data!C1:D1</xm:f><x14:sparklines>" in group  # above the edit
+    sparklines = (await call("describe_sheet", **BOOK, sheet="Data"))["sparklines"]
+    assert sparklines[0]["sparklines"] == {"F5": "Data!C5:D5", "F6": "Data!C6:D6"}
+    await call("rename_sheet", **BOOK, sheet="Data", new_name="My Data")
+    (group,) = _groups(sample, "My Data")
+    assert "<xm:f>'My Data'!C1:D1</xm:f><x14:sparklines>" in group
+    assert "<xm:f>'My Data'!C5:D5</xm:f><xm:sqref>F5</xm:sqref>" in group
 
 
 BAR_NEGATIVES = {
@@ -463,7 +461,7 @@ async def test_extended_rules_survive_edits_and_sheet_copies(call: ToolCall, sam
     assert_package_is_consistent(read_parts(sample))
 
 
-async def test_extended_rules_follow_inserted_rows(call: ToolCall, sample: Path) -> None:
+async def test_extended_rules_follow_row_edits(call: ToolCall, sample: Path) -> None:
     await call(
         "add_conditional_format",
         **BOOK,
@@ -471,11 +469,21 @@ async def test_extended_rules_follow_inserted_rows(call: ToolCall, sample: Path)
         range="C3:C5",
         rule={"type": "data_bar", "colors": ["#638EC6"]},
     )
-    workbook = load_workbook(sample)
-    package.capture(sample, workbook, 50_000_000)
-    sheet = workbook["Data"]
-    edit = _edit("Data", "rows", 2)
-    rewrite_lines(workbook, edit, _formula(edit))
-    state = state_of(workbook).sheet(sheet)
-    assert list(state.rule_extensions) == [("C4:C6", "1")]
-    assert "<xm:sqref>C4:C6</xm:sqref>" in state.extensions[ext.CONDITIONAL_FORMATS]
+    await call(
+        "add_conditional_format",
+        **BOOK,
+        sheet="Data",
+        range="D3:D5",
+        rule={"type": "icon_set", "icon_set": "3Stars"},
+    )
+    await call("insert_rows_or_columns", **BOOK, sheet="Data", axis="rows", at=2)
+    xml = _sheet_xml(sample)
+    assert 'conditionalFormatting sqref="C4:C6"' in xml
+    guid = re.search(r"<x14:id>(\{[^}]*\})</x14:id>", xml)[1]  # type: ignore[index]
+    rules = _x14_rules(sample)
+    assert f'id="{guid}"' in rules[0] and "<xm:sqref>C4:C6</xm:sqref>" in rules[0]
+    assert "<xm:sqref>D4:D6</xm:sqref>" in rules[1]
+    await call("delete_rows_or_columns", **BOOK, sheet="Data", axis="rows", at=1, count=3)
+    assert 'conditionalFormatting sqref="C1:C3"' in _sheet_xml(sample)
+    assert "<xm:sqref>C1:C3</xm:sqref>" in _x14_rules(sample)[0]
+    assert_package_is_consistent(read_parts(sample))

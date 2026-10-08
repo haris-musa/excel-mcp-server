@@ -99,7 +99,11 @@ def _copy_extensions(
     package = state.sheets.get(source)
     if package is None:
         return
-    found, rules = extensions.copied(package.extensions, package.rule_extensions, refs.operand)
+    found, rules = extensions.copied(
+        package.extensions,
+        package.rule_extensions,
+        lambda text: refs.operand(text, target.title),
+    )
     copy = state.sheet(target)
     copy.extensions.update(found)
     copy.rule_extensions.update(rules)

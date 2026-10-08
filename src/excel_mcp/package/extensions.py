@@ -46,6 +46,7 @@ _EMPTY_GROUP = re.compile(
 )
 _RULE_GROUP = re.compile(r"<x14:conditionalFormatting\b[^>]*>.*?</x14:conditionalFormatting>", re.S)
 _VALIDATION = re.compile(r"<x14:dataValidation\b[^>]*>.*?</x14:dataValidation>", re.S)
+_GROUP_DATES = re.compile(r"<xm:f>([^<]*)</xm:f>(?=<x14:sparklines>)")
 _RANGE = re.compile(r"<xm:sqref>([^<]*)</xm:sqref>")
 _FORMULA = re.compile(r"<xm:f>([^<]*)</xm:f>")
 _FORMULA_ITEM = re.compile(
@@ -67,6 +68,8 @@ def rewrite_extensions(extensions: dict[str, str], rewriter: Rewriter) -> None:
     for uri, xml in list(extensions.items()):
         if uri == SPARKLINES:
             kept = _sparklines(xml, lambda item: _moved_sparkline(item, rewriter))
+            if kept is not None:
+                kept = _GROUP_DATES.sub(lambda m: _moved_formula(m, rewriter), kept)
         elif uri == CONDITIONAL_FORMATS:
             kept = _items(xml, _RULE_GROUP, lambda item: _moved_item(item, rewriter), "<x14:cfRule")
         elif uri == DATA_VALIDATIONS:
@@ -199,6 +202,10 @@ def _moved_sparkline(item: str, rewriter: Rewriter) -> list[str]:
         else:
             item = item.replace(source[0], f"<xm:f>{escape(read)}</xm:f>")
     return [item, *_inserted_copies(item, location[1], rewriter)]
+
+
+def _moved_formula(match: re.Match[str], rewriter: Rewriter) -> str:
+    return f"<xm:f>{escape(rewriter.formula(unescape(match[1])))}</xm:f>"
 
 
 def _inserted_copies(item: str, old: str, rewriter: Rewriter) -> list[str]:
