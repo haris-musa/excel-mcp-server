@@ -21,6 +21,7 @@ class RangeData(BaseModel):
     range: str
     values: list[list[CellValue]]
     next_range: str | None = None
+    uncalculated: dict[str, str] | None = None
 
 
 class WriteResult(BaseModel):
