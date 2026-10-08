@@ -1,6 +1,7 @@
 """Table options as Excel's Table Design tab offers them: header and totals rows, calculated
 columns, banding, emphasis, filter buttons and resizing."""
 
+from dataclasses import replace
 from typing import Annotated, Literal
 
 from openpyxl.worksheet.filters import AutoFilter
@@ -9,6 +10,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import Field, StringConstraints
 
 from excel_mcp.errors import InvalidArgumentError, LimitExceededError
+from excel_mcp.formulas import storable_formula
 from excel_mcp.inputs import InputModel
 from excel_mcp.operations.cells import store_value, writable_cell
 from excel_mcp.operations.shifting import Mover
@@ -37,9 +39,9 @@ class ColumnOptions(InputModel):
     name: str = Field(description="The column's header text.")
     formula: str | None = Field(
         default=None,
-        description="Makes it a calculated column: the formula fills every row, and rows added "
-        "later. Use structured references, e.g. '=[@Price]*[@Qty]' (the same row) or "
-        "'=Sales[Price]'; cell references must be absolute.",
+        description="Makes it a calculated column: the formula, written for the first data row, "
+        "fills every row, and rows added later. Use structured references, e.g. "
+        "'=[@Price]*[@Qty]' (the same row) or '=Sales[Price]', or relative cells like '=B2*C2'.",
     )
     total: TotalFunction | Annotated[str, StringConstraints(pattern=r"^=")] | None = Field(
         default=None,
@@ -65,7 +67,8 @@ class TableOptions(InputModel):
     )
     totals_row: bool | None = Field(
         default=None,
-        description="A row below the table, which must be empty; its first cell says 'Total'.",
+        description="A row below the table, which must be empty. As in Excel, its first cell says "
+        "'Total' and the last column sums numbers or counts other values.",
     )
     striped_rows: bool | None = None
     striped_columns: bool | None = None
@@ -163,9 +166,24 @@ def _set_totals_row(sheet: Worksheet, table: Table, shown: bool) -> None:
     _require_empty(sheet, row, area.min_col, area.max_col, "the totals row")
     table.ref = str(CellRange(area.min_row, area.min_col, row, area.max_col))
     table.totalsRowCount = 1
-    first = table.tableColumns[0]
-    first.totalsRowLabel = "Total"
-    store_value(writable_cell(sheet, row, area.min_col), "Total")
+    columns = table.tableColumns
+    if len(columns) > 1:
+        columns[0].totalsRowLabel = "Total"
+        store_value(writable_cell(sheet, row, area.min_col), "Total")
+    last = len(columns) - 1
+    fill = "sum" if _is_numeric(sheet, table, area.min_col + last) else "count"
+    _set_total(sheet, table, columns[last], area.min_col + last, ColumnOptions(name="", total=fill))
+
+
+def _is_numeric(sheet: Worksheet, table: Table, position: int) -> bool:
+    """Whether Excel sums the column of a new totals row: it has numbers and nothing else."""
+    first, last = _data_rows(table)
+    cells = [sheet.cell(row, position) for row in range(first, last + 1)]
+    values = [c for c in cells if c.value is not None]
+    return bool(values) and all(
+        c.data_type == "f" or (isinstance(c.value, int | float) and not isinstance(c.value, bool))
+        for c in values
+    )
 
 
 def _require_empty(sheet: Worksheet, row: int, first: int, last: int, what: str) -> None:
@@ -194,22 +212,23 @@ def _set_column(sheet: Worksheet, table: Table, options: ColumnOptions, max_cell
         _set_total(sheet, table, column, position, options)
 
 
+def calculated_value(sheet: Worksheet, formula: str, first_row: int, row: int) -> str:
+    """The formula (no "=") of a calculated column, written for its first data row, as it is
+    in ``row``: relative references move as when the formula is copied down."""
+    moved = Mover(row - first_row, 0).operand(formula, sheet.title)
+    return storable_formula(f"={moved}", sheet_names(sheet))
+
+
 def _set_formula(
     sheet: Worksheet, table: Table, column: TableColumn, position: int, formula: str, max_cells: int
 ) -> None:
-    text = qualify_formula(f"={formula.removeprefix('=')}", table.displayName)
-    if Mover(1, 0).operand(text, sheet.title) != text:
-        raise InvalidArgumentError(
-            "A calculated column formula cannot use relative cell references like A2: write "
-            "'[@Price]' for the same row's Price, or '$A$2' for one fixed cell."
-        )
+    text = qualify_formula(f"={formula.removeprefix('=')}", table.displayName).removeprefix("=")
     first, last = _data_rows(table)
     if last - first + 1 > max_cells:
         raise LimitExceededError(f"The column has more than {max_cells:,} rows.")
-    stored = to_cell(text, sheet_names(sheet))
-    column.calculatedColumnFormula = TableFormula(attr_text=text.removeprefix("="))
     for row in range(first, last + 1):
-        writable_cell(sheet, row, position).value = stored
+        writable_cell(sheet, row, position).value = calculated_value(sheet, text, first, row)
+    column.calculatedColumnFormula = TableFormula(attr_text=text)
 
 
 def _set_total(
@@ -239,33 +258,56 @@ def _set_total(
 
 
 def _resize(sheet: Worksheet, table: Table, new: CellRange, max_cells: int) -> None:
-    """Move the table's last row and column, as dragging its resize handle does."""
+    """Move the table's last row and column, as dragging its resize handle does. The totals
+    row moves with the end of the table; data rows cut off are pushed below it."""
     old = parse_range(table.ref)
     if (new.min_row, new.min_col) != (old.min_row, old.min_col):
         raise InvalidArgumentError(f"The table's top-left cell stays {old.top_left}.")
-    if table.totalsRowCount:
-        raise InvalidArgumentError(
-            "Resizing a table with a totals row is not supported: set totals_row to false, "
-            "resize, and turn it on again."
-        )
+    totals = bool(table.totalsRowCount)
+    if totals and new.max_row < old.max_row:
+        new = replace(new, max_row=new.max_row + 1)  # the range given is the data's
     for other in sheet.tables.values():
         if other is not table and new.overlaps(parse_range(other.ref)):
             raise InvalidArgumentError(f"{new} overlaps table {other.displayName!r}.")
-    if new.rows < 1 + (table.headerRowCount != 0):
+    if new.rows < 1 + (table.headerRowCount != 0) + totals:
         raise InvalidArgumentError("A table needs at least one data row.")
+    if totals:
+        _move_totals_row(sheet, table, old, new)
     columns = table.tableColumns
     del columns[new.cols :]
     for index in range(len(columns), new.cols):
         columns.append(_new_column(sheet, table, old, new.min_col + index, columns))
     table.tableColumns = columns
-    first = old.max_row + 1
+    first = old.max_row - totals + 1
     table.ref = str(new)
+    first_data, last_data = _data_rows(table)
+    if last_data - first_data + 1 > max_cells:
+        raise LimitExceededError(f"The table has more than {max_cells:,} rows.")
     for index, column in enumerate(columns, start=new.min_col):
         formula = column.calculatedColumnFormula
-        if formula is not None and formula.attr_text and new.max_row >= first:
-            stored = to_cell(f"={formula.attr_text}", sheet_names(sheet))
-            for row in range(first, new.max_row + 1):
-                writable_cell(sheet, row, index).value = stored
+        if formula is not None and formula.attr_text:
+            for row in range(first, last_data + 1):
+                writable_cell(sheet, row, index).value = calculated_value(
+                    sheet, formula.attr_text, first_data, row
+                )
+
+
+def _move_totals_row(sheet: Worksheet, table: Table, old: CellRange, new: CellRange) -> None:
+    columns = range(old.min_col, old.max_col + 1)
+    kept = [(c, sheet.cell(old.max_row, c)) for c in columns if c <= new.max_col]
+    saved = [(c, cell.value, cell.data_type, cell._style) for c, cell in kept]
+    if new.max_row > old.max_row:
+        _require_empty(sheet, new.max_row, old.min_col, old.max_col, "the totals row")
+    for c in columns:
+        sheet.cell(old.max_row, c).value = None
+    if new.max_row < old.max_row:
+        cut = CellRange(new.max_row, old.min_col, old.max_row - 1, old.max_col)
+        sheet.move_range(str(cut), rows=1, translate=True)
+    for c, value, data_type, style in saved:
+        cell = writable_cell(sheet, new.max_row, c)
+        cell.value = value
+        cell.data_type = data_type
+        cell._style = style
 
 
 def _new_column(

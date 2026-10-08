@@ -51,8 +51,8 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         range: Annotated[
             str | None,
             Field(
-                description="Resize: the new range, with the same top-left cell. Not with a "
-                "totals row. New columns take their header cell's text, or 'ColumnN'."
+                description="Resize: the new range, with the same top-left cell. The totals row "
+                "moves to the end. New columns take their header cell's text, or 'ColumnN'."
             ),
         ] = None,
     ) -> str:
