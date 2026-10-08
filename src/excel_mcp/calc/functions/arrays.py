@@ -1,7 +1,10 @@
 """Functions that build arrays; a cell that is not array-entered shows the first element."""
 
+from typing import TYPE_CHECKING
+
 from excel_mcp.calc.functions.helpers import as_grid
 from excel_mcp.calc.functions.lookup import exact_extent
+from excel_mcp.calc.parser import Node, Ref
 from excel_mcp.calc.registry import function
 from excel_mcp.calc.values import (
     CALC,
@@ -19,7 +22,18 @@ from excel_mcp.calc.values import (
     to_number,
 )
 
+if TYPE_CHECKING:
+    from excel_mcp.calc.engine import Engine
+
 _MAX_ELEMENTS = 100_000
+
+
+@function("ANCHORARRAY", kind="lazy")
+def anchor_array(engine: "Engine", reference: Node) -> Value:
+    """``A1#``: the whole range the dynamic array formula in A1 spills into."""
+    if not isinstance(reference, Ref):
+        raise UncalculableError("spill reference to a computed value")
+    return engine.anchored(reference)
 
 
 @function("SEQUENCE", kind="scalar")

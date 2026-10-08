@@ -10,7 +10,7 @@ import logging
 import math
 from collections.abc import Iterator
 from contextlib import suppress
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import Decimal
 from typing import Any
 
@@ -54,6 +54,7 @@ from excel_mcp.calc.values import (
     Value,
     date_to_serial,
 )
+from excel_mcp.refs import parse_range
 from excel_mcp.workspace import worksheets
 from excel_mcp.xlfn import FUTURE_FUNCTIONS
 
@@ -90,6 +91,7 @@ class Engine:
         self.cached_sheets = {ws.title.casefold(): ws for ws in worksheets(cached)}
         self.memo: dict[CellKey, Scalar | UncalculableError] = {}
         self.trees: dict[CellKey, Node] = {}
+        self.spills: dict[CellKey, Grid] = {}
         self.active: set[CellKey] = set()
         self.work = 0
         self.depth = 0
@@ -262,7 +264,7 @@ class Engine:
     def evaluate_cell(self, cell: Any) -> Scalar:
         if isinstance(cell.value, ArrayFormula):
             text = str(cell.value.text)
-            return self.spill(cell.parent, cell.row, cell.column, text).rows[0][0]
+            return self.spill_of(cell.parent, cell.row, cell.column, text).rows[0][0]
         node = self.tree(cell)
         shown = self.eval(node, array=False)
         if isinstance(shown, RefGrid):
@@ -279,6 +281,35 @@ class Engine:
         return (
             left if not isinstance(left, Grid) else None,
             right if not isinstance(right, Grid) else None,
+        )
+
+    def spill_of(self, sheet: Worksheet, row: int, col: int, formula: str) -> Grid:
+        key = (sheet.title, row, col)
+        if key not in self.spills:
+            self.spills[key] = self.spill(sheet, row, col, formula)
+        return self.spills[key]
+
+    def anchored(self, ref: Ref) -> Value:
+        """What the spill reference ``A1#`` stands for: the range the formula in A1 filled.
+
+        Where Excel stored the result, that is the stored array range; otherwise it is what
+        the calculator gets for the formula.
+        """
+        if ref.top is None or ref.left is None or (ref.top, ref.left) != (ref.bottom, ref.right):
+            raise UncalculableError("spill reference to something other than one cell")
+        sheet = self.sheets_of(ref)[0]
+        cell = sheet._cells.get((ref.top, ref.left))
+        if cell is None or cell.data_type != "f":
+            raise FormulaError(REF)
+        if not isinstance(cell.value, ArrayFormula):
+            return self.reference(ref)  # Excel: a formula that spills nothing fills its own cell
+        if self.cached_value(sheet, ref.top, ref.left) is None:
+            return self.spill_of(sheet, ref.top, ref.left, str(cell.value.text))
+        area = parse_range(cell.value.ref)
+        return self.reference(
+            replace(
+                ref, top=area.min_row, left=area.min_col, bottom=area.max_row, right=area.max_col
+            )
         )
 
     def spill(self, sheet: Worksheet, row: int, col: int, formula: str) -> Grid:

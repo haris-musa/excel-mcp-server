@@ -28,6 +28,7 @@ from excel_mcp.calc.values import UncalculableError
 # Functions whose result is an array, so a formula that ends in one spills.
 _ARRAYS = frozenset(
     [
+        "ANCHORARRAY",
         "SORT",
         "SORTBY",
         "UNIQUE",

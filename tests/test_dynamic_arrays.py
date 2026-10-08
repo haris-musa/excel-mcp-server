@@ -246,3 +246,17 @@ async def test_a_copied_sheet_copies_its_dynamic_arrays(call: ToolCall, files: P
         "E1": ("1", "E1"),
         "F1": ("1", "F1:F5"),
     }
+
+
+async def test_spill_references_stand_for_the_range_a_formula_filled(
+    call: ToolCall, numbers: Path
+) -> None:
+    await call("write_range", **BOOK, sheet="Out", start_cell="A1", rows=[FORMULAS])
+    uses = ["=SUM(C1#)", "=COUNTA(F1#)", "=INDEX(D1#,3)", "=ROWS(A1#)", "=SUM(E1#)", "=SUM(B9#)"]
+    await call("write_range", **BOOK, sheet="Out", start_cell="H1", rows=[uses])
+
+    data = await call("read_range", **BOOK, sheet="Out", range="H1:M1")
+
+    assert data["values"] == [[25, 5, 3, 3, 50, "#REF!"]]
+    shown = await call("read_range", **BOOK, sheet="Out", range="H1:H1", mode="formulas")
+    assert shown["values"] == [["=SUM(C1#)"]]
