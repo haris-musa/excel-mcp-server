@@ -92,6 +92,7 @@ def _font(current, style: CellFormat):
         font.strike = style.strikethrough
     if style.font_name is not None:
         font.name = style.font_name
+        font.scheme = None  # a scheme makes Excel use the theme's font instead of the name
     if style.font_size is not None:
         font.size = style.font_size
     if style.font_color is not None:
