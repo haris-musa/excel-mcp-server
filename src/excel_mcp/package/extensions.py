@@ -46,6 +46,10 @@ _EMPTY_GROUP = re.compile(
 )
 _RULE_GROUP = re.compile(r"<x14:conditionalFormatting\b[^>]*>.*?</x14:conditionalFormatting>", re.S)
 _VALIDATION = re.compile(r"<x14:dataValidation\b[^>]*>.*?</x14:dataValidation>", re.S)
+_DATED_GROUP = re.compile(
+    r"(<x14:sparklineGroup(?!s)[^>]*>(?:(?!<x14:sparklines>).)*?)<xm:f>([^<]*)</xm:f>(<x14:sparklines>)",
+    re.S,
+)
 _GROUP_DATES = re.compile(r"<xm:f>([^<]*)</xm:f>(?=<x14:sparklines>)")
 _RANGE = re.compile(r"<xm:sqref>([^<]*)</xm:sqref>")
 _FORMULA = re.compile(r"<xm:f>([^<]*)</xm:f>")
@@ -85,15 +89,22 @@ def rewrite_extensions(extensions: dict[str, str], rewriter: Rewriter) -> None:
 
 
 def forget_sheets(extensions: dict[str, str], names: set[str]) -> None:
-    """Drop what reads the deleted sheets ``names``: Excel deletes such sparklines and puts
-    ``#REF!`` into the formulas of validations and conditional formats."""
+    """Update what reads the deleted sheets ``names``, as Excel does: a sparkline loses its
+    data, a group loses its date axis (Excel writes ``#REF!`` for the dates, a file that it
+    cannot open again), and the formulas of validations and conditional formats become
+    ``#REF!``."""
 
     def gone(text: str) -> bool:
         return any(refers_to(text, name) for name in names)
 
     def sparkline(item: str) -> list[str]:
         source = _FORMULA.search(item)
-        return [] if source and gone(unescape(source[1])) else [item]
+        return [item.replace(source[0], "")] if source and gone(unescape(source[1])) else [item]
+
+    def group(match: re.Match[str]) -> str:
+        if not gone(unescape(match[2])):
+            return match[0]
+        return match[1].replace(' dateAxis="1"', "").replace(' dateAxis="true"', "") + match[3]
 
     def rule(item: str) -> str:
         return _FORMULA.sub(lambda m: "<xm:f>#REF!</xm:f>" if gone(unescape(m[1])) else m[0], item)
@@ -101,6 +112,8 @@ def forget_sheets(extensions: dict[str, str], names: set[str]) -> None:
     for uri, xml in list(extensions.items()):
         if uri == SPARKLINES:
             kept = _sparklines(xml, sparkline)
+            if kept is not None:
+                kept = _DATED_GROUP.sub(group, kept)
         elif uri in (CONDITIONAL_FORMATS, DATA_VALIDATIONS):
             kept = rule_sub(xml, rule)
         else:

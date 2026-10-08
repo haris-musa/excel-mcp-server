@@ -48,7 +48,7 @@ Adding content, as a feature that writes sparklines, slicers or comments does::
   `check_sheet_removal` and `check_pivot_removal` before deleting.
 - Content that refers to what an edit removed is cleaned up as Excel does it when the file
   is written (`package.consistency`): slicer caches no slicer uses, threaded comments
-  without their note, sparklines that read a deleted sheet.
+  without their note, sparklines that lose their data with a deleted sheet.
 - Sheet and table numbers, which openpyxl renumbers, are remapped in the slicer and timeline
   caches that name them; parts you add may name sheets and tables by the numbers they had
   in the file.
