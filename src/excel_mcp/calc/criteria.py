@@ -4,29 +4,11 @@ import re
 from collections.abc import Callable
 
 from excel_mcp.calc.values import ERRORS, ExcelError, Scalar, compare, is_number, parse_number
+from excel_mcp.calc.wildcard import Wildcard
 
 Test = Callable[[Scalar], bool]
 
 _OPERATOR = re.compile(r"(<=|>=|<>|<|>|=)?(.*)", re.DOTALL)
-
-
-def wildcard(pattern: str) -> re.Pattern[str]:
-    """A pattern with * ? and ~ escapes as a case-insensitive whole-text regular expression."""
-    out: list[str] = []
-    index = 0
-    while index < len(pattern):
-        character = pattern[index]
-        if character == "~" and index + 1 < len(pattern):
-            index += 1
-            out.append(re.escape(pattern[index]))
-        elif character == "*":
-            out.append(".*")
-        elif character == "?":
-            out.append(".")
-        else:
-            out.append(re.escape(character))
-        index += 1
-    return re.compile("".join(out), re.IGNORECASE | re.DOTALL)
 
 
 def has_wildcard(text: str) -> bool:
@@ -79,5 +61,5 @@ def _equals_text(operand: str) -> Test:
             (is_number(value) and value == number)
             or (isinstance(value, str) and parse_number(value) == number)
         )
-    pattern = wildcard(operand)
-    return lambda value: isinstance(value, str) and pattern.fullmatch(value) is not None
+    pattern = Wildcard(operand)
+    return lambda value: isinstance(value, str) and pattern.fullmatch(value)

@@ -1,6 +1,7 @@
 """Formula text to syntax tree, using openpyxl's tokenizer."""
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from openpyxl.formula import Tokenizer
@@ -9,6 +10,9 @@ from openpyxl.utils.cell import column_index_from_string
 
 from excel_mcp.calc.values import ERRORS, REF, UncalculableError
 from excel_mcp.structured import StructuredRef, parse_structured
+
+MAX_NESTING = 64  # Excel's limit on nested function calls
+MAX_FORMULA_LENGTH = 8192
 
 
 @dataclass(frozen=True)
@@ -95,6 +99,8 @@ _FUNCTION_PREFIXES = ("_xlfn.", "_xlws.", "_xlpm.", "_xludf.", "_xleta.")
 
 
 def parse(formula: str) -> Node:
+    if len(formula) > MAX_FORMULA_LENGTH:
+        raise UncalculableError("formula too long")
     try:
         tokens = [t for t in Tokenizer(formula).items if t.type != Token.WSPACE]
     except TokenizerError:
@@ -110,6 +116,16 @@ class _Parser:
     def __init__(self, tokens: list[Token]) -> None:
         self.tokens = tokens
         self.position = 0
+        self.depth = 0
+
+    def nested(self, build: Callable[[], Node]) -> Node:
+        self.depth += 1
+        if self.depth > MAX_NESTING:
+            raise UncalculableError(f"formula nested more than {MAX_NESTING} levels")
+        try:
+            return build()
+        finally:
+            self.depth -= 1
 
     def peek(self) -> Token | None:
         return self.tokens[self.position] if self.position < len(self.tokens) else None
@@ -137,7 +153,7 @@ class _Parser:
         token = self.peek()
         if token and token.type == Token.OP_PRE:
             self.take()
-            return Unary(token.value, self.unary())
+            return self.nested(lambda: Unary(token.value, self.unary()))
         node = self.primary()
         while (token := self.peek()) and token.type == Token.OP_POST:
             self.take()
@@ -149,14 +165,17 @@ class _Parser:
         if token.type == Token.OPERAND:
             return _operand(token)
         if token.type == Token.FUNC and token.subtype == Token.OPEN:
-            return self.call(token)
+            return self.nested(lambda: self.call(token))
         if token.type == Token.PAREN and token.subtype == Token.OPEN:
-            node = self.expression(0)
-            self.expect(Token.PAREN)
-            return node
+            return self.nested(self.parenthesized)
         if token.type == Token.ARRAY and token.subtype == Token.OPEN:
-            return self.array()
+            return self.nested(self.array)
         raise UncalculableError("unparseable formula")
+
+    def parenthesized(self) -> Node:
+        node = self.expression(0)
+        self.expect(Token.PAREN)
+        return node
 
     def expect(self, kind: str) -> None:
         token = self.take()

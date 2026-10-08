@@ -97,6 +97,22 @@ class UncalculableError(Exception):
     """The calculator cannot reproduce Excel's result, so the cell is left out."""
 
 
+MAX_TEXT = 32_767  # characters in a cell, as in Excel
+MAX_ARRAY_CELLS = 100_000
+MAX_PERIODS = 10_000  # iterations of the depreciation and cumulative loan functions
+
+
+def check_periods(count: float) -> None:
+    if count > MAX_PERIODS:
+        raise UncalculableError("too many periods")
+
+
+def check_array_size(height: int, width: int) -> None:
+    """Refuse an array result before it is built."""
+    if height * width > MAX_ARRAY_CELLS:
+        raise UncalculableError("array too large")
+
+
 def is_number(value: object) -> bool:
     return isinstance(value, int | float) and not isinstance(value, bool)
 

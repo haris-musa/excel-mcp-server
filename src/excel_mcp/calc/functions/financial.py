@@ -14,6 +14,7 @@ from excel_mcp.calc.values import (
     Scalar,
     UncalculableError,
     Value,
+    check_periods,
     scalar,
     to_int,
     to_number,
@@ -176,6 +177,7 @@ def _cumulative(
     first, last, kind = to_int(start), to_int(end), to_number(type_)
     if r <= 0 or n <= 0 or present <= 0 or first < 1 or last < first or last > n:
         raise FormulaError(NUM)
+    check_periods(last)
     if kind not in (0, 1):
         raise FormulaError(NUM)
     return naive_sum(portion(r, p, n, present, 0.0, int(kind)) for p in range(first, last + 1))
@@ -356,6 +358,7 @@ def db(cost: Scalar, salvage: Scalar, life: Scalar, period: Scalar, month: Scala
         return 0.0
     if p != int(p) or n != int(n) or m != int(m):
         raise UncalculableError("DB with fractional arguments")
+    check_periods(p)
     rate = round(1 - (s / c) ** (1 / n), 3)
     total = 0.0
     depreciation = 0.0
@@ -375,6 +378,7 @@ def _declining(
 ) -> float:
     if start != int(start) or end != int(end) or life != int(life):
         raise UncalculableError("depreciation over fractional periods")
+    check_periods(end)
     total = taken = 0.0
     for period in range(1, int(end) + 1):
         declining = min((cost - total) * factor / life, max(cost - salvage - total, 0.0))

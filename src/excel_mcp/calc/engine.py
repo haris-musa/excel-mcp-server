@@ -63,6 +63,7 @@ from excel_mcp.xlfn import FUTURE_FUNCTIONS
 logger = logging.getLogger(__name__)
 
 MAX_WORK = 1_000_000
+TEXT_PER_UNIT = 16
 MAX_DEPTH = 30
 MAX_NAME_DEPTH = 8
 
@@ -115,12 +116,14 @@ class Engine:
         queued = {(sheet.title, row, col)}
         while True:
             current = stack[-1]
-            waiting = [d for d in self.unfinished_dependencies(*current) if _key(d) not in queued]
-            if waiting:
-                stack.extend(reversed(waiting))
-                queued.update(_key(d) for d in waiting)
-                continue
             try:
+                waiting = [
+                    d for d in self.unfinished_dependencies(*current) if _key(d) not in queued
+                ]
+                if waiting:
+                    stack.extend(reversed(waiting))
+                    queued.update(_key(d) for d in waiting)
+                    continue
                 value = self.cell_value(*current)
             except TooDeepError as deep:
                 stack.append(deep.target)
@@ -131,7 +134,9 @@ class Engine:
                 if len(stack) == 1:
                     raise
                 value = None
-            except (ArithmeticError, ValueError, TypeError, RecursionError) as error:
+            except Exception as error:
+                # A hostile or unusual formula must end as an uncalculated cell, never as a
+                # failed read: this covers recursion limits, memory and arithmetic overflow.
                 logger.debug("calculation failed: %r", error)
                 failure = UncalculableError("not supported")
                 self.memo[_key(current)] = failure
@@ -341,6 +346,12 @@ class Engine:
         with suppress(UncalculableError):
             self.calculate(sheet, row, col)
 
+    def sized(self, value: Scalar) -> Scalar:
+        """Count produced text against the work limit, so arrays of long text stop."""
+        if isinstance(value, str):
+            self.charge(len(value) // TEXT_PER_UNIT)
+        return value
+
     def charge(self, units: int) -> None:
         self.work += units
         if self.work > MAX_WORK:
@@ -454,7 +465,7 @@ class Engine:
                 return elementwise(apply_percent, self.operand(operand, array))
             case Binary(op, left, right):
                 return elementwise(
-                    lambda a, b: apply_binary(op, a, b),
+                    lambda a, b: self.sized(apply_binary(op, a, b)),
                     self.operand(left, array),
                     self.operand(right, array),
                 )
@@ -490,6 +501,8 @@ class Engine:
             return error.error
         if isinstance(result, float) and not math.isfinite(result):
             return NUM
+        if isinstance(result, str):
+            self.sized(result)
         return result
 
     def dispatch(self, spec: Function, args: tuple[Node, ...], array: bool) -> Value:
@@ -520,7 +533,7 @@ class Engine:
                     if isinstance(value, ExcelError):
                         return value
             try:
-                return spec.call(*scalars)
+                return self.sized(spec.call(*scalars))
             except FormulaError as error:
                 return error.error
 

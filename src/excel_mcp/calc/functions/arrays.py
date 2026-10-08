@@ -16,6 +16,7 @@ from excel_mcp.calc.values import (
     Scalar,
     UncalculableError,
     Value,
+    check_array_size,
     scalar,
     to_bool,
     to_int,
@@ -24,8 +25,6 @@ from excel_mcp.calc.values import (
 
 if TYPE_CHECKING:
     from excel_mcp.calc.engine import Engine
-
-_MAX_ELEMENTS = 100_000
 
 
 @function("ANCHORARRAY", kind="lazy")
@@ -41,8 +40,7 @@ def sequence(rows: Scalar, columns: Scalar = 1, start: Scalar = 1, step: Scalar 
     height, width = to_int(rows), to_int(columns)
     if height < 1 or width < 1:
         raise FormulaError(CALC)
-    if height * width > _MAX_ELEMENTS:
-        raise UncalculableError("array too large")
+    check_array_size(height, width)
     first, delta = to_number(start), to_number(step)
     return Grid([[first + (r * width + c) * delta for c in range(width)] for r in range(height)])
 
@@ -225,6 +223,7 @@ def drop(array: Value, rows: Value, columns: Value = None) -> Grid:
 def vstack(*arrays: Value) -> Grid:
     grids = [as_grid(a) for a in arrays]
     width = max(g.width for g in grids)
+    check_array_size(sum(g.height for g in grids), width)
     pad: Scalar = ExcelError("#N/A")
     return Grid([list(line) + [pad] * (width - g.width) for g in grids for line in g.rows])
 
@@ -233,6 +232,7 @@ def vstack(*arrays: Value) -> Grid:
 def hstack(*arrays: Value) -> Grid:
     grids = [as_grid(a) for a in arrays]
     height = max(g.height for g in grids)
+    check_array_size(height, sum(g.width for g in grids))
     pad: Scalar = ExcelError("#N/A")
     return Grid(
         [

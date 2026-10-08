@@ -5,8 +5,10 @@ from collections.abc import Callable
 
 from excel_mcp.calc.values import (
     DIV0,
+    MAX_TEXT,
     NA,
     NUM,
+    VALUE,
     ExcelError,
     FormulaError,
     Grid,
@@ -14,6 +16,7 @@ from excel_mcp.calc.values import (
     Scalar,
     UncalculableError,
     Value,
+    check_array_size,
     compare,
     to_number,
     to_text,
@@ -71,6 +74,7 @@ def elementwise(function: Callable[..., Scalar], *values: Value) -> Value:
         return function(*values)
     height = max(grid.height for grid in grids)
     width = max(grid.width for grid in grids)
+    check_array_size(height, width)
     if any(
         isinstance(g, RefGrid)
         and (g.clipped_rows or g.clipped_cols)
@@ -136,6 +140,12 @@ def _odd_root(base: float, exponent: float) -> float:
     return -((-base) ** exponent)
 
 
+def _concatenate(left: Scalar, right: Scalar) -> Scalar:
+    if len(text := to_text(left) + to_text(right)) > MAX_TEXT:
+        raise FormulaError(VALUE)
+    return text
+
+
 def _comparison(test: Callable[[int], bool]) -> Callable[[Scalar, Scalar], Scalar]:
     return lambda left, right: test(compare(left, right))
 
@@ -146,7 +156,7 @@ _BINARY: dict[str, Callable[[Scalar, Scalar], Scalar]] = {
     "*": _arithmetic(lambda a, b: a * b),
     "/": _arithmetic(_divide),
     "^": _arithmetic(_power),
-    "&": lambda left, right: to_text(left) + to_text(right),
+    "&": _concatenate,
     "=": _comparison(lambda c: c == 0),
     "<>": _comparison(lambda c: c != 0),
     "<": _comparison(lambda c: c < 0),

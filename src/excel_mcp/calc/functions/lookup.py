@@ -3,7 +3,7 @@
 from itertools import pairwise
 from typing import TYPE_CHECKING
 
-from excel_mcp.calc.criteria import has_wildcard, wildcard
+from excel_mcp.calc.criteria import has_wildcard
 from excel_mcp.calc.parser import Name, Node, Ref
 from excel_mcp.calc.registry import function
 from excel_mcp.calc.values import (
@@ -23,6 +23,7 @@ from excel_mcp.calc.values import (
     to_int,
     type_rank,
 )
+from excel_mcp.calc.wildcard import Wildcard
 from excel_mcp.refs import MAX_COLUMN, MAX_ROW
 
 if TYPE_CHECKING:
@@ -65,7 +66,7 @@ def find_position(lookup: Scalar, values: list[Scalar], mode: int, wildcards: bo
     key = _key(lookup)
     if mode == 0:
         if wildcards and isinstance(key, str) and has_wildcard(key):
-            pattern = wildcard(key)
+            pattern = Wildcard(key)
             return next(
                 (i for i, v in enumerate(values) if isinstance(v, str) and pattern.fullmatch(v)),
                 None,
@@ -181,7 +182,7 @@ def _xmatch(lookup: Scalar, values: list[Scalar], match_mode: int, search_mode: 
     order = _search_order(len(values), search_mode)
     if match_mode in (0, 2):
         if match_mode == 2 and isinstance(key, str):
-            pattern = wildcard(key)
+            pattern = Wildcard(key)
             matches = (
                 i for i in order if isinstance(text := values[i], str) and pattern.fullmatch(text)
             )

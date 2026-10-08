@@ -237,7 +237,8 @@ def fact(number: Scalar) -> float:
 @function("COMBIN", kind="scalar")
 def combin(number: Scalar, chosen: Scalar) -> float:
     n, k = to_int(number), to_int(chosen)
-    if n < 0 or k < 0 or k > n:
+    # Past 1030 chosen items the result exceeds the largest number, and computing it is slow.
+    if n < 0 or k < 0 or k > n or min(k, n - k) > 1030:
         raise fail(NUM)
     return float(math.comb(n, k))
 
@@ -245,7 +246,7 @@ def combin(number: Scalar, chosen: Scalar) -> float:
 @function("PERMUT", kind="scalar")
 def permut(number: Scalar, chosen: Scalar) -> float:
     n, k = to_int(number), to_int(chosen)
-    if n < 0 or k < 0 or k > n:
+    if n < 0 or k < 0 or k > n or k > 170:
         raise fail(NUM)
     return float(math.perm(n, k))
 

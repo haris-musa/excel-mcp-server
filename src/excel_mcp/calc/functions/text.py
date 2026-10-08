@@ -2,11 +2,11 @@
 
 import re
 
-from excel_mcp.calc.criteria import wildcard
 from excel_mcp.calc.functions.helpers import flat
 from excel_mcp.calc.registry import function
 from excel_mcp.calc.textformat import format_fixed, format_number
 from excel_mcp.calc.values import (
+    MAX_TEXT,
     VALUE,
     FormulaError,
     Scalar,
@@ -17,8 +17,7 @@ from excel_mcp.calc.values import (
     to_number,
     to_text,
 )
-
-_MAX_TEXT = 32_767
+from excel_mcp.calc.wildcard import Wildcard
 
 
 def _count(value: Scalar) -> int:
@@ -101,7 +100,7 @@ def textjoin(delimiter: Value, ignore_empty: Value, *args: Value) -> str:
 
 
 def _limited(text: str) -> str:
-    if len(text) > _MAX_TEXT:
+    if len(text) > MAX_TEXT:
         raise FormulaError(VALUE)
     return text
 
@@ -112,6 +111,9 @@ def substitute(text: Scalar, old: Scalar, new: Scalar, instance: Scalar = None) 
     if not target:
         return source
     if instance is None:
+        grown = source.count(target) * (len(replacement) - len(target))
+        if len(source) + grown > MAX_TEXT:
+            raise FormulaError(VALUE)
         return source.replace(target, replacement)
     which = to_int(instance)
     if which < 1:
@@ -145,15 +147,18 @@ def search(needle: Scalar, text: Scalar, start: Scalar = 1) -> float:
     within = to_text(text)
     pattern = to_text(needle)
     begin = _start(within, start)
-    match = wildcard(pattern).search(within, begin)
-    if match is None:
+    index = Wildcard(pattern).search(within, begin)
+    if index is None:
         raise FormulaError(VALUE)
-    return float(match.start() + 1)
+    return float(index + 1)
 
 
 @function("REPT", kind="scalar")
 def rept(text: Scalar, count: Scalar) -> str:
-    return _limited(to_text(text) * _count(count))
+    source, times = to_text(text), _count(count)
+    if len(source) * times > MAX_TEXT:
+        raise FormulaError(VALUE)
+    return source * times
 
 
 @function("VALUE", kind="scalar")
@@ -229,7 +234,10 @@ def code(text: Scalar) -> float:
 
 @function("UNICHAR", kind="scalar")
 def unichar(number: Scalar) -> str:
-    return chr(to_int(number))
+    code = to_int(number)
+    if not 1 <= code <= 0x10FFFF or 0xD800 <= code <= 0xDFFF:
+        raise FormulaError(VALUE)
+    return chr(code)
 
 
 @function("UNICODE", kind="scalar")
