@@ -2,6 +2,7 @@
 
 from typing import Literal
 
+from openpyxl.chartsheet import Chartsheet
 from openpyxl.utils.cell import get_column_letter
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
@@ -40,6 +41,9 @@ def rename_sheet(workbook: Workbook, name: str, new_name: str) -> None:
 
 
 def delete_sheet(workbook: Workbook, name: str) -> None:
+    if name in workbook.sheetnames and isinstance(workbook[name], Chartsheet):
+        workbook.remove(workbook[name])
+        return
     sheet = get_sheet(workbook, name)
     visible = [other for other in workbook.worksheets if other.sheet_state == "visible"]
     if visible == [sheet]:

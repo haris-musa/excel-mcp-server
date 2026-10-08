@@ -28,11 +28,10 @@ async def test_create_chart(call: ToolCall, sample: Path, chart_type: str) -> No
         "create_chart",
         path="sales.xlsx",
         sheet="Report",
-        data_sheet="Data",
-        data_range="B1:C5",
+        data_range="Data!B1:C5",
         chart_type=chart_type,
         anchor_cell="B2",
-        options={"title": "Units", "x_axis_title": "Product"},
+        options={"title": "Units"},
     )
     details = await call("describe_sheet", path="sales.xlsx", sheet="Report")
     assert len(details["charts"]) == 1

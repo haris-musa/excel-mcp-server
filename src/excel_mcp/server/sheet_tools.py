@@ -64,7 +64,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
 
     @tools.destroyer("Delete sheet")
     def delete_sheet(path: WorkbookPath, sheet: SheetName) -> str:
-        """Delete a worksheet and everything on it."""
+        """Delete a worksheet or chart sheet and everything on it."""
         with workspace.edit(path) as workbook:
             sheets.delete_sheet(workbook, sheet)
         return f"Deleted sheet {sheet!r}."

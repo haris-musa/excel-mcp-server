@@ -15,7 +15,7 @@ from openpyxl.chart import AreaChart
 from openpyxl.worksheet._read_only import ReadOnlyWorksheet
 from openpyxl.worksheet.worksheet import Worksheet
 
-from excel_mcp import macros
+from excel_mcp import chart_roundtrip, macros
 from excel_mcp.config import Limits
 from excel_mcp.errors import (
     InvalidArgumentError,
@@ -39,6 +39,7 @@ class Workspace:
     """
 
     def __init__(self, paths: PathPolicy, limits: Limits, allow_macro_workbooks: bool) -> None:
+        chart_roundtrip.install()
         self.paths = paths
         self.limits = limits
         self.allow_macro_workbooks = allow_macro_workbooks

@@ -25,6 +25,7 @@ class SheetSummary(BaseModel):
 
 class WorkbookInfo(BaseModel):
     sheets: list[SheetSummary]
+    chart_sheets: list[str] = []
     defined_names: list[DefinedNameInfo] = []
     has_vba: bool = False
 
@@ -72,6 +73,7 @@ def describe_workbook(workbook: Workbook, has_vba: bool) -> WorkbookInfo:
             )
             for sheet in streamed_worksheets(workbook)
         ],
+        chart_sheets=[sheet.title for sheet in workbook.chartsheets],
         defined_names=list_defined_names(workbook),
         has_vba=has_vba,
     )

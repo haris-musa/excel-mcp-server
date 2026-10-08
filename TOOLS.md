@@ -17,7 +17,7 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`create_sheet`](#create_sheet) | Add an empty worksheet. |
 | [`rename_sheet`](#rename_sheet) | Rename a worksheet. Formulas that refer to the old name are not updated. |
 | [`copy_sheet`](#copy_sheet) | Copy a worksheet to a new sheet at the end, as Excel's "Create a copy" does. |
-| [`delete_sheet`](#delete_sheet) | Delete a worksheet and everything on it. |
+| [`delete_sheet`](#delete_sheet) | Delete a worksheet or chart sheet and everything on it. |
 | [`insert_rows_or_columns`](#insert_rows_or_columns) | Insert empty rows or columns before position `at`. |
 | [`delete_rows_or_columns`](#delete_rows_or_columns) | Delete rows or columns starting at position `at`. |
 | [`read_range`](#read_range) | Read cell values as rows, without trailing empty cells or rows. Dates are ISO 8601. |
@@ -32,7 +32,7 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`add_conditional_format`](#add_conditional_format) | Add a conditional format rule to a range. |
 | [`add_data_validation`](#add_data_validation) | Restrict what can be entered in a range, e.g. a dropdown list. |
 | [`create_table`](#create_table) | Turn a range with a header row of unique text labels into an Excel table. |
-| [`create_chart`](#create_chart) | Add a chart of a block of data to `sheet`. |
+| [`create_chart`](#create_chart) | Add a chart to `sheet`, or replace one. |
 | [`delete_chart`](#delete_chart) | Remove a chart from a sheet. The data it plotted is left untouched. |
 | [`create_pivot_table`](#create_pivot_table) | Add an Excel PivotTable that summarizes a block of data. |
 | [`delete_pivot_table`](#delete_pivot_table) | Remove a PivotTable and clear the cells it fills. The source data is left untouched. |
@@ -163,7 +163,7 @@ original's data. Workbook-scoped names are not duplicated.
 
 **Delete sheet** (modifies files, may overwrite data)
 
-Delete a worksheet and everything on it.
+Delete a worksheet or chart sheet and everything on it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -514,41 +514,100 @@ Turn a range with a header row of unique text labels into an Excel table.
 
 **Create chart** (modifies files)
 
-Add a chart of a block of data to `sheet`.
+Add a chart to `sheet`, or replace one.
 
-'column' draws vertical bars, 'bar' horizontal ones. 'scatter' takes x values from
-the first column. Options that do not fit the chart type are rejected. Charts are
-listed by describe_sheet and removed by delete_chart.
+Give data_range for a plain block, or series for ranges that are not adjacent, sit in
+rows, have their own names or live on other sheets. Combo charts take a `type` and
+`secondary_axis` per series. To change a chart, create it again with `index`.
+Options that do not fit the chart type are rejected. describe_sheet lists the charts;
+delete_chart removes one.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
-| `data_range` | string | yes | Header row, labels in the first column, one series per further column, e.g. 'A1:C13'. |
-| `chart_type` | `column` \| `bar` \| `line` \| `area` \| `pie` \| `scatter` \| `doughnut` \| `radar` | yes | Kind of chart. |
-| `anchor_cell` | string | yes | Top-left cell of the chart. |
+| `chart_type` | `column` \| `bar` \| `line` \| `area` \| `pie` \| `doughnut` \| `radar` \| `scatter` \| `bubble` | yes | Kind of chart. |
 | `options` | object | no |  |
-| `data_sheet` | string | no | Default: `sheet`. |
+| `anchor_cell` | string | no | Top-left cell, e.g. 'E2'. Omit to put the chart on a new chart sheet named `sheet`. |
+| `data_range` | string | no | A block with a header row, labels in the first column and one series per further column, e.g. 'A1:C13' or 'Data!A1:C13'. Scatter: x values first. Bubble: x, y, size. |
+| `series_in` | `columns` \| `rows` | no | 'rows': series are the rows of data_range. Default: `columns`. |
+| `series` | array of object | no | Explicit series instead of data_range, for any ranges on any sheet. Default: `[]`. |
+| `categories` | string | no | Category labels (x values) for series without their own. |
+| `index` | integer | no | Replace chart N of `sheet` (from describe_sheet) with this one, rebuilt from these arguments, instead of adding a chart. |
 
 `options` fields:
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `title` | string | no |  |
-| `x_axis_title` | string | no |  |
-| `y_axis_title` | string | no |  |
+| `title_size` | integer | no | Points. Default 14. |
 | `width_cm` | number | no | Default: `15`. |
 | `height_cm` | number | no | Default: `7.5`. |
-| `legend` | `right` \| `left` \| `top` \| `bottom` \| `none` | no | 'none' hides it. Default: `right`. |
-| `data_labels` | boolean | no | Show each value. Default: `False`. |
+| `legend` | `right` \| `left` \| `top` \| `bottom` \| `none` | no | 'none' hides it. Default: `bottom`. |
+| `data_labels` | object | no | Labels on every series; a series' own data_labels win. |
 | `grouping` | `standard` \| `stacked` \| `percent_stacked` | no | 'stacked' and 'percent_stacked' (categories sum to 100%) fit column, bar, line and area charts. Default: `standard`. |
-| `colors` | array of string | no | Hex, e.g. ['#1F4E78', '#C00000']: one per series in column order, or per slice in pie and doughnut charts. |
+| `colors` | array of string | no | Hex, e.g. ['#1F4E78', '#C00000']: one per series in order, or per slice in pie and doughnut charts. A series' own color wins. |
 | `markers` | boolean | no | Line charts only. Default: `False`. |
 | `smooth` | boolean | no | Line charts only. Default: `False`. |
-| `y_axis_min` | number | no |  |
-| `y_axis_max` | number | no |  |
-| `y_axis_number_format` | string | no | e.g. '0%' or '#,##0'. |
-| `secondary_line_columns` | array of string | no | Header names of columns drawn as lines on a second axis (combo chart). Column charts only. |
+| `scatter_style` | `markers` \| `lines_markers` \| `lines` \| `smooth_markers` \| `smooth` | no | Scatter charts only. Default: `markers`. |
+| `style` | integer | no | Excel 2007 chart style number, which sets the series colors (1 grayscale, 2 colorful, 3-8 one accent color...). Default: Excel's own. |
+| `plot_color` | string | no | Hex fill of the plot area. |
+| `x_axis` | object | no | The category axis, which has no min, max, major_unit, log or number_format; for scatter and bubble charts, the x axis. |
+| `y_axis` | object | no | The value axis. |
+| `secondary_y_axis` | object | no | Used by series with secondary_axis. |
+
+`data_labels` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `show` | array of `value` \| `percent` \| `category` \| `series` | no | 'percent' fits pie and doughnut charts only. Default: `['value']`. |
+| `position` | `center` \| `inside_end` \| `inside_base` \| `outside_end` \| `above` \| `below` \| `left` \| `right` \| `best_fit` | no | Default: Excel's. Valid positions depend on the chart type: column and bar charts take center, inside_end, inside_base, outside_end (not when stacked); line, scatter and bubble charts center, above, below, left, right; pie charts center, inside_end, outside_end, best_fit. |
+| `number_format` | string | no | e.g. '0.0%' or '#,##0'. |
+
+`x_axis` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `title` | string | no |  |
+| `min` | number | no |  |
+| `max` | number | no |  |
+| `major_unit` | number | no |  |
+| `log` | boolean | no | Base-10 logarithmic scale. Default: `False`. |
+| `reverse` | boolean | no | Draw from the other end. In a bar chart the rows then run bottom-up, as Excel does by default. Default: `False`. |
+| `number_format` | string | no | e.g. '0%' or '#,##0'. |
+| `major_gridlines` | boolean | no | Default: on for the main value axis (and the x axis of scatter and bubble charts), off otherwise. |
+| `minor_gridlines` | boolean | no | Default: `False`. |
+| `labels` | `next_to_axis` \| `low` \| `high` | no | Where the tick labels sit; for none at all, number_format ';;;'. Default: `next_to_axis`. |
+
+`y_axis` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `title` | string | no |  |
+| `min` | number | no |  |
+| `max` | number | no |  |
+| `major_unit` | number | no |  |
+| `log` | boolean | no | Base-10 logarithmic scale. Default: `False`. |
+| `reverse` | boolean | no | Draw from the other end. In a bar chart the rows then run bottom-up, as Excel does by default. Default: `False`. |
+| `number_format` | string | no | e.g. '0%' or '#,##0'. |
+| `major_gridlines` | boolean | no | Default: on for the main value axis (and the x axis of scatter and bubble charts), off otherwise. |
+| `minor_gridlines` | boolean | no | Default: `False`. |
+| `labels` | `next_to_axis` \| `low` \| `high` | no | Where the tick labels sit; for none at all, number_format ';;;'. Default: `next_to_axis`. |
+
+`secondary_y_axis` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `title` | string | no |  |
+| `min` | number | no |  |
+| `max` | number | no |  |
+| `major_unit` | number | no |  |
+| `log` | boolean | no | Base-10 logarithmic scale. Default: `False`. |
+| `reverse` | boolean | no | Draw from the other end. In a bar chart the rows then run bottom-up, as Excel does by default. Default: `False`. |
+| `number_format` | string | no | e.g. '0%' or '#,##0'. |
+| `major_gridlines` | boolean | no | Default: on for the main value axis (and the x axis of scatter and bubble charts), off otherwise. |
+| `minor_gridlines` | boolean | no | Default: `False`. |
+| `labels` | `next_to_axis` \| `low` \| `high` | no | Where the tick labels sit; for none at all, number_format ';;;'. Default: `next_to_axis`. |
 
 ## delete_chart
 

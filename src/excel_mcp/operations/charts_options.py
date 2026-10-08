@@ -1,29 +1,146 @@
-"""Chart options: what the client can ask for, and which chart types each option fits."""
+"""What a client can ask for in a chart: series, trendlines, error bars, axes and layout."""
 
 from typing import Literal
 
 from pydantic import Field
 
-from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.inputs import InputModel
-from excel_mcp.operations.formatting import parse_color
 
-ChartType = Literal["column", "bar", "line", "area", "pie", "scatter", "doughnut", "radar"]
+ChartType = Literal[
+    "column", "bar", "line", "area", "pie", "doughnut", "radar", "scatter", "bubble"
+]
+SeriesType = Literal["column", "line", "area"]
 Grouping = Literal["standard", "stacked", "percent_stacked"]
 LegendPosition = Literal["right", "left", "top", "bottom", "none"]
+ScatterStyle = Literal["markers", "lines_markers", "lines", "smooth_markers", "smooth"]
+MarkerStyle = Literal[
+    "circle", "square", "diamond", "triangle", "x", "star", "dash", "dot", "plus", "none"
+]
+LabelPosition = Literal[
+    "center", "inside_end", "inside_base", "outside_end", "above", "below", "left", "right",
+    "best_fit",
+]  # fmt: skip
+LabelContent = Literal["value", "percent", "category", "series"]
+TrendlineType = Literal[
+    "linear", "exponential", "logarithmic", "polynomial", "power", "moving_average"
+]
+ErrorBarKind = Literal["fixed", "percent", "std_dev", "std_error"]
+TickLabels = Literal["next_to_axis", "low", "high"]
 
 ROUND_TYPES = ("pie", "doughnut")
-_GROUPED = ("column", "bar", "line", "area")
+
+
+class DataLabels(InputModel):
+    show: list[LabelContent] = Field(
+        default=["value"], description="'percent' fits pie and doughnut charts only."
+    )
+    position: LabelPosition | None = Field(
+        default=None,
+        description="Default: Excel's. Valid positions depend on the chart type: column and "
+        "bar charts take center, inside_end, inside_base, outside_end (not when stacked); line, "
+        "scatter and bubble charts center, above, below, left, right; pie charts center, "
+        "inside_end, outside_end, best_fit.",
+    )
+    number_format: str | None = Field(default=None, description="e.g. '0.0%' or '#,##0'.")
+
+
+class Trendline(InputModel):
+    type: TrendlineType
+    order: int | None = Field(default=None, ge=2, le=6, description="Polynomial only. Default 2.")
+    period: int | None = Field(default=None, ge=2, le=255, description="Moving average only.")
+    equation: bool = Field(default=False, description="Show the equation on the chart.")
+    r_squared: bool = Field(default=False, description="Show R² on the chart.")
+
+
+class ErrorBars(InputModel):
+    kind: ErrorBarKind
+    value: float | None = Field(
+        default=None,
+        gt=0,
+        description="Amount for 'fixed', percentage for 'percent', multiple of the standard "
+        "deviation for 'std_dev'. Not used by 'std_error'.",
+    )
+    direction: Literal["both", "plus", "minus"] = "both"
+    axis: Literal["y", "x"] = Field(default="y", description="'x' fits scatter and bubble.")
+    end_cap: bool = True
+
+
+class SeriesSpec(InputModel):
+    values: str = Field(
+        description="One row or column of values, e.g. 'B2:B13' or 'Data!B2:B13'. Without a "
+        "sheet name, the chart's own sheet. For scatter and bubble charts these are the y values."
+    )
+    name: str | None = Field(
+        default=None,
+        description="Series name: text, or a sheet-qualified cell like 'Data!B1' that the name "
+        "follows. Default: no name (Excel calls it 'Series1').",
+    )
+    categories: str | None = Field(
+        default=None,
+        description="Category labels, e.g. 'Data!A2:A13'; for scatter and bubble charts the x "
+        "values. Default: the top-level `categories`.",
+    )
+    sizes: str | None = Field(default=None, description="Bubble sizes. Bubble charts only.")
+    type: SeriesType | None = Field(
+        default=None,
+        description="Draw this series differently from chart_type, for a combo chart. "
+        "Column, line and area charts only.",
+    )
+    secondary_axis: bool = Field(
+        default=False,
+        description="Plot on a second value axis (options.secondary_y_axis). Column, line, "
+        "area and scatter charts only.",
+    )
+    color: str | None = Field(
+        default=None,
+        description="Hex, e.g. '#C00000': the fill of bars, areas and bubbles; the "
+        "line of line and scatter series.",
+    )
+    line_width: float | None = Field(
+        default=None, gt=0, le=20, description="Points. Line, scatter and radar series."
+    )
+    marker: MarkerStyle | None = Field(default=None, description="Line and scatter series.")
+    marker_size: int | None = Field(default=None, ge=2, le=72)
+    data_labels: DataLabels | None = Field(
+        default=None, description="Overrides options.data_labels for this series."
+    )
+    trendline: Trendline | None = None
+    error_bars: ErrorBars | None = None
+
+
+class Axis(InputModel):
+    title: str | None = None
+    min: float | None = None
+    max: float | None = None
+    major_unit: float | None = Field(default=None, gt=0)
+    log: bool = Field(default=False, description="Base-10 logarithmic scale.")
+    reverse: bool = Field(
+        default=False,
+        description="Draw from the other end. In a bar chart the rows then run bottom-up, "
+        "as Excel does by default.",
+    )
+    number_format: str | None = Field(default=None, description="e.g. '0%' or '#,##0'.")
+    major_gridlines: bool | None = Field(
+        default=None,
+        description="Default: on for the main value axis (and the x axis of scatter and "
+        "bubble charts), off otherwise.",
+    )
+    minor_gridlines: bool = False
+    labels: TickLabels = Field(
+        default="next_to_axis",
+        description="Where the tick labels sit; for none at all, number_format ';;;'.",
+    )
 
 
 class ChartOptions(InputModel):
     title: str | None = None
-    x_axis_title: str | None = None
-    y_axis_title: str | None = None
+    title_size: int | None = Field(default=None, ge=6, le=72, description="Points. Default 14.")
     width_cm: float = Field(default=15, gt=0, le=100)
     height_cm: float = Field(default=7.5, gt=0, le=100)
-    legend: LegendPosition = Field(default="right", description="'none' hides it.")
-    data_labels: bool = Field(default=False, description="Show each value.")
+    legend: LegendPosition = Field(default="bottom", description="'none' hides it.")
+    data_labels: DataLabels | None = Field(
+        default=None, description="Labels on every series; a series' own data_labels win."
+    )
     grouping: Grouping = Field(
         default="standard",
         description="'stacked' and 'percent_stacked' (categories sum to 100%) fit column, bar, "
@@ -31,47 +148,26 @@ class ChartOptions(InputModel):
     )
     colors: list[str] = Field(
         default_factory=list,
-        description="Hex, e.g. ['#1F4E78', '#C00000']: one per series in column order, or per "
-        "slice in pie and doughnut charts.",
+        description="Hex, e.g. ['#1F4E78', '#C00000']: one per series in order, or per slice "
+        "in pie and doughnut charts. A series' own color wins.",
     )
     markers: bool = Field(default=False, description="Line charts only.")
     smooth: bool = Field(default=False, description="Line charts only.")
-    y_axis_min: float | None = None
-    y_axis_max: float | None = None
-    y_axis_number_format: str | None = Field(default=None, description="e.g. '0%' or '#,##0'.")
-    secondary_line_columns: list[str] = Field(
-        default_factory=list,
-        description="Header names of columns drawn as lines on a second axis (combo chart). "
-        "Column charts only.",
+    scatter_style: ScatterStyle = Field(default="markers", description="Scatter charts only.")
+    style: int | None = Field(
+        default=None,
+        ge=1,
+        le=48,
+        description="Excel 2007 chart style number, which sets the series colors (1 grayscale, "
+        "2 colorful, 3-8 one accent color...). Default: Excel's own.",
     )
-
-
-def check_options(options: ChartOptions, chart_type: ChartType) -> None:
-    """Reject options that do not fit the chart type, before anything is built."""
-    _require(options.grouping != "standard", "grouping", chart_type, _GROUPED)
-    _require(options.markers, "markers", chart_type, ("line",))
-    _require(options.smooth, "smooth", chart_type, ("line",))
-    _require(
-        bool(options.secondary_line_columns), "secondary_line_columns", chart_type, ("column",)
+    plot_color: str | None = Field(default=None, description="Hex fill of the plot area.")
+    x_axis: Axis = Field(
+        default_factory=Axis,
+        description="The category axis, which has no min, max, major_unit, log or "
+        "number_format; for scatter and bubble charts, the x axis.",
     )
-    axis_options = (options.y_axis_min, options.y_axis_max, options.y_axis_number_format)
-    if chart_type in ROUND_TYPES and any(value is not None for value in axis_options):
-        raise InvalidArgumentError(f"{chart_type} charts have no axes to set.")
-    low, high = options.y_axis_min, options.y_axis_max
-    if low is not None and high is not None and low >= high:
-        raise InvalidArgumentError(f"y_axis_min ({low}) must be below y_axis_max ({high}).")
-
-
-def _require(used: bool, name: str, chart_type: ChartType, allowed: tuple[str, ...]) -> None:
-    if used and chart_type not in allowed:
-        raise InvalidArgumentError(
-            f"{name} does not apply to {chart_type} charts; it works with {', '.join(allowed)}."
-        )
-
-
-def parse_colors(options: ChartOptions, chart_type: ChartType, slots: int) -> list[str]:
-    """Colors as 6-digit hex, checked against the number of series (or slices)."""
-    if len(options.colors) > slots:
-        what = "slices" if chart_type in ROUND_TYPES else "series"
-        raise InvalidArgumentError(f"{len(options.colors)} colors given for {slots} {what}.")
-    return [parse_color(color)[2:] for color in options.colors]
+    y_axis: Axis = Field(default_factory=Axis, description="The value axis.")
+    secondary_y_axis: Axis = Field(
+        default_factory=Axis, description="Used by series with secondary_axis."
+    )

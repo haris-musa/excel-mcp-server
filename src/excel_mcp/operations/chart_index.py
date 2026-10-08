@@ -1,6 +1,7 @@
 """Finding and removing the charts already on a sheet."""
 
 from openpyxl.chart import BarChart
+from openpyxl.chart._chart import ChartBase
 from openpyxl.chart.title import Title
 from openpyxl.drawing.spreadsheet_drawing import OneCellAnchor, TwoCellAnchor
 from openpyxl.worksheet.worksheet import Worksheet
@@ -15,6 +16,7 @@ class ChartInfo(BaseModel):
     type: str
     title: str | None
     anchor: str | None
+    series: list[str]
 
 
 def list_charts(sheet: Worksheet) -> list[ChartInfo]:
@@ -24,12 +26,26 @@ def list_charts(sheet: Worksheet) -> list[ChartInfo]:
             type=_type_name(chart),
             title=_title_text(chart.title),
             anchor=_anchor_cell(chart.anchor),
+            series=[_values_ref(item) for plot in chart._charts for item in plot.series],
         )
         for index, chart in enumerate(sheet._charts, start=1)  # pyright: ignore[reportAttributeAccessIssue]
     ]
 
 
 def delete_chart(sheet: Worksheet, index: int) -> ChartInfo:
+    removed = check_index(sheet, index)
+    del sheet._charts[index - 1]  # pyright: ignore[reportAttributeAccessIssue]
+    return removed
+
+
+def replace_chart(sheet: Worksheet, index: int, chart: ChartBase, anchor: str | None) -> None:
+    """Put `chart` where chart `index` was in the sheet's list, drawn at `anchor`."""
+    check_index(sheet, index)
+    sheet.add_chart(chart, anchor)
+    sheet._charts[index - 1] = sheet._charts.pop()  # pyright: ignore[reportAttributeAccessIssue]
+
+
+def check_index(sheet: Worksheet, index: int) -> ChartInfo:
     charts = list_charts(sheet)
     if not charts:
         raise InvalidArgumentError(f"Sheet {sheet.title!r} has no charts.")
@@ -38,8 +54,12 @@ def delete_chart(sheet: Worksheet, index: int) -> ChartInfo:
             f"Sheet {sheet.title!r} has no chart {index}. Valid chart indices: 1 to "
             f"{len(charts)}. describe_sheet lists them."
         )
-    del sheet._charts[index - 1]  # pyright: ignore[reportAttributeAccessIssue]
     return charts[index - 1]
+
+
+def _values_ref(series) -> str:
+    source = series.val or series.yVal
+    return source.numRef.f if source and source.numRef else ""
 
 
 def _type_name(chart) -> str:

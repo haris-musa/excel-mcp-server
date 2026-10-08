@@ -151,7 +151,7 @@
     },
     {
       "name": "create_chart",
-      "description": "Add a chart that plots a block of data."
+      "description": "Add a chart to `sheet`, or replace one."
     },
     {
       "name": "delete_chart",

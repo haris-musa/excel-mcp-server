@@ -5,7 +5,8 @@ from typing import Annotated
 from pydantic import Field
 
 from excel_mcp.operations import chart_index, charts, tables
-from excel_mcp.operations.charts_options import ChartOptions, ChartType
+from excel_mcp.operations.charts_data import SeriesIn
+from excel_mcp.operations.charts_options import ChartOptions, ChartType, SeriesSpec
 from excel_mcp.server.params import SheetName, WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
 from excel_mcp.workspace import Workspace, get_sheet
@@ -34,34 +35,65 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     def create_chart(
         path: WorkbookPath,
         sheet: SheetName,
-        data_range: Annotated[
-            str,
-            Field(
-                description="Header row, labels in the first column, one series per further "
-                "column, e.g. 'A1:C13'."
-            ),
-        ],
         chart_type: Annotated[ChartType, Field(description="Kind of chart.")],
-        anchor_cell: Annotated[str, Field(description="Top-left cell of the chart.")],
         options: Annotated[ChartOptions, Field(default_factory=ChartOptions)],
-        data_sheet: Annotated[str | None, Field(description="Default: `sheet`.")] = None,
+        anchor_cell: Annotated[
+            str | None,
+            Field(
+                description="Top-left cell, e.g. 'E2'. Omit to put the chart on a new chart "
+                "sheet named `sheet`."
+            ),
+        ] = None,
+        data_range: Annotated[
+            str | None,
+            Field(
+                description="A block with a header row, labels in the first column and one "
+                "series per further column, e.g. 'A1:C13' or 'Data!A1:C13'. Scatter: x values "
+                "first. Bubble: x, y, size."
+            ),
+        ] = None,
+        series_in: Annotated[
+            SeriesIn, Field(description="'rows': series are the rows of data_range.")
+        ] = "columns",
+        series: Annotated[
+            list[SeriesSpec],
+            Field(
+                description="Explicit series instead of data_range, for any ranges on any sheet."
+            ),
+        ] = [],  # noqa: B006
+        categories: Annotated[
+            str | None,
+            Field(description="Category labels (x values) for series without their own."),
+        ] = None,
+        index: Annotated[
+            int | None,
+            Field(
+                description="Replace chart N of `sheet` (from describe_sheet) with this one, "
+                "rebuilt from these arguments, instead of adding a chart."
+            ),
+        ] = None,
     ) -> str:
-        """Add a chart of a block of data to `sheet`.
+        """Add a chart to `sheet`, or replace one.
 
-        'column' draws vertical bars, 'bar' horizontal ones. 'scatter' takes x values from
-        the first column. Options that do not fit the chart type are rejected. Charts are
-        listed by describe_sheet and removed by delete_chart.
+        Give data_range for a plain block, or series for ranges that are not adjacent, sit in
+        rows, have their own names or live on other sheets. Combo charts take a `type` and
+        `secondary_axis` per series. To change a chart, create it again with `index`.
+        Options that do not fit the chart type are rejected. describe_sheet lists the charts;
+        delete_chart removes one.
         """
         with workspace.edit(path) as workbook:
-            area = charts.create_chart(
-                get_sheet(workbook, sheet),
-                get_sheet(workbook, data_sheet or sheet),
-                data_range,
-                chart_type,
+            return charts.create_chart(
+                workbook,
+                sheet,
                 anchor_cell,
+                chart_type,
+                data_range,
+                series_in,
+                series,
+                categories,
                 options,
+                index,
             )
-        return f"Added a {chart_type} chart of {data_sheet or sheet}!{area} at {anchor_cell}."
 
     @tools.destroyer("Delete chart")
     def delete_chart(

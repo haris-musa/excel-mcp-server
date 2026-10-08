@@ -173,8 +173,7 @@ async def test_chart_anchor_is_normalized(call: ToolCall, sample: Path) -> None:
         "create_chart",
         path="sales.xlsx",
         sheet="Report",
-        data_sheet="Data",
-        data_range="B1:C5",
+        data_range="Data!B1:C5",
         chart_type="column",
         anchor_cell=" d5 ",
     )
@@ -215,8 +214,7 @@ async def test_area_chart_axes_survive_later_edits(call: ToolCall, sample: Path)
         "create_chart",
         path="sales.xlsx",
         sheet="Report",
-        data_sheet="Data",
-        data_range="B1:C5",
+        data_range="Data!B1:C5",
         chart_type="area",
         anchor_cell="B2",
     )
