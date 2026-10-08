@@ -14,6 +14,7 @@ from excel_mcp.server import (
     pivot_tools,
     sheet_tools,
     vba_tools,
+    vba_write_tools,
     workbook_tools,
 )
 from excel_mcp.server.registry import ToolRegistry
@@ -34,7 +35,7 @@ TOOL_MODULES = (
 
 def create_server(settings: Settings) -> MCPServer:
     paths = PathPolicy(settings.allowed_dirs)
-    workspace = Workspace(paths, settings.limits)
+    workspace = Workspace(paths, settings.limits, allow_macro_workbooks=settings.allow_vba_write)
     server = MCPServer(
         "excel-mcp-server",
         title="Excel MCP Server",
@@ -47,6 +48,8 @@ def create_server(settings: Settings) -> MCPServer:
     tools = ToolRegistry(server, settings.read_only)
     for module in TOOL_MODULES:
         module.register(tools, workspace)
+    if settings.allow_vba_write:
+        vba_write_tools.register(tools, workspace)
     return server
 
 
@@ -67,4 +70,9 @@ def _instructions(settings: Settings, paths: PathPolicy) -> str:
     ]
     if settings.read_only:
         lines.append("The server is read-only: workbooks can be inspected but not changed.")
+    elif settings.allow_vba_write:
+        lines.append(
+            "VBA writing is enabled. Macros are only stored, never run: tell the user to "
+            "review macro code before enabling macros in Excel."
+        )
     return "\n".join(lines)

@@ -16,7 +16,8 @@ create, read and edit Excel workbooks. It needs no Microsoft Excel installation.
   group rows, columns and sheets; set up printing; protect sheets
 - **Structure** sheets, rows and columns, merged cells, tables, charts, images and PivotTables
 - **Rules**: conditional formatting and data validation (dropdowns, number limits)
-- **Macros**: read the VBA code in `.xlsm` files, module by module (read-only, never run)
+- **Macros**: read the VBA code in `.xlsm` files, module by module (never run). Writing VBA
+  is off unless you start the server with `--allow-vba-write` (see below)
 - **Safe by design**: optional folder confinement, a formula safety check, read-only mode,
   localhost-only HTTP by default, and atomic saves that never leave a half-written file
 
@@ -136,6 +137,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
 | --- | --- | --- | --- |
 | `--allow-dir DIR` | `EXCEL_FILES_PATH` | none (stdio), `./excel_files` (HTTP) | Folders workbooks must be in |
 | `--read-only` | `EXCEL_MCP_READ_ONLY=1` | off | Only offer tools that do not change files |
+| `--allow-vba-write` | `EXCEL_MCP_ALLOW_VBA_WRITE=1` | off | Add tools that write VBA macros (see warning below); ignored with `--read-only` |
 | `--max-file-mb N` | | `100` | Largest workbook the server opens |
 | `--log-level LEVEL` | | `WARNING` | Logging on stderr |
 | `--host HOST` | `EXCEL_MCP_HOST` | `127.0.0.1` | HTTP listen address |
@@ -153,9 +155,21 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
 | Formatting | `format_range`, `merge_cells`, `set_sheet_layout`, `add_conditional_format`, `add_data_validation` |
 | Objects | `create_table`, `create_chart`, `delete_chart`, `create_pivot_table`, `delete_pivot_table`, `insert_image`, `delete_image` |
 | Names and notes | `set_defined_name`, `delete_defined_name`, `set_note`, `delete_note` |
-| Macros | `read_vba` |
+| Macros | `read_vba`; with `--allow-vba-write`: `write_vba_module`, `delete_vba_module` |
 
 Every parameter is documented in [TOOLS.md](TOOLS.md).
+
+### Writing macros (opt-in)
+
+With `--allow-vba-write` (or `EXCEL_MCP_ALLOW_VBA_WRITE=1`) the server can set the code of
+standard, class, workbook and sheet modules in `.xlsm` and `.xltm` files, delete standard and
+class modules, and create new `.xlsm`/`.xltm` workbooks. The server only stores the code; it
+never runs it, and Excel asks before enabling macros.
+
+> **Warning:** macro code runs with your user's rights once you enable macros in Excel. A
+> model that reads untrusted content could be tricked into writing harmful code. Enable this
+> option only for trusted workflows, keep `--allow-dir` narrow, and **read the code before
+> you enable macros**. The tools are never offered in `--read-only` mode.
 
 ## Security
 

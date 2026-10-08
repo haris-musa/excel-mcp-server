@@ -36,6 +36,12 @@ All notable changes to this project are documented here. The format follows
   into the cells.
 - `delete_pivot_table` removes a PivotTable and the cells it fills; `describe_sheet` lists
   each sheet's `pivot_tables` with their name, range and source.
+- Opt-in VBA writing: start the server with `--allow-vba-write` (or
+  `EXCEL_MCP_ALLOW_VBA_WRITE=1`) to get `write_vba_module` (set the code of a standard,
+  class, `ThisWorkbook` or sheet module of an `.xlsm`/`.xltm`, creating the module or the
+  whole VBA project if needed) and `delete_vba_module`. The tools are absent by default and
+  in `--read-only` mode; code is stored, never run. `create_workbook` can then also create
+  `.xlsm`/`.xltm` files.
 
 ### Changed
 

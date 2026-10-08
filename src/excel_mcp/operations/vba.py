@@ -2,16 +2,14 @@
 
 import zipfile
 from pathlib import Path
-from typing import Literal
 
 from pydantic import BaseModel
 
 from excel_mcp import ovba
 from excel_mcp.errors import InvalidArgumentError, WorkbookError
+from excel_mcp.ovba import ModuleKind
 
 VBA_PROJECT_PART = "xl/vbaProject.bin"
-
-ModuleKind = Literal["standard", "class", "document", "form"]
 
 
 class VbaModule(BaseModel):
@@ -32,9 +30,8 @@ def has_vba(path: Path) -> bool:
 
 
 def read_vba(path: Path, module: str | None, max_chars: int) -> VbaProject:
-    raw_modules, project_text = ovba.read_project(_project_bytes(path))
-    kinds = _document_and_form_names(project_text)
-    modules = [_module(raw, kinds) for raw in raw_modules]
+    raw_modules = ovba.read_project(_project_bytes(path)).modules
+    modules = [_module(raw) for raw in raw_modules]
     if module is not None:
         modules = [found for found in modules if found.name.casefold() == module.casefold()]
         if not modules:
@@ -61,23 +58,9 @@ def _project_bytes(path: Path) -> bytes:
         return archive.read(info)
 
 
-def _document_and_form_names(project_text: str) -> dict[str, ModuleKind]:
-    """The PROJECT stream tells document modules and forms apart from classes."""
-    kinds: dict[str, ModuleKind] = {}
-    for line in project_text.splitlines():
-        key, _, value = line.partition("=")
-        if key == "Document":
-            kinds[value.split("/")[0].casefold()] = "document"
-        elif key == "BaseClass":
-            kinds[value.casefold()] = "form"
-    return kinds
-
-
-def _module(raw: ovba.RawModule, kinds: dict[str, ModuleKind]) -> VbaModule:
+def _module(raw: ovba.RawModule) -> VbaModule:
     code = editor_text(raw.source)
-    # Modules that are neither procedural, documents nor forms are class modules.
-    kind = "standard" if raw.procedural else kinds.get(raw.name.casefold(), "class")
-    return VbaModule(name=raw.name, kind=kind, line_count=len(code.splitlines()), code=code)
+    return VbaModule(name=raw.name, kind=raw.kind, line_count=len(code.splitlines()), code=code)
 
 
 def _within_budget(modules: list[VbaModule], max_chars: int) -> VbaProject:
