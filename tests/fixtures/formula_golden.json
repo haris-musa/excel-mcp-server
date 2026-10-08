@@ -11216,6 +11216,23 @@
     "=-PPMT($A$2/12,A364,$A$3,$A$1)",
     "=B364-E364"
    ]
+  ],
+  "Spill": [
+   [
+    "=SORT(Data!C2:C11)",
+    null,
+    "=FILTER(Data!C2:C11,Data!C2:C11>5)",
+    null,
+    "=UNIQUE(Data!A2:A11)",
+    null,
+    "=SEQUENCE(5)",
+    null,
+    "=SORT(A1#,1,-1)",
+    null,
+    "=Data!C2",
+    null,
+    "=SEQUENCE(2,3)"
+   ]
   ]
  },
  "names": {
@@ -21674,6 +21691,86 @@
   {
    "formula": "=Loan!C364*Loan!A3-SUM(Loan!D5:D364)",
    "expected": 249999.99999999994
+  },
+  {
+   "formula": "=SUM(Spill!A1#)",
+   "expected": 75.0
+  },
+  {
+   "formula": "=COUNTA(Spill!E1#)",
+   "expected": 4.0
+  },
+  {
+   "formula": "=COUNT(Spill!C1#)",
+   "expected": 7.0
+  },
+  {
+   "formula": "=MAX(Spill!C1#)",
+   "expected": 12.0
+  },
+  {
+   "formula": "=INDEX(Spill!A1#,2)",
+   "expected": 4.0
+  },
+  {
+   "formula": "=INDEX(Spill!I1#,1)",
+   "expected": 12.0
+  },
+  {
+   "formula": "=SUM(Spill!I1#)",
+   "expected": 75.0
+  },
+  {
+   "formula": "=ROWS(Spill!G1#)",
+   "expected": 5.0
+  },
+  {
+   "formula": "=SUM(Spill!M1#)",
+   "expected": 21.0
+  },
+  {
+   "formula": "=COLUMNS(Spill!M1#)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=SUM(Spill!G1#*2)",
+   "expected": 30.0
+  },
+  {
+   "formula": "=SUM(Spill!K1#)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=Spill!G1#",
+   "expected": 1.0
+  },
+  {
+   "formula": "=SORT(Spill!G1#,1,-1)",
+   "expected": 5.0
+  },
+  {
+   "formula": "=SUM(SORT(Spill!A1#,1,-1))",
+   "expected": 75.0
+  },
+  {
+   "formula": "=SUM(Data!C2#)",
+   "expected": "#REF!"
+  },
+  {
+   "formula": "=SUM(Data!S2#)",
+   "expected": 15.0
+  },
+  {
+   "formula": "=SUM(Data!A2#)",
+   "expected": "#REF!"
+  },
+  {
+   "formula": "=ISREF(Spill!K1#)",
+   "expected": true
+  },
+  {
+   "formula": "=ROWS(Spill!K1#)",
+   "expected": 1.0
   }
  ],
  "uncalculated": [
@@ -21732,6 +21829,7 @@
   1914,
   1915,
   1916,
-  1917
+  1917,
+  2598
  ]
 }

@@ -18,7 +18,7 @@ import win32com.client  # pyright: ignore[reportMissingImports]
 from golden_cases import CASES, HIDDEN_ROWS, INPUTS, NAMES
 from golden_workbook import build_workbook, calculate_cases, case_row, same
 
-from excel_mcp.errors import UnsafeFormulaError
+from excel_mcp.errors import InvalidFormulaError, UnsafeFormulaError
 from excel_mcp.formulas import check_formula
 
 FIXTURE = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "formula_golden.json"
@@ -81,7 +81,7 @@ def rejected_by_excel(excel: object, formulas: list[str], directory: Path) -> li
 def _allowed(formula: str) -> bool:
     try:
         check_formula(formula, INPUTS)
-    except UnsafeFormulaError as error:
+    except (InvalidFormulaError, UnsafeFormulaError) as error:
         print(f"not written by the server ({error}): {formula}")
         return False
     return True

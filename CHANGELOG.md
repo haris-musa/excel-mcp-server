@@ -32,6 +32,9 @@ All notable changes to this project are documented here. The format follows
 - Spill references (`A1#`, `Sheet1!A1#`, `name#`) are accepted, stored as
   `_xlfn.ANCHORARRAY(A1)` as Excel's file format does, and shown as `A1#` by `read_range` in
   `formulas` mode.
+- The calculator evaluates spill references: `=SUM(A1#)`, `=COUNTA(A1#)` and `=INDEX(A1#,2)`
+  use the range the dynamic array formula in `A1` filled, including a spill of a spill, and a
+  reference to a cell that holds no formula is `#REF!`, as in Excel.
 
 - `add_data_validation`: dropdown lists can come from cells or a name (`source`, e.g.
   `=$A$2:$A$20`, `=Sheet2!$A:$A`, `=Regions`), the `time` type is supported, and rules take an

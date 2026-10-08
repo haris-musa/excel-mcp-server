@@ -757,3 +757,46 @@ CASES += [
     "=MAX(Loan!F5:F364)",
     "=Loan!C364*Loan!A3-SUM(Loan!D5:D364)",
 ]
+
+# Spill references (A1#) to dynamic array formulas, including a spill of a spill.
+INPUTS["Spill"] = [
+    [
+        "=SORT(Data!C2:C11)",
+        None,
+        "=FILTER(Data!C2:C11,Data!C2:C11>5)",
+        None,
+        "=UNIQUE(Data!A2:A11)",
+        None,
+        "=SEQUENCE(5)",
+        None,
+        "=SORT(A1#,1,-1)",
+        None,
+        "=Data!C2",
+        None,
+        "=SEQUENCE(2,3)",
+    ]
+]
+CASES += [
+    "=SUM(Spill!A1#)",
+    "=COUNTA(Spill!E1#)",
+    "=COUNT(Spill!C1#)",
+    "=MAX(Spill!C1#)",
+    "=INDEX(Spill!A1#,2)",
+    "=INDEX(Spill!I1#,1)",
+    "=SUM(Spill!I1#)",
+    "=ROWS(Spill!G1#)",
+    "=SUM(Spill!M1#)",
+    "=COLUMNS(Spill!M1#)",
+    "=SUM(Spill!G1#*2)",
+    "=SUM(Spill!K1#)",
+    "=Spill!G1#",
+    "=SORT(Spill!G1#,1,-1)",
+    "=SUM(SORT(Spill!A1#,1,-1))",
+]
+CASES += [
+    "=SUM(Data!C2#)",
+    "=SUM(Data!S2#)",
+    "=SUM(Data!A2#)",
+    "=ISREF(Spill!K1#)",
+    "=ROWS(Spill!K1#)",
+]
