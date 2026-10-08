@@ -18,9 +18,9 @@ from excel_mcp.operations.names import DefinedNameInfo, list_defined_names
 from excel_mcp.operations.notes import NoteInfo, list_notes
 from excel_mcp.operations.pivot_index import PivotInfo, list_pivots
 from excel_mcp.operations.sheet_view import ViewInfo, read_view
+from excel_mcp.operations.slicer_manage import SlicerInfo, list_slicers
 from excel_mcp.operations.sparkline_style import SparklineInfo
 from excel_mcp.operations.sparklines import list_sparklines
-from excel_mcp.operations.slicer_manage import SlicerInfo, list_slicers
 from excel_mcp.operations.workbook_settings import (
     CalculationInfo,
     PropertiesInfo,
