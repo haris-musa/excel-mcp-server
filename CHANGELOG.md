@@ -41,11 +41,26 @@ All notable changes to this project are documented here. The format follows
 - `insert_image` places a PNG or JPEG file at a cell, optionally sized in cm with the
   aspect ratio kept; `delete_image` removes one. `describe_sheet` lists the images and now
   also reports hidden rows and columns, the print area and whether the sheet is protected.
-- `create_chart` options: `data_labels`, `grouping` (stacked and 100% stacked column, bar,
-  line and area charts), `colors` (per series, or per slice for pie and doughnut),
-  `markers` and `smooth` for line charts, `y_axis_min`, `y_axis_max`,
-  `y_axis_number_format`, and `secondary_line_columns` for column charts with lines on a
-  second axis. Options that do not fit the chart type are rejected with an explanation.
+- `create_chart` takes either a `data_range` block (series in columns, or in rows with
+  `series_in`) or explicit `series`: any ranges on any sheet (`'Sheet'!B2:B13`), not
+  necessarily adjacent, with their own `name` (text, or a cell the name follows) and
+  `categories`. Options that do not fit the chart type are rejected with an explanation.
+- `scatter` charts have Excel's five subtypes (`scatter_style`: markers, lines with markers,
+  lines, smooth with markers, smooth) and there are `bubble` charts (x, y and `sizes`).
+- Series can have a `trendline` (linear, exponential, logarithmic, polynomial, power,
+  moving average; optional equation and R²) and `error_bars` (fixed, percent, standard
+  deviation or error; both, plus or minus; x or y).
+- Axes (`x_axis`, `y_axis`, `secondary_y_axis`) take a `title`, `min`, `max`, `major_unit`,
+  `log` scale, `reverse` order, `number_format`, major and minor gridlines, and the position
+  of the tick `labels`. Any series can sit on the secondary axis (`secondary_axis`), and
+  a series `type` (column, line, area) makes combo charts in either direction.
+- Series formatting: `color`, `line_width`, `marker` and `marker_size`, `data_labels`
+  (which content, `position`, `number_format`), plus the chart's `colors`, `grouping`,
+  `title_size`, `plot_color` and Excel 2007 `style` number.
+- A chart can sit on its own chart sheet (omit `anchor_cell`); `describe_workbook` lists
+  `chart_sheets` and `delete_sheet` removes one.
+- `create_chart` with `index` replaces that chart of `describe_sheet` in place, so a chart
+  is changed by describing it again; `describe_sheet` lists each chart's `series` ranges.
 - `create_chart` draws `doughnut` and `radar` charts.
 - `describe_sheet` lists each chart with its 1-based `index`, `type`, `title` and `anchor`.
 - `delete_chart` removes a chart by the index `describe_sheet` shows.
@@ -100,8 +115,15 @@ All notable changes to this project are documented here. The format follows
   no longer advertise an output schema, and tool schemas lose generated titles and `null`
   unions: `tools/list` shrinks by about a third.
 - `import_workbook` checks uploads without loading every cell.
-- **Breaking:** `create_chart`'s `show_legend` option is replaced by `legend`: `right`
-  (default), `left`, `top`, `bottom` or `none`.
+- **Breaking:** `create_chart`'s `show_legend` option is replaced by `legend`: `bottom`
+  (default, as in Excel), `right`, `left`, `top` or `none`.
+- **Breaking:** `create_chart` loses `data_sheet` (put the sheet in the range, `Data!A1:C13`)
+  and `secondary_line_columns` (give a series `type: "line"` and `secondary_axis`). Its
+  `data_labels` option is an object (`{}` for values), `y_axis_min`, `y_axis_max`,
+  `y_axis_number_format` and `x_axis_title`/`y_axis_title` move into `y_axis` and `x_axis`,
+  and `anchor_cell` is optional.
+- Charts are drawn as current Excel draws them: gray text and light gridlines, no rounded
+  corners, one color per series (not per category), a gap between clustered columns.
 - **Breaking:** `describe_sheet` no longer returns `chart_count`; use the length of `charts`.
 - Scatter charts plot points instead of joining them with lines.
 - Horizontal bar charts list the rows top-down in sheet order, instead of Excel's
@@ -119,6 +141,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Editing a workbook no longer damages its charts: openpyxl dropped the chart style
+  number, the rounded-corners flag, the plot area fill, the axes of area charts, and turned
+  the empty text of chart labels into the word "None".
 - `copy_sheet` now copies what Excel's "Create a copy" does: data validation, conditional
   formats, images, charts (re-pointed at the copy's own data), tables (renamed, as Excel
   does), PivotTables, freeze panes, filters, print setup, protection and sheet-scoped

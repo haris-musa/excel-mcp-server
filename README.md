@@ -14,7 +14,8 @@ create, read and edit Excel workbooks. It needs no Microsoft Excel installation.
 - **Read and write** cells, formulas (with results calculated for you) and dates, with paging and streaming reads for large sheets, and search
 - **Format** fonts, fills, borders, number formats, column widths and frozen panes; hide or
   group rows, columns and sheets; set up printing; protect sheets
-- **Structure** sheets, rows and columns, merged cells, tables, charts, images and PivotTables
+- **Structure** sheets, rows and columns, merged cells, tables, charts (column, bar, line, area, pie, doughnut, radar, scatter and
+  bubble, with combos, secondary axes, trendlines and error bars), images and PivotTables
 - **Rules**: conditional formatting and data validation (dropdowns, number limits)
 - **Macros**: read the VBA code in `.xlsm` files, module by module (never run). Writing VBA
   is off unless you start the server with `--allow-vba-write` (see below)

@@ -1,30 +1,42 @@
-"""Charts built from a block of data on a sheet."""
+"""Building charts: series, plot groups (combos, secondary axes) and where the chart goes."""
 
+# pyright: reportArgumentType=false, reportAttributeAccessIssue=false, reportOptionalMemberAccess=false
+# openpyxl's stubs type its enum-like fields as Literals and its descriptors as plain attributes.
+
+from openpyxl import Workbook
 from openpyxl.chart import (
     AreaChart,
     BarChart,
+    BubbleChart,
     DoughnutChart,
     LineChart,
     PieChart,
     RadarChart,
-    Reference,
     ScatterChart,
 )
-from openpyxl.chart.series import Series
-from openpyxl.chart.series_factory import SeriesFactory
-from openpyxl.worksheet.worksheet import Worksheet
+from openpyxl.chart._chart import ChartBase
+from openpyxl.chart.data_source import AxDataSource, NumDataSource, NumRef
+from openpyxl.chart.series import Series, XYSeries
 
 from excel_mcp.errors import InvalidArgumentError
+from excel_mcp.operations import charts_axes as axes
+from excel_mcp.operations.chart_index import replace_chart
+from excel_mcp.operations.charts_check import check_chart
+from excel_mcp.operations.charts_data import Plot, SeriesIn, resolve_series
 from excel_mcp.operations.charts_options import (
+    ROUND_TYPES,
     ChartOptions,
     ChartType,
-    check_options,
-    parse_colors,
+    SeriesSpec,
 )
-from excel_mcp.operations.charts_style import style_chart, style_series
-from excel_mcp.refs import CellRange, cell_name, parse_cell, parse_range
+from excel_mcp.operations.charts_series import color_slices, style_series
+from excel_mcp.operations.charts_style import style_chart
+from excel_mcp.operations.formatting import parse_color
+from excel_mcp.operations.sheets import validate_sheet_name
+from excel_mcp.refs import cell_name, parse_cell
+from excel_mcp.workspace import get_sheet
 
-_CATEGORICAL = {
+_CLASSES = {
     "column": BarChart,
     "bar": BarChart,
     "line": LineChart,
@@ -32,97 +44,156 @@ _CATEGORICAL = {
     "pie": PieChart,
     "doughnut": DoughnutChart,
     "radar": RadarChart,
+    "scatter": ScatterChart,
+    "bubble": BubbleChart,
 }
+# The order Excel draws combo parts in: areas behind columns behind lines.
+_DRAW_ORDER = list(_CLASSES)
+_GROUPINGS = {"stacked": "stacked", "percent_stacked": "percentStacked"}
+_XY = ("scatter", "bubble")
 
 
 def create_chart(
-    sheet: Worksheet,
-    data_sheet: Worksheet,
-    data_ref: str,
+    workbook: Workbook,
+    sheet: str,
+    anchor_cell: str | None,
     chart_type: ChartType,
-    anchor_cell: str,
+    data_range: str | None,
+    series_in: SeriesIn,
+    series: list[SeriesSpec],
+    categories: str | None,
     options: ChartOptions,
+    index: int | None,
 ) -> str:
-    area = parse_range(data_ref)
-    if area.rows < 2 or area.cols < 2:
-        raise InvalidArgumentError(
-            "Chart data needs a header row and a label column plus at least one series, "
-            "e.g. 'A1:C10' with labels in A and series in B and C."
-        )
-    anchor = cell_name(*parse_cell(anchor_cell))
-    check_options(options, chart_type)
-    slots = area.rows - 1 if chart_type in ("pie", "doughnut") else area.cols - 1
-    colors = parse_colors(options, chart_type, slots)
-
-    if chart_type == "scatter":
-        chart, series = _scatter(data_sheet, area)
-    else:
-        chart, series = _categorical(data_sheet, area, chart_type, options)
-    style_chart(chart, options, chart_type)
-    style_series(series, colors, chart_type, options)
-
-    sheet.add_chart(chart, anchor)
-    return str(area)
-
-
-def _categorical(sheet: Worksheet, area: CellRange, chart_type: ChartType, options: ChartOptions):
-    chart = _CATEGORICAL[chart_type]()
-    if chart_type == "bar":
-        chart.type = "bar"
-        # Excel draws the first category at the bottom; list rows top-down as in the sheet,
-        # with the value axis kept below the bars.
-        chart.x_axis.scaling.orientation = "maxMin"
-        chart.y_axis.crosses = "max"
-    secondary = _secondary_columns(sheet, area, options)
-    line = LineChart() if secondary else None
-    series: list[Series] = []
-    for col in range(area.min_col + 1, area.max_col + 1):
-        target = line if col in secondary and line else chart
-        data = Reference(sheet, min_col=col, min_row=area.min_row, max_row=area.max_row)
-        target.add_data(data, titles_from_data=True)
-        series.append(target.series[-1])
-    labels = Reference(sheet, min_col=area.min_col, min_row=area.min_row + 1, max_row=area.max_row)
-    chart.set_categories(labels)
-    if line:
-        line.set_categories(labels)
-        line.y_axis.axId = 200
-        line.y_axis.crosses = "max"
-        line.y_axis.delete = False
-        line.y_axis.majorGridlines = None
-        for item in line.series:
-            item.smooth = False
-        chart += line
-    return chart, series
-
-
-def _secondary_columns(sheet: Worksheet, area: CellRange, options: ChartOptions) -> set[int]:
-    """Column numbers of the headers named in secondary_line_columns."""
-    names = options.secondary_line_columns
-    headers = {
-        str(sheet.cell(area.min_row, col).value): col
-        for col in range(area.min_col + 1, area.max_col + 1)
-    }
-    unknown = [name for name in names if name not in headers]
-    if unknown:
-        raise InvalidArgumentError(
-            f"secondary_line_columns {unknown} not found among the series headers: "
-            f"{', '.join(repr(header) for header in headers)}."
-        )
-    columns = {headers[name] for name in names}
-    if len(columns) == len(headers):
-        raise InvalidArgumentError(
-            "secondary_line_columns cannot include every series; leave at least one as "
-            "columns or bars."
-        )
-    return columns
-
-
-def _scatter(sheet: Worksheet, area: CellRange):
-    chart = ScatterChart()
-    x_values = Reference(
-        sheet, min_col=area.min_col, min_row=area.min_row + 1, max_row=area.max_row
+    """Add a chart (or replace chart `index`) and say where it went."""
+    host = None if anchor_cell is None else get_sheet(workbook, sheet)
+    anchor = None if anchor_cell is None else cell_name(*parse_cell(anchor_cell))
+    if host is None:
+        if index is not None:
+            raise InvalidArgumentError(
+                "index replaces a chart placed at anchor_cell; a chart sheet holds one chart, so "
+                "delete the sheet and create it again."
+            )
+        validate_sheet_name(sheet, workbook.sheetnames)
+    plots = resolve_series(
+        workbook,
+        host.title if host else sheet,
+        chart_type,
+        data_range,
+        series_in,
+        series,
+        categories,
     )
-    for col in range(area.min_col + 1, area.max_col + 1):
-        y_values = Reference(sheet, min_col=col, min_row=area.min_row, max_row=area.max_row)
-        chart.series.append(SeriesFactory(y_values, x_values, title_from_data=True))
-    return chart, list(chart.series)
+    check_chart(plots, chart_type, options)
+    chart = build_chart(plots, chart_type, options)
+    if host is None:
+        workbook.create_chartsheet(sheet).add_chart(chart)
+        return f"Added a {chart_type} chart on the new chart sheet {sheet!r}."
+    if index is None:
+        host.add_chart(chart, anchor)
+        return f"Added a {chart_type} chart to {host.title} at {anchor}."
+    replace_chart(host, index, chart, anchor)
+    return f"Replaced chart {index} of {host.title} with a {chart_type} chart at {anchor}."
+
+
+def build_chart(plots: list[Plot], chart_type: ChartType, options: ChartOptions) -> ChartBase:
+    colors = [_color(color) for color in options.colors]
+    groups: dict[tuple[str, bool], ChartBase] = {}
+    for position, plot in enumerate(plots):
+        kind = plot.spec.type or chart_type
+        key = (kind, plot.spec.secondary_axis)
+        if key not in groups:
+            groups[key] = _new_group(kind, chart_type, options)
+        series = _series(plot, kind)
+        color = _color(plot.spec.color) or (colors[position] if position < len(colors) else None)
+        style_series(series, plot.spec, kind, index=position, color=color, options=options)
+        groups[key].series.append(series)
+    if chart_type in ROUND_TYPES:
+        color_slices(groups[(chart_type, False)].series[0], plots[0].points, colors)
+    ordered = sorted(groups, key=lambda key: (key[1], _DRAW_ORDER.index(key[0])))
+    chart = groups[ordered[0]]
+    for key in ordered[1:]:
+        chart += groups[key]
+    style_chart(chart, options)
+    if chart_type not in ROUND_TYPES:
+        # Areas fill the plot edge to edge, unless columns or lines share the chart.
+        cross = "midCat" if {key[0] for key in groups} <= {"area", *_XY} else "between"
+        _style_axes(chart, chart_type, options, cross)
+        for key in ordered:
+            if key[1]:
+                axes.secondary_axes(
+                    groups[key],
+                    options.secondary_y_axis,
+                    scatter=key[0] == "scatter",
+                    cross=cross,
+                )
+    return chart
+
+
+def _color(color: str | None) -> str | None:
+    return parse_color(color)[2:] if color else None
+
+
+def _new_group(kind: str, chart_type: str, options: ChartOptions) -> ChartBase:
+    """An empty plot group; `kind` is what it draws, `chart_type` the chart's main type."""
+    group = _CLASSES[kind]()
+    group.varyColors = kind in ROUND_TYPES
+    if options.grouping != "standard" and kind == chart_type:
+        group.grouping = _GROUPINGS[options.grouping]
+    if isinstance(group, BarChart):
+        group.type = "bar" if kind == "bar" else "col"
+        if group.grouping != "clustered":
+            group.overlap = 100
+        else:
+            group.overlap = -27
+        group.gapWidth = 182 if kind == "bar" else 219
+    elif isinstance(group, LineChart):
+        group.marker = True
+    elif isinstance(group, ScatterChart):
+        smooth = options.scatter_style.startswith("smooth")
+        group.scatterStyle = "smoothMarker" if smooth else "lineMarker"
+    elif isinstance(group, BubbleChart):
+        group.bubbleScale = 100
+        group.showNegBubbles = False
+    elif isinstance(group, DoughnutChart):
+        group.holeSize = 50
+    return group
+
+
+def _series(plot: Plot, kind: str) -> Series:
+    values = NumDataSource(numRef=NumRef(f=plot.values))
+    labels = AxDataSource(numRef=NumRef(f=plot.categories)) if plot.categories else None
+    if kind in _XY:
+        series = XYSeries()
+        series.yVal, series.xVal = values, labels
+        if plot.sizes:
+            series.zVal = NumDataSource(numRef=NumRef(f=plot.sizes))
+    else:
+        series = Series()
+        series.val, series.cat = values, labels
+    series.tx = plot.name
+    return series
+
+
+def _style_axes(chart: ChartBase, chart_type: str, options: ChartOptions, cross: str) -> None:
+    xy = chart_type in _XY
+    bar = chart_type == "bar"
+    x_spec = options.x_axis
+    if bar:
+        # Excel draws the first category at the bottom; list rows top-down as in the sheet,
+        # with the value axis kept below the bars. `reverse` gives Excel's own order.
+        x_spec = x_spec.model_copy(update={"reverse": not x_spec.reverse})
+    axes.style_axis(
+        chart.x_axis, x_spec, vertical=bar, default_gridlines=xy,
+        line=(25000, 75000) if xy else (15000, 85000),
+    )  # fmt: skip
+    axes.style_axis(
+        chart.y_axis, options.y_axis, vertical=not bar, default_gridlines=True,
+        line=(25000, 75000) if xy else None,
+    )  # fmt: skip
+    chart.x_axis.axPos, chart.y_axis.axPos = ("l", "b") if bar else ("b", "l")
+    chart.y_axis.crossBetween = cross
+    if xy:
+        chart.x_axis.crossBetween = cross
+    if bar:
+        chart.y_axis.crosses = "max" if x_spec.reverse else "autoZero"

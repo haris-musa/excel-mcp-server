@@ -59,8 +59,7 @@ async def _decorate_data_sheet(call: ToolCall) -> None:
         "create_chart",
         **BOOK,
         sheet="Data",
-        data_sheet="Report",
-        data_range="A1:B3",
+        data_range="Report!A1:B3",
         chart_type="line",
         anchor_cell="G30",
     )
