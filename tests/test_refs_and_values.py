@@ -39,22 +39,22 @@ def test_cell_range_str() -> None:
 
 
 def test_dates_round_trip_as_iso_strings() -> None:
-    assert to_cell("2026-01-31") == dt.date(2026, 1, 31)
-    assert to_cell("2026-01-31T09:30:00") == dt.datetime(2026, 1, 31, 9, 30)
+    assert to_cell("2026-01-31", ["Sheet1"]) == dt.date(2026, 1, 31)
+    assert to_cell("2026-01-31T09:30:00", ["Sheet1"]) == dt.datetime(2026, 1, 31, 9, 30)
     assert to_json(dt.datetime(2026, 1, 31, 9, 30)) == "2026-01-31T09:30:00"
 
 
 def test_invalid_date_is_an_argument_error() -> None:
     with pytest.raises(InvalidArgumentError, match="date"):
-        to_cell("2026-13-45")
+        to_cell("2026-13-45", ["Sheet1"])
 
 
 def test_plain_values_pass_through() -> None:
     for value in ["text", "00123", 42, 1.5, True, None]:
-        assert to_cell(value) == value
+        assert to_cell(value, ["Sheet1"]) == value
 
 
 def test_formulas_are_checked() -> None:
-    assert to_cell("=SUM(A1:A2)") == "=SUM(A1:A2)"
+    assert to_cell("=SUM(A1:A2)", ["Sheet1"]) == "=SUM(A1:A2)"
     with pytest.raises(UnsafeFormulaError):
-        to_cell('=WEBSERVICE("https://x")')
+        to_cell('=WEBSERVICE("https://x")', ["Sheet1"])

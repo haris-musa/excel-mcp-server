@@ -62,9 +62,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
 
         Values can be text, numbers, booleans or null (to empty a cell). Text starting with
         '=' is a formula, e.g. '=SUM(B2:B9)'; formulas that reach the network, other
-        programs or other workbooks are rejected. Text in the form '2026-01-31' or
-        '2026-01-31T09:30:00' is stored as a date. Send long numeric IDs as text so they
-        keep all their digits.
+        programs or other workbooks are rejected, and a formula can only refer to sheets
+        that already exist. Text in the form '2026-01-31' or '2026-01-31T09:30:00' is
+        stored as a date. Send long numeric IDs as text so they keep all their digits.
         """
         with workspace.edit(path) as workbook:
             return cells.write_range(get_sheet(workbook, sheet), start_cell, rows, limits.max_cells)

@@ -12,6 +12,7 @@ from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.formulas import check_formula
 from excel_mcp.operations.formatting import parse_color
 from excel_mcp.refs import parse_range
+from excel_mcp.workspace import sheet_names
 
 Operator = Literal[
     "between",
@@ -68,11 +69,11 @@ class DataValidationRule(BaseModel):
 
 def add_conditional_format(sheet: Worksheet, ref: str, rule: ConditionalFormat) -> str:
     target = str(parse_range(ref))
-    sheet.conditional_formatting.add(target, _build_conditional_rule(rule))
+    sheet.conditional_formatting.add(target, _build_conditional_rule(rule, sheet_names(sheet)))
     return target
 
 
-def _build_conditional_rule(rule: ConditionalFormat):
+def _build_conditional_rule(rule: ConditionalFormat, names: list[str]):
     colors = [parse_color(color) for color in rule.colors or []]
     fill = (
         PatternFill(fill_type="solid", bgColor=parse_color(rule.fill_color))
@@ -107,24 +108,24 @@ def _build_conditional_rule(rule: ConditionalFormat):
                 raise InvalidArgumentError("cell_value needs an operator and values.")
             if any(not value.strip() for value in rule.values):
                 raise InvalidArgumentError("cell_value values cannot be empty.")
-            values = [_checked_operand(value) for value in rule.values]
+            values = [_checked_operand(value, names) for value in rule.values]
             return CellIsRule(operator=rule.operator, formula=values, fill=fill, font=font)
         case "formula":
             if not rule.formula:
                 raise InvalidArgumentError("formula rules need a formula.")
-            check_formula(rule.formula)
+            check_formula(rule.formula, names)
             return FormulaRule(formula=[rule.formula.removeprefix("=")], fill=fill, font=font)
 
 
 def add_data_validation(sheet: Worksheet, ref: str, rule: DataValidationRule) -> str:
     target = str(parse_range(ref))
-    validation = _build_validation(rule)
+    validation = _build_validation(rule, sheet_names(sheet))
     validation.add(target)
     sheet.add_data_validation(validation)
     return target
 
 
-def _build_validation(rule: DataValidationRule) -> DataValidation:
+def _build_validation(rule: DataValidationRule, names: list[str]) -> DataValidation:
     messages = {
         "allow_blank": rule.allow_blank,
         "error": rule.error_message,
@@ -145,7 +146,7 @@ def _build_validation(rule: DataValidationRule) -> DataValidation:
         case "custom":
             if not rule.formula:
                 raise InvalidArgumentError("custom validation needs a formula.")
-            check_formula(rule.formula)
+            check_formula(rule.formula, names)
             return DataValidation(
                 type="custom", formula1=rule.formula.removeprefix("="), **messages
             )
@@ -155,13 +156,13 @@ def _build_validation(rule: DataValidationRule) -> DataValidation:
             return DataValidation(
                 type="textLength" if rule.type == "text_length" else rule.type,
                 operator=rule.operator,
-                formula1=_checked_operand(rule.minimum),
-                formula2=_checked_operand(rule.maximum) if rule.maximum else None,
+                formula1=_checked_operand(rule.minimum, names),
+                formula2=_checked_operand(rule.maximum, names) if rule.maximum else None,
                 **messages,
             )
 
 
-def _checked_operand(value: str) -> str:
+def _checked_operand(value: str, names: list[str]) -> str:
     """Rule operands are stored as formulas without the leading '='."""
-    check_formula(value if value.startswith("=") else f"={value}")
+    check_formula(value if value.startswith("=") else f"={value}", names)
     return value.removeprefix("=")

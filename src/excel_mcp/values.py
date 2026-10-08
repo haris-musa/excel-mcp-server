@@ -7,6 +7,7 @@ that form stores a real Excel date.
 
 import datetime as dt
 import re
+from collections.abc import Iterable
 from decimal import Decimal
 
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
@@ -38,17 +39,18 @@ def to_json(value: object) -> CellValue:
             return str(value)
 
 
-def to_cell(value: CellValue) -> CellValue | dt.date | dt.datetime:
+def to_cell(value: CellValue, sheet_names: Iterable[str]) -> CellValue | dt.date | dt.datetime:
     """Convert a JSON value to what openpyxl should store.
 
-    Strings starting with ``=`` are formulas and must pass the safety policy.
+    Strings starting with ``=`` are formulas and must pass the safety policy for
+    a workbook with ``sheet_names``.
     """
     if not isinstance(value, str):
         return value
     if ILLEGAL_CHARACTERS_RE.search(value):
         raise InvalidArgumentError("Text cannot contain control characters such as '\x01'.")
     if value.startswith("="):
-        check_formula(value)
+        check_formula(value, sheet_names)
         return value
     try:
         if _ISO_DATE.fullmatch(value):

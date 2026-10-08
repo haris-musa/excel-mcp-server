@@ -8,6 +8,7 @@ import zipfile
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
+from typing import cast
 
 from openpyxl import Workbook, load_workbook
 from openpyxl.chart import AreaChart
@@ -190,3 +191,9 @@ def get_sheet(workbook: Workbook, name: str) -> Worksheet:
 def worksheets(workbook: Workbook) -> list[Worksheet]:
     """The workbook's worksheets, leaving out chart sheets."""
     return [sheet for sheet in workbook.worksheets if isinstance(sheet, Worksheet)]
+
+
+def sheet_names(sheet: Worksheet) -> list[str]:
+    """The names of all sheets in the workbook that holds ``sheet``."""
+    # openpyxl types parent as optional, but every sheet it loads or creates has one.
+    return cast(Workbook, sheet.parent).sheetnames

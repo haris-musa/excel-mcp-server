@@ -4,14 +4,15 @@ import base64
 import binascii
 import io
 import zipfile
+from collections.abc import Iterator
 from pathlib import Path
+from xml.etree import ElementTree
 
 from openpyxl import load_workbook
-from openpyxl.worksheet.formula import ArrayFormula
 
 from excel_mcp.errors import InvalidArgumentError, LimitExceededError, UnsafeFormulaError
 from excel_mcp.formulas import check_formula
-from excel_mcp.workspace import close_workbook, worksheets
+from excel_mcp.workspace import close_workbook
 
 
 def encode_file(path: Path) -> str:
@@ -32,7 +33,34 @@ def decode_workbook(content_base64: str, max_bytes: int) -> bytes:
     return content
 
 
+# The uploaded bytes are stored unchanged, so the check reads the XML itself
+# rather than what openpyxl loads: openpyxl drops reserved names such as print
+# areas and whole features (x14 rules, sparklines) that would then go unchecked.
+# These elements hold formulas: cell formulas and chart or sparkline references
+# ("f"), rule formulas, table column formulas and defined names.
+_FORMULA_ELEMENTS = frozenset(
+    {
+        "f",
+        "formula",
+        "formula1",
+        "formula2",
+        "calculatedColumnFormula",
+        "totalsRowFormula",
+        "definedName",
+    }
+)
+
+
 def _check_formulas(content: bytes) -> None:
+    sheet_names = _sheet_names(content)
+    with zipfile.ZipFile(io.BytesIO(content)) as archive:
+        for part in archive.namelist():
+            if part.startswith("xl/") and part.endswith(".xml"):
+                for formula in _formulas(archive.read(part), part):
+                    check_formula(f"={formula}", sheet_names)
+
+
+def _sheet_names(content: bytes) -> list[str]:
     try:
         workbook = load_workbook(io.BytesIO(content))
     except Exception as error:
@@ -41,12 +69,19 @@ def _check_formulas(content: bytes) -> None:
     try:
         if workbook._external_links:  # pyright: ignore[reportAttributeAccessIssue]
             raise UnsafeFormulaError("Workbooks that link to other workbooks cannot be uploaded.")
-        for sheet in worksheets(workbook):
-            for cell in sheet._cells.values():
-                if cell.data_type == "f":
-                    formula = (
-                        cell.value.text if isinstance(cell.value, ArrayFormula) else cell.value
-                    )
-                    check_formula(str(formula))
+        return workbook.sheetnames
     finally:
         close_workbook(workbook)
+
+
+def _formulas(xml: bytes, part: str) -> Iterator[str]:
+    try:
+        for _, element in ElementTree.iterparse(io.BytesIO(xml)):
+            name = element.tag.rpartition("}")[2]
+            if name in _FORMULA_ELEMENTS and element.text and element.text.strip():
+                yield element.text
+            # Color scale, data bar and icon set thresholds can be formulas too.
+            elif name == "cfvo" and (value := element.get("val")):
+                yield value
+    except ElementTree.ParseError:
+        raise InvalidArgumentError(f"The uploaded workbook part {part} is not valid XML.") from None
