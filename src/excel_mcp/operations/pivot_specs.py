@@ -16,7 +16,7 @@ _CAPTIONS = {
     "min": "Min",
     "max": "Max",
 }
-_NEEDS_BASE_FIELD = frozenset(
+NEEDS_BASE_FIELD = frozenset(
     {
         "percent_of_parent",
         "difference_from",
@@ -28,7 +28,7 @@ _NEEDS_BASE_FIELD = frozenset(
         "rank_descending",
     }
 )
-_COMPARES_WITH_ITEM = frozenset({"difference_from", "percent_difference_from", "percent_of"})
+COMPARES_WITH_ITEM = frozenset({"difference_from", "percent_difference_from", "percent_of"})
 
 
 def data_specs(
@@ -90,7 +90,7 @@ def _resolve(spec: DataSpec, value: PivotValue, axis_fields: list[AxisField]) ->
         if value.base_field is not None or value.base_item is not None:
             raise InvalidArgumentError("base_field and base_item need show_as.")
         return spec
-    if show_as not in _NEEDS_BASE_FIELD:
+    if show_as not in NEEDS_BASE_FIELD:
         if value.base_field is not None or value.base_item is not None:
             raise InvalidArgumentError(f"show_as {show_as!r} takes no base_field or base_item.")
         return replace(spec, show_as=show_as)
@@ -118,7 +118,7 @@ def _resolve(spec: DataSpec, value: PivotValue, axis_fields: list[AxisField]) ->
         )
     item = None
     if value.base_item is not None:
-        if show_as not in _COMPARES_WITH_ITEM:
+        if show_as not in COMPARES_WITH_ITEM:
             raise InvalidArgumentError(f"show_as {show_as!r} takes no base_item.")
         texts = [item_text(label).casefold() for label in base.labels]
         if value.base_item.strip().casefold() not in texts:
@@ -151,7 +151,7 @@ def check_values_in_rows(specs: list[DataSpec], subtotals: bool, row_levels: int
                 "'rows'. Use values_in 'columns'."
             )
         if (
-            spec.show_as in _NEEDS_BASE_FIELD - {"percent_of_parent"}
+            spec.show_as in NEEDS_BASE_FIELD - {"percent_of_parent"}
             and subtotals
             and row_levels > 1
         ):

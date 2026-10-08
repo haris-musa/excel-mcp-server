@@ -14,6 +14,7 @@ from excel_mcp.operations import chartex
 from excel_mcp.operations.cells import stored_cells
 from excel_mcp.operations.sheet_refs import SheetCopyRefs
 from excel_mcp.operations.sheets import validate_sheet_name
+from excel_mcp.operations.slicer_manage import copy_slicers
 from excel_mcp.operations.tables import table_names
 from excel_mcp.package import arrays, extensions, state_of
 from excel_mcp.rewrite import chart_references
@@ -26,7 +27,8 @@ def copy_sheet(workbook: Workbook, name: str, new_name: str) -> None:
     validate_sheet_name(new_name, workbook.sheetnames)
     target = workbook.create_sheet(new_name)
     WorksheetCopy(source, target).copy_worksheet()
-    refs = SheetCopyRefs(source.title, target.title, _copy_tables(workbook, source, target))
+    tables = _copy_tables(workbook, source, target)
+    refs = SheetCopyRefs(source.title, target.title, tables)
     _copy_formulas(workbook, target, refs)
     _copy_rules(workbook, source, target, refs)
     _copy_extensions(workbook, source, target, refs)
@@ -35,6 +37,7 @@ def copy_sheet(workbook: Workbook, name: str, new_name: str) -> None:
     _copy_drawings(source, target, refs)
     _copy_pivots(source, target)
     arrays.copy_marks(source, target)
+    copy_slicers(workbook, source, target, tables)
 
 
 def _copy_tables(workbook: Workbook, source: Worksheet, target: Worksheet) -> dict[str, str]:

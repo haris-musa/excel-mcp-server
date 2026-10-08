@@ -1,5 +1,7 @@
 """What a client can ask of a PivotTable beyond its rows, columns and values."""
 
+import datetime as dt
+from dataclasses import dataclass
 from typing import Literal
 
 from pydantic import Field
@@ -87,3 +89,12 @@ class CalculatedField(InputModel):
         description="Over source field names (quote names with spaces: 'Unit Price'), "
         "e.g. 'Units*Price'. Applied to the sums, as in Excel.",
     )
+
+
+@dataclass(frozen=True)
+class DatePeriod:
+    """Records whose date in ``field`` lies from ``start`` to ``end``, both included."""
+
+    field: str
+    start: dt.datetime
+    end: dt.datetime

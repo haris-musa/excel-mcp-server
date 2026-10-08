@@ -30,6 +30,7 @@ from excel_mcp.operations.line_edit_objects import (
 )
 from excel_mcp.operations.line_edit_rules import update_rules
 from excel_mcp.operations.shifting import Shifter
+from excel_mcp.operations.slicer_manage import drop_table_slicers
 from excel_mcp.operations.spans import format_span, parse_span
 from excel_mcp.operations.workbook_rewrite import (
     gated_operand,
@@ -59,7 +60,9 @@ def edit_lines(
         _check_room(sheet, edit)
     _check_arrays(sheet, edit)
     check_table_cuts(sheet, edit)
-    shifter = Shifter(edit, dead_tables(sheet, edit))
+    dead = dead_tables(sheet, edit)
+    drop_table_slicers(workbook, sheet, dead)
+    shifter = Shifter(edit, dead)
     names = workbook.sheetnames
     results = filter_results(sheet, edit, formula_values)
     try:

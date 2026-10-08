@@ -22,8 +22,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     @tools.reader("Describe sheet")
     def describe_sheet(path: WorkbookPath, sheet: SheetName) -> SheetDetails:
         """Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables,
-        images, notes, hyperlinks, validation, conditional formats, sparklines, custom column
-        widths, hidden rows and columns, print area and protection. Empty items are omitted.
+        slicers, timelines, images, notes, hyperlinks, validation, conditional formats, sparklines,
+        custom column widths, hidden rows and columns, print area and protection. Empty items are
+        omitted.
 
         Loads the whole workbook into memory, so it is slow on very large files."""
         with workspace.read(path, with_package=True) as workbook:
@@ -56,9 +57,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
 
         Copies cells, styles, merges, sizes, hidden rows and columns, freeze panes, filters, data
         validation, conditional formats, images, notes, charts, tables, PivotTables, print setup,
-        protection and sheet-scoped names. References to the sheet itself, including chart data,
-        point at the copy. Tables get new names (Sales becomes Sales2). PivotTables share the
-        original's data. Workbook-scoped names are not duplicated.
+        protection, slicers, timelines and sheet-scoped names. References to the sheet itself,
+        including chart data, point at the copy. Tables get new names (Sales becomes Sales2).
+        PivotTables share the original's data. Workbook-scoped names are not duplicated.
         """
         with workspace.edit(path) as workbook:
             sheet_copy.copy_sheet(workbook, sheet, new_name)

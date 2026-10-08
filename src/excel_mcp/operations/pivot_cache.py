@@ -21,6 +21,7 @@ from excel_mcp.operations.pivot_fields import FieldSetup, Shared
 from excel_mcp.operations.pivot_groups import Grouping
 from excel_mcp.operations.pivot_source import Column, Value
 
+REFRESHED_BY = "excel-mcp-server"
 CacheItem = Missing | Number | Text | DateTimeField
 
 
@@ -50,7 +51,7 @@ def build_cache(setup: FieldSetup, calculated: list[CalcField]) -> CacheDefiniti
             worksheetSource=WorksheetSource(ref=source.ref, sheet=source.sheet),
         ),
         cacheFields=fields,
-        refreshedBy="excel-mcp-server",
+        refreshedBy=REFRESHED_BY,
         refreshedDate=to_excel(dt.datetime.now(dt.UTC).replace(tzinfo=None)),
         createdVersion=6,
         refreshedVersion=6,

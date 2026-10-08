@@ -32,6 +32,20 @@ All notable changes to this project are documented here. The format follows
   and automatic, lowest/highest, number, percent, percentile or formula ends. Icon sets accept
   the sets that exist in the extension only (`3Stars`, `3Triangles`, `5Boxes`) and custom
   `icons` per range, including no icon. `describe_sheet` lists them; `copy_sheet` copies them.
+- `add_slicer` and `delete_slicer`: slicers for tables and PivotTables and timelines for
+  date fields of PivotTables, written as Excel writes them (checked part by part against
+  Excel's own files, and opened in Excel without repair). Options: field, caption,
+  position and size, columns, built-in style, sort, hide items with no data, selected items
+  or period, and one slicer connected to several PivotTables that share a cache. Selecting
+  items filters like the buttons do: PivotTable items are hidden and the figures recalculated
+  from the source (equal to Excel's after a refresh), table rows are filtered and hidden.
+  `describe_sheet` lists slicers and timelines with their selection.
+- `copy_sheet` copies slicers and timelines as Excel does (a copy of a sheet with its
+  PivotTables and slicers filters itself; slicers elsewhere gain the copied PivotTables).
+- Deleting a table, or the column of a table slicer, with `delete_rows_or_columns` removes
+  the slicer, as Excel does. `delete_slicer` keeps what Excel keeps (a table's filter, a
+  row, column or filter field's hidden items) and clears a timeline's period and the hidden
+  items of a field the PivotTable does not show.
 - `read_range` in `values` mode calculates formulas that have no stored result, which used
   to read as null until Excel saved the file. A built-in calculator covers about 260
   functions (math, statistics, financial and securities, dates, text, lookup, logical,

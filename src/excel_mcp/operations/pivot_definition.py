@@ -12,16 +12,19 @@ from openpyxl.pivot.table import (
     PageField,
     PivotArea,
     PivotField,
+    PivotFilter,
     PivotTableStyle,
     Reference,
     RowColField,
     TableDefinition,
 )
+from openpyxl.utils.datetime import to_excel
+from openpyxl.worksheet.filters import AutoFilter, CustomFilter, CustomFilters, FilterColumn
 
 from excel_mcp.operations.pivot_axis import Axis, axis_items
 from excel_mcp.operations.pivot_calc import CalcField
 from excel_mcp.operations.pivot_fields import AxisField, FieldSetup
-from excel_mcp.operations.pivot_options import Layout, ShowAs
+from excel_mcp.operations.pivot_options import DatePeriod, Layout, ShowAs
 from excel_mcp.operations.pivot_render import Table
 from excel_mcp.operations.pivot_values import DataSpec
 from excel_mcp.refs import CellRange
@@ -67,6 +70,9 @@ class Definition:
     rows: Axis
     columns: Axis
     pages: list[PageFilter]
+    hidden: list[AxisField]
+    """Fields off the axes whose items are limited."""
+    filters: list[PivotFilter]
     specs: list[DataSpec]
     format_ids: list[int | None]
     table: Table
@@ -111,6 +117,7 @@ def build_definition(plan: Definition) -> TableDefinition:
             PageField(fld=page.field.index, item=page.item, hier=-1) for page in plan.pages
         ],
         dataFields=[_data_field(plan, position) for position in range(len(plan.specs))],
+        filters=plan.filters,
         pivotTableStyleInfo=PivotTableStyle(
             name="PivotStyleLight16",
             showRowHeaders=True,
@@ -136,7 +143,9 @@ def _pivot_fields(plan: Definition) -> list[PivotField]:
         **{field.index: "axisRow" for field in plan.rows.fields},
     }
     placed = [*plan.rows.fields, *plan.columns.fields]
-    axis_fields = {field.index: field for field in [*placed, *(page.field for page in plan.pages)]}
+    axis_fields = {
+        field.index: field for field in [*placed, *(p.field for p in plan.pages), *plan.hidden]
+    }
     on_axes = {field.index for field in placed}
     source = plan.setup.source
     summarized = {spec.field for spec in plan.specs}
@@ -256,3 +265,31 @@ def data_field_extensions(plan: Definition) -> dict[int, str]:
         for position, spec in enumerate(plan.specs)
         if spec.show_as in SHOW_AS_EXTENSION
     }
+
+
+def date_filter(field: int, period: DatePeriod, number: int) -> PivotFilter:
+    """The "between" date filter Excel writes for a date range."""
+    first, last = str(int(to_excel(period.start))), str(int(to_excel(period.end)))
+    return PivotFilter(
+        fld=field,
+        type="dateBetween",
+        evalOrder=-1,
+        id=number,
+        stringValue1=first,
+        stringValue2=last,
+        autoFilter=AutoFilter(
+            ref="A1",
+            filterColumn=[
+                FilterColumn(
+                    colId=0,
+                    customFilters=CustomFilters(
+                        _and=True,
+                        customFilter=[
+                            CustomFilter(operator="greaterThanOrEqual", val=first),
+                            CustomFilter(operator="lessThanOrEqual", val=last),
+                        ],
+                    ),
+                )
+            ],
+        ),
+    )
