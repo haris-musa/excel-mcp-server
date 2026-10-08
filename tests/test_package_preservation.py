@@ -46,7 +46,7 @@ async def test_sparklines_and_extended_rules_survive_edits(call: ToolCall, files
     sheet = text(parts, sheet_part(parts, "Data"))
 
     assert sheet.count("<x14:sparklineGroup ") == 3
-    assert sheet.count("<x14:sparkline>") == 18
+    assert sheet.count("<x14:sparkline>") == 21  # each group grows over the inserted row
     assert sheet.count("<x14:cfRule ") == 2
     assert "<xm:f>Lists!$A$1:$A$3</xm:f>" in sheet
     assert sheet.count("<conditionalFormatting ") == 3

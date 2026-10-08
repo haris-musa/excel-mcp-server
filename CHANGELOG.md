@@ -195,7 +195,9 @@ All notable changes to this project are documented here. The format follows
   references), the sheet filter, print area and titles, freeze panes, row heights and column
   widths, page breaks, pictures, charts (on sheets and chart sheets, with their series,
   categories and titles), filters with their criteria and sort, and PivotTable locations and
-  sources all follow the move. Like Excel, an edit fails (and nothing is saved) when it
+  sources all follow the move, as do sparklines, extended conditional formats and validation,
+  shapes, form controls and newer charts that Excel saved. Deleting one of several filtered
+  columns applies the remaining criteria again, as Excel does. Like Excel, an edit fails (and nothing is saved) when it
   would cut through an array formula, a PivotTable, a table's header row or two tables at
   once. Inserted cells take the formatting of the line above or to the left, and rows
   inserted into a table get its calculated column formulas, as in Excel. Verified against
