@@ -182,3 +182,36 @@ async def test_today_and_now(call: ToolCall, files: Path) -> None:
 
     today = (dt.date.today() - dt.date(1899, 12, 30)).days
     assert data["values"] == [[today], [today]]
+
+
+async def test_running_balance_of_2000_rows(call: ToolCall, files: Path) -> None:
+    workbook = Workbook()
+    sheet = workbook.worksheets[0]
+    sheet.title = "Data"
+    for row in range(1, 2001):
+        sheet.cell(row, 1, row % 7 + 1)
+        sheet.cell(row, 2, "=A1" if row == 1 else f"=B{row - 1}+A{row}")
+    workbook.save(files / "calc.xlsx")
+
+    data = await read_values(call, "B2000")
+
+    assert data["values"] == [[sum(row % 7 + 1 for row in range(1, 2001))]]
+
+
+async def test_amortization_schedule_read_from_its_last_row(call: ToolCall, files: Path) -> None:
+    workbook = Workbook()
+    sheet = workbook.worksheets[0]
+    sheet.title = "Data"
+    sheet["A1"], sheet["A2"], sheet["A3"] = 250000, 0.065, 360
+    for month in range(1, 361):
+        row = month + 4
+        sheet[f"A{row}"] = month
+        sheet[f"B{row}"] = "=$A$1" if month == 1 else f"=F{row - 1}"
+        sheet[f"D{row}"] = f"=-IPMT($A$2/12,A{row},$A$3,$A$1)"
+        sheet[f"E{row}"] = f"=-PPMT($A$2/12,A{row},$A$3,$A$1)"
+        sheet[f"F{row}"] = f"=B{row}-E{row}"
+    workbook.save(files / "calc.xlsx")
+
+    data = await read_values(call, "F364")
+
+    assert abs(data["values"][0][0]) < 1e-6

@@ -17,6 +17,7 @@ from openpyxl.formula import Tokenizer
 from openpyxl.formula.tokenizer import Token, TokenizerError
 
 from excel_mcp.errors import UnsafeFormulaError
+from excel_mcp.xlfn import add_prefixes
 
 BLOCKED_FUNCTIONS = frozenset(
     {
@@ -106,6 +107,20 @@ def check_formula(formula: str, sheet_names: Iterable[str]) -> None:
     sheets = {name.casefold(): name for name in sheet_names}
     for token in tokens:
         _check_token(token, sheets)
+
+
+def storable_formula(formula: str, sheet_names: Iterable[str]) -> str:
+    """Check a formula and return it as it is stored in a file (see `add_prefixes`).
+
+    Every formula that is written anywhere in a workbook goes through here.
+    """
+    check_formula(formula, sheet_names)
+    return add_prefixes(formula)
+
+
+def storable_operand(operand: str, sheet_names: Iterable[str]) -> str:
+    """`storable_formula` for rule operands and names, which are stored without the "="."""
+    return storable_formula(f"={operand.removeprefix('=')}", sheet_names).removeprefix("=")
 
 
 def _check_token(token: Token, sheets: dict[str, str]) -> None:

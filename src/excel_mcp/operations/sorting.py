@@ -4,7 +4,7 @@ import datetime as dt
 import unicodedata
 from copy import copy
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from openpyxl.cell.cell import Cell, MergedCell
 from openpyxl.comments import Comment
@@ -17,7 +17,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel, Field
 
 from excel_mcp.errors import InvalidArgumentError
-from excel_mcp.formulas import check_formula
+from excel_mcp.formulas import storable_formula
 from excel_mcp.refs import CellRange, parse_range
 from excel_mcp.workspace import sheet_names
 
@@ -172,7 +172,8 @@ def _write_rows(sheet: Worksheet, first_col: int, first_row: int, rows: list[_Ro
     names = sheet_names(sheet)
     for row_offset, row in enumerate(rows):
         for col_offset, saved in enumerate(row.cells):
-            cell = sheet.cell(first_row + row_offset, first_col + col_offset)
+            # Merged cells are rejected before sorting, so this is always a real cell.
+            cell = cast(Cell, sheet.cell(first_row + row_offset, first_col + col_offset))
             if saved.data_type == "f":
                 if not isinstance(saved.value, str):
                     raise InvalidArgumentError(
@@ -182,8 +183,7 @@ def _write_rows(sheet: Worksheet, first_col: int, first_row: int, rows: list[_Ro
                 formula = Translator(saved.value, origin=saved.origin).translate_formula(
                     cell.coordinate
                 )
-                check_formula(formula, names)
-                cell.value = formula
+                cell.value = storable_formula(formula, names)
             else:
                 cell.value = saved.value
                 cell.data_type = saved.data_type

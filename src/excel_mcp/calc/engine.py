@@ -8,6 +8,7 @@ where a single value is expected is reduced to the formula cell's own row or col
 import datetime as dt
 import logging
 import math
+from collections.abc import Iterator
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
@@ -87,6 +88,7 @@ class Engine:
         self.sheets = {ws.title.casefold(): ws for ws in worksheets(formulas)}
         self.cached_sheets = {ws.title.casefold(): ws for ws in worksheets(cached)}
         self.memo: dict[CellKey, Scalar | UncalculableError] = {}
+        self.trees: dict[CellKey, Node] = {}
         self.active: set[CellKey] = set()
         self.work = 0
         self.depth = 0
@@ -97,20 +99,121 @@ class Engine:
     # -- cells -----------------------------------------------------------------------------
 
     def calculate(self, sheet: Worksheet, row: int, col: int) -> Scalar:
-        """The value of a cell, calculating its formula if Excel stored no result."""
-        pending = [(sheet, row, col)]
+        """The value of a cell, calculating its formula if Excel stored no result.
+
+        The formula cells a cell refers to are calculated first, from an explicit stack, so
+        a chain of any length (a running balance) needs no deep recursion. References the
+        scan cannot see (OFFSET, INDEX) fall back to recursion, which is depth-limited.
+        """
+        stack = [(sheet, row, col)]
+        queued = {(sheet.title, row, col)}
         while True:
-            try:
-                value = self.cell_value(*pending[-1])
-            except TooDeepError as deep:
-                pending.append(deep.target)
+            current = stack[-1]
+            waiting = [d for d in self.unfinished_dependencies(*current) if _key(d) not in queued]
+            if waiting:
+                stack.extend(reversed(waiting))
+                queued.update(_key(d) for d in waiting)
                 continue
+            try:
+                value = self.cell_value(*current)
+            except TooDeepError as deep:
+                stack.append(deep.target)
+                queued.add(_key(deep.target))
+                continue
+            except UncalculableError:
+                # A failed dependency is remembered; the cells that use it will report it.
+                if len(stack) == 1:
+                    raise
+                value = None
             except (ArithmeticError, ValueError, TypeError, RecursionError) as error:
                 logger.debug("calculation failed: %r", error)
-                raise UncalculableError("not supported") from None
-            pending.pop()
-            if not pending:
+                failure = UncalculableError("not supported")
+                self.memo[_key(current)] = failure
+                if len(stack) == 1:
+                    raise failure from None
+                value = None
+            stack.pop()
+            queued.discard(_key(current))
+            if not stack:
                 return value
+
+    def unfinished_dependencies(
+        self, sheet: Worksheet, row: int, col: int
+    ) -> list[tuple[Worksheet, int, int]]:
+        """Formula cells that the formula at this position names and that are not done yet."""
+        cell = sheet._cells.get((row, col))
+        if cell is None or cell.data_type != "f" or isinstance(cell.value, ArrayFormula):
+            return []
+        key = (sheet.title, row, col)
+        if key in self.memo or self.cached_value(sheet, row, col) is not None:
+            return []
+        try:
+            tree = self.tree(cell)
+            references = list(self._references(tree, sheet, 0))
+        except (UncalculableError, FormulaError):
+            return []
+        found = []
+        for target, top, left, bottom, right in references:
+            self.charge(1)
+            for position, other in _stored_in(target, top, left, bottom, right):
+                if other.data_type == "f" and self._is_unfinished(target, *position):
+                    found.append((target, *position))
+        return found
+
+    def _is_unfinished(self, sheet: Worksheet, row: int, col: int) -> bool:
+        return (sheet.title, row, col) not in self.memo and (
+            self.cached_value(sheet, row, col) is None
+        )
+
+    def _references(
+        self, node: Node, home: Worksheet, depth: int
+    ) -> Iterator[tuple[Worksheet, int, int, int, int]]:
+        """The rectangles a syntax tree refers to, as (sheet, top, left, bottom, right)."""
+        match node:
+            case Ref():
+                for target in self._sheets_for(node, home):
+                    yield (
+                        target,
+                        node.top or 1,
+                        node.left or 1,
+                        node.bottom or target.max_row,
+                        node.right or target.max_column,
+                    )
+            case Name() if depth < MAX_NAME_DEPTH:
+                scope = self.sheets.get((node.sheet or "").casefold(), home)
+                try:
+                    inner = parse(self._lookup_name(scope, node.name))
+                except UncalculableError:
+                    return
+                yield from self._references(inner, home, depth + 1)
+            case Unary(_, operand) | Percent(operand):
+                yield from self._references(operand, home, depth)
+            case Binary(_, left, right):
+                yield from self._references(left, home, depth)
+                yield from self._references(right, home, depth)
+            case Call():
+                for argument in node.args:
+                    yield from self._references(argument, home, depth)
+            case ArrayLiteral(rows):
+                for row in rows:
+                    for item in row:
+                        yield from self._references(item, home, depth)
+
+    def _sheets_for(self, ref: Ref, home: Worksheet) -> list[Worksheet]:
+        saved = self.here
+        self.here = Position(home, saved.row, saved.col)
+        try:
+            return self.sheets_of(ref)
+        except FormulaError:
+            return []
+        finally:
+            self.here = saved
+
+    def tree(self, cell: Any) -> Node:
+        key = (cell.parent.title, cell.row, cell.column)
+        if key not in self.trees:
+            self.trees[key] = parse(str(cell.value))
+        return self.trees[key]
 
     def cell_value(self, sheet: Worksheet, row: int, col: int) -> Scalar:
         cell = sheet._cells.get((row, col))
@@ -157,7 +260,7 @@ class Engine:
     def evaluate_cell(self, cell: Any) -> Scalar:
         if isinstance(cell.value, ArrayFormula):
             raise UncalculableError("array formula")
-        node = parse(str(cell.value))
+        node = self.tree(cell)
         shown = self.eval(node, array=False)
         if isinstance(shown, RefGrid):
             shown = self.intersect(shown)
@@ -354,6 +457,25 @@ class Engine:
                 return error.error
 
         return elementwise(apply, *values)
+
+
+def _key(position: tuple[Worksheet, int, int]) -> CellKey:
+    return (position[0].title, position[1], position[2])
+
+
+def _stored_in(
+    sheet: Worksheet, top: int, left: int, bottom: int, right: int
+) -> Iterator[tuple[tuple[int, int], Any]]:
+    """The stored cells inside a rectangle, whichever is fewer to walk: it or the sheet."""
+    if (bottom - top + 1) * (right - left + 1) <= len(sheet._cells):
+        for row in range(top, bottom + 1):
+            for col in range(left, right + 1):
+                if (cell := sheet._cells.get((row, col))) is not None:
+                    yield (row, col), cell
+    else:
+        for (row, col), cell in sheet._cells.items():
+            if top <= row <= bottom and left <= col <= right:
+                yield (row, col), cell
 
 
 def constant(cell: Any) -> Scalar:

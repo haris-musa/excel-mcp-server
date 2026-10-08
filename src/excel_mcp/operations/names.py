@@ -6,7 +6,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
 
 from excel_mcp.errors import InvalidArgumentError
-from excel_mcp.formulas import check_formula
+from excel_mcp.formulas import storable_operand
 from excel_mcp.operations.tables import is_valid_name, table_names
 
 
@@ -42,7 +42,7 @@ def set_defined_name(
     reference = refers_to.removeprefix("=").strip()
     if not reference:
         raise InvalidArgumentError("refers_to cannot be empty.")
-    check_formula(f"={reference}", workbook.sheetnames)
+    reference = storable_operand(reference, workbook.sheetnames)
     names = _scope(workbook, sheet)
     replaced = name in names
     names[name] = DefinedName(name, attr_text=reference)
