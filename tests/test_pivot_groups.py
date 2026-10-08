@@ -1,5 +1,6 @@
 """Group items and record placement, with the labels Excel produced for the same settings."""
 
+import calendar
 import datetime as dt
 
 import pytest
@@ -57,3 +58,12 @@ def test_date_units_are_ordered_largest_first_and_cover_every_slot() -> None:
     days = group_dates(values, ["days"])[0]
     assert len(days.labels) == 366 + 2
     assert days.labels[days.positions[2]] == "29-Feb"
+
+
+def test_labels_do_not_depend_on_the_host_locale(monkeypatch: pytest.MonkeyPatch) -> None:
+    values = [dt.datetime(2024, 3, 5), dt.datetime(2025, 12, 31)]
+    expected = [group_dates(values, ["months", "days"])[i].labels for i in range(2)]
+    monkeypatch.setattr(calendar, "month_abbr", [""] + ["xx"] * 12)
+    monkeypatch.setattr(calendar, "month_name", [""] + ["xx"] * 12)
+    assert [group_dates(values, ["months", "days"])[i].labels for i in range(2)] == expected
+    assert expected[0][1:3] == ["Jan", "Feb"] and expected[1][1] == "01-Jan"

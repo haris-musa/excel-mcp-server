@@ -4,7 +4,6 @@ A group is a list of items and the item each record falls in. Items start with o
 everything below the range and end with one for everything above it, as Excel's do.
 """
 
-import calendar
 import datetime as dt
 import math
 from dataclasses import dataclass
@@ -14,7 +13,8 @@ from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.operations.pivot_options import DateUnit, NumberGroup
 
 UNIT_ORDER: tuple[DateUnit, ...] = ("years", "quarters", "months", "days")
-_MONTHS = [calendar.month_abbr[month] for month in range(1, 13)]
+# Excel stores English names in the pivot cache; never take them from the host's locale.
+_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 _LEAP_YEAR = 2000
 _DAYS = [dt.date(_LEAP_YEAR, 1, 1) + dt.timedelta(days=offset) for offset in range(366)]
 
@@ -62,7 +62,7 @@ def _date_items(
         case "months":
             return _MONTHS, [value.month - 1 for value in values]
         case _:
-            labels = [f"{day:%d-%b}" for day in _DAYS]
+            labels = [f"{day.day:02d}-{_MONTHS[day.month - 1]}" for day in _DAYS]
             slots = {(day.month, day.day): index for index, day in enumerate(_DAYS)}
             return labels, [slots[(value.month, value.day)] for value in values]
 
