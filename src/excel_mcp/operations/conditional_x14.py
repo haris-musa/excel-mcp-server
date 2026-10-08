@@ -11,11 +11,13 @@ from typing import Literal, cast, get_args
 from xml.sax.saxutils import escape
 
 from openpyxl.formatting.rule import DataBarRule, Rule
+from openpyxl.formula import Tokenizer
+from openpyxl.formula.tokenizer import Token
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.errors import InvalidArgumentError
-from excel_mcp.formulas import storable_operand
+from excel_mcp.formulas import storable_operand, unquote
 from excel_mcp.operations.conditional_kinds import IconSetName, ScaleType, ThresholdType
 from excel_mcp.operations.conditional_rule import ConditionalFormat
 from excel_mcp.operations.formatting import parse_color
@@ -99,7 +101,7 @@ def add_extended(
     guid = new_guid()
     classic = None
     if rule.type == "data_bar":
-        classic, xml = _data_bar(rule, guid, names)
+        classic, xml = _data_bar(rule, guid, names, sheet.title)
         package.rule_extensions[(area, str(priority))] = _link(guid)
     else:
         xml = _icon_set(rule, guid, priority)
@@ -134,12 +136,12 @@ def _link(guid: str) -> str:
     return f'<extLst><ext uri="{RULE_ID}" xmlns:x14="{X14}"><x14:id>{guid}</x14:id></ext></extLst>'
 
 
-def _data_bar(rule: ConditionalFormat, guid: str, names: list[str]) -> tuple[Rule, str]:
+def _data_bar(rule: ConditionalFormat, guid: str, names: list[str], own: str) -> tuple[Rule, str]:
     if len(rule.colors or []) != 1:
         raise InvalidArgumentError("data_bar needs exactly 1 color.")
     fill = parse_color((rule.colors or [""])[0])
-    low = _point(rule.min_type, rule.min_value, "min", names)
-    high = _point(rule.max_type, rule.max_value, "max", names)
+    low = _point(rule.min_type, rule.min_value, "min", names, own)
+    high = _point(rule.max_type, rule.max_value, "max", names, own)
     if rule.negative_border_color and not rule.border_color:
         raise InvalidArgumentError("negative_border_color needs a border_color.")
     classic = DataBarRule(
@@ -182,7 +184,11 @@ def _data_bar(rule: ConditionalFormat, guid: str, names: list[str]) -> tuple[Rul
 
 
 def _point(
-    kind: ScaleType, value: float | str | None, side: Literal["min", "max"], names: list[str]
+    kind: ScaleType,
+    value: float | str | None,
+    side: Literal["min", "max"],
+    names: list[str],
+    own: str,
 ) -> tuple[str, str, str | None]:
     """(classic type, extension type, value) of the end of a data bar's scale."""
     label = f"{side}_type"
@@ -197,7 +203,7 @@ def _point(
     if value is None:
         raise InvalidArgumentError(f"{label} {kind} needs {side}_value.")
     if kind == "formula":
-        return "formula", "formula", storable_operand(str(value), names)
+        return "formula", "formula", _unqualified(storable_operand(str(value), names), own)
     number = _number(value, f"{side}_value")
     if kind != "number" and not 0 <= number <= 100:
         raise InvalidArgumentError(f"{side}_value is a {kind}: 0 to 100.")
@@ -257,3 +263,14 @@ def _custom_icons(rule: ConditionalFormat, count: int) -> str:
             )
         shown.append(f'<x14:cfIcon iconSet="{found[1]}" iconId="{int(found[2]) - 1}"/>')
     return "".join(shown)
+
+
+def _unqualified(operand: str, own: str) -> str:
+    """Excel writes references to the rule's own sheet without the sheet name."""
+    tokenizer = Tokenizer(f"={operand}")
+    for token in tokenizer.items:
+        if token.subtype == Token.RANGE:
+            sheet, bang, cells = token.value.rpartition("!")
+            if bang and unquote(sheet).casefold() == own.casefold():
+                token.value = cells
+    return tokenizer.render().removeprefix("=")

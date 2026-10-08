@@ -456,7 +456,7 @@ async def test_extended_rules_survive_edits_and_sheet_copies(call: ToolCall, sam
     await call("copy_sheet", **BOOK, sheet="Data", new_name="Copy")
     source, copied = _x14_rules(sample), _x14_rules(sample, "Copy")
     assert len(source) == len(copied) == 2
-    assert "<xm:f>Data!$F$1</xm:f>" in source[0] and "<xm:f>'Copy'!$F$1</xm:f>" in copied[0]
+    assert "<xm:f>$F$1</xm:f>" in source[0] and "<xm:f>$F$1</xm:f>" in copied[0]
     ids = lambda parts: set(re.findall(r"\{[0-9A-F-]{36}\}", "".join(parts)))  # noqa: E731
     assert ids(source).isdisjoint(ids(copied))
     assert re.findall(r"<x14:id>(\{[^}]*\})</x14:id>", _sheet_xml(sample, "Copy"))[0] in ids(copied)
