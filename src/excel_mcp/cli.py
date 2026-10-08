@@ -69,6 +69,7 @@ def _settings(args: argparse.Namespace) -> Settings:
     return Settings(
         allowed_dirs=[Path(directory).expanduser() for directory in directories],
         read_only=args.read_only or os.environ.get("EXCEL_MCP_READ_ONLY") == "1",
+        allow_vba_write=args.allow_vba_write or os.environ.get("EXCEL_MCP_ALLOW_VBA_WRITE") == "1",
         limits=Limits(max_file_bytes=args.max_file_mb * 1024 * 1024),
         log_level=args.log_level,
     )
@@ -93,6 +94,12 @@ def _parser() -> argparse.ArgumentParser:
         "--read-only",
         action="store_true",
         help="Only register tools that do not change files. Also EXCEL_MCP_READ_ONLY=1.",
+    )
+    common.add_argument(
+        "--allow-vba-write",
+        action="store_true",
+        help="Add tools that write VBA macro code into .xlsm files (never run by the server). "
+        "Off by default and ignored with --read-only. Also EXCEL_MCP_ALLOW_VBA_WRITE=1.",
     )
     common.add_argument(
         "--max-file-mb", type=int, default=100, help="Largest workbook to open (default 100)."

@@ -18,5 +18,6 @@ class Limits:
 class Settings:
     allowed_dirs: list[Path] = field(default_factory=list)
     read_only: bool = False
+    allow_vba_write: bool = False
     limits: Limits = field(default_factory=Limits)
     log_level: LogLevel = "WARNING"

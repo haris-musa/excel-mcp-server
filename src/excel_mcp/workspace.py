@@ -15,6 +15,7 @@ from openpyxl.chart import AreaChart
 from openpyxl.worksheet._read_only import ReadOnlyWorksheet
 from openpyxl.worksheet.worksheet import Worksheet
 
+from excel_mcp import macros
 from excel_mcp.config import Limits
 from excel_mcp.errors import (
     InvalidArgumentError,
@@ -37,9 +38,10 @@ class Workspace:
     and saves the whole file, so concurrent edits would otherwise lose data.
     """
 
-    def __init__(self, paths: PathPolicy, limits: Limits) -> None:
+    def __init__(self, paths: PathPolicy, limits: Limits, allow_macro_workbooks: bool) -> None:
         self.paths = paths
         self.limits = limits
+        self.allow_macro_workbooks = allow_macro_workbooks
         self._write_lock = threading.Lock()
 
     def resolve(self, raw_path: str) -> Path:
@@ -111,18 +113,25 @@ class Workspace:
 
     def create(self, raw_path: str, sheets: list[str], *, overwrite: bool) -> Path:
         path = self.resolve(raw_path)
-        if path.suffix.lower() in MACRO_SUFFIXES:
+        macro_enabled = path.suffix.lower() in MACRO_SUFFIXES
+        if macro_enabled and not self.allow_macro_workbooks:
             raise InvalidArgumentError(
-                "New workbooks cannot contain macros. Create an .xlsx or .xltx file instead."
+                "New workbooks cannot contain macros unless the server allows VBA writing. "
+                "Create an .xlsx or .xltx file instead."
             )
         workbook = Workbook()
         workbook.worksheets[0].title = sheets[0]
         for name in sheets[1:]:
             workbook.create_sheet(name)
         workbook.template = path.suffix.lower() in TEMPLATE_SUFFIXES
+        if macro_enabled:
+            macros.store_project(workbook, macros.new_project(workbook))
         with self._write_lock:
-            self._check_overwrite(path, overwrite)
-            save_atomically(workbook, path)
+            try:
+                self._check_overwrite(path, overwrite)
+                save_atomically(workbook, path)
+            finally:
+                close_workbook(workbook)
         return path
 
     def store(self, raw_path: str, content: bytes, *, overwrite: bool) -> Path:

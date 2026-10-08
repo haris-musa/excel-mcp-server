@@ -61,11 +61,11 @@ async def test_describe_workbook_reports_macros(
 
 
 def test_excel_made_project_is_decoded() -> None:
-    modules, project_text = ovba.read_project((FIXTURES / "vbaProject.bin").read_bytes())
-    module1 = next(module for module in modules if module.name == "Module1")
-    assert module1.procedural
+    project = ovba.read_project((FIXTURES / "vbaProject.bin").read_bytes())
+    module1 = next(module for module in project.modules if module.name == "Module1")
+    assert module1.kind == "standard"
     assert 'MsgBox ("Hello from Python!")' in module1.source
-    assert "Module=Module1" in project_text
+    assert "Module=Module1" in project.text
 
 
 def test_decompress_uncompressed_chunk() -> None:
