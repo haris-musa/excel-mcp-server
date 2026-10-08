@@ -725,7 +725,7 @@ Options that do not fit the chart type are rejected. describe_sheet lists the ch
 | `title_size` | integer | no | Points. Default 14. |
 | `width_cm` | number | no | Default: `15`. |
 | `height_cm` | number | no | Default: `7.5`. |
-| `legend` | `right` \| `left` \| `top` \| `bottom` \| `none` | no | 'none' hides it. Default: `bottom`. |
+| `legend` | `right` \| `left` \| `top` \| `bottom` \| `none` | no | Default: Excel's for the chart type. 'none' hides it. |
 | `data_labels` | object | no | Labels on every series; a series' own data_labels win. |
 | `grouping` | `standard` \| `stacked` \| `percent_stacked` | no | 'stacked' and 'percent_stacked' (categories sum to 100%) fit column, bar, line and area charts. Default: `standard`. |
 | `colors` | array of string | no | Hex, e.g. ['#1F4E78', '#C00000']: one per series in order, or per slice in pie and doughnut charts. A series' own color wins. |
@@ -736,7 +736,7 @@ Options that do not fit the chart type are rejected. describe_sheet lists the ch
 | `plot_color` | string | no | Hex fill of the plot area. |
 | `x_axis` | object | no | The category axis, which has no min, max, major_unit, log or number_format; for scatter and bubble charts, the x axis. |
 | `y_axis` | object | no | The value axis. |
-| `secondary_y_axis` | object | no | Used by series with secondary_axis. |
+| `secondary_y_axis` | object | no | Used by series with secondary_axis; for pareto, the percentage axis (title, min, max as fractions; 0 to 1 by default). |
 | `totals` | array of integer | no | Waterfall: 1-based positions of the points shown as totals ('Set as total'). |
 | `connector_lines` | boolean | no | Waterfall: lines between bars. Default: `True`. |
 | `bins` | object | no | Histogram. Default: Excel's automatic bins. |

@@ -139,6 +139,17 @@ class Axis(InputModel):
     )
 
 
+def default_legend(chart_type: str, series: int) -> LegendPosition:
+    """Where Excel puts the legend of a new chart, as found by creating each type in Excel."""
+    if chart_type in ("waterfall", "treemap"):
+        return "top"
+    if chart_type in ROUND_TYPES:
+        return "bottom"
+    if series == 1 or chart_type in MODERN_TYPES or chart_type == "bubble":
+        return "none"
+    return "top" if chart_type == "radar" else "bottom"
+
+
 class Bins(InputModel):
     width: float | None = Field(default=None, gt=0, description="Values per bin.")
     count: int | None = Field(default=None, ge=1, le=1000, description="Number of bins.")
@@ -163,7 +174,9 @@ class ChartOptions(InputModel):
     title_size: int | None = Field(default=None, ge=6, le=72, description="Points. Default 14.")
     width_cm: float = Field(default=15, gt=0, le=100)
     height_cm: float = Field(default=7.5, gt=0, le=100)
-    legend: LegendPosition = Field(default="bottom", description="'none' hides it.")
+    legend: LegendPosition | None = Field(
+        default=None, description="Default: Excel's for the chart type. 'none' hides it."
+    )
     data_labels: DataLabels | None = Field(
         default=None, description="Labels on every series; a series' own data_labels win."
     )
@@ -195,7 +208,9 @@ class ChartOptions(InputModel):
     )
     y_axis: Axis = Field(default_factory=Axis, description="The value axis.")
     secondary_y_axis: Axis = Field(
-        default_factory=Axis, description="Used by series with secondary_axis."
+        default_factory=Axis,
+        description="Used by series with secondary_axis; for pareto, the percentage axis "
+        "(title, min, max as fractions; 0 to 1 by default).",
     )
     totals: list[int] = Field(
         default_factory=list,

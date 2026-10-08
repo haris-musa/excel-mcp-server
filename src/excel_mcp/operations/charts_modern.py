@@ -33,7 +33,7 @@ _ONLY = {
 }
 _CLASSIC_ONLY = (
     "title_size", "grouping", "colors", "markers", "smooth", "scatter_style", "style",
-    "plot_color", "secondary_y_axis",
+    "plot_color",
 )  # fmt: skip
 _SERIES_CLASSIC = (
     "sizes", "type", "secondary_axis", "color", "line_width", "marker", "marker_size",
@@ -145,7 +145,12 @@ def _check_options(options: ChartOptions, chart_type: ChartType) -> None:
             raise InvalidArgumentError(f"{name} does not apply to {chart_type} charts.")
     x = {"title"} if chart_type in _VALUE_AXIS else set()
     y = _Y_AXIS if chart_type in _VALUE_AXIS else set()
-    for name, axis, allowed in (("x_axis", options.x_axis, x), ("y_axis", options.y_axis, y)):
+    percent = {"title", "min", "max"} if chart_type == "pareto" else set()
+    for name, axis, allowed in (
+        ("x_axis", options.x_axis, x),
+        ("y_axis", options.y_axis, y),
+        ("secondary_y_axis", options.secondary_y_axis, percent),
+    ):
         extra = {f for f in type(axis).model_fields if _changed(axis, f)} - allowed
         if extra:
             raise InvalidArgumentError(

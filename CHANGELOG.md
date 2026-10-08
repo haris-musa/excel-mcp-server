@@ -178,6 +178,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Breaking:** `options.legend` defaults to Excel's own for the chart type instead of
+  always the bottom: none for a single series (except pie and doughnut: bottom), bottom for
+  several, top for radar with several series, waterfall and treemap, none for the other
+  Excel 2016 charts. Explicit values still win. The Pareto percentage axis takes
+  `secondary_y_axis` (title, min, max).
+
 - Invalid arguments are reported as one readable line per problem, such as
   `Invalid arguments for read_range: mode: 'formula' is not valid; use 'values' or
   'formulas'.`, instead of pydantic's report. Unknown fields get a suggestion

@@ -13,7 +13,7 @@ from openpyxl import Workbook
 from openpyxl.workbook.defined_name import DefinedName
 
 from excel_mcp.operations.charts_data import Plot, split_sheet
-from excel_mcp.operations.charts_options import ChartOptions, DataLabels
+from excel_mcp.operations.charts_options import Axis, ChartOptions, DataLabels, default_legend
 from excel_mcp.package.opc import XML_DECLARATION
 
 _NAMESPACES = (
@@ -85,6 +85,7 @@ def _unquoted(reference: str) -> str:
 
 def chart_xml(workbook: Workbook, chart_type: str, plots: list[Plot], options: ChartOptions) -> str:
     kind = KINDS[chart_type]
+    legend = options.legend or default_legend(chart_type, len(plots))
     book = NameBook(workbook)
     categories = book.of(plots[0].categories, kind.version) if plots[0].categories else None
     data, series = [], []
@@ -109,7 +110,7 @@ def chart_xml(workbook: Workbook, chart_type: str, plots: list[Plot], options: C
         )
     body = (
         f"{_title(options.title)}<cx:plotArea><cx:plotAreaRegion>{''.join(series)}"
-        f"</cx:plotAreaRegion>{_axes(chart_type, options)}</cx:plotArea>{_legend(options)}"
+        f"</cx:plotAreaRegion>{_axes(chart_type, options)}</cx:plotArea>{_legend(legend)}"
     )
     return (
         f"{XML_DECLARATION}<cx:chartSpace {_NAMESPACES}><cx:chartData>{''.join(data)}"
@@ -145,10 +146,10 @@ def _title(text: str | None) -> str:
     )
 
 
-def _legend(options: ChartOptions) -> str:
-    if options.legend == "none":
+def _legend(position: str) -> str:
+    if position == "none":
         return ""
-    return f'<cx:legend pos="{_LEGEND[options.legend]}" align="ctr" overlay="0"/>'
+    return f'<cx:legend pos="{_LEGEND[position]}" align="ctr" overlay="0"/>'
 
 
 def _labels(labels: DataLabels | None) -> str:
@@ -231,29 +232,36 @@ def _axes(chart_type: str, options: ChartOptions) -> str:
     )
     if not kind.value_axis:
         return category
-    axis = options.y_axis
+    value = _value_axis(1, options.y_axis, "", "<cx:majorGridlines/>")
+    if chart_type != "pareto":
+        return category + value
+    percent = options.secondary_y_axis
+    # The cumulative percentage axis runs from 0 to 1 unless asked otherwise.
+    bounds = percent.model_copy(
+        update={
+            "max": 1 if percent.max is None else percent.max,
+            "min": 0 if percent.min is None else percent.min,
+        }
+    )
+    return category + value + _value_axis(2, bounds, '<cx:units unit="percentage"/>', "")
+
+
+def _value_axis(number: int, axis: Axis, units: str, grid: str) -> str:
     limits = "".join(
         f' {name}="{_number(value)}"'
         for name, value in (("max", axis.max), ("min", axis.min), ("majorUnit", axis.major_unit))
         if value is not None
     )
-    grid = "" if axis.major_gridlines is False else "<cx:majorGridlines/>"
-    number = (
+    grid = "" if axis.major_gridlines is False else grid
+    fmt = (
         f'<cx:numFmt formatCode={quoteattr(axis.number_format)} sourceLinked="0"/>'
         if axis.number_format
         else ""
     )
-    value = (
-        f'<cx:axis id="1"><cx:valScaling{limits}/>{_axis_title(axis.title)}{grid}'
-        f"<cx:tickLabels/>{number}</cx:axis>"
+    return (
+        f'<cx:axis id="{number}"><cx:valScaling{limits}/>{_axis_title(axis.title)}{units}{grid}'
+        f"<cx:tickLabels/>{fmt}</cx:axis>"
     )
-    percent = (
-        '<cx:axis id="2"><cx:valScaling max="1" min="0"/><cx:units unit="percentage"/>'
-        "<cx:tickLabels/></cx:axis>"
-        if chart_type == "pareto"
-        else ""
-    )
-    return category + value + percent
 
 
 def _axis_title(text: str | None) -> str:

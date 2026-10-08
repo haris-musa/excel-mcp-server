@@ -549,11 +549,11 @@ async def test_chart_style_title_size_and_plot_color(call: ToolCall, sample: Pat
 
 
 async def test_default_look_matches_excel(call: ToolCall, sample: Path) -> None:
-    await chart(call)
+    await chart(call, series=[{"values": "Data!C2:C5"}, {"values": "Data!D2:D5"}])
     root = chart_xml(sample)
     assert values(root, "roundedCorners") == ["0"]
     assert values(root, "varyColors") == ["0"]
-    assert values(root, "invertIfNegative") == ["0"]
+    assert values(root, "invertIfNegative") == ["0", "0"]
     assert values(root, "gapWidth") == ["219"] and values(root, "overlap") == ["-27"]
     assert values(root, "legendPos") == ["b"]
     assert set(values(root, "majorTickMark")) == {"none"}
@@ -680,3 +680,25 @@ async def test_create_chart_stays_inside_the_allowed_folder(
         series=[{"values": "Data!C2:C5"}],
     )
     assert "outside" in message
+
+
+@pytest.mark.parametrize(
+    ("chart_type", "series", "expected"),
+    [
+        ("column", 1, []), ("column", 2, ["b"]), ("line", 2, ["b"]), ("pie", 1, ["b"]),
+        ("doughnut", 1, ["b"]), ("radar", 1, []), ("radar", 2, ["t"]), ("scatter", 2, ["b"]),
+    ],
+)  # fmt: skip
+async def test_legend_default_is_excels_for_the_chart_type(
+    call: ToolCall, sample: Path, chart_type: str, series: int, expected: list[str]
+) -> None:
+    lines = [{"values": "Data!C2:C5"}, {"values": "Data!D2:D5"}][:series]
+    await chart(call, chart_type, series=lines)
+
+    assert values(chart_xml(sample), "legendPos") == expected
+
+
+async def test_an_explicit_legend_wins(call: ToolCall, sample: Path) -> None:
+    await chart(call, options={"legend": "right"})
+
+    assert values(chart_xml(sample), "legendPos") == ["r"]
