@@ -14,7 +14,7 @@ from excel_mcp.ovba_write import Module, Project, normalize_newlines
 MAX_CODE_CHARS = 200_000
 
 _MODULE_NAME = re.compile(r"[A-Za-z][A-Za-z0-9_]{0,30}")
-_ATTRIBUTE_LINE = re.compile(r"^[ \t]*attribute\b",re.IGNORECASE | re.MULTILINE)
+_ATTRIBUTE_LINE = re.compile(r"^[ \t]*attribute\b", re.IGNORECASE | re.MULTILINE)
 
 
 class VbaChange(BaseModel):

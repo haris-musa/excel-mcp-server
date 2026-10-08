@@ -1,6 +1,6 @@
 """Resolution and confinement of paths supplied by clients."""
 
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 from excel_mcp.errors import PathNotAllowedError
 
@@ -8,6 +8,12 @@ EXCEL_SUFFIXES = frozenset({".xlsx", ".xlsm", ".xltx", ".xltm"})
 MACRO_SUFFIXES = frozenset({".xlsm", ".xltm"})
 TEMPLATE_SUFFIXES = frozenset({".xltx", ".xltm"})
 IMAGE_SUFFIXES = frozenset({".png", ".jpg", ".jpeg"})
+
+# Windows opens these names as devices in every folder, with or without an extension.
+_DEVICE_NAMES = frozenset(
+    {"CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$"}
+    | {f"{device}{number}" for device in ("COM", "LPT") for number in "123456789¹²³"}
+)
 
 
 class PathPolicy:
@@ -22,6 +28,7 @@ class PathPolicy:
     def __init__(self, allowed_dirs: list[Path]) -> None:
         self.allowed_dirs = [directory.resolve() for directory in allowed_dirs]
         self._drives = {directory.drive.casefold() for directory in self.allowed_dirs}
+        self._shares = {drive for drive in self._drives if drive.startswith("\\\\")}
 
     @property
     def confined(self) -> bool:
@@ -58,6 +65,7 @@ class PathPolicy:
     def _resolve(self, raw_path: str) -> Path:
         if not raw_path.strip() or "\x00" in raw_path:
             raise PathNotAllowedError("Path must be a non-empty file system path.")
+        self._check_network_and_device_paths(raw_path)
         path = Path(raw_path).expanduser()
         if ":" in str(path)[len(path.drive) :]:
             raise PathNotAllowedError(f"Path {raw_path!r} cannot contain ':' after the drive.")
@@ -73,6 +81,8 @@ class PathPolicy:
                     "'/home/me/q1.xlsx'."
                 )
             path = self.allowed_dirs[0] / path
+        if any(_is_device_name(part) for part in path.parts[1:]):
+            raise PathNotAllowedError(f"Path {raw_path!r} contains a reserved device name.")
         outside = f"Path {raw_path!r} is outside the allowed directories."
         # Refuse other drives and network shares before resolving, since resolving
         # a path on a network share connects to that server.
@@ -83,6 +93,24 @@ class PathPolicy:
             raise PathNotAllowedError(outside)
         return resolved
 
+    def _check_network_and_device_paths(self, raw_path: str) -> None:
+        """Opening a network path sends the user's Windows credentials to that server."""
+        normalized = raw_path.replace("/", "\\")
+        if not normalized.startswith("\\\\"):
+            return
+        if normalized[2:3] in ("?", "."):
+            raise PathNotAllowedError(f"Path {raw_path!r} is a Windows device path.")
+        # Only a share that holds an allowed directory is trusted.
+        if PureWindowsPath(normalized).drive.casefold() not in self._shares:
+            raise PathNotAllowedError(
+                f"Path {raw_path!r} is a network path; only the share of an allowed directory "
+                "can be used."
+            )
+
     def allows(self, path: Path) -> bool:
         """Whether a path lies in an allowed directory; any path does when unconfined."""
         return not self.confined or any(path.is_relative_to(d) for d in self.allowed_dirs)
+
+
+def _is_device_name(part: str) -> bool:
+    return part.rstrip(" .").partition(".")[0].rstrip(" ").upper() in _DEVICE_NAMES
