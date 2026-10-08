@@ -12,11 +12,11 @@ from openpyxl.worksheet.table import Table, TableColumn
 from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.errors import InvalidArgumentError
-from excel_mcp.formulas import storable_formula
 from excel_mcp.operations.comparison import FormulaResults
 from excel_mcp.operations.filter_stored import stored_test
 from excel_mcp.operations.filters import FormulaValues, hide_failing_rows
 from excel_mcp.operations.pivot_index import pivot_area, sheet_pivots, workbook_pivots
+from excel_mcp.operations.table_options import calculated_value
 from excel_mcp.package.guards import check_pivot_removal
 from excel_mcp.package.lines import LineEdit
 from excel_mcp.refs import CellRange, cell_name, parse_cell, parse_range
@@ -214,12 +214,14 @@ def _fill_calculated_columns(
     sheet: Worksheet, table: Table, old: CellRange, edit: LineEdit, sheet_names: list[str]
 ) -> None:
     """Rows inserted into a table get the formulas of its calculated columns."""
+    first = old.min_row + (table.headerRowCount != 0)
     for index, column in enumerate(table.tableColumns, start=old.min_col):
         formula = column.calculatedColumnFormula
         if formula is not None and formula.attr_text:
-            text = storable_formula(f"={formula.attr_text}", sheet_names)
             for row in range(edit.at, edit.at + edit.count):
-                cast(Cell, sheet.cell(row, index)).value = text
+                cast(Cell, sheet.cell(row, index)).value = calculated_value(
+                    sheet, formula.attr_text, first, row
+                )
 
 
 def _update_columns(

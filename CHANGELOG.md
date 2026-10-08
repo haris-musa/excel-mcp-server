@@ -12,8 +12,10 @@ All notable changes to this project are documented here. The format follows
   row with a function per column (sum, average, count, count numbers, max, min, standard
   deviation, variance, or a custom formula) or a label, written as Excel writes them
   (`totalsRowFunction`, `SUBTOTAL(109,...)` cells, `totalsRowLabel`); calculated columns from
-  a formula with structured references such as `=[@Price]*[@Qty]`, filled into every row, into
-  rows added by `edit_table` and into rows inserted later (`calculatedColumnFormula`); header
+  a formula with structured references such as `=[@Price]*[@Qty]` or relative cells such as
+  `=B2*C2`, filled into every row, into rows added by `edit_table` and into rows inserted
+  later (`calculatedColumnFormula`); a new totals row is what Excel makes ("Total" first, and
+  the last column summed or counted); resizing moves the totals row; header
   row on or off, banded columns, first and last column emphasis, filter buttons; and resizing
   (`range`). Checked against the same steps in Excel.
 - The formula calculator reads structured references: `Sales[Price]`, `[@Price]`,

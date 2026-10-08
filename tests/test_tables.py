@@ -152,16 +152,84 @@ async def test_calculated_columns_fill_new_rows(call: ToolCall, sample: Path) ->
     assert _table(sample).ref == "A1:E9"
 
 
-async def test_calculated_columns_reject_relative_cell_references(
-    call_error: ToolCall, sample: Path
+async def test_relative_references_in_a_calculated_column_fill_down(
+    call: ToolCall, sample: Path
 ) -> None:
-    message = await call_error(
+    await call("write_range", **SHEET, start_cell="E1", rows=[["Revenue"]])
+    await call(
         "create_table",
         **SHEET,
-        range="A1:D5",
-        options={"columns": [{"name": "Price", "formula": "=C2*2"}]},
+        range="A1:E5",
+        name="Sales",
+        options={"columns": [{"name": "Revenue", "formula": "=C2*D2"}]},
     )
-    assert "[@Price]" in message
+    assert _table(sample).tableColumns[4].calculatedColumnFormula.attr_text == "C2*D2"
+    assert _cells(sample, "E2", "E5") == ["=C2*D2", "=C5*D5"]
+    await call("edit_table", **SHEET, table="Sales", options={}, range="A1:E7")
+    assert _cells(sample, "E6", "E7") == ["=C6*D6", "=C7*D7"]
+    await call("insert_rows_or_columns", **SHEET, axis="rows", at=3, count=1)
+    assert _cells(sample, "E3") == ["=C3*D3"]
+
+
+async def test_a_new_totals_row_is_what_excel_makes(call: ToolCall, sample: Path) -> None:
+    await _create(call, totals_row=True)
+    table = _table(sample)
+    columns = table.tableColumns
+    assert (columns[0].totalsRowLabel, columns[3].totalsRowFunction) == ("Total", "sum")
+    assert _cells(sample, "A6", "B6", "D6") == ["Total", None, "=SUBTOTAL(109,Sales[Price])"]
+    await call(
+        "write_range",
+        path="sales.xlsx",
+        sheet="Report",
+        start_cell="A1",
+        rows=[["a", "b"], [1, "x"], [2, "y"]],
+    )
+    await call(
+        "create_table",
+        path="sales.xlsx",
+        sheet="Report",
+        range="A1:B3",
+        name="Small",
+        options={"totals_row": True},
+    )
+    report = load_workbook(sample)["Report"]
+    assert [report["A4"].value, report["B4"].value] == ["Total", "=SUBTOTAL(103,Small[b])"]
+    await call(
+        "write_range", path="sales.xlsx", sheet="Report", start_cell="D1", rows=[["n"], [1], [2]]
+    )
+    await call(
+        "create_table",
+        path="sales.xlsx",
+        sheet="Report",
+        range="D1:D3",
+        name="One",
+        options={"totals_row": True},
+    )
+    report = load_workbook(sample)["Report"]
+    assert report["D4"].value == "=SUBTOTAL(109,One[n])"
+
+
+async def test_resizing_moves_the_totals_row_like_excel(call: ToolCall, sample: Path) -> None:
+    await _create(call, totals_row=True)
+    await call("edit_table", **SHEET, table="Sales", options={}, range="A1:D8")
+    table = _table(sample)
+    assert (table.ref, table.autoFilter.ref) == ("A1:D8", "A1:D7")
+    assert _cells(sample, "A6", "D6", "A8", "D8") == [
+        None,
+        None,
+        "Total",
+        "=SUBTOTAL(109,Sales[Price])",
+    ]
+    await call("edit_table", **SHEET, table="Sales", options={}, range="A1:D4")
+    assert _table(sample).ref == "A1:D5"  # the range given is the data's
+    assert _cells(sample, "A5", "D5") == ["Total", "=SUBTOTAL(109,Sales[Price])"]
+
+
+async def test_cut_off_rows_go_below_the_totals_row(call: ToolCall, sample: Path) -> None:
+    await _create(call, totals_row=True)
+    await call("edit_table", **SHEET, table="Sales", options={}, range="A1:D4")
+    assert _table(sample).ref == "A1:D5"
+    assert _cells(sample, "A4", "A5", "A6", "C6") == ["North", "Total", "South", 3]
 
 
 async def test_formulas_pass_the_safety_check(call_error: ToolCall, sample: Path) -> None:
@@ -239,9 +307,6 @@ async def test_a_new_column_is_named_like_excel(call: ToolCall, sample: Path) ->
 
 async def test_resize_and_edit_errors(call: ToolCall, call_error: ToolCall, sample: Path) -> None:
     await _create(call, totals_row=True)
-    assert "totals row" in await call_error(
-        "edit_table", **SHEET, table="Sales", options={}, range="A1:D8"
-    )
     assert "no table 'Nope'. Tables: Sales" in await call_error(
         "edit_table", **SHEET, table="Nope", options={}
     )

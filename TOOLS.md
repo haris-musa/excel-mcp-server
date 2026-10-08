@@ -721,7 +721,7 @@ columns and totals. Defaults are Excel's: striped rows, filter buttons.
 | --- | --- | --- | --- |
 | `style` | string | no | Built-in style, e.g. 'TableStyleMedium9' (Light1-21, Medium1-28, Dark1-11). |
 | `header_row` | boolean | no | Turning it off deletes the header cells and the table shrinks to its data; turning it on needs empty cells above the table. |
-| `totals_row` | boolean | no | A row below the table, which must be empty; its first cell says 'Total'. |
+| `totals_row` | boolean | no | A row below the table, which must be empty. As in Excel, its first cell says 'Total' and the last column sums numbers or counts other values. |
 | `striped_rows` | boolean | no |  |
 | `striped_columns` | boolean | no |  |
 | `first_column` | boolean | no | Emphasize the first column. |
@@ -741,7 +741,7 @@ Change a table's options, add calculated columns and totals, or resize it.
 | `sheet` | string | yes | Worksheet name. |
 | `table` | string | yes | Table name (describe_sheet lists them). |
 | `options` | object | no | Fields left out keep the table's setting; a new table gets Excel's defaults. |
-| `range` | string | no | Resize: the new range, with the same top-left cell. Not with a totals row. New columns take their header cell's text, or 'ColumnN'. |
+| `range` | string | no | Resize: the new range, with the same top-left cell. The totals row moves to the end. New columns take their header cell's text, or 'ColumnN'. |
 
 `options` fields:
 
@@ -749,7 +749,7 @@ Change a table's options, add calculated columns and totals, or resize it.
 | --- | --- | --- | --- |
 | `style` | string | no | Built-in style, e.g. 'TableStyleMedium9' (Light1-21, Medium1-28, Dark1-11). |
 | `header_row` | boolean | no | Turning it off deletes the header cells and the table shrinks to its data; turning it on needs empty cells above the table. |
-| `totals_row` | boolean | no | A row below the table, which must be empty; its first cell says 'Total'. |
+| `totals_row` | boolean | no | A row below the table, which must be empty. As in Excel, its first cell says 'Total' and the last column sums numbers or counts other values. |
 | `striped_rows` | boolean | no |  |
 | `striped_columns` | boolean | no |  |
 | `first_column` | boolean | no | Emphasize the first column. |
