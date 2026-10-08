@@ -8,11 +8,20 @@ from pydantic import BaseModel
 
 from excel_mcp.operations.cells import streamed_used_range, used_range
 from excel_mcp.operations.chart_index import ChartInfo, list_charts
+from excel_mcp.operations.hyperlinks import LinkInfo, list_links
 from excel_mcp.operations.images import ImageInfo, list_images
 from excel_mcp.operations.layout import hidden_lines
 from excel_mcp.operations.names import DefinedNameInfo, list_defined_names
 from excel_mcp.operations.notes import NoteInfo, list_notes
 from excel_mcp.operations.pivot_index import PivotInfo, list_pivots
+from excel_mcp.operations.sheet_view import ViewInfo, read_view
+from excel_mcp.operations.workbook_settings import (
+    CalculationInfo,
+    PropertiesInfo,
+    read_calculation,
+    read_properties,
+    structure_protected,
+)
 from excel_mcp.paths import EXCEL_SUFFIXES
 from excel_mcp.workspace import streamed_worksheets
 
@@ -21,6 +30,7 @@ class SheetSummary(BaseModel):
     name: str
     used_range: str
     hidden: bool = False
+    active: bool = False
 
 
 class WorkbookInfo(BaseModel):
@@ -28,6 +38,9 @@ class WorkbookInfo(BaseModel):
     chart_sheets: list[str] = []
     defined_names: list[DefinedNameInfo] = []
     has_vba: bool = False
+    doc_properties: PropertiesInfo = PropertiesInfo()
+    calculation: CalculationInfo = CalculationInfo()
+    structure_protected: bool = False
 
 
 class DataValidationInfo(BaseModel):
@@ -58,11 +71,13 @@ class SheetDetails(BaseModel):
     hidden_rows: list[str] = []
     hidden_columns: list[str] = []
     images: list[ImageInfo] = []
+    hyperlinks: dict[str, LinkInfo] = {}
     print_area: str | None = None
     protected: bool = False
+    view: ViewInfo = ViewInfo()
 
 
-def describe_workbook(workbook: Workbook, has_vba: bool) -> WorkbookInfo:
+def describe_workbook(workbook: Workbook, has_vba: bool, company: str) -> WorkbookInfo:
     """Summarize a streamed workbook: each sheet costs one pass over its cells."""
     return WorkbookInfo(
         sheets=[
@@ -70,12 +85,16 @@ def describe_workbook(workbook: Workbook, has_vba: bool) -> WorkbookInfo:
                 name=sheet.title,
                 used_range=str(streamed_used_range(sheet)),
                 hidden=sheet.sheet_state != "visible",
+                active=workbook.active is sheet,
             )
             for sheet in streamed_worksheets(workbook)
         ],
         chart_sheets=[sheet.title for sheet in workbook.chartsheets],
         defined_names=list_defined_names(workbook),
         has_vba=has_vba,
+        doc_properties=read_properties(workbook, company),
+        calculation=read_calculation(workbook),
+        structure_protected=structure_protected(workbook),
     )
 
 
@@ -112,8 +131,10 @@ def describe_sheet(sheet: Worksheet) -> SheetDetails:
         hidden_rows=hidden_lines(sheet, "rows"),
         hidden_columns=hidden_lines(sheet, "columns"),
         images=list_images(sheet),
+        hyperlinks=list_links(sheet),
         print_area=sheet.print_area or None,
         protected=bool(sheet.protection.sheet),
+        view=read_view(sheet),
     )
 
 

@@ -38,7 +38,12 @@ async def test_create_workbook_rejects_duplicate_sheet_names(call_error: ToolCal
 async def test_describe_workbook(call: ToolCall, sample: Path) -> None:
     info = await call("describe_workbook", path="sales.xlsx")
     assert info == {
-        "sheets": [{"name": "Data", "used_range": "A1:D5"}, {"name": "Report", "used_range": "A1"}]
+        "sheets": [
+            {"name": "Data", "used_range": "A1:D5", "active": True},
+            {"name": "Report", "used_range": "A1"},
+        ],
+        "doc_properties": {"author": "openpyxl"},
+        "calculation": {"full_calc_on_load": True},
     }
 
 
@@ -107,7 +112,7 @@ async def test_describe_workbook_flags_hidden_sheets_and_names(
     workbook.save(sample)
     info = await call("describe_workbook", path="sales.xlsx")
     assert info["sheets"] == [
-        {"name": "Data", "used_range": "A1:D5"},
+        {"name": "Data", "used_range": "A1:D5", "active": True},
         {"name": "Report", "used_range": "A1", "hidden": True},
     ]
     assert info["defined_names"] == [{"name": "Totals", "refers_to": "Data!$C$2:$C$5"}]

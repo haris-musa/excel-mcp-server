@@ -113,6 +113,31 @@ All notable changes to this project are documented here. The format follows
   in `--read-only` mode; code is stored, never run. `create_workbook` can then also create
   `.xlsm`/`.xltm` files.
 
+- `create_pivot_table` reproduces what Excel's PivotTable dialogs offer: `number_format` and
+  `show_as` per values field (percent of total, row, column or parent, difference from, percent
+  difference from, percent of, running total, percent of running total, rank, with
+  `base_field` and `base_item`), `fields` settings per row, column or filter field (`show_items`,
+  `sort` by label or by a values field with `sort_by`, `group_dates` for years,
+  quarters, months and days, `group_numbers` for ranges), `calculated_fields` (formulas over
+  the source fields, checked by the formula safety check), `layout` (`compact`, `outline`
+  or `tabular`), `subtotals` on or off, and `values_in` `columns` or `rows`. Filters can show
+  chosen items. The same field can be summarized twice (Excel's "Sum of Units2" naming). The
+  figures in the cells are the ones Excel shows after refreshing the PivotTable, checked
+  against about 200 PivotTables recorded from Excel.
+- `write_range` takes `links`: it turns written cells into hyperlinks to `http`, `https` or
+  `mailto` addresses or to places in the workbook (`#'Sheet 2'!A1`, a defined name), with a
+  tooltip. Other kinds (`file:`, network shares, `javascript:`) are refused. `describe_sheet`
+  lists `hyperlinks` and the sheet `view`. `clear_range` with `clear: "all"` removes a link.
+- `set_sheet_layout` can move a sheet (`position`) and set how it looks when opened (`view`:
+  `zoom`, `gridlines`, `headings`, `show_formulas`, `right_to_left`, `active`, `selected_cell`).
+  `describe_workbook` marks the `active` sheet.
+- `format_range` sets the `locked` and `formula_hidden` flags that decide what a protected
+  sheet allows and shows.
+- `set_workbook_settings` sets the document properties (title, subject, author, keywords,
+  company), the calculation options (automatic, manual or automatic except data tables;
+  iterative calculation with a maximum of iterations and change; recalculation on load) and
+  workbook structure protection. `describe_workbook` returns them.
+
 ### Changed
 
 - Invalid arguments are reported as one readable line per problem, such as
@@ -184,6 +209,11 @@ All notable changes to this project are documented here. The format follows
   the empty text of chart labels into the word "None".
 - Date and time limits in data validation (`2026-01-31`) were stored as the formula
   `2026-01-31`, a wrong number, instead of a date.
+- Inserting or deleting rows or columns moves hyperlinks with their cells (they stayed in
+  place before), and `copy_range` copies them.
+- Editing a workbook keeps the extension data Excel stores in PivotTables (rank and
+  percent-of-parent figures, a hidden "Values" row) and the Company property, which were
+  dropped.
 - `copy_sheet` now copies what Excel's "Create a copy" does: data validation, conditional
   formats, images, charts (re-pointed at the copy's own data), tables (renamed, as Excel
   does), PivotTables, freeze panes, filters, print setup, protection and sheet-scoped

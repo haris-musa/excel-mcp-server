@@ -1,12 +1,14 @@
 """The pivot cache: a snapshot of the source data that a PivotTable reads from."""
 
 import datetime as dt
-from dataclasses import dataclass
 
 from openpyxl.pivot.cache import (
     CacheDefinition,
     CacheField,
     CacheSource,
+    FieldGroup,
+    GroupItems,
+    RangePr,
     SharedItems,
     WorksheetSource,
 )
@@ -14,71 +16,40 @@ from openpyxl.pivot.fields import DateTimeField, Index, Missing, Number, Text
 from openpyxl.pivot.record import Record, RecordList
 from openpyxl.utils.datetime import to_excel
 
-from excel_mcp.operations.pivot_source import Column, Source, Value
+from excel_mcp.operations.pivot_calc import CalcField
+from excel_mcp.operations.pivot_fields import FieldSetup, Shared
+from excel_mcp.operations.pivot_groups import Grouping
+from excel_mcp.operations.pivot_source import Column, Value
 
 CacheItem = Missing | Number | Text | DateTimeField
 
 
-@dataclass(frozen=True)
-class FieldItems:
-    """The distinct values of a field used to group.
-
-    ``shared`` holds each value once, in order of first appearance, which is how the
-    cache stores them. ``index`` gives each record's value as a position in ``shared``.
-    A PivotTable lists the values sorted, blanks last: ``order`` is that listing as
-    positions in ``shared`` and ``rank`` the inverse.
-    """
-
-    shared: list[Value]
-    index: list[int]
-    order: list[int]
-    rank: list[int]
-
-    def label(self, rank: int) -> Value:
-        return self.shared[self.order[rank]]
-
-    def record_rank(self, record: int) -> int:
-        return self.rank[self.index[record]]
-
-
-def build_items(column: Column) -> FieldItems:
-    seen: dict[object, int] = {}
-    shared: list[Value] = []
-    index: list[int] = []
-    for value in column.values:
-        key = value.casefold() if isinstance(value, str) else value
-        if key not in seen:
-            seen[key] = len(shared)
-            shared.append(value)
-        index.append(seen[key])
-    order = sorted(range(len(shared)), key=lambda item: _sort_key(shared[item]))
-    rank = [0] * len(shared)
-    for position, item in enumerate(order):
-        rank[item] = position
-    return FieldItems(shared, index, order, rank)
-
-
-def _sort_key(value: Value) -> tuple[bool, object]:
-    if value is None:
-        return True, 0
-    return False, value.casefold() if isinstance(value, str) else value
-
-
-def build_cache(source: Source, items: dict[int, FieldItems]) -> CacheDefinition:
-    """Describe ``source`` with shared items for the fields in ``items``."""
+def build_cache(setup: FieldSetup, calculated: list[CalcField]) -> CacheDefinition:
+    """Describe the source's fields, then the fields derived from them."""
+    source = setup.source
+    fields = [
+        CacheField(
+            name=column.name,
+            numFmtId=column.number_format_id,
+            sharedItems=_shared_items(column, setup.shared.get(position)),
+            fieldGroup=_base_group(setup, position),
+        )
+        for position, column in enumerate(source.columns)
+    ]
+    for position, groups in setup.date_groups.items():
+        for index, grouping in groups:
+            name = f"{grouping.by.capitalize()} ({source.columns[position].name})"
+            fields.append(_derived(index, name, position, grouping))
+    fields += [
+        CacheField(name=item.name, numFmtId=0, formula=item.formula, databaseField=False)
+        for item in calculated
+    ]
     cache = CacheDefinition(
         cacheSource=CacheSource(
             type="worksheet",
             worksheetSource=WorksheetSource(ref=source.ref, sheet=source.sheet),
         ),
-        cacheFields=[
-            CacheField(
-                name=column.name,
-                numFmtId=column.number_format_id,
-                sharedItems=_shared_items(column, items.get(position)),
-            )
-            for position, column in enumerate(source.columns)
-        ],
+        cacheFields=fields,
         refreshedBy="excel-mcp-server",
         refreshedDate=to_excel(dt.datetime.now(dt.UTC).replace(tzinfo=None)),
         createdVersion=6,
@@ -86,18 +57,64 @@ def build_cache(source: Source, items: dict[int, FieldItems]) -> CacheDefinition
         minRefreshableVersion=3,
         recordCount=source.record_count,
     )
-    cache.records = RecordList(r=_records(source, items))
+    cache.records = RecordList(r=_records(setup))
     return cache
 
 
-def _shared_items(column: Column, items: FieldItems | None) -> SharedItems:
+def _base_group(setup: FieldSetup, position: int) -> FieldGroup | None:
+    if position in setup.number_groups:
+        grouping = setup.number_groups[position]
+        explicit_start, explicit_end = grouping.explicit
+        return FieldGroup(
+            base=position,
+            rangePr=RangePr(
+                autoStart=False if explicit_start else None,
+                autoEnd=False if explicit_end else None,
+                groupBy="range",
+                startNum=float(grouping.start),  # pyright: ignore[reportArgumentType]
+                endNum=float(grouping.end),  # pyright: ignore[reportArgumentType]
+                groupInterval=grouping.interval,
+            ),
+            groupItems=_group_items(grouping),
+        )
+    if position in setup.date_groups:
+        return FieldGroup(par=setup.date_groups[position][-1][0])
+    return None
+
+
+def _derived(index: int, name: str, base: int, grouping: Grouping) -> CacheField:
+    assert isinstance(grouping.start, dt.datetime) and isinstance(grouping.end, dt.datetime)
+    return CacheField(
+        name=name,
+        numFmtId=0,
+        databaseField=False,
+        fieldGroup=FieldGroup(
+            base=base,
+            rangePr=RangePr(
+                autoStart=None,
+                autoEnd=None,
+                groupBy=grouping.by,
+                startDate=grouping.start,
+                endDate=grouping.end,
+                groupInterval=None,
+            ),
+            groupItems=_group_items(grouping),
+        ),
+    )
+
+
+def _group_items(grouping: Grouping) -> GroupItems:
+    return GroupItems(s=[Text(v=label) for label in grouping.labels])
+
+
+def _shared_items(column: Column, shared: Shared | None) -> SharedItems:
     present = [value for value in column.values if value is not None]
     blank = len(present) < len(column.values)
     numbers = [float(value) for value in present if isinstance(value, int | float)]
     moments = [value for value in present if isinstance(value, dt.datetime)]
     is_number, is_date = column.kind == "number", column.kind == "date"
     return SharedItems(
-        _fields=[_item(value) for value in items.shared] if items else (),
+        _fields=[_item(value) for value in shared.values] if shared else (),
         containsBlank=True if blank else None,
         containsSemiMixedTypes=False if column.kind != "text" and not blank else None,
         containsString=False if column.kind != "text" else None,
@@ -124,12 +141,13 @@ def _item(value: Value) -> CacheItem:
             return Number(v=value)
 
 
-def _records(source: Source, items: dict[int, FieldItems]) -> list[Record]:
+def _records(setup: FieldSetup) -> list[Record]:
+    source = setup.source
     return [
         Record(
             _fields=[
-                Index(v=items[position].index[row])
-                if position in items
+                Index(v=setup.shared[position].index[row])
+                if position in setup.shared
                 else _item(column.values[row])
                 for position, column in enumerate(source.columns)
             ]

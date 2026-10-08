@@ -59,7 +59,11 @@
     },
     {
       "name": "describe_workbook",
-      "description": "List a workbook's sheets with their used ranges, plus its defined names with their scope."
+      "description": "List a workbook's sheets with their used ranges, plus its defined names, properties and calculation settings."
+    },
+    {
+      "name": "set_workbook_settings",
+      "description": "Set document properties, calculation options and workbook structure protection."
     },
     {
       "name": "list_workbooks",
@@ -75,7 +79,7 @@
     },
     {
       "name": "describe_sheet",
-      "description": "Describe a sheet's structure: used range, frozen panes, merged ranges, tables, charts, data validation, conditional formats, notes and custom column widths."
+      "description": "Describe a sheet's structure: used range, frozen panes, merged ranges, tables, charts, PivotTables, hyperlinks, data validation, conditional formats, notes, view settings and custom column widths."
     },
     {
       "name": "create_sheet",
@@ -107,7 +111,7 @@
     },
     {
       "name": "write_range",
-      "description": "Write values into cells, overwriting what is there."
+      "description": "Write values into cells, overwriting what is there, optionally as hyperlinks."
     },
     {
       "name": "clear_range",
@@ -135,7 +139,7 @@
     },
     {
       "name": "format_range",
-      "description": "Change fonts, fill, borders, alignment or number format of a range."
+      "description": "Change fonts, fill, borders, alignment, number format or protection flags of a range."
     },
     {
       "name": "merge_cells",
@@ -143,7 +147,7 @@
     },
     {
       "name": "set_sheet_layout",
-      "description": "Set column widths, row heights, hidden or grouped lines, frozen panes, the auto filter, the tab color, sheet visibility, print setup and sheet protection."
+      "description": "Set column widths, row heights, hidden or grouped lines, frozen panes, the auto filter, the tab color, sheet visibility and position, view options, print setup and sheet protection."
     },
     {
       "name": "add_conditional_format",
@@ -167,7 +171,7 @@
     },
     {
       "name": "create_pivot_table",
-      "description": "Add a real Excel PivotTable that summarizes a block of data."
+      "description": "Add a real Excel PivotTable that summarizes a block of data: number formats, show values as, sorting, grouping, calculated fields, layouts and filters."
     },
     {
       "name": "delete_pivot_table",

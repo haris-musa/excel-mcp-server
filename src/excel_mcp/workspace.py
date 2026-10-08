@@ -15,7 +15,8 @@ from openpyxl.chart import AreaChart
 from openpyxl.worksheet._read_only import ReadOnlyWorksheet
 from openpyxl.worksheet.worksheet import Worksheet
 
-from excel_mcp import chart_roundtrip, macros
+from excel_mcp import chart_roundtrip, macros, pivot_ext
+from excel_mcp.app_properties import attach_company, company_of, read_company, with_company
 from excel_mcp.config import Limits
 from excel_mcp.errors import (
     InvalidArgumentError,
@@ -44,6 +45,7 @@ class Workspace:
         self.limits = limits
         self.allow_macro_workbooks = allow_macro_workbooks
         self._write_lock = threading.Lock()
+        pivot_ext.keep_extensions()
 
     def resolve(self, raw_path: str) -> Path:
         return self.paths.resolve(raw_path)
@@ -108,6 +110,7 @@ class Workspace:
             _restore_area_chart_axes(workbook)
             try:
                 yield workbook
+                _pin_hyperlinks(workbook)
                 save_atomically(workbook, path)
             finally:
                 close_workbook(workbook)
@@ -156,12 +159,15 @@ class Workspace:
                 "supported; legacy .xls and CSV files must be converted first."
             )
         try:
-            return load_workbook(
+            workbook = load_workbook(
                 path,
                 data_only=data_only,
                 read_only=stream,
                 keep_vba=not stream and path.suffix.lower() in MACRO_SUFFIXES,
             )
+            if not stream:
+                attach_company(workbook, read_company(path))
+            return workbook
         except Exception as error:
             # openpyxl raises many different exception types for damaged files.
             raise WorkbookError(
@@ -177,7 +183,7 @@ def save_atomically(workbook: Workbook, path: Path) -> None:
     except Exception as error:
         # openpyxl reports invalid workbook states with many exception types.
         raise WorkbookError(f"Could not save the workbook: {error}") from None
-    write_atomically(path, buffer.getvalue())
+    write_atomically(path, with_company(buffer.getvalue(), company_of(workbook)))
 
 
 def write_atomically(path: Path, content: bytes) -> None:
@@ -219,6 +225,18 @@ def _restore_area_chart_axes(workbook: Workbook) -> None:
                 for axis in (chart.x_axis, chart.y_axis):
                     if axis.delete is None:
                         axis.delete = False
+
+
+def _pin_hyperlinks(workbook: Workbook) -> None:
+    """Point each link at the cell that holds it now.
+
+    openpyxl keeps the address a link had when it was read, so inserting or deleting rows
+    or columns would leave links on the cells that took their place.
+    """
+    for sheet in worksheets(workbook):
+        for cell in sheet._cells.values():
+            if cell.hyperlink:
+                cell.hyperlink.ref = cell.coordinate
 
 
 def get_sheet(workbook: Workbook, name: str) -> Worksheet:

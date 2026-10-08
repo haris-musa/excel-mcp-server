@@ -8,6 +8,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
 
 from excel_mcp.errors import InvalidArgumentError, LimitExceededError
+from excel_mcp.operations.hyperlinks import Link, set_link
 from excel_mcp.refs import (
     MAX_COLUMN,
     MAX_ROW,
@@ -164,7 +165,11 @@ def read_range(sheet: ReadOnlyWorksheet, ref: str | None, max_cells: int) -> Ran
 
 
 def write_range(
-    sheet: Worksheet, start_cell: str, rows: list[list[CellValue]], max_cells: int
+    sheet: Worksheet,
+    start_cell: str,
+    rows: list[list[CellValue]],
+    links: list[Link],
+    max_cells: int,
 ) -> WriteResult:
     start_row, start_col = parse_cell(start_cell)
     if not any(rows):
@@ -177,6 +182,12 @@ def write_range(
     if written.max_row > MAX_ROW or written.max_col > MAX_COLUMN:
         raise InvalidArgumentError(f"Writing {written} would go past the worksheet limits.")
 
+    for link in links:
+        row, col = parse_cell(link.cell)
+        if not (
+            written.min_row <= row <= written.max_row and written.min_col <= col <= written.max_col
+        ):
+            raise InvalidArgumentError(f"Link cell {link.cell} is outside the written {written}.")
     names = sheet_names(sheet)
     converted = [[to_cell(value, names) for value in row] for row in rows]
     for row_offset, row in enumerate(converted):
@@ -185,6 +196,8 @@ def write_range(
             cell.value = value
             if number_format := date_number_format(value):
                 cell.number_format = number_format
+    for link in links:
+        set_link(writable_cell(sheet, *parse_cell(link.cell)), link)
     return WriteResult(sheet=sheet.title, range=str(written), cells_written=count)
 
 
@@ -203,6 +216,8 @@ def clear_range(sheet: Worksheet, ref: str, contents: bool, formats: bool, max_c
                 cell.value = None
             if formats:
                 cell.style = "Normal"
+            if contents and formats:
+                cell.hyperlink = None
     return str(target)
 
 

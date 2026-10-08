@@ -7,6 +7,7 @@ from pydantic import Field
 from excel_mcp.operations import cells, replace, sorting
 from excel_mcp.operations.calculated import formula_values, read_calculated
 from excel_mcp.operations.cells import FindResult, RangeData
+from excel_mcp.operations.hyperlinks import Link
 from excel_mcp.operations.paste import PasteMode
 from excel_mcp.operations.paste import copy_range as paste_cells
 from excel_mcp.operations.replace import ReplaceResult
@@ -74,6 +75,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             list[list[CellValue]],
             Field(description="Rows of values, written right and down from start_cell."),
         ],
+        links: Annotated[
+            list[Link], Field(description="Cells of the written block to turn into hyperlinks.")
+        ] = [],  # noqa: B006
     ) -> cells.WriteResult:
         """Write values into cells, overwriting them.
 
@@ -81,9 +85,15 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         is a formula such as '=SUM(B2:B9)'; formulas that reach the network, other programs
         or other workbooks are rejected. '2026-01-31' or '2026-01-31T09:30:00' is stored as
         a date. Send long numeric IDs as text.
+
+        `links` makes written cells clickable, with their value as the display text, e.g.
+        [{"cell": "B2", "target": "https://example.com"}]. Only http, https, mailto and places in
+        this workbook are allowed. clear_range with clear='all' removes a link.
         """
         with workspace.edit(path) as workbook:
-            return cells.write_range(get_sheet(workbook, sheet), start_cell, rows, limits.max_cells)
+            return cells.write_range(
+                get_sheet(workbook, sheet), start_cell, rows, links, limits.max_cells
+            )
 
     @tools.destroyer("Clear range")
     def clear_range(

@@ -15,6 +15,7 @@ from excel_mcp.operations.filters import AutoFilter, FormulaValues, apply_auto_f
 from excel_mcp.operations.formatting import parse_color
 from excel_mcp.operations.print_setup import PrintSetup, apply_print_setup
 from excel_mcp.operations.protection import Protection, apply_protection
+from excel_mcp.operations.sheet_view import ViewOptions, apply_view, move_sheet
 from excel_mcp.operations.spans import Axis, parse_span, to_spans
 from excel_mcp.refs import MAX_ROW, parse_cell
 
@@ -61,11 +62,17 @@ class SheetLayout(InputModel):
     )
     print_setup: PrintSetup | None = None
     protection: Protection | None = None
+    position: int | None = Field(
+        default=None, ge=1, description="Move the sheet to this 1-based tab position."
+    )
+    view: ViewOptions | None = None
 
 
 def apply_layout(
     sheet: Worksheet, layout: SheetLayout, formula_values: FormulaValues, max_cells: int
 ) -> None:
+    if layout.position is not None:
+        move_sheet(sheet, layout.position)
     if layout.column_widths or layout.autofit_columns or layout.columns:
         split_column_dimensions(sheet)
     for column, width in (layout.column_widths or {}).items():
@@ -94,6 +101,8 @@ def apply_layout(
         set_visibility(sheet, layout.visibility)
     if layout.protection is not None:
         apply_protection(sheet, layout.protection)
+    if layout.view is not None:
+        apply_view(sheet, layout.view)
 
 
 def split_column_dimensions(sheet: Worksheet) -> None:

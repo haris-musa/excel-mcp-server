@@ -48,14 +48,14 @@ def copy_range(
     rows, cols = (area.cols, area.rows) if transpose else (area.rows, area.cols)
     destination = CellRange(first_row, first_col, first_row + rows - 1, first_col + cols - 1)
     snapshot = [
-        (cell.row, cell.column, cell.value, cell.data_type, copy(cell._style))
+        (cell.row, cell.column, cell.value, cell.data_type, copy(cell._style), copy(cell.hyperlink))
         for row in source.iter_rows(
             min_row=area.min_row, max_row=area.max_row, min_col=area.min_col, max_col=area.max_col
         )
         for cell in row
     ]
     names = sheet_names(target)
-    for row, col, value, data_type, style in snapshot:
+    for row, col, value, data_type, style, link in snapshot:
         if skip_blanks and value is None:
             continue
         down, right = row - area.min_row, col - area.min_col
@@ -67,6 +67,8 @@ def copy_range(
             _paste_content(cell, origin, value, data_type, paste, transpose, results, names)
         if paste in ("all", "formats"):
             cell._style = style
+        if paste == "all":
+            cell.hyperlink = link
     return str(destination)
 
 
