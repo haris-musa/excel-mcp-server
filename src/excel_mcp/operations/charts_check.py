@@ -53,10 +53,10 @@ def check_chart(plots: list[Plot], chart_type: ChartType, options: ChartOptions)
 
 
 def _check_options(options: ChartOptions, chart_type: ChartType) -> None:
-    _require(options.grouping != "standard", "grouping", chart_type, _GROUPED)
-    _require(options.markers, "markers", chart_type, ("line",))
-    _require(options.smooth, "smooth", chart_type, ("line",))
-    _require(options.scatter_style != "markers", "scatter_style", chart_type, ("scatter",))
+    require(options.grouping != "standard", "grouping", chart_type, _GROUPED)
+    require(options.markers, "markers", chart_type, ("line",))
+    require(options.smooth, "smooth", chart_type, ("line",))
+    require(options.scatter_style != "markers", "scatter_style", chart_type, ("scatter",))
     axes = (options.x_axis, options.y_axis, options.secondary_y_axis)
     if chart_type in ROUND_TYPES and any(axis != Axis() for axis in axes):
         raise InvalidArgumentError(f"{chart_type} charts have no axes to set.")
@@ -84,7 +84,7 @@ def _check_axis(name: str, axis: Axis, category: bool) -> None:
         raise InvalidArgumentError(f"{name}: a logarithmic axis needs a min above zero (or none).")
 
 
-def _require(used: bool, name: str, chart_type: ChartType, allowed: tuple[str, ...]) -> None:
+def require(used: bool, name: str, chart_type: ChartType, allowed: tuple[str, ...]) -> None:
     if used and chart_type not in allowed:
         raise InvalidArgumentError(
             f"{name} does not apply to {chart_type} charts; it works with {', '.join(allowed)}."
@@ -99,9 +99,9 @@ def _check_series(plot: Plot, chart_type: ChartType, options: ChartOptions) -> N
             f"{chart_type}."
         )
     kind = spec.type or chart_type
-    _require(spec.secondary_axis, "secondary_axis", kind, _SECONDARY)
-    _require(spec.marker is not None or spec.marker_size is not None, "marker", kind, _MARKED)
-    _require(spec.line_width is not None, "line_width", kind, _LINED)
+    require(spec.secondary_axis, "secondary_axis", kind, _SECONDARY)
+    require(spec.marker is not None or spec.marker_size is not None, "marker", kind, _MARKED)
+    require(spec.line_width is not None, "line_width", kind, _LINED)
     if (plot.sizes is not None) != (chart_type == "bubble"):
         raise InvalidArgumentError(
             "sizes are required for bubble charts, and only for them."
@@ -110,16 +110,16 @@ def _check_series(plot: Plot, chart_type: ChartType, options: ChartOptions) -> N
         )
     stacked = options.grouping != "standard" and kind == chart_type
     if spec.trendline:
-        _require(True, "trendline", kind, _FITTED)
+        require(True, "trendline", kind, _FITTED)
         if stacked:
             raise InvalidArgumentError("Excel cannot fit a trendline to a stacked series.")
         _check_trendline(spec)
     if spec.error_bars:
-        _require(True, "error_bars", kind, _FITTED)
+        require(True, "error_bars", kind, _FITTED)
         _check_error_bars(spec, kind)
     labels = spec.data_labels or options.data_labels
     if labels:
-        _check_labels(labels, kind, stacked)
+        check_labels(labels, kind, stacked)
 
 
 def _check_trendline(spec: SeriesSpec) -> None:
@@ -146,7 +146,7 @@ def _check_error_bars(spec: SeriesSpec, kind: str) -> None:
         raise InvalidArgumentError(f"{bars.kind} error bars need a value.")
 
 
-def _check_labels(labels: DataLabels, kind: str, stacked: bool) -> None:
+def check_labels(labels: DataLabels, kind: str, stacked: bool) -> None:
     if "percent" in labels.show and kind not in ROUND_TYPES:
         raise InvalidArgumentError("Percent labels fit pie and doughnut charts only.")
     if labels.position is None:

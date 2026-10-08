@@ -8,6 +8,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `create_chart` makes the Excel 2016 chart types `waterfall` (`totals`, `connector_lines`),
+  `histogram` (`bins`: width, count, underflow, overflow), `pareto`, `box_whisker` (`box`:
+  quartile method, mean marker and line, inner points, outliers), `treemap`
+  (`parent_labels`), `sunburst` and `funnel`, with title, legend, data labels and, where
+  Excel has them, axis titles and scale. They are written as Excel writes them (chartex
+  parts, hidden `_xlchart` names, style and colour parts) and are listed by `describe_sheet`
+  after the other charts, removed by `delete_chart`, replaced with `index` and copied by
+  `copy_sheet`. Checked against the same charts made in Excel; Excel opens them without repair.
 - `read_range` in `values` mode calculates formulas that have no stored result, which used
   to read as null until Excel saved the file. A built-in calculator covers about 260
   functions (math, statistics, financial and securities, dates, text, lookup, logical,

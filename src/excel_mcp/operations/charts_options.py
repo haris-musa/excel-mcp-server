@@ -7,8 +7,9 @@ from pydantic import Field
 from excel_mcp.inputs import InputModel
 
 ChartType = Literal[
-    "column", "bar", "line", "area", "pie", "doughnut", "radar", "scatter", "bubble"
-]
+    "column", "bar", "line", "area", "pie", "doughnut", "radar", "scatter", "bubble",
+    "waterfall", "histogram", "pareto", "box_whisker", "treemap", "sunburst", "funnel",
+]  # fmt: skip
 SeriesType = Literal["column", "line", "area"]
 Grouping = Literal["standard", "stacked", "percent_stacked"]
 LegendPosition = Literal["right", "left", "top", "bottom", "none"]
@@ -28,6 +29,11 @@ ErrorBarKind = Literal["fixed", "percent", "std_dev", "std_error"]
 TickLabels = Literal["next_to_axis", "low", "high"]
 
 ROUND_TYPES = ("pie", "doughnut")
+MODERN_TYPES = (
+    "waterfall", "histogram", "pareto", "box_whisker", "treemap", "sunburst", "funnel"
+)  # fmt: skip
+ParentLabels = Literal["none", "banner", "overlapping"]
+Quartiles = Literal["exclusive", "inclusive"]
 
 
 class DataLabels(InputModel):
@@ -39,7 +45,8 @@ class DataLabels(InputModel):
         description="Default: Excel's. Valid positions depend on the chart type: column and "
         "bar charts take center, inside_end, inside_base, outside_end (not when stacked); line, "
         "scatter and bubble charts center, above, below, left, right; pie charts center, "
-        "inside_end, outside_end, best_fit.",
+        "inside_end, outside_end, best_fit; waterfall, histogram and pareto charts as column "
+        "charts. The other Excel 2016 charts place their labels themselves.",
     )
     number_format: str | None = Field(default=None, description="e.g. '0.0%' or '#,##0'.")
 
@@ -132,6 +139,25 @@ class Axis(InputModel):
     )
 
 
+class Bins(InputModel):
+    width: float | None = Field(default=None, gt=0, description="Values per bin.")
+    count: int | None = Field(default=None, ge=1, le=1000, description="Number of bins.")
+    underflow: float | None = Field(
+        default=None, description="One bin for all values at or below this."
+    )
+    overflow: float | None = Field(default=None, description="One bin for all values above this.")
+
+
+class BoxPlot(InputModel):
+    quartiles: Quartiles = Field(
+        default="exclusive", description="'inclusive' includes the median in both halves."
+    )
+    mean_marker: bool = True
+    mean_line: bool = False
+    inner_points: bool = Field(default=False, description="Show the points that are no outliers.")
+    outliers: bool = True
+
+
 class ChartOptions(InputModel):
     title: str | None = None
     title_size: int | None = Field(default=None, ge=6, le=72, description="Points. Default 14.")
@@ -171,3 +197,13 @@ class ChartOptions(InputModel):
     secondary_y_axis: Axis = Field(
         default_factory=Axis, description="Used by series with secondary_axis."
     )
+    totals: list[int] = Field(
+        default_factory=list,
+        description="Waterfall: 1-based positions of the points shown as totals ('Set as total').",
+    )
+    connector_lines: bool = Field(default=True, description="Waterfall: lines between bars.")
+    bins: Bins = Field(
+        default_factory=Bins, description="Histogram. Default: Excel's automatic bins."
+    )
+    box: BoxPlot = Field(default_factory=BoxPlot, description="Box and whisker.")
+    parent_labels: ParentLabels = Field(default="none", description="Treemap.")

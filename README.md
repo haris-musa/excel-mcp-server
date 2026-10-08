@@ -15,7 +15,8 @@ create, read and edit Excel workbooks. It needs no Microsoft Excel installation.
 - **Format** fonts, fills, borders, number formats, column widths and frozen panes; hide or
   group rows, columns and sheets; set up printing; protect sheets
 - **Structure** sheets (order, view, workbook settings and protection), rows and columns (inserting or deleting updates every reference, as in Excel), merged cells, tables, charts (column, bar, line, area, pie, doughnut, radar, scatter and
-  bubble, with combos, secondary axes, trendlines and error bars), images, hyperlinks and PivotTables
+  bubble, with combos, secondary axes, trendlines and error bars; and the Excel 2016 waterfall,
+  histogram, Pareto, box and whisker, treemap, sunburst and funnel), images, hyperlinks and PivotTables
 - **Data tools**: paste special, fill series, remove duplicates, text to columns, find and
   replace, sheet and table filters with criteria
 - **Rules**: conditional formatting (scales, icon sets, top/bottom, duplicates, text, dates and
@@ -226,7 +227,8 @@ Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
   formats and validation, slicers and timelines, newer charts (waterfall, histogram,
   treemap and others), threaded comments, shapes, form controls, linked data types and
   custom XML stay as Excel saved them and move with inserted or deleted rows and columns and
-  renamed sheets; `copy_sheet` does not copy them. Deleting a sheet removes slicers that only
+  renamed sheets; `copy_sheet` does not copy them (waterfall and the other Excel 2016 charts
+  made by `create_chart` are copied). Deleting a sheet removes slicers that only
   it used; slicers that would be left without their PivotTable or table block the deletion.
   Digital signatures are removed, as Excel does when a signed file changes.
 - Formulas that return several values (`FILTER`, `SORT`, `UNIQUE`, `SEQUENCE`, `A2:A9*2`) are

@@ -7,7 +7,8 @@ from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
 
 from excel_mcp.operations.cells import streamed_used_range, used_range
-from excel_mcp.operations.chart_index import ChartInfo, list_charts
+from excel_mcp.operations.chart_index import list_charts
+from excel_mcp.operations.chart_info import ChartInfo
 from excel_mcp.operations.hyperlinks import LinkInfo, list_links
 from excel_mcp.operations.images import ImageInfo, list_images
 from excel_mcp.operations.layout import hidden_lines

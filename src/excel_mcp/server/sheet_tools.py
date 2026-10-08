@@ -26,7 +26,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         rows and columns, print area and protection. Empty items are omitted.
 
         Loads the whole workbook into memory, so it is slow on very large files."""
-        with workspace.read(path) as workbook:
+        with workspace.read(path, with_package=True) as workbook:
             return inspect.describe_sheet(get_sheet(workbook, sheet))
 
     @tools.writer("Create sheet")

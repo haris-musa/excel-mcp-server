@@ -49,19 +49,19 @@ def resolve_series(
 
 
 def _resolve(workbook: Workbook, sheet: str, spec: SeriesSpec, categories: str | None) -> Plot:
-    values, points = _line(workbook, sheet, spec.values, "values")
+    values, points = one_line(workbook, sheet, spec.values, "values")
     labels = spec.categories or categories
     return Plot(
         spec=spec,
         values=values,
-        categories=_line(workbook, sheet, labels, "categories")[0] if labels else None,
-        sizes=_line(workbook, sheet, spec.sizes, "sizes")[0] if spec.sizes else None,
-        name=_name(workbook, spec.name),
+        categories=one_line(workbook, sheet, labels, "categories")[0] if labels else None,
+        sizes=one_line(workbook, sheet, spec.sizes, "sizes")[0] if spec.sizes else None,
+        name=series_name(workbook, spec.name),
         points=points,
     )
 
 
-def _split_sheet(workbook: Workbook, default: str, text: str) -> tuple[str, str]:
+def split_sheet(workbook: Workbook, default: str, text: str) -> tuple[str, str]:
     """Split 'Data!B2:B9' (or 'My Sheet'!B2:B9) into the worksheet's title and the cells."""
     qualifier, mark, cells = text.rpartition("!")
     if not mark:
@@ -70,23 +70,23 @@ def _split_sheet(workbook: Workbook, default: str, text: str) -> tuple[str, str]
     return get_sheet(workbook, name).title, cells
 
 
-def _qualified(sheet: str, area: CellRange) -> str:
+def qualified(sheet: str, area: CellRange) -> str:
     return f"{quote_sheetname(sheet)}!{absolute_coordinate(str(area))}"
 
 
-def _line(workbook: Workbook, default: str, text: str, what: str) -> tuple[str, int]:
+def one_line(workbook: Workbook, default: str, text: str, what: str) -> tuple[str, int]:
     """A one-row or one-column range as an absolute formula, and its number of cells."""
-    sheet, cells = _split_sheet(workbook, default, text)
+    sheet, cells = split_sheet(workbook, default, text)
     area = parse_range(cells)
     if area.rows > 1 and area.cols > 1:
         raise InvalidArgumentError(
             f"Series {what} must be one row or one column, got {text!r}. List one series per "
             "column, or use data_range for a block."
         )
-    return _qualified(sheet, area), area.size
+    return qualified(sheet, area), area.size
 
 
-def _name(workbook: Workbook, text: str | None) -> SeriesLabel | None:
+def series_name(workbook: Workbook, text: str | None) -> SeriesLabel | None:
     """A reference when `text` is a sheet-qualified cell such as 'Data!B1', else a literal."""
     if text is None:
         return None
@@ -94,7 +94,7 @@ def _name(workbook: Workbook, text: str | None) -> SeriesLabel | None:
     sheet = qualifier.removeprefix("'").removesuffix("'").replace("''", "'")
     if mark and sheet in workbook.sheetnames:
         row, col = parse_cell(cell)
-        return SeriesLabel(strRef=StrRef(f=_qualified(sheet, CellRange(row, col, row, col))))
+        return SeriesLabel(strRef=StrRef(f=qualified(sheet, CellRange(row, col, row, col))))
     return SeriesLabel(v=text)
 
 
@@ -102,7 +102,7 @@ def _block_series(
     workbook: Workbook, default: str, data_range: str, chart_type: ChartType, series_in: SeriesIn
 ) -> list[SeriesSpec]:
     """Series for a block with a header line and a label line, by columns or by rows."""
-    sheet, cells = _split_sheet(workbook, default, data_range)
+    sheet, cells = split_sheet(workbook, default, data_range)
     area = parse_range(cells)
     if area.rows < 2 or area.cols < 2:
         raise InvalidArgumentError(
@@ -123,7 +123,7 @@ def _block_series(
             cells = CellRange(
                 area.min_row + line, area.min_col + start, area.min_row + line, area.min_col + stop
             )
-        return _qualified(sheet, cells)
+        return qualified(sheet, cells)
 
     if chart_type == "bubble" and lines != 3:
         raise InvalidArgumentError(
