@@ -8,14 +8,14 @@ from openpyxl.chart.legend import Legend
 from openpyxl.chart.shapes import GraphicalProperties
 
 from excel_mcp.operations import charts_look as look
-from excel_mcp.operations.charts_options import ChartOptions
+from excel_mcp.operations.charts_options import ChartOptions, LegendPosition
 from excel_mcp.operations.formatting import parse_color
 
 _LEGEND_POSITIONS = {"right": "r", "left": "l", "top": "t", "bottom": "b"}
 _DEFAULT_TITLE_SIZE = 14
 
 
-def style_chart(chart: ChartBase, options: ChartOptions) -> None:
+def style_chart(chart: ChartBase, options: ChartOptions, legend: LegendPosition) -> None:
     chart.width = options.width_cm
     chart.height = options.height_cm
     chart.style = options.style
@@ -27,11 +27,11 @@ def style_chart(chart: ChartBase, options: ChartOptions) -> None:
     if options.title:
         size = (options.title_size or _DEFAULT_TITLE_SIZE) * 100
         chart.title = look.title(options.title, size)
-    if options.legend == "none":
+    if legend == "none":
         chart.legend = None
     else:
         # Without an explicit overlay flag, Excel draws the legend over the plot.
-        chart.legend = Legend(legendPos=_LEGEND_POSITIONS[options.legend], overlay=False)
+        chart.legend = Legend(legendPos=_LEGEND_POSITIONS[legend], overlay=False)
         chart.legend.spPr = look.no_fill()
         chart.legend.txPr = look.text_properties(900)
     if options.plot_color:

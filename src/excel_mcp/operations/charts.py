@@ -37,6 +37,7 @@ from excel_mcp.operations.charts_options import (
     ChartOptions,
     ChartType,
     SeriesSpec,
+    default_legend,
 )
 from excel_mcp.operations.charts_series import color_slices, style_series
 from excel_mcp.operations.charts_style import style_chart
@@ -169,7 +170,7 @@ def build_chart(plots: list[Plot], chart_type: ChartType, options: ChartOptions)
     chart = groups[ordered[0]]
     for key in ordered[1:]:
         chart += groups[key]
-    style_chart(chart, options)
+    style_chart(chart, options, options.legend or default_legend(chart_type, len(plots)))
     if chart_type not in ROUND_TYPES:
         # Areas fill the plot edge to edge, unless columns or lines share the chart.
         cross = "midCat" if {key[0] for key in groups} <= {"area", *_XY} else "between"

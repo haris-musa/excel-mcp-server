@@ -523,3 +523,43 @@ async def test_the_tool_schema_lists_the_new_types(client: Any) -> None:
     for chart_type in CHARTS:
         assert f"'{chart_type}'" in schema
     assert "'totals'" in schema and "'bins'" in schema
+
+
+@pytest.mark.parametrize(
+    ("chart_type", "legend"),
+    [
+        ("waterfall", "t"), ("treemap", "t"), ("histogram", None), ("pareto", None),
+        ("box_whisker", None), ("sunburst", None), ("funnel", None),
+    ],
+)  # fmt: skip
+async def test_legend_default_is_excels_for_the_chart_type(
+    call: ToolCall, sample: Path, chart_type: str, legend: str | None
+) -> None:
+    await add(call, chart_type)
+
+    found = re.findall(r'<cx:legend pos="(\w)"', chart_text(sample))
+    assert found == ([legend] if legend else [])
+
+
+async def test_pareto_percentage_axis_takes_the_secondary_axis_options(
+    call: ToolCall, sample: Path
+) -> None:
+    await add(
+        call, "pareto",
+        options={"secondary_y_axis": {"title": "Share", "max": 0.8}},
+    )  # fmt: skip
+
+    assert (
+        '<cx:axis id="2"><cx:valScaling max="0.8" min="0"/><cx:title><cx:tx><cx:txData>'
+        '<cx:v>Share</cx:v></cx:txData></cx:tx></cx:title><cx:units unit="percentage"/>'
+        "<cx:tickLabels/></cx:axis>"
+    ) in chart_text(sample)
+
+
+async def test_the_secondary_axis_fits_pareto_only(call_error: ToolCall, sample: Path) -> None:
+    message = await call_error(
+        "create_chart", path="sales.xlsx", sheet="Report", chart_type="waterfall",
+        anchor_cell="B2", options={"secondary_y_axis": {"title": "x"}}, **CHARTS["waterfall"],
+    )  # fmt: skip
+
+    assert "secondary_y_axis.title does not apply" in message
