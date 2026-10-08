@@ -170,6 +170,14 @@
       "description": "Remove a chart from a sheet. The data it plotted is left untouched."
     },
     {
+      "name": "add_sparklines",
+      "description": "Add a group of sparklines (Insert > Sparklines): a line, column or win/loss chart in each cell of `location`, one per row of `data` (or per column when the cell count matches the columns)."
+    },
+    {
+      "name": "delete_sparklines",
+      "description": "Remove the sparklines in a range (Clear Sparklines). The data is left untouched."
+    },
+    {
       "name": "create_pivot_table",
       "description": "Add a real Excel PivotTable that summarizes a block of data: number formats, show values as, sorting, grouping, calculated fields, layouts and filters."
     },

@@ -7,7 +7,7 @@ from pydantic import Field
 from excel_mcp.operations import conditional, formatting, rules
 from excel_mcp.operations.calculated import formula_values
 from excel_mcp.operations.comparison import FormulaResults
-from excel_mcp.operations.conditional import ConditionalFormat
+from excel_mcp.operations.conditional_rule import ConditionalFormat
 from excel_mcp.operations.formatting import CellFormat
 from excel_mcp.operations.layout import SheetLayout, apply_layout
 from excel_mcp.operations.rules import DataValidationRule

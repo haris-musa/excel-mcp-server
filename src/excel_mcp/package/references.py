@@ -86,6 +86,7 @@ def _rewrite(workbook: Workbook, edit: LineEdit | None, formula: Formula) -> Non
 
 def _sheet(package: SheetPackage, rewriter: _Rewriter, geometry: Geometry | None) -> None:
     extensions.rewrite_extensions(package.extensions, rewriter)
+    package.rule_extensions = _rule_extensions(package.rule_extensions, rewriter)
     moved: Moved = {}
     edit = rewriter.edit
     if edit is not None and geometry is not None:
@@ -97,6 +98,14 @@ def _sheet(package: SheetPackage, rewriter: _Rewriter, geometry: Geometry | None
     parts = {id(link.target): link.target for link in links if isinstance(link.target, Part)}
     for part in parts.values():
         _part(part, rewriter)
+
+
+def _rule_extensions(
+    found: dict[tuple[str, str], str], rewriter: _Rewriter
+) -> dict[tuple[str, str], str]:
+    """Rules are found again by their range, which moves like the range of their Excel 2010 half."""
+    moved = {(rewriter.ranges(sqref), priority): xml for (sqref, priority), xml in found.items()}
+    return {(sqref, priority): xml for (sqref, priority), xml in moved.items() if sqref is not None}
 
 
 def _element(

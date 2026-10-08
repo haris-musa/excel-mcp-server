@@ -307,8 +307,8 @@ async def test_icon_sets(
     assert not saved.iconSet.reverse and saved.iconSet.showValue is None
 
 
-async def test_icon_set_reverse_and_icon_only(call: ToolCall, sample: Path) -> None:
-    rule = {"type": "icon_set", "icon_set": "3Symbols", "reverse": True, "icon_only": True}
+async def test_icon_set_reverse_and_hide_values(call: ToolCall, sample: Path) -> None:
+    rule = {"type": "icon_set", "icon_set": "3Symbols", "reverse": True, "hide_values": True}
     await call("add_conditional_format", **BOOK, range="C2:C5", rule=rule)
     (saved,) = _rules(sample)
     assert saved.iconSet.reverse is True
@@ -330,7 +330,7 @@ async def test_icon_set_reverse_and_icon_only(call: ToolCall, sample: Path) -> N
             {"type": "color_scale", "colors": ["#FF0000", "#00FF00"], "text": "x"},
             "does not use text",
         ),
-        ({"type": "unique", "icon_only": True, **RED}, "does not use icon_only"),
+        ({"type": "unique", "hide_values": True, **RED}, "does not use hide_values"),
     ],
 )
 async def test_invalid_rules_are_rejected(

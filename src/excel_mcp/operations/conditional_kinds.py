@@ -40,7 +40,8 @@ TextRuleType = Literal["containsText", "notContainsText", "beginsWith", "endsWit
 TextOperator = Literal["containsText", "notContains", "beginsWith", "endsWith"]
 CellRuleType = Literal["containsBlanks", "notContainsBlanks", "containsErrors", "notContainsErrors"]
 ThresholdType = Literal["percent", "num", "percentile"]
-IconSetName = Literal[
+ScaleType = Literal["automatic", "lowest", "highest", "number", "percent", "percentile", "formula"]
+ClassicIconSet = Literal[
     "3Arrows",
     "3ArrowsGray",
     "3Flags",
@@ -59,6 +60,7 @@ IconSetName = Literal[
     "5Rating",
     "5Quarters",
 ]
+IconSetName = ClassicIconSet | Literal["3Stars", "3Triangles", "5Boxes"]
 
 # What Excel writes for each period; {c} is the top-left cell of the range.
 PERIOD_FORMULAS: dict[Period, str] = {
@@ -92,8 +94,22 @@ CELL_FORMULAS: dict[str, tuple[CellRuleType, str]] = {
 FORMATTED = {"fill_color", "font_color"}
 FIELDS = {
     "color_scale": {"colors"},
-    "data_bar": {"colors"},
-    "icon_set": {"icon_set", "thresholds", "threshold_type", "reverse", "icon_only"},
+    "data_bar": {
+        "colors",
+        "hide_values",
+        "bar_fill",
+        "border_color",
+        "negative_color",
+        "negative_border_color",
+        "axis",
+        "axis_color",
+        "bar_direction",
+        "min_type",
+        "min_value",
+        "max_type",
+        "max_value",
+    },
+    "icon_set": {"icon_set", "thresholds", "threshold_type", "icons", "reverse", "hide_values"},
     "cell_value": {"operator", "values"} | FORMATTED,
     "formula": {"formula"} | FORMATTED,
     "top": {"count", "percent"} | FORMATTED,

@@ -5,6 +5,7 @@ in the sheet proper. They hold ranges and formulas that must follow the cells th
 """
 
 import re
+import uuid
 from collections.abc import Callable
 from typing import Protocol
 from xml.sax.saxutils import escape
@@ -18,6 +19,8 @@ from excel_mcp.refs import parse_range
 SPARKLINES = "{05C60535-1F16-4fd2-B633-F4F36F0B64E0}"
 CONDITIONAL_FORMATS = "{78C0D931-6437-407d-A8EE-F0AAD7539E65}"
 DATA_VALIDATIONS = "{CCE6A557-97BC-4b89-ADB6-D9C93CAAB3DF}"
+# The <ext> inside a classic conditional format rule that names its Excel 2010 counterpart.
+RULE_ID = "{B025F937-C7B1-47D3-B67F-A62EFF666E3E}"
 
 
 class Rewriter(Protocol):
@@ -48,6 +51,7 @@ _FORMULA = re.compile(r"<xm:f>([^<]*)</xm:f>")
 _FORMULA_ITEM = re.compile(
     r"<x14:cfRule\b.*?</x14:cfRule>|<x14:dataValidation\b.*?</x14:dataValidation>", re.S
 )
+_GUID = re.compile(r'(<x14:id>|\b(?:xr2:uid|id)=")(\{[0-9A-Fa-f-]{36}\})')
 _CELL = re.compile(r"(\$?)\b([A-Z]{1,3})(\$?)(\d+)\b(?![!(\w])")
 
 
@@ -102,6 +106,44 @@ def forget_sheets(extensions: dict[str, str], names: set[str]) -> None:
             del extensions[uri]
         else:
             extensions[uri] = kept
+
+
+def new_guid() -> str:
+    return "{" + str(uuid.uuid4()).upper() + "}"
+
+
+def edit_sparklines(extensions: dict[str, str], handle: Callable[[str], list[str]]) -> None:
+    """Replace each ``<x14:sparkline>`` of the extensions by what ``handle`` returns for it
+    (nothing deletes it); a group left without sparklines goes too."""
+    xml = extensions.get(SPARKLINES)
+    kept = None if xml is None else _sparklines(xml, handle)
+    if kept is None:
+        extensions.pop(SPARKLINES, None)
+    else:
+        extensions[SPARKLINES] = kept
+
+
+def copied(
+    extensions: dict[str, str],
+    rule_extensions: dict[tuple[str, str], str],
+    formula: Callable[[str], str],
+) -> tuple[dict[str, str], dict[tuple[str, str], str]]:
+    """The sparklines and conditional formats of a sheet as its copy has them: formulas
+    rewritten by ``formula`` (no leading "="), and new ids as Excel gives them."""
+    ids: dict[str, str] = {}
+
+    def renewed(xml: str) -> str:
+        return _GUID.sub(lambda m: m[1] + ids.setdefault(m[2], new_guid()), xml)
+
+    def rewritten(xml: str) -> str:
+        return _FORMULA.sub(lambda m: f"<xm:f>{escape(formula(unescape(m[1])))}</xm:f>", xml)
+
+    kept = {
+        uri: renewed(rewritten(xml))
+        for uri, xml in extensions.items()
+        if uri in (SPARKLINES, CONDITIONAL_FORMATS)
+    }
+    return kept, {key: renewed(xml) for key, xml in rule_extensions.items()}
 
 
 def rule_sub(xml: str, rule: Callable[[str], str]) -> str:

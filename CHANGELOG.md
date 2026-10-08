@@ -21,6 +21,17 @@ All notable changes to this project are documented here. The format follows
   `show: []` hides them. Data blocks are read as Excel reads them (leading text columns are
   labels, a single column of numbers is enough for box and whisker, histogram, funnel,
   waterfall, treemap and sunburst, and a Pareto of numbers is binned).
+- `add_sparklines` and `delete_sparklines`: Insert > Sparklines with line, column and
+  win/loss types, colors, emphasized points (markers, high, low, first, last, negative), axis
+  and scale options, date axes, empty-cell handling and line weight. Sparklines in the target
+  cells are replaced. `describe_sheet` lists them. They are written as Excel writes them, are
+  kept by every edit and by `copy_sheet`, and follow rows and columns through the package
+  references API.
+- `add_conditional_format` data bars are written as Excel 2010 and later write them: gradient
+  or solid fill, border, negative bar fill and border, axis position and color, bar direction,
+  and automatic, lowest/highest, number, percent, percentile or formula ends. Icon sets accept
+  the sets that exist in the extension only (`3Stars`, `3Triangles`, `5Boxes`) and custom
+  `icons` per range, including no icon. `describe_sheet` lists them; `copy_sheet` copies them.
 - `read_range` in `values` mode calculates formulas that have no stored result, which used
   to read as null until Excel saved the file. A built-in calculator covers about 260
   functions (math, statistics, financial and securities, dates, text, lookup, logical,
@@ -188,6 +199,9 @@ All notable changes to this project are documented here. The format follows
   several, top for radar with several series, waterfall and treemap, none for the other
   Excel 2016 charts. Explicit values still win. The Pareto percentage axis takes
   `secondary_y_axis` (title, min, max).
+- **Breaking:** the conditional format field `icon_only` is now `hide_values`, and also
+  applies to data bars.
+- Rules of the Excel 2010 extension share their priority numbering with the classic ones.
 
 - Invalid arguments are reported as one readable line per problem, such as
   `Invalid arguments for read_range: mode: 'formula' is not valid; use 'values' or
