@@ -430,10 +430,10 @@ Turn a range with a header row of unique text labels into an Excel table.
 
 Add a chart that plots a block of data.
 
-'column' draws vertical bars, 'bar' horizontal bars. For 'scatter', the first column
-holds the x values. 'doughnut' is a pie with a hole; 'radar' draws one polygon per
-series. Options that do not apply to the chart type are rejected. List a sheet's
-charts with describe_sheet and remove one with delete_chart.
+'column' draws vertical bars, 'bar' horizontal bars. 'scatter' plots points, with the
+x values in the first column. 'doughnut' is a pie with a hole; 'radar' draws one
+polygon per series. Options that do not fit the chart type are rejected. List a
+sheet's charts with describe_sheet and remove one with delete_chart.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -442,7 +442,7 @@ charts with describe_sheet and remove one with delete_chart.
 | `data_range` | string | yes | Data with a header row, labels in the first column and one series per further column, e.g. 'A1:C13'. |
 | `chart_type` | `column` \| `bar` \| `line` \| `area` \| `pie` \| `scatter` \| `doughnut` \| `radar` | yes | Kind of chart to draw. |
 | `anchor_cell` | string | yes | Cell where the chart's top-left sits. |
-| `options` | object | no | Titles, size, legend, data labels, stacking, colors, markers, axis range and number format, and secondary-axis lines. Every field is optional; omitted fields keep the chart type's defaults. |
+| `options` | object | no | Titles, size, legend, data labels, stacking, colors, markers, axis range and number format, and secondary-axis lines. Every field is optional. Default: `{'title': None, 'x_axis_title': None, 'y_axis_title': None, 'width_cm': 15.0, 'height_cm': 7.5, 'legend': 'right', 'data_labels': False, 'grouping': 'standard', 'colors': [], 'markers': False, 'smooth': False, 'y_axis_min': None, 'y_axis_max': None, 'y_axis_number_format': None, 'secondary_line_columns': []}`. |
 | `data_sheet` | string | no | Sheet holding the data. Default: `sheet`. |
 
 `options` fields:
@@ -454,17 +454,16 @@ charts with describe_sheet and remove one with delete_chart.
 | `y_axis_title` | string | no | Vertical axis title. |
 | `width_cm` | number | no | Chart width in cm. Default: `15`. |
 | `height_cm` | number | no | Chart height in cm. Default: `7.5`. |
-| `show_legend` | boolean | no | Show the series legend. Default: `True`. |
-| `legend_position` | `right` \| `left` \| `top` \| `bottom` | no | Where the legend sits. Default: right. Needs show_legend true. |
+| `legend` | `right` \| `left` \| `top` \| `bottom` \| `none` | no | Where the series legend sits, or 'none' to hide it. Default: `right`. |
 | `data_labels` | boolean | no | Print each value on its bar, point or slice. Default: `False`. |
-| `grouping` | `standard` \| `stacked` \| `percent_stacked` | no | How series combine: 'standard' (side by side for column/bar), 'stacked' or 'percent_stacked' (each category sums to 100%). For column, bar, line and area charts only. Default: standard. |
-| `colors` | array of string | no | Hex colors such as ['#1F4E78', '#C00000'], one per series in the order of the data columns (fewer colors leave the remaining series on the default palette). For pie and doughnut charts, one color per slice instead. |
-| `markers` | boolean | no | Show (true) or hide (false) point markers. Line and scatter charts only. Default: the chart type's own style. |
-| `smooth` | boolean | no | Draw curved (true) or straight (false) lines. Line and scatter charts only. Default: straight. |
-| `y_axis_min` | number | no | Lowest value on the (primary) vertical axis. Default: automatic. |
-| `y_axis_max` | number | no | Highest value on the (primary) vertical axis. Default: automatic. |
-| `y_axis_number_format` | string | no | Excel number format for the (primary) vertical axis labels, e.g. '0%' or '#,##0'. Default: taken from the data. |
-| `secondary_line_columns` | array of string | no | Header names of data columns to draw as lines on a secondary vertical axis on the right, combined with the other data columns drawn as columns (a combo chart). For column charts only; at least one data column must stay as columns. |
+| `grouping` | `standard` \| `stacked` \| `percent_stacked` | no | How series combine: 'standard' (side by side), 'stacked', or 'percent_stacked' (each category sums to 100%). Stacking works for column, bar, line and area charts. Default: `standard`. |
+| `colors` | array of string | no | Hex colors such as ['#1F4E78', '#C00000'], one per series in the order of the data columns; series without a color use Excel's palette. For pie and doughnut charts, one color per slice. |
+| `markers` | boolean | no | Mark each point. Line charts only. Default: `False`. |
+| `smooth` | boolean | no | Draw curved lines. Line charts only. Default: `False`. |
+| `y_axis_min` | number | no | Lowest value on the vertical axis. Default: automatic. |
+| `y_axis_max` | number | no | Highest value on the vertical axis. Default: automatic. |
+| `y_axis_number_format` | string | no | Excel number format for the vertical axis labels, e.g. '0%' or '#,##0'. Default: the data's format. |
+| `secondary_line_columns` | array of string | no | Header names of data columns to draw as lines on a second vertical axis on the right, while the other columns stay as columns (a combo chart). Column charts only. |
 
 ## delete_chart
 

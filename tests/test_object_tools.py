@@ -35,7 +35,7 @@ async def test_create_chart(call: ToolCall, sample: Path, chart_type: str) -> No
         options={"title": "Units", "x_axis_title": "Product"},
     )
     details = await call("describe_sheet", path="sales.xlsx", sheet="Report")
-    assert details["chart_count"] == 1
+    assert len(details["charts"]) == 1
 
 
 async def test_chart_needs_labels_and_a_series(call_error: ToolCall, sample: Path) -> None:

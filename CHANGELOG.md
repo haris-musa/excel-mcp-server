@@ -8,22 +8,27 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
-- `create_chart` options: `legend_position`, `data_labels`, `grouping` (stacked and
-  100% stacked column, bar, line and area charts), `colors`, `markers`, `smooth`,
-  `y_axis_min`, `y_axis_max`, `y_axis_number_format` and `secondary_line_columns` (combo
-  column charts with lines on a secondary axis). Options that do not fit the chart type are
-  rejected with an explanation.
+- `create_chart` options: `data_labels`, `grouping` (stacked and 100% stacked column, bar,
+  line and area charts), `colors` (per series, or per slice for pie and doughnut),
+  `markers` and `smooth` for line charts, `y_axis_min`, `y_axis_max`,
+  `y_axis_number_format`, and `secondary_line_columns` for column charts with lines on a
+  second axis. Options that do not fit the chart type are rejected with an explanation.
 - `create_chart` draws `doughnut` and `radar` charts.
-- `describe_sheet` lists each chart with its 1-based `index`, `type`, `title` and `anchor`
-  cell, next to the existing `chart_count`.
+- `describe_sheet` lists each chart with its 1-based `index`, `type`, `title` and `anchor`.
 - `delete_chart` removes a chart by the index `describe_sheet` shows.
+
+### Changed
+
+- **Breaking:** `create_chart`'s `show_legend` option is replaced by `legend`: `right`
+  (default), `left`, `top`, `bottom` or `none`.
+- **Breaking:** `describe_sheet` no longer returns `chart_count`; use the length of `charts`.
+- Scatter charts plot points instead of joining them with lines.
+- Line charts draw straight lines without markers unless `smooth` or `markers` is set;
+  Excel used to curve them.
 
 ### Fixed
 
-- The `options` description of `create_chart` no longer says the default is "none".
 - Chart titles, axis titles and legends no longer sit on top of the plot in Excel.
-- Line and scatter charts draw straight lines unless `smooth` is set; Excel used to curve
-  them.
 
 ## [1.1.2] - 2026-10-08
 

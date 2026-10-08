@@ -67,21 +67,13 @@ async def test_combo_secondary_axis_has_no_extra_gridlines(call: ToolCall, sampl
 
 
 async def test_legend_position(call: ToolCall, sample: Path) -> None:
-    await add_chart(call, legend_position="bottom")
+    await add_chart(call, legend="bottom")
     assert values(chart_xml(sample), "legendPos") == ["b"]
 
 
-async def test_legend_position_needs_a_legend(call_error: ToolCall, sample: Path) -> None:
-    message = await call_error(
-        "create_chart",
-        path="sales.xlsx",
-        sheet="Report",
-        data_range="A1:B2",
-        chart_type="column",
-        anchor_cell="A1",
-        options={"show_legend": False, "legend_position": "top"},
-    )
-    assert "show_legend" in message
+async def test_legend_none_hides_the_legend(call: ToolCall, sample: Path) -> None:
+    await add_chart(call, legend="none")
+    assert elements(chart_xml(sample), "legend") == []
 
 
 async def test_data_labels(call: ToolCall, sample: Path) -> None:
@@ -175,12 +167,24 @@ async def test_color_errors(call_error: ToolCall, sample: Path) -> None:
     )
 
 
-@pytest.mark.parametrize("chart_type", ["line", "scatter"])
-async def test_markers_and_smooth(call: ToolCall, sample: Path, chart_type: str) -> None:
-    await add_chart(call, chart_type, data_range="C1:D5", markers=False, smooth=True)
+async def test_line_markers_and_smooth(call: ToolCall, sample: Path) -> None:
+    await add_chart(call, "line", data_range="C1:D5", markers=True, smooth=True)
     root = chart_xml(sample)
-    assert set(values(root, "symbol")) == {"none"}
+    assert set(values(root, "symbol")) == {"circle"}
     assert set(values(root, "smooth")) == {"1"}
+
+
+async def test_line_has_no_markers_by_default(call: ToolCall, sample: Path) -> None:
+    await add_chart(call, "line", data_range="C1:D5")
+    assert set(values(chart_xml(sample), "symbol")) == {"none"}
+
+
+async def test_scatter_plots_points_without_lines(call: ToolCall, sample: Path) -> None:
+    await add_chart(call, "scatter", data_range="C1:D5", colors=["#112233"])
+    series = elements(chart_xml(sample), "ser")[0]
+    assert values(series, "symbol") == ["circle"]
+    assert len(elements(elements(series, "ln")[0], "noFill")) == 1
+    assert "112233" in values(elements(series, "marker")[0], "srgbClr")
 
 
 async def test_axis_range_and_number_format(call: ToolCall, sample: Path) -> None:
@@ -237,8 +241,6 @@ async def test_secondary_column_errors(call_error: ToolCall, sample: Path) -> No
         "create_chart", **base, options={"secondary_line_columns": ["Units", "Price"]}
     )
     assert "at least one" in everything
-    empty = await call_error("create_chart", **base, options={"secondary_line_columns": []})
-    assert "at least one column" in empty
 
 
 @pytest.mark.parametrize(
@@ -250,8 +252,10 @@ async def test_secondary_column_errors(call_error: ToolCall, sample: Path) -> No
         ("area", {"smooth": True}, "smooth does not apply to area"),
         ("line", {"secondary_line_columns": ["Units"]}, "does not apply to line"),
         ("bar", {"secondary_line_columns": ["Units"]}, "does not apply to bar"),
-        ("doughnut", {"y_axis_min": 0}, "y_axis_min does not apply to doughnut"),
-        ("pie", {"y_axis_number_format": "0%"}, "y_axis_number_format does not apply"),
+        ("scatter", {"markers": True}, "markers does not apply to scatter"),
+        ("scatter", {"smooth": True}, "smooth does not apply to scatter"),
+        ("doughnut", {"y_axis_min": 0}, "doughnut charts have no axes"),
+        ("pie", {"y_axis_number_format": "0%"}, "pie charts have no axes"),
         ("column", {"y_axis_min": 5, "y_axis_max": 5}, "must be below"),
     ],
 )
@@ -296,7 +300,6 @@ async def test_describe_sheet_lists_charts(call: ToolCall, sample: Path) -> None
     await add_chart(call, "column", secondary_line_columns=["Price"])
     await add_chart(call, "pie", data_range="B1:C5")
     details = await call("describe_sheet", path="sales.xlsx", sheet="Report")
-    assert details["chart_count"] == 3
     assert details["charts"] == [
         {"index": 1, "type": "bar", "title": "Horizontal", "anchor": "B2"},
         {"index": 2, "type": "column", "title": None, "anchor": "B2"},
