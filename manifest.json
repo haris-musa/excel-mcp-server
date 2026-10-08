@@ -187,11 +187,15 @@
     },
     {
       "name": "set_note",
-      "description": "Add a note to a cell, replacing the cell's existing note."
+      "description": "Add a note, or a threaded comment, to a cell. A cell has one or the other."
     },
     {
       "name": "delete_note",
-      "description": "Remove the note from a cell."
+      "description": "Remove the note or whole threaded comment from a cell, or one reply of a thread."
+    },
+    {
+      "name": "resolve_comment",
+      "description": "Resolve or reopen the threaded comment on a cell."
     },
     {
       "name": "insert_image",

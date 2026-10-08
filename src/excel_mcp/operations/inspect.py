@@ -15,6 +15,7 @@ from excel_mcp.operations.names import DefinedNameInfo, list_defined_names
 from excel_mcp.operations.notes import NoteInfo, list_notes
 from excel_mcp.operations.pivot_index import PivotInfo, list_pivots
 from excel_mcp.operations.sheet_view import ViewInfo, read_view
+from excel_mcp.operations.threads import ThreadInfo, list_threads
 from excel_mcp.operations.workbook_settings import (
     CalculationInfo,
     PropertiesInfo,
@@ -62,6 +63,7 @@ class SheetDetails(BaseModel):
     auto_filter: str | None = None
     merged_ranges: list[str] = []
     notes: list[NoteInfo] = []
+    comments: list[ThreadInfo] = []
     tables: dict[str, str] = {}
     charts: list[ChartInfo] = []
     pivot_tables: list[PivotInfo] = []
@@ -105,6 +107,7 @@ def describe_sheet(sheet: Worksheet) -> SheetDetails:
         auto_filter=sheet.auto_filter.ref,
         merged_ranges=sorted(str(merged) for merged in sheet.merged_cells.ranges),
         notes=list_notes(sheet),
+        comments=list_threads(sheet),
         tables=dict(sheet.tables.items()),
         charts=list_charts(sheet),
         pivot_tables=list_pivots(sheet),

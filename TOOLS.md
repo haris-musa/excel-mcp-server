@@ -14,7 +14,7 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`list_workbooks`](#list_workbooks) | List Excel files in a directory as path to size in bytes. |
 | [`export_workbook`](#export_workbook) | Return the workbook file as an embedded base64 resource, for remote servers. |
 | [`import_workbook`](#import_workbook) | Save an uploaded workbook file on the server, e.g. to edit it remotely. |
-| [`describe_sheet`](#describe_sheet) | Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables, images, notes, hyperlinks, validation, conditional formats, custom column widths, hidden rows and columns, print area and protection. Empty items are omitted. |
+| [`describe_sheet`](#describe_sheet) | Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables, images, notes, threaded comments, hyperlinks, validation, conditional formats, custom column widths, hidden rows and columns, print area and protection. Empty items are omitted. |
 | [`create_sheet`](#create_sheet) | Add an empty worksheet. |
 | [`rename_sheet`](#rename_sheet) | Rename a worksheet. Formulas that refer to the old name are not updated. |
 | [`copy_sheet`](#copy_sheet) | Copy a worksheet to a new sheet at the end, as Excel's "Create a copy" does. |
@@ -41,8 +41,9 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`delete_pivot_table`](#delete_pivot_table) | Remove a PivotTable and clear the cells it fills. The source data is left untouched. |
 | [`set_defined_name`](#set_defined_name) | Create a defined name for a range or constant, replacing a name of the same scope. |
 | [`delete_defined_name`](#delete_defined_name) | Delete a defined name. Formulas that use it are not changed and will show #NAME?. |
-| [`set_note`](#set_note) | Add a note to a cell, replacing the cell's existing note. |
-| [`delete_note`](#delete_note) | Remove the note from a cell. |
+| [`set_note`](#set_note) | Add a note, or a threaded comment, to a cell. A cell has one or the other. |
+| [`delete_note`](#delete_note) | Remove the note or whole threaded comment from a cell, or one reply of a thread. |
+| [`resolve_comment`](#resolve_comment) | Resolve or reopen the threaded comment on a cell. |
 | [`insert_image`](#insert_image) | Place a picture with its top-left corner at a cell. |
 | [`delete_image`](#delete_image) | Remove a picture from a sheet. |
 | [`read_vba`](#read_vba) | Show the VBA macro code in an .xlsm or .xltm workbook, module by module. |
@@ -163,8 +164,9 @@ Save an uploaded workbook file on the server, e.g. to edit it remotely.
 **Describe sheet** (read-only)
 
 Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables,
-images, notes, hyperlinks, validation, conditional formats, custom column widths, hidden
-rows and columns, print area and protection. Empty items are omitted.
+images, notes, threaded comments, hyperlinks, validation, conditional formats, custom
+column widths, hidden rows and columns, print area and protection. Empty items are
+omitted.
 
 Loads the whole workbook into memory, so it is slow on very large files.
 
@@ -877,29 +879,44 @@ Delete a defined name. Formulas that use it are not changed and will show #NAME?
 
 **Set note** (modifies files, may overwrite data)
 
-Add a note to a cell, replacing the cell's existing note.
+Add a note, or a threaded comment, to a cell. A cell has one or the other.
 
-describe_sheet lists notes; Excel shows them on hover.
+describe_sheet lists both. Excel shows notes on hover; resolve_comment resolves threads.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
 | `cell` | string | yes | Cell, e.g. 'B2'. |
-| `text` | string | yes | Note text. |
-| `author` | string | no | Shown as the note's author. Default: `Claude`. |
+| `text` | string | yes | Note or comment text. |
+| `author` | string | no | Shown as the author. Default: `Claude`. |
+| `threaded` | boolean | no | true: a threaded comment (Review > New Comment), a reply if the cell has a thread. false: a note, replacing the cell's note. Default: `False`. |
 
 ## delete_note
 
 **Delete note** (modifies files, may overwrite data)
 
-Remove the note from a cell.
+Remove the note or whole threaded comment from a cell, or one reply of a thread.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
 | `cell` | string | yes | Cell, e.g. 'B2'. |
+| `reply` | integer | no | Reply number in the cell's thread (1 = first). 0: all. Default: `0`. |
+
+## resolve_comment
+
+**Resolve comment** (modifies files)
+
+Resolve or reopen the threaded comment on a cell.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
+| `sheet` | string | yes | Worksheet name. |
+| `cell` | string | yes | Cell, e.g. 'B2'. |
+| `resolved` | boolean | no | false reopens the thread. Default: `True`. |
 
 ## insert_image
 

@@ -8,6 +8,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Threaded comments (Review > New Comment): `set_note` with `threaded=true` starts a thread
+  on a cell or replies to its thread, `resolve_comment` resolves or reopens it, and
+  `delete_note` deletes a thread or, with `reply`, one reply. `describe_sheet` lists threads
+  (authors, dates, resolved) as `comments`. Written as Excel does: threaded comment and
+  person parts, GUIDs, and the note older versions of Excel show. A cell has a note or a
+  thread. Threads follow row and column edits and are copied by `copy_sheet`.
 - `read_range` in `values` mode calculates formulas that have no stored result, which used
   to read as null until Excel saved the file. A built-in calculator covers about 260
   functions (math, statistics, financial and securities, dates, text, lookup, logical,
@@ -170,6 +176,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Breaking:** `delete_note` on a cell with a threaded comment deletes the thread; notes
+  that stand in for threads are no longer listed in `describe_sheet` `notes`.
 - Invalid arguments are reported as one readable line per problem, such as
   `Invalid arguments for read_range: mode: 'formula' is not valid; use 'values' or
   'formulas'.`, instead of pydantic's report. Unknown fields get a suggestion

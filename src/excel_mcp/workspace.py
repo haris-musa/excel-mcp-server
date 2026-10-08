@@ -78,10 +78,19 @@ class Workspace:
         return self.paths.display(path)
 
     @contextmanager
-    def read(self, raw_path: str, *, data_only: bool = False) -> Iterator[Workbook]:
-        """Open a workbook for reading; changes are never saved."""
-        workbook = self._load(self.resolve_existing(raw_path), data_only=data_only)
+    def read(
+        self, raw_path: str, *, data_only: bool = False, with_package: bool = False
+    ) -> Iterator[Workbook]:
+        """Open a workbook for reading; changes are never saved.
+
+        ``with_package`` also reads the content openpyxl does not model, such as threaded
+        comments (see `excel_mcp.package`).
+        """
+        path = self.resolve_existing(raw_path)
+        workbook = self._load(path, data_only=data_only)
         try:
+            if with_package:
+                package.capture(path, workbook, self.limits.max_file_bytes)
             yield workbook
         finally:
             close_workbook(workbook)

@@ -158,7 +158,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
 | Cells | `read_range`, `write_range`, `clear_range`, `copy_range`, `sort_range`, `transform_range`, `find_cells`, `replace_cells` |
 | Formatting | `format_range`, `merge_cells`, `set_sheet_layout`, `add_conditional_format`, `add_data_validation` |
 | Objects | `create_table`, `create_chart`, `delete_chart`, `create_pivot_table`, `delete_pivot_table`, `insert_image`, `delete_image` |
-| Names and notes | `set_defined_name`, `delete_defined_name`, `set_note`, `delete_note` |
+| Names and notes | `set_defined_name`, `delete_defined_name`, `set_note`, `delete_note`, `resolve_comment` |
 | Macros | `read_vba`; with `--allow-vba-write`: `write_vba_module`, `delete_vba_module` |
 
 Every parameter is documented in [TOOLS.md](TOOLS.md).
