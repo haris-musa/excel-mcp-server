@@ -4,6 +4,8 @@ The server turns every `ExcelMCPError` into an MCP tool error, and its message
 is shown to the model, so messages should say what went wrong and how to fix it.
 """
 
+from excel_mcp.text import quoted
+
 
 class ExcelMCPError(Exception):
     """Base class for expected, user-facing errors."""
@@ -33,8 +35,11 @@ class SheetNotFoundError(ExcelMCPError):
     """The worksheet does not exist."""
 
     def __init__(self, sheet: str, available: list[str]) -> None:
-        names = ", ".join(repr(name) for name in available)
-        super().__init__(f"Sheet {sheet!r} not found. Available sheets: {names}.")
+        super().__init__(f"Sheet {sheet!r} not found. Available sheets: {quoted(available)}.")
+
+
+class InvalidFormulaError(ExcelMCPError):
+    """A formula is not valid Excel syntax."""
 
 
 class UnsafeFormulaError(ExcelMCPError):

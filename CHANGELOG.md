@@ -20,6 +20,14 @@ All notable changes to this project are documented here. The format follows
   prefix (and `_xlpm.` for `LET` names): in cells, `copy_range`, `sort_range`, conditional
   formats, data validation and defined names.
 - Formula chains of any length (running balances, amortization schedules) are calculated.
+- `read_range` accepts whole-column and whole-row spans (`B:B`, `2:3`), limited to the used
+  range.
+- Formulas Excel cannot parse are rejected before anything is written, in every place a
+  formula can be stored: unclosed or unmatched parentheses, a missing operand, an operator
+  where a value belongs, unterminated text, malformed arrays, references and names that
+  cannot exist, such as `Formula '=SUM(A1:' is not valid: unclosed '('.`. Checked against
+  Excel: every accepted formula opens without repair, and the ones Excel refuses are
+  refused too, except for wrong argument counts, which are not checked.
 
 - `set_sheet_layout` can hide, show, group and ungroup rows and columns (`rows`, `columns`),
   hide or show a whole sheet (`visibility`; the last visible sheet cannot be hidden), set
@@ -58,6 +66,18 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Invalid arguments are reported as one readable line per problem, such as
+  `Invalid arguments for read_range: mode: 'formula' is not valid; use 'values' or
+  'formulas'.`, instead of pydantic's report. Unknown fields get a suggestion
+  (`rnage: unknown field; did you mean 'range'?`), several type failures of one value are
+  merged, and input values are never echoed in full.
+- Range errors say what is wrong (`Column ZZZ is past XFD, the last column.`), and messages
+  that list names (sheets, fields, indices) share one format. An empty list reads
+  `Sheet 'Data' has no images.` instead of `Valid image indices: none: ...`.
+- `insert_rows_or_columns` and `delete_rows_or_columns` report `Inserted 1 row at row 2.` or
+  `Deleted 3 columns at column C.`.
+- Formulas that are not valid syntax fail with `InvalidFormulaError`; the formula safety
+  policy still raises `UnsafeFormulaError`.
 - **Breaking:** `describe_workbook` returns `defined_names` as objects with `name`,
   `refers_to` and `sheet` (null for workbook scope), and includes sheet-scoped names.
 - **Breaking:** `create_summary_table` is removed; `create_pivot_table` replaces it

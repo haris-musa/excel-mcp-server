@@ -4,15 +4,18 @@ import functools
 import inspect
 import json
 from collections.abc import Callable
-from typing import Any, ParamSpec, TypeVar
+from typing import Any, ClassVar, ParamSpec, TypeVar
 
 from mcp.server import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import CallToolResult, TextContent, ToolAnnotations
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from excel_mcp.errors import ExcelMCPError
 from excel_mcp.inputs import InputModel
+from excel_mcp.server.validation import format_validation_error
+
+_REJECTED = "_rejected_arguments"
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -61,7 +64,11 @@ class ToolRegistry:
             tool = self.server._tool_manager.get_tool(function.__name__)  # pyright: ignore[reportPrivateUsage]
             assert tool is not None
             arguments = tool.fn_metadata.arg_model
-            tool.fn_metadata.arg_model = type(arguments.__name__, (InputModel, arguments), {})
+            tool.fn_metadata.arg_model = type(
+                arguments.__name__,
+                (_Validated, InputModel, arguments),
+                {"tool_name": function.__name__},
+            )
             _slim_schema(tool.parameters)
             if tool.output_schema:
                 _slim_schema(tool.output_schema)
@@ -70,11 +77,34 @@ class ToolRegistry:
         return decorate
 
 
+class _Rejected:
+    """Stands in for validated arguments; the SDK would print a ValidationError as raw pydantic."""
+
+    def __init__(self, message: str) -> None:
+        self.message = message
+
+    def model_dump_one_level(self) -> dict[str, str]:
+        return {_REJECTED: self.message}
+
+
+class _Validated(BaseModel):
+    tool_name: ClassVar[str]
+
+    @classmethod
+    def model_validate(cls, obj: Any, **kwargs: Any) -> Any:
+        try:
+            return super().model_validate(obj, **kwargs)
+        except ValidationError as error:
+            return _Rejected(format_validation_error(cls.tool_name, error))
+
+
 def _as_tool_errors(function: Callable[P, R]) -> Callable[P, R]:
     """Report expected errors to the model; the SDK hides the details of anything else."""
 
     @functools.wraps(function)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        if _REJECTED in kwargs:
+            raise ToolError(kwargs[_REJECTED])
         try:
             return _compact(function(*args, **kwargs))
         except ExcelMCPError as error:

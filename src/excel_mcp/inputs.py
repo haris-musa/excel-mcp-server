@@ -3,6 +3,7 @@
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic_core import PydanticCustomError
 
 
 class InputModel(BaseModel):
@@ -14,6 +15,9 @@ class InputModel(BaseModel):
         if isinstance(data, dict):
             unknown = [str(key) for key in data if key not in cls.model_fields]
             if unknown:
-                valid = ", ".join(cls.model_fields)
-                raise ValueError(f"Unknown field(s): {', '.join(unknown)}. Valid fields: {valid}.")
+                raise PydanticCustomError(
+                    "unknown_fields",
+                    "unknown fields",
+                    {"unknown": unknown, "valid": list(cls.model_fields)},
+                )
         return data

@@ -217,7 +217,7 @@ in them.
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
-| `range` | string | no | Range to read, e.g. 'A1:D20'. Default: the used range. |
+| `range` | string | no | Range to read, e.g. 'A1:D20', 'B:B' or '2:3'. Default: the used range. |
 | `mode` | `values` \| `formulas` | no | 'values': formula results (saved by Excel, else calculated here; ones it cannot calculate read as null and are listed in `uncalculated`). 'formulas': formula text. Default: `values`. |
 | `max_cells` | integer | no | Page size in cells; see next_range. Default: `2000`. |
 

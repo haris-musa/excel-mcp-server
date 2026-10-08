@@ -26,7 +26,7 @@ def read_calculated(
     with workspace.stream(path) as formulas:
         formula_sheet = get_streamed_sheet(formulas, sheet)
         # A used range found from stored results alone would miss formulas never calculated.
-        window = ref or str(cells.streamed_used_range(formula_sheet))
+        window = str(cells.read_window(formula_sheet, ref))
     with workspace.stream(path, data_only=True) as stored:
         data = cells.read_range(get_streamed_sheet(stored, sheet), window, max_cells)
     area = parse_range(data.range)

@@ -2,6 +2,7 @@
 
 from typing import Literal
 
+from openpyxl.utils.cell import get_column_letter
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
@@ -61,6 +62,13 @@ def delete_lines(sheet: Worksheet, axis: Axis, at: int, count: int) -> None:
         sheet.delete_rows(at, count)
     else:
         sheet.delete_cols(at, count)
+
+
+def describe_lines(axis: Axis, at: int, count: int) -> str:
+    """``1 row at row 2`` or ``3 columns at column C``."""
+    unit = axis.removesuffix("s")
+    position = at if axis == "rows" else get_column_letter(at)
+    return f"{count} {axis if count != 1 else unit} at {unit} {position}"
 
 
 def _check_room(needed: int, limit: int, axis: Axis) -> None:

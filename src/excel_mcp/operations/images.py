@@ -51,11 +51,12 @@ def list_images(sheet: Worksheet) -> list[ImageInfo]:
 
 def delete_image(sheet: Worksheet, index: int) -> ImageInfo:
     images = list_images(sheet)
+    if not images:
+        raise InvalidArgumentError(f"Sheet {sheet.title!r} has no images.")
     if not 1 <= index <= len(images):
-        valid = f"1 to {len(images)}" if images else "none: the sheet has no images"
         raise InvalidArgumentError(
-            f"Sheet {sheet.title!r} has no image {index}. Valid image indices: {valid}. "
-            "describe_sheet lists them."
+            f"Sheet {sheet.title!r} has no image {index}. Valid image indices: 1 to "
+            f"{len(images)}. describe_sheet lists them."
         )
     del _images(sheet)[index - 1]
     return images[index - 1]
