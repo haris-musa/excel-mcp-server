@@ -13,7 +13,7 @@ from excel_mcp.refs import parse_range
 
 _TABLE_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_.]{0,254}")
 _CELL_LIKE = re.compile(r"[A-Za-z]{1,3}[0-9]+|[RrCc]([0-9]*|[Rr]?[0-9]*[Cc][0-9]*)")
-DEFAULT_STYLE = "TableStyleMedium9"
+DEFAULT_STYLE = "TableStyleMedium2"
 _BUILTIN_STYLE = re.compile(
     r"TableStyle(Light([1-9]|1[0-9]|2[01])|Medium([1-9]|1[0-9]|2[0-8])|Dark([1-9]|1[01]))"
 )
@@ -35,7 +35,7 @@ def create_table(
     if options.style is not None and not _BUILTIN_STYLE.fullmatch(options.style):
         raise InvalidArgumentError(
             f"Unknown table style {options.style!r}. Use a built-in style such as "
-            "'TableStyleMedium9' (Light1-21, Medium1-28, Dark1-11)."
+            "'TableStyleMedium2' (Light1-21, Medium1-28, Dark1-11)."
         )
     for existing in sheet.tables.values():
         if area.overlaps(parse_range(existing.ref)):

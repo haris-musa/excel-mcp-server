@@ -719,7 +719,7 @@ columns and totals. Defaults are Excel's: striped rows, filter buttons.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
-| `style` | string | no | Built-in style, e.g. 'TableStyleMedium9' (Light1-21, Medium1-28, Dark1-11). |
+| `style` | string | no | Built-in style, e.g. 'TableStyleMedium2' (Light1-21, Medium1-28, Dark1-11). |
 | `header_row` | boolean | no | Turning it off deletes the header cells and the table shrinks to its data; turning it on needs empty cells above the table. |
 | `totals_row` | boolean | no | A row below the table, which must be empty. As in Excel, its first cell says 'Total' and the last column sums numbers or counts other values. |
 | `striped_rows` | boolean | no |  |
@@ -747,7 +747,7 @@ Change a table's options, add calculated columns and totals, or resize it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
-| `style` | string | no | Built-in style, e.g. 'TableStyleMedium9' (Light1-21, Medium1-28, Dark1-11). |
+| `style` | string | no | Built-in style, e.g. 'TableStyleMedium2' (Light1-21, Medium1-28, Dark1-11). |
 | `header_row` | boolean | no | Turning it off deletes the header cells and the table shrinks to its data; turning it on needs empty cells above the table. |
 | `totals_row` | boolean | no | A row below the table, which must be empty. As in Excel, its first cell says 'Total' and the last column sums numbers or counts other values. |
 | `striped_rows` | boolean | no |  |
