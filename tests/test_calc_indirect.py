@@ -102,12 +102,17 @@ async def test_cell_reports_what_excel_would(call: ToolCall, files: Path) -> Non
     assert data["values"] == [["$A$2"], [302], [20], ["lvb"], ["#VALUE!"], [8], [1], ["G"]]
 
 
-async def test_cell_filename_names_the_workbook_and_sheet(call: ToolCall, files: Path) -> None:
+async def test_cell_filename_shows_the_path_the_server_shows(call: ToolCall, files: Path) -> None:
     _book(files / "calc.xlsx", {"D1": '=CELL("filename",A1)'})
+    (files / "reports").mkdir()
+    _book(files / "reports" / "calc.xlsx", {"D1": '=CELL("filename",A1)'})
 
-    data = await read_values(call, "D1")
+    root = await read_values(call, "D1")
+    nested = await call("read_range", path="reports/calc.xlsx", sheet="Data", range="D1")
 
-    assert data["values"][0][0].endswith("[calc.xlsx]Data")
+    assert root["values"] == [["[calc.xlsx]Data"]]
+    assert nested["values"] == [["reports/[calc.xlsx]Data"]]
+    assert str(files) not in str(nested["values"])
 
 
 async def test_info_answers_only_what_the_file_decides(call: ToolCall, files: Path) -> None:

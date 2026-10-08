@@ -127,7 +127,8 @@ All notable changes to this project are documented here. The format follows
 - The calculator evaluates `INDIRECT` (A1 and R1C1 text, names, `ROW(INDIRECT("1:10"))`),
   `CELL` (`address`, `row`, `col`, `contents`, `type`, `filename`, `prefix`, `protect`, and
   `width`, `format`, `color`, `parentheses` for cells without custom widths or number
-  formats) and `INFO("recalc")`, checked against Excel's results. Answers that depend on
+  formats) and `INFO("recalc")`, checked against Excel's results. `CELL("filename")` shows the
+  folder the way the server shows paths (relative to `--allow-dir`), not the host's path. Answers that depend on
   the host (`INFO("osversion")` and the like) are left uncalculated.
 
 - `set_sheet_layout` can hide, show, group and ungroup rows and columns (`rows`, `columns`),
@@ -504,10 +505,12 @@ All notable changes to this project are documented here. The format follows
   in constant memory with a nesting limit.
 - Network (UNC) paths, Windows device paths and reserved device names are rejected for
   every file the server opens, with or without `--allow-dir`, unless the allowed folder is
-  on that share.
+  on that share. The rules are applied again to the resolved path, so a link that leads to a
+  network share or device is refused too.
 - Excel 4.0 macro functions that read files, the system or workbook internals, or run other
-  programs (`FILES`, `GET.*`, `APP.*`, `RUN`, `EXEC`, `SEND.KEYS`, `ALERT` and related) are
-  blocked in every formula, including defined names.
+  programs (`FILES`, `GET.*`, `APP.*`, `RUN`, `EXEC`, `SEND.KEYS`, `ALERT`, `SQL.*`, `MAIL.*`
+  and related) are blocked in every formula, including defined names. The list follows
+  Microsoft's Excel 4.0 macro function index and was checked against Excel.
 - The calculator matches wildcards without backtracking, limits formula length and nesting
   (64 levels, as in Excel), checks text and array sizes before building them, and ends
   hostile formulas as uncalculated cells instead of errors.

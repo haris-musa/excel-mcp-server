@@ -1,6 +1,6 @@
 """Functions that look at where cells are: INDIRECT, ROW, COLUMN, CELL and INFO."""
 
-import os
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from openpyxl.cell import Cell
@@ -135,8 +135,9 @@ def _plain_format(stored: Cell | None, answer: Scalar) -> Scalar:
 def _filename(engine: "Engine", sheet: str) -> str:
     if engine.filename is None:
         raise UncalculableError("CELL filename without a file")
-    folder, name = os.path.split(engine.filename)
-    return f"{folder}{os.sep}[{name}]{sheet}"
+    name = Path(engine.filename).name
+    # The folder is shown as the server shows paths, so the host's own folders stay private.
+    return f"{engine.filename.removesuffix(name)}[{name}]{sheet}"
 
 
 @function("INFO", kind="lazy")

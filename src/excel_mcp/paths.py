@@ -89,6 +89,10 @@ class PathPolicy:
         if self.confined and path.drive.casefold() not in self._drives:
             raise PathNotAllowedError(outside)
         resolved = path.resolve()
+        # A link can lead to a network share or a device that the typed path did not name.
+        self._check_network_and_device_paths(str(resolved))
+        if any(_is_device_name(part) for part in resolved.parts[1:]):
+            raise PathNotAllowedError(f"Path {raw_path!r} leads to a reserved device name.")
         if not self.allows(resolved):
             raise PathNotAllowedError(outside)
         return resolved

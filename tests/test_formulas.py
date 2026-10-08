@@ -236,3 +236,26 @@ async def test_macro_functions_are_refused_in_names_and_cells(
     assert "HYPERLINK" in await call_error(
         "write_range", path="sales.xlsx", sheet="Data", start_cell="F2", rows=[["=HYPERLINK(A2)"]]
     )
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "SQL.OPEN", "MAIL.LOGON", "QUERY.REFRESH", "SOLVER.LOAD", "VBA.MAKE.ADDIN", "SOUND.PLAY",
+        "OPEN.TEXT", "SAVE.COPY.AS", "FWRITELN", "FSIZE", "UPDATE.LINK", "CHANGE.LINK", "LINKS",
+        "TERMINATE", "REQUEST", "POKE", "PASTE.LINK", "CLOSE.ALL", "LIST.NAMES", "SCENARIO.GET",
+        "INSERT.PICTURE", "ACTIVATE.NEXT", "REGISTER.ID", "SEND.MAIL", "WORKBOOK.TAB.SPLIT",
+    ],
+)  # fmt: skip
+def test_more_macro_functions_are_rejected(name: str) -> None:
+    with pytest.raises(UnsafeFormulaError, match="not allowed"):
+        check_formula(f"={name}(1)", SHEETS)
+
+
+def test_no_worksheet_function_is_taken_for_a_macro_function() -> None:
+    from excel_mcp.calc.registry import FUNCTIONS
+    from excel_mcp.xlm import is_macro_function
+
+    assert not [name for name in FUNCTIONS if is_macro_function(name)]
+    for name in ("ROW", "COLUMN", "SORT", "FILTER", "INDEX", "NOW", "CHAR", "TABLE", "TEXT"):
+        assert not is_macro_function(name)

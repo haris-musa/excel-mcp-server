@@ -1,5 +1,5 @@
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 import pytest
 from mcp import Client
@@ -179,3 +179,46 @@ async def test_tools_refuse_network_paths_before_touching_them() -> None:
         )
     assert result.is_error
     assert "network path" in error_text(result)
+
+
+@pytest.mark.parametrize("confined", [True, False])
+@pytest.mark.parametrize(
+    ("target", "message"),
+    [
+        (r"\\10.255.255.1\share\a.xlsx", "network path"),
+        (r"\\?\Volume{1234}\a.xlsx", "device path"),
+        (r"\\.\pipe\a.xlsx", "device path"),
+    ],
+)
+def test_links_that_lead_to_network_or_device_targets_are_rejected(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, confined: bool, target: str, message: str
+) -> None:
+    policy = PathPolicy([tmp_path] if confined else [])
+    linked = str(tmp_path / "link.xlsx")
+    # What a symlink or junction to the target resolves to; resolving for real would connect.
+    monkeypatch.setattr(Path, "resolve", lambda self, strict=False: PureWindowsPath(target))
+    with pytest.raises(PathNotAllowedError, match=message):
+        policy.resolve(linked)
+    with pytest.raises(PathNotAllowedError, match=message):
+        policy.resolve_image(linked.replace(".xlsx", ".png"))
+
+
+def test_links_to_a_reserved_device_name_are_rejected(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        Path, "resolve", lambda self, strict=False: PureWindowsPath("C:/data/NUL.xlsx")
+    )
+    with pytest.raises(PathNotAllowedError, match="reserved device name"):
+        PathPolicy([]).resolve(str(tmp_path / "link.xlsx"))
+
+
+def test_a_link_into_the_allowed_share_is_accepted(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    policy = PathPolicy([tmp_path])
+    policy._shares = {r"\\fileserver\team"}  # pyright: ignore[reportPrivateUsage]
+    inside = PureWindowsPath(r"\\fileserver\team\a.xlsx")
+    monkeypatch.setattr(Path, "resolve", lambda self, strict=False: inside)
+    monkeypatch.setattr(policy, "allows", lambda path: True)
+    assert policy.resolve(str(tmp_path / "link.xlsx")) == inside
