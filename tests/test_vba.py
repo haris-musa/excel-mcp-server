@@ -57,7 +57,7 @@ async def test_describe_workbook_reports_macros(
     call: ToolCall, sample: Path, macro_workbook: Path
 ) -> None:
     assert (await call("describe_workbook", path="macros.xlsm"))["has_vba"] is True
-    assert (await call("describe_workbook", path="sales.xlsx"))["has_vba"] is False
+    assert "has_vba" not in await call("describe_workbook", path="sales.xlsx")
 
 
 def test_excel_made_project_is_decoded() -> None:

@@ -62,7 +62,7 @@ def _check_formulas(content: bytes) -> None:
 
 def _sheet_names(content: bytes) -> list[str]:
     try:
-        workbook = load_workbook(io.BytesIO(content))
+        workbook = load_workbook(io.BytesIO(content), read_only=True)
     except Exception as error:
         # openpyxl raises many different exception types for damaged files.
         raise InvalidArgumentError(f"The uploaded workbook could not be read ({error}).") from None

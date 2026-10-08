@@ -8,10 +8,11 @@ import zipfile
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import cast
+from typing import TypeVar, cast
 
 from openpyxl import Workbook, load_workbook
 from openpyxl.chart import AreaChart
+from openpyxl.worksheet._read_only import ReadOnlyWorksheet
 from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.config import Limits
@@ -26,6 +27,7 @@ from excel_mcp.errors import (
 from excel_mcp.paths import MACRO_SUFFIXES, TEMPLATE_SUFFIXES, PathPolicy
 
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
+Sheet = TypeVar("Sheet")
 
 
 class Workspace:
@@ -82,6 +84,19 @@ class Workspace:
             close_workbook(workbook)
 
     @contextmanager
+    def stream(self, raw_path: str, *, data_only: bool = False) -> Iterator[Workbook]:
+        """Open a workbook for streaming reads, which use constant memory on huge sheets.
+
+        Its worksheets are openpyxl read-only views: they hold only cell values (no
+        formatting, merged ranges, tables or charts) and re-parse the sheet on each pass.
+        """
+        workbook = self._load(self.resolve_existing(raw_path), data_only=data_only, stream=True)
+        try:
+            yield workbook
+        finally:
+            close_workbook(workbook)
+
+    @contextmanager
     def edit(self, raw_path: str) -> Iterator[Workbook]:
         """Open a workbook and save it only if the block finishes without error."""
         with self._write_lock:
@@ -124,7 +139,7 @@ class Workspace:
                 f"{self.display(path)} already exists. Pass overwrite=true to replace it."
             )
 
-    def _load(self, path: Path, *, data_only: bool) -> Workbook:
+    def _load(self, path: Path, *, data_only: bool, stream: bool = False) -> Workbook:
         if not zipfile.is_zipfile(path):
             raise WorkbookError(
                 f"{self.display(path)} is not an Excel workbook. Only .xlsx/.xlsm files are "
@@ -132,7 +147,10 @@ class Workspace:
             )
         try:
             return load_workbook(
-                path, data_only=data_only, keep_vba=path.suffix.lower() in MACRO_SUFFIXES
+                path,
+                data_only=data_only,
+                read_only=stream,
+                keep_vba=not stream and path.suffix.lower() in MACRO_SUFFIXES,
             )
         except Exception as error:
             # openpyxl raises many different exception types for damaged files.
@@ -194,17 +212,30 @@ def _restore_area_chart_axes(workbook: Workbook) -> None:
 
 
 def get_sheet(workbook: Workbook, name: str) -> Worksheet:
-    if name not in workbook.sheetnames:
-        raise SheetNotFoundError(name, workbook.sheetnames)
-    sheet = workbook[name]
-    if not isinstance(sheet, Worksheet):
-        raise SheetNotFoundError(name, [sheet.title for sheet in worksheets(workbook)])
-    return sheet
+    return _find_sheet(workbook, name, Worksheet)
+
+
+def get_streamed_sheet(workbook: Workbook, name: str) -> ReadOnlyWorksheet:
+    return _find_sheet(workbook, name, ReadOnlyWorksheet)
 
 
 def worksheets(workbook: Workbook) -> list[Worksheet]:
     """The workbook's worksheets, leaving out chart sheets."""
     return [sheet for sheet in workbook.worksheets if isinstance(sheet, Worksheet)]
+
+
+def streamed_worksheets(workbook: Workbook) -> list[ReadOnlyWorksheet]:
+    return [sheet for sheet in workbook.worksheets if isinstance(sheet, ReadOnlyWorksheet)]
+
+
+def _find_sheet(workbook: Workbook, name: str, kind: type[Sheet]) -> Sheet:
+    if name not in workbook.sheetnames:
+        raise SheetNotFoundError(name, workbook.sheetnames)
+    sheet = workbook[name]
+    if not isinstance(sheet, kind):
+        available = [sheet.title for sheet in workbook.worksheets if isinstance(sheet, kind)]
+        raise SheetNotFoundError(name, available)
+    return sheet
 
 
 def sheet_names(sheet: Worksheet) -> list[str]:

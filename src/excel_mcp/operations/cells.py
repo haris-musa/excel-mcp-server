@@ -5,6 +5,7 @@ from copy import copy
 
 from openpyxl.cell.cell import Cell, MergedCell
 from openpyxl.formula.translate import Translator
+from openpyxl.worksheet._read_only import ReadOnlyWorksheet
 from openpyxl.worksheet.formula import ArrayFormula
 from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
@@ -17,10 +18,8 @@ from excel_mcp.workspace import sheet_names
 
 
 class RangeData(BaseModel):
-    sheet: str
     range: str
     values: list[list[CellValue]]
-    truncated: bool
     next_range: str | None = None
 
 
@@ -30,15 +29,9 @@ class WriteResult(BaseModel):
     cells_written: int
 
 
-class CellMatch(BaseModel):
-    sheet: str
-    cell: str
-    value: CellValue
-
-
 class FindResult(BaseModel):
-    matches: list[CellMatch]
-    truncated: bool
+    matches: dict[str, dict[str, CellValue]]
+    truncated: bool = False
 
 
 def stored_cells(sheet: Worksheet) -> Iterator[Cell]:
@@ -65,6 +58,28 @@ def used_range(sheet: Worksheet) -> CellRange:
     return CellRange(min(rows), min(cols), max(rows), max(cols))
 
 
+def streamed_cells(sheet: ReadOnlyWorksheet) -> Iterator[tuple[int, int, object]]:
+    """Cells that hold a value as (row, column, value), row by row, in constant memory."""
+    # A wrong <dimension> in the file would otherwise cut the pass short.
+    sheet.reset_dimensions()
+    for row_number, row in enumerate(sheet.iter_rows(values_only=True), start=1):
+        for col_number, value in enumerate(row, start=1):
+            if value is not None:
+                yield row_number, col_number, value
+
+
+def streamed_used_range(sheet: ReadOnlyWorksheet) -> CellRange:
+    """Like used_range, for a streamed sheet: one full pass over its cells."""
+    min_row = min_col = MAX_ROW + 1
+    max_row = max_col = 0
+    for row, col, _ in streamed_cells(sheet):
+        min_row, max_row = min(min_row, row), max(max_row, row)
+        min_col, max_col = min(min_col, col), max(max_col, col)
+    if max_row == 0:
+        return CellRange(1, 1, 1, 1)
+    return CellRange(min_row, min_col, max_row, max_col)
+
+
 def writable_cell(sheet: Worksheet, row: int, col: int) -> Cell:
     if row > MAX_ROW or col > MAX_COLUMN:
         raise InvalidArgumentError(f"{cell_name(row, col)} is outside the worksheet limits.")
@@ -83,8 +98,8 @@ def store_value(cell: Cell, value: CellValue) -> None:
         cell.data_type = "s"
 
 
-def read_range(sheet: Worksheet, ref: str | None, max_cells: int) -> RangeData:
-    target = parse_range(ref) if ref else used_range(sheet)
+def read_range(sheet: ReadOnlyWorksheet, ref: str | None, max_cells: int) -> RangeData:
+    target = parse_range(ref) if ref else streamed_used_range(sheet)
     if target.cols > max_cells:
         raise LimitExceededError(
             f"Range {target} has {target.cols} columns; at most {max_cells} cells can be "
@@ -98,15 +113,18 @@ def read_range(sheet: Worksheet, ref: str | None, max_cells: int) -> RangeData:
         max_col=target.max_col,
         values_only=True,
     )
+    values = [[to_json(value) for value in row] for row in rows]
+    for row in values:
+        while row and row[-1] is None:
+            row.pop()
+    while values and not values[-1]:
+        values.pop()
     read = CellRange(target.min_row, target.min_col, last_row, target.max_col)
-    truncated = last_row < target.max_row
     remaining = CellRange(last_row + 1, target.min_col, target.max_row, target.max_col)
     return RangeData(
-        sheet=sheet.title,
         range=str(read),
-        values=[[to_json(value) for value in row] for row in rows],
-        truncated=truncated,
-        next_range=str(remaining) if truncated else None,
+        values=values,
+        next_range=str(remaining) if last_row < target.max_row else None,
     )
 
 
@@ -192,7 +210,7 @@ def copy_range(
 
 
 def find_cells(
-    sheets: list[Worksheet],
+    sheets: list[ReadOnlyWorksheet],
     query: str,
     exact: bool,
     case_sensitive: bool,
@@ -202,16 +220,15 @@ def find_cells(
         return text if case_sensitive else text.casefold()
 
     needle = normalize(query)
-    matches: list[CellMatch] = []
+    matches: dict[str, dict[str, CellValue]] = {}
+    count = 0
     for sheet in sheets:
-        for cell in stored_cells(sheet):
-            text = normalize(str(cell.value))
-            found = text == needle if exact else needle in text
-            if not found:
+        for row, col, value in streamed_cells(sheet):
+            text = normalize(str(value))
+            if not (text == needle if exact else needle in text):
                 continue
-            if len(matches) == max_results:
+            if count == max_results:
                 return FindResult(matches=matches, truncated=True)
-            matches.append(
-                CellMatch(sheet=sheet.title, cell=cell.coordinate, value=to_json(cell.value))
-            )
-    return FindResult(matches=matches, truncated=False)
+            matches.setdefault(sheet.title, {})[cell_name(row, col)] = to_json(value)
+            count += 1
+    return FindResult(matches=matches)

@@ -7,12 +7,11 @@ from pydantic import Field
 WorkbookPath = Annotated[
     str,
     Field(
-        description="Path to an .xlsx, .xlsm, .xltx or .xltm file. Relative paths are resolved "
-        "in the server's workbook directory when one is configured; otherwise use an "
-        "absolute path."
+        description="Workbook file (.xlsx, .xlsm, .xltx, .xltm): relative to the server's "
+        "workbook directory if one is set, else absolute."
     ),
 ]
-SheetName = Annotated[str, Field(description="Worksheet name, e.g. 'Sheet1'.")]
+SheetName = Annotated[str, Field(description="Worksheet name.")]
 CellRef = Annotated[str, Field(description="A single cell in A1 notation, e.g. 'B2'.")]
 RangeRef = Annotated[
     str, Field(description="A cell or rectangular range in A1 notation, e.g. 'A1:D20'.")

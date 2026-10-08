@@ -5,6 +5,8 @@ import pytest
 from mcp import Client
 from mcp.types import BlobResourceContents, EmbeddedResource
 from openpyxl import load_workbook
+from openpyxl.chart import BarChart
+from openpyxl.workbook.defined_name import DefinedName
 
 from tests.conftest import ToolCall
 
@@ -35,14 +37,8 @@ async def test_create_workbook_rejects_duplicate_sheet_names(call_error: ToolCal
 
 async def test_describe_workbook(call: ToolCall, sample: Path) -> None:
     info = await call("describe_workbook", path="sales.xlsx")
-    assert info["path"] == "sales.xlsx"
-    assert info["size_bytes"] == sample.stat().st_size
-    assert info["sheets"][0] == {
-        "name": "Data",
-        "used_range": "A1:D5",
-        "rows": 5,
-        "columns": 4,
-        "visible": True,
+    assert info == {
+        "sheets": [{"name": "Data", "used_range": "A1:D5"}, {"name": "Report", "used_range": "A1"}]
     }
 
 
@@ -70,9 +66,9 @@ async def test_list_workbooks(call: ToolCall, sample: Path, files: Path) -> None
     (files / "sub" / "b.xlsx").write_bytes(sample.read_bytes())
     (files / "notes.txt").write_text("x")
     flat = await call("list_workbooks")
-    assert [entry["path"] for entry in flat] == ["sales.xlsx"]
+    assert flat == {"sales.xlsx": sample.stat().st_size}
     nested = await call("list_workbooks", recursive=True)
-    assert [entry["path"] for entry in nested] == ["sales.xlsx", "sub/b.xlsx"]
+    assert list(nested) == ["sales.xlsx", "sub/b.xlsx"]
 
 
 async def test_export_and_import_round_trip(
@@ -99,3 +95,19 @@ async def test_import_rejects_non_workbooks(call_error: ToolCall) -> None:
         "import_workbook", path="x.xlsx", content_base64=content
     )
     assert "base64" in await call_error("import_workbook", path="x.xlsx", content_base64="%%")
+
+
+async def test_describe_workbook_flags_hidden_sheets_and_names(
+    call: ToolCall, sample: Path
+) -> None:
+    workbook = load_workbook(sample)
+    workbook["Report"].sheet_state = "hidden"
+    workbook.defined_names["Totals"] = DefinedName("Totals", attr_text="Data!$C$2:$C$5")
+    workbook.create_chartsheet("Chart").add_chart(BarChart())
+    workbook.save(sample)
+    info = await call("describe_workbook", path="sales.xlsx")
+    assert info["sheets"] == [
+        {"name": "Data", "used_range": "A1:D5"},
+        {"name": "Report", "used_range": "A1", "hidden": True},
+    ]
+    assert info["defined_names"] == [{"name": "Totals", "refers_to": "Data!$C$2:$C$5"}]

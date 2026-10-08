@@ -43,6 +43,20 @@ All notable changes to this project are documented here. The format follows
   `refers_to` and `sheet` (null for workbook scope), and includes sheet-scoped names.
 - **Breaking:** `create_summary_table` is removed; `create_pivot_table` replaces it
   (`group_by` is now `rows`, `aggregation` is `function`, and the result is a PivotTable).
+- `read_range`, `find_cells` and `describe_workbook` stream the workbook instead of loading
+  it: memory stays flat (about 20 MB instead of 850 MB for a 200,000 x 10 sheet) and
+  large files no longer risk exhausting memory. `describe_sheet` still loads the file.
+- **Breaking:** compact results. `read_range` returns `{range, values, next_range?}`
+  (no `sheet` or `truncated`; page on while `next_range` is present) and omits trailing
+  empty cells and rows. `find_cells` returns `matches` grouped as `{sheet: {cell: value}}`.
+  `describe_workbook` returns `sheets` (`name`, `used_range`, `hidden` when true),
+  `defined_names` (when any) and `has_vba` (when true), without path, size, row and column counts.
+  `describe_sheet` omits empty fields and its `name`, and lists `tables` as `{name: range}`.
+  `list_workbooks` returns `{path: size_bytes}`. Dates at midnight read as `2026-01-31`.
+- Tool results are sent as compact JSON without default values, tools that return a message
+  no longer advertise an output schema, and tool schemas lose generated titles and `null`
+  unions: `tools/list` shrinks by about a third.
+- `import_workbook` checks uploads without loading every cell.
 - **Breaking:** `create_chart`'s `show_legend` option is replaced by `legend`: `right`
   (default), `left`, `top`, `bottom` or `none`.
 - **Breaking:** `describe_sheet` no longer returns `chart_count`; use the length of `charts`.

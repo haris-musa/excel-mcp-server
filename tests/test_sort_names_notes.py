@@ -132,8 +132,8 @@ async def test_defined_names_roundtrip(call: ToolCall, sample: Path) -> None:
     assert "Updated" in result
     names = (await call("describe_workbook", path="sales.xlsx"))["defined_names"]
     assert names == [
-        {"name": "Tax", "refers_to": "0.2", "sheet": None},
-        {"name": "Units", "refers_to": "Data!$C$2:$C$5", "sheet": None},
+        {"name": "Tax", "refers_to": "0.2"},
+        {"name": "Units", "refers_to": "Data!$C$2:$C$5"},
         {"name": "Tax", "refers_to": "0.1", "sheet": "Report"},
     ]
     await call("delete_defined_name", path="sales.xlsx", name="Tax", sheet="Report")
