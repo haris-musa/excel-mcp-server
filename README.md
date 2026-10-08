@@ -19,8 +19,9 @@ create, read and edit Excel workbooks. It needs no Microsoft Excel installation.
   histogram, Pareto, box and whisker, treemap, sunburst and funnel), images, hyperlinks and PivotTables
 - **Data tools**: paste special, fill series, remove duplicates, text to columns, find and
   replace, sheet and table filters with criteria
-- **Rules**: conditional formatting (scales, icon sets, top/bottom, duplicates, text, dates and
-  more) and data validation (dropdowns from cells, limits, input messages, alert styles)
+- **Rules**: conditional formatting (scales, data bars with borders, negative bars and axis, icon
+  sets with custom icons, top/bottom, duplicates, text, dates and more), sparklines (line, column,
+  win/loss) and data validation (dropdowns from cells, limits, input messages, alert styles)
 - **Macros**: read the VBA code in `.xlsm` files, module by module (never run). Writing VBA
   is off unless you start the server with `--allow-vba-write` (see below)
 - **Safe by design**: optional folder confinement, a formula safety check, read-only mode,
@@ -158,7 +159,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
 | Sheets | `describe_sheet`, `create_sheet`, `rename_sheet`, `copy_sheet`, `delete_sheet`, `insert_rows_or_columns`, `delete_rows_or_columns` |
 | Cells | `read_range`, `write_range`, `clear_range`, `copy_range`, `sort_range`, `transform_range`, `find_cells`, `replace_cells` |
 | Formatting | `format_range`, `merge_cells`, `set_sheet_layout`, `add_conditional_format`, `add_data_validation` |
-| Objects | `create_table`, `create_chart`, `delete_chart`, `create_pivot_table`, `delete_pivot_table`, `insert_image`, `delete_image` |
+| Objects | `create_table`, `create_chart`, `delete_chart`, `create_pivot_table`, `delete_pivot_table`, `insert_image`, `delete_image`, `add_sparklines`, `delete_sparklines` |
 | Names and notes | `set_defined_name`, `delete_defined_name`, `set_note`, `delete_note` |
 | Macros | `read_vba`; with `--allow-vba-write`: `write_vba_module`, `delete_vba_module` |
 
@@ -227,8 +228,9 @@ Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
   formats and validation, slicers and timelines, newer charts (waterfall, histogram,
   treemap and others), threaded comments, shapes, form controls, linked data types and
   custom XML stay as Excel saved them and move with inserted or deleted rows and columns and
-  renamed sheets; `copy_sheet` does not copy them (waterfall and the other Excel 2016 charts
-  made by `create_chart` are copied). Deleting a sheet removes slicers that only
+  renamed sheets. `copy_sheet` copies sparklines, the Excel 2010 half of conditional formats
+  (data bars, icon sets) and the Excel 2016 charts made by `create_chart`, but not the others.
+  Deleting a sheet removes slicers that only
   it used; slicers that would be left without their PivotTable or table block the deletion.
   Digital signatures are removed, as Excel does when a signed file changes.
 - Formulas that return several values (`FILTER`, `SORT`, `UNIQUE`, `SEQUENCE`, `A2:A9*2`) are

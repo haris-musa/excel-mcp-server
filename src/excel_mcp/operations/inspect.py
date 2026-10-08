@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from excel_mcp.operations.cells import streamed_used_range, used_range
 from excel_mcp.operations.chart_index import list_charts
 from excel_mcp.operations.chart_info import ChartInfo
+from excel_mcp.operations.conditional_x14 import extended_rules
 from excel_mcp.operations.hyperlinks import LinkInfo, list_links
 from excel_mcp.operations.images import ImageInfo, list_images
 from excel_mcp.operations.layout import hidden_lines
@@ -16,6 +17,8 @@ from excel_mcp.operations.names import DefinedNameInfo, list_defined_names
 from excel_mcp.operations.notes import NoteInfo, list_notes
 from excel_mcp.operations.pivot_index import PivotInfo, list_pivots
 from excel_mcp.operations.sheet_view import ViewInfo, read_view
+from excel_mcp.operations.sparkline_style import SparklineInfo
+from excel_mcp.operations.sparklines import list_sparklines
 from excel_mcp.operations.workbook_settings import (
     CalculationInfo,
     PropertiesInfo,
@@ -57,6 +60,15 @@ class ConditionalFormatInfo(BaseModel):
     type: str
 
 
+def list_conditional_formats(sheet: Worksheet) -> list[ConditionalFormatInfo]:
+    rules = [
+        ConditionalFormatInfo(range=str(entry.sqref), type=rule.type)
+        for entry in sheet.conditional_formatting
+        for rule in entry.rules
+    ]
+    return rules + [ConditionalFormatInfo(range=r, type=t) for r, t in extended_rules(sheet)]
+
+
 class SheetDetails(BaseModel):
     used_range: str
     freeze_panes: str | None = None
@@ -68,6 +80,7 @@ class SheetDetails(BaseModel):
     pivot_tables: list[PivotInfo] = []
     data_validations: list[DataValidationInfo] = []
     conditional_formats: list[ConditionalFormatInfo] = []
+    sparklines: list[SparklineInfo] = []
     column_widths: dict[str, float] = {}
     hidden_rows: list[str] = []
     hidden_columns: list[str] = []
@@ -119,11 +132,8 @@ def describe_sheet(sheet: Worksheet) -> SheetDetails:
             )
             for rule in sheet.data_validations.dataValidation
         ],
-        conditional_formats=[
-            ConditionalFormatInfo(range=str(entry.sqref), type=rule.type)
-            for entry in sheet.conditional_formatting
-            for rule in entry.rules
-        ],
+        conditional_formats=list_conditional_formats(sheet),
+        sparklines=list_sparklines(sheet),
         column_widths={
             letter: dimension.width
             for letter, dimension in sorted(sheet.column_dimensions.items())

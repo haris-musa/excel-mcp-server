@@ -14,7 +14,7 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`list_workbooks`](#list_workbooks) | List Excel files in a directory as path to size in bytes. |
 | [`export_workbook`](#export_workbook) | Return the workbook file as an embedded base64 resource, for remote servers. |
 | [`import_workbook`](#import_workbook) | Save an uploaded workbook file on the server, e.g. to edit it remotely. |
-| [`describe_sheet`](#describe_sheet) | Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables, images, notes, hyperlinks, validation, conditional formats, custom column widths, hidden rows and columns, print area and protection. Empty items are omitted. |
+| [`describe_sheet`](#describe_sheet) | Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables, images, notes, hyperlinks, validation, conditional formats, sparklines, custom column widths, hidden rows and columns, print area and protection. Empty items are omitted. |
 | [`create_sheet`](#create_sheet) | Add an empty worksheet. |
 | [`rename_sheet`](#rename_sheet) | Rename a worksheet. References to it are updated as in Excel: formulas, names, rules, charts and PivotTable sources. |
 | [`copy_sheet`](#copy_sheet) | Copy a worksheet to a new sheet at the end, as Excel's "Create a copy" does. |
@@ -37,6 +37,8 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`create_table`](#create_table) | Turn a range with a header row of unique text labels into an Excel table. |
 | [`create_chart`](#create_chart) | Add a chart to `sheet`, or replace one. |
 | [`delete_chart`](#delete_chart) | Remove a chart from a sheet. The data it plotted is left untouched. |
+| [`add_sparklines`](#add_sparklines) | Add a group of sparklines (Insert > Sparklines): a line, column or win/loss chart in each cell of `location`, one per row of `data` (or per column when the cell count matches the columns). Sparklines already in those cells are replaced. |
+| [`delete_sparklines`](#delete_sparklines) | Remove the sparklines in a range (Clear Sparklines). The data is left untouched. |
 | [`create_pivot_table`](#create_pivot_table) | Add an Excel PivotTable that summarizes a block of data. |
 | [`delete_pivot_table`](#delete_pivot_table) | Remove a PivotTable and clear the cells it fills. The source data is left untouched. |
 | [`set_defined_name`](#set_defined_name) | Create a defined name for a range or constant, replacing a name of the same scope. |
@@ -163,8 +165,8 @@ Save an uploaded workbook file on the server, e.g. to edit it remotely.
 **Describe sheet** (read-only)
 
 Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables,
-images, notes, hyperlinks, validation, conditional formats, custom column widths, hidden
-rows and columns, print area and protection. Empty items are omitted.
+images, notes, hyperlinks, validation, conditional formats, sparklines, custom column
+widths, hidden rows and columns, print area and protection. Empty items are omitted.
 
 Loads the whole workbook into memory, so it is slow on very large files.
 
@@ -634,11 +636,23 @@ go to the first rule met.
 | `include_equal` | boolean | no | above/below_average. Default: `False`. |
 | `text` | string | no | contains_text etc. |
 | `period` | `yesterday` \| `today` \| `tomorrow` \| `last7Days` \| `lastWeek` \| `thisWeek` \| `nextWeek` \| `lastMonth` \| `thisMonth` \| `nextMonth` | no | date. |
-| `icon_set` | `3Arrows` \| `3ArrowsGray` \| `3Flags` \| `3TrafficLights1` \| `3TrafficLights2` \| `3Signs` \| `3Symbols` \| `3Symbols2` \| `4Arrows` \| `4ArrowsGray` \| `4RedToBlack` \| `4Rating` \| `4TrafficLights` \| `5Arrows` \| `5ArrowsGray` \| `5Rating` \| `5Quarters` | no | icon_set. |
+| `icon_set` | `3Arrows` \| `3ArrowsGray` \| `3Flags` \| `3TrafficLights1` \| `3TrafficLights2` \| `3Signs` \| `3Symbols` \| `3Symbols2` \| `4Arrows` \| `4ArrowsGray` \| `4RedToBlack` \| `4Rating` \| `4TrafficLights` \| `5Arrows` \| `5ArrowsGray` \| `5Rating` \| `5Quarters` \| `3Stars` \| `3Triangles` \| `5Boxes` | no | icon_set. |
 | `thresholds` | array of number | no | icon_set: where icons 2..n start, lowest first (n-1 values). Default: equal shares as in Excel. |
 | `threshold_type` | `percent` \| `number` \| `percentile` | no | icon_set: what `thresholds` mean. Default: `percent`. |
+| `icons` | array of string | no | icon_set: a custom icon for each of the n ranges, lowest first: '3Arrows:1' is the lowest icon of that set (1) up to its highest (3, 4 or 5), 'none' shows no icon. Sets can be mixed. |
 | `reverse` | boolean | no | icon_set: reverse the icon order. Default: `False`. |
-| `icon_only` | boolean | no | icon_set: hide the cell values. Default: `False`. |
+| `hide_values` | boolean | no | icon_set, data_bar: hide the values. Default: `False`. |
+| `bar_fill` | `gradient` \| `solid` | no | data_bar. Default: `gradient`. |
+| `border_color` | string | no | data_bar: border of the bars. |
+| `negative_color` | string | no | data_bar: fill of negative bars. Default: as `colors`. |
+| `negative_border_color` | string | no | data_bar: border of negative bars. Default: border_color. |
+| `axis` | `automatic` \| `middle` \| `none` | no | data_bar: where negative bars start. automatic: in proportion to the values; middle: in the middle of the cell. Default: `none`. |
+| `axis_color` | string | no | data_bar: default black. |
+| `bar_direction` | `context` \| `left_to_right` \| `right_to_left` | no | data_bar: context follows the text direction. Default: `context`. |
+| `min_type` | `automatic` \| `lowest` \| `highest` \| `number` \| `percent` \| `percentile` \| `formula` | no | data_bar: what the shortest bar stands for. Default: `lowest`. |
+| `min_value` | number \| string | no | data_bar: with min_type number, percent, percentile or formula (a formula such as '=$G$1'). |
+| `max_type` | `automatic` \| `lowest` \| `highest` \| `number` \| `percent` \| `percentile` \| `formula` | no | data_bar: what the longest bar stands for. Default: `highest`. |
+| `max_value` | number \| string | no | data_bar: like min_value. |
 | `fill_color` | string | no | Every type but the scales/icons. |
 | `font_color` | string | no | Like fill_color. |
 | `stop_if_true` | boolean | no | Skip lower-priority rules if met. Default: `False`. |
@@ -828,6 +842,65 @@ Later charts move up one index; call describe_sheet again before deleting anothe
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
 | `index` | integer | yes | Chart number from describe_sheet. |
+
+## add_sparklines
+
+**Add sparklines** (modifies files)
+
+Add a group of sparklines (Insert > Sparklines): a line, column or win/loss chart in
+each cell of `location`, one per row of `data` (or per column when the cell count
+matches the columns). Sparklines already in those cells are replaced.
+
+describe_sheet lists sparklines; delete_sparklines removes them.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
+| `sheet` | string | yes | Worksheet name. |
+| `location` | string | yes | Cells that get a sparkline: one row or column, e.g. 'G2:G9'. |
+| `data` | string | yes | Data, on any sheet: 'B2:F9' or 'Data!B2:F9'. One sparkline per row. |
+| `style` | object | no |  |
+
+`style` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `type` | `line` \| `column` \| `win_loss` | no | Default: `line`. |
+| `colors` | object | no | Hex RGB colors such as '376092'. |
+| `show` | array of `markers` \| `high` \| `low` \| `first` \| `last` \| `negative` | no | Points to emphasize in their colors. markers is for line only; win_loss shows losses with negative. |
+| `show_axis` | boolean | no | Draw the horizontal axis (0 or dates). Default: `False`. |
+| `axis_min` | `individual` \| `same` \| number | no | Lowest value of the vertical axis: each sparkline's own, the lowest of the group ('same'), or a number. Default: `individual`. |
+| `axis_max` | `individual` \| `same` \| number | no | Like axis_min. Default: `individual`. |
+| `right_to_left` | boolean | no | Plot the data from right to left. Default: `False`. |
+| `dates` | string | no | Range of dates, one per data point, to plot on a date axis, e.g. 'Data!B1:F1'. |
+| `empty_cells` | `gap` \| `zero` \| `connect` | no | Show empty cells as gaps or zeros, or connect the points. Default: `gap`. |
+| `hidden` | boolean | no | Plot data in hidden rows and columns. Default: `False`. |
+| `line_weight` | number | no | Line only, points. Default: `0.75`. |
+
+`colors` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `series` | string | no | Default: `376092`. |
+| `negative` | string | no | Default: `D00000`. |
+| `axis` | string | no | Default: `000000`. |
+| `markers` | string | no | Default: `D00000`. |
+| `first` | string | no | Default: `D00000`. |
+| `last` | string | no | Default: `D00000`. |
+| `high` | string | no | Default: `D00000`. |
+| `low` | string | no | Default: `D00000`. |
+
+## delete_sparklines
+
+**Delete sparklines** (modifies files, may overwrite data)
+
+Remove the sparklines in a range (Clear Sparklines). The data is left untouched.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
+| `sheet` | string | yes | Worksheet name. |
+| `range` | string | yes | Cells whose sparklines to remove. |
 
 ## create_pivot_table
 

@@ -15,7 +15,7 @@ from excel_mcp.operations.cells import stored_cells
 from excel_mcp.operations.sheet_refs import SheetCopyRefs
 from excel_mcp.operations.sheets import validate_sheet_name
 from excel_mcp.operations.tables import table_names
-from excel_mcp.package import arrays
+from excel_mcp.package import arrays, extensions, state_of
 from excel_mcp.rewrite import chart_references
 from excel_mcp.workspace import get_sheet
 
@@ -29,6 +29,7 @@ def copy_sheet(workbook: Workbook, name: str, new_name: str) -> None:
     refs = SheetCopyRefs(source.title, target.title, _copy_tables(workbook, source, target))
     _copy_formulas(workbook, target, refs)
     _copy_rules(workbook, source, target, refs)
+    _copy_extensions(workbook, source, target, refs)
     _copy_names(workbook, source, target, refs)
     _copy_sheet_settings(source, target)
     _copy_drawings(source, target, refs)
@@ -88,6 +89,20 @@ def _copy_rules(
                 storable_operand(refs.operand(f, target.title), names) for f in rule.formula
             ]
             target.conditional_formatting.add(str(entry.sqref), clone)
+
+
+def _copy_extensions(
+    workbook: Workbook, source: Worksheet, target: Worksheet, refs: SheetCopyRefs
+) -> None:
+    """Sparklines and the Excel 2010 half of conditional formats."""
+    state = state_of(workbook)
+    package = state.sheets.get(source)
+    if package is None:
+        return
+    found, rules = extensions.copied(package.extensions, package.rule_extensions, refs.operand)
+    copy = state.sheet(target)
+    copy.extensions.update(found)
+    copy.rule_extensions.update(rules)
 
 
 def _copy_names(

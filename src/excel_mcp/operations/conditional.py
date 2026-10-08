@@ -1,11 +1,10 @@
 """Conditional formatting rules of the kinds Excel's Conditional Formatting menu offers."""
 
-from typing import Literal
+from typing import cast
 
 from openpyxl.formatting.rule import (
     CellIsRule,
     ColorScaleRule,
-    DataBarRule,
     FormatObject,
     FormulaRule,
     IconSet,
@@ -14,97 +13,38 @@ from openpyxl.formatting.rule import (
 from openpyxl.styles import Font, PatternFill
 from openpyxl.styles.differential import DifferentialStyle
 from openpyxl.worksheet.worksheet import Worksheet
-from pydantic import Field
 
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.formulas import storable_operand
-from excel_mcp.inputs import InputModel
+from excel_mcp.operations import conditional_x14 as x14
 from excel_mcp.operations.conditional_kinds import (
     ALWAYS,
     CELL_FORMULAS,
     FIELDS,
     PERIOD_FORMULAS,
     TEXT_RULES,
-    IconSetName,
-    Period,
-    RuleType,
-    ThresholdType,
+    ClassicIconSet,
 )
+from excel_mcp.operations.conditional_rule import ConditionalFormat
 from excel_mcp.operations.formatting import parse_color
-from excel_mcp.operations.rules import Operator
 from excel_mcp.refs import parse_range
 from excel_mcp.workspace import sheet_names
-
-
-class ConditionalFormat(InputModel):
-    """Only the fields named for the ``type`` apply; others are rejected."""
-
-    type: RuleType = Field(
-        description="top/bottom: highest or lowest `count` values (or percent). "
-        "above_average/below_average: compared with the range's average. "
-        "date: dates in a `period`."
-    )
-    colors: list[str] | None = Field(
-        default=None, description="color_scale: 2 or 3, lowest to highest. data_bar: 1."
-    )
-    operator: Operator | None = Field(default=None, description="cell_value.")
-    values: list[str] | None = Field(
-        default=None,
-        description="cell_value: 1, or 2 for between/notBetween. Numbers, quoted text such "
-        "as '\"Done\"', or formulas.",
-    )
-    formula: str | None = Field(
-        default=None,
-        description="formula: true for highlighted cells, written for the range's top-left "
-        "cell, e.g. '=$C2>100'.",
-    )
-    count: int | None = Field(
-        default=None, ge=1, le=1000, description="top, bottom: how many (1-100 if percent)."
-    )
-    percent: bool = Field(default=False, description="top, bottom: `count` is a percentage.")
-    std_dev: int | None = Field(
-        default=None, ge=1, le=3, description="above/below_average: standard deviations."
-    )
-    include_equal: bool = Field(default=False, description="above/below_average.")
-    text: str | None = Field(default=None, max_length=255, description="contains_text etc.")
-    period: Period | None = Field(default=None, description="date.")
-    icon_set: IconSetName | None = Field(default=None, description="icon_set.")
-    thresholds: list[float] | None = Field(
-        default=None,
-        description="icon_set: where icons 2..n start, lowest first (n-1 values). "
-        "Default: equal shares as in Excel.",
-    )
-    threshold_type: Literal["percent", "number", "percentile"] = Field(
-        default="percent", description="icon_set: what `thresholds` mean."
-    )
-    reverse: bool = Field(default=False, description="icon_set: reverse the icon order.")
-    icon_only: bool = Field(default=False, description="icon_set: hide the cell values.")
-    fill_color: str | None = Field(default=None, description="Every type but the scales/icons.")
-    font_color: str | None = Field(default=None, description="Like fill_color.")
-    stop_if_true: bool = Field(default=False, description="Skip lower-priority rules if met.")
-    priority: int | None = Field(
-        default=None,
-        ge=1,
-        description="1 is evaluated first; rules at or below it move down. Default: last.",
-    )
 
 
 def add_conditional_format(sheet: Worksheet, ref: str, rule: ConditionalFormat) -> str:
     area = parse_range(ref)
     rule.reject_unused(FIELDS[rule.type] | ALWAYS, f"A {rule.type} rule")
-    built = _build_rule(rule, area.top_left, sheet_names(sheet))
-    if rule.stop_if_true:
-        built.stopIfTrue = True
-    formatting = sheet.conditional_formatting
-    existing = [entry for ranges in formatting for entry in ranges.rules]
-    built.priority = (
-        rule.priority or max((entry.priority or 0 for entry in existing), default=0) + 1
-    )
-    if rule.priority:
-        for entry in existing:
-            if entry.priority and entry.priority >= rule.priority:
-                entry.priority += 1
-    formatting.add(str(area), built)
+    names = sheet_names(sheet)
+    priority = x14.claim_priority(sheet, rule.priority)
+    if x14.is_extended(rule):
+        built = x14.add_extended(sheet, str(area), rule, priority, names)
+    else:
+        built = _build_rule(rule, area.top_left, names)
+    if built is not None:
+        built.priority = priority
+        if rule.stop_if_true:
+            built.stopIfTrue = True
+        sheet.conditional_formatting.add(str(area), built)
     return str(area)
 
 
@@ -112,11 +52,6 @@ def _build_rule(rule: ConditionalFormat, top_left: str, names: list[str]) -> Rul
     match rule.type:
         case "color_scale":
             return _color_scale(rule)
-        case "data_bar":
-            if len(rule.colors or []) != 1:
-                raise InvalidArgumentError("data_bar needs exactly 1 color.")
-            color = parse_color((rule.colors or [""])[0])
-            return DataBarRule(start_type="min", end_type="max", color=color)
         case "icon_set":
             return _icon_set(rule)
     cell = top_left
@@ -219,27 +154,15 @@ def _color_scale(rule: ConditionalFormat) -> Rule:
 def _icon_set(rule: ConditionalFormat) -> Rule:
     if rule.icon_set is None:
         raise InvalidArgumentError("icon_set rules need an icon_set.")
-    icons = int(rule.icon_set[0])
-    thresholds = rule.thresholds or [round(100 * index / icons) for index in range(1, icons)]
-    if len(thresholds) != icons - 1:
-        raise InvalidArgumentError(f"{rule.icon_set} needs {icons - 1} thresholds.")
-    if thresholds != sorted(thresholds):
-        raise InvalidArgumentError("thresholds must be in ascending order.")
-    kinds: dict[str, ThresholdType] = {
-        "percent": "percent",
-        "number": "num",
-        "percentile": "percentile",
-    }
-    kind = kinds[rule.threshold_type]
-    points = [FormatObject(type="percent", val=0)]
-    points += [
-        FormatObject(type=kind, val=int(value) if value == int(value) else value)
-        for value in thresholds
-    ]
+    points = [FormatObject(type=kind, val=_plain(value)) for kind, value in x14.icon_points(rule)]
     icons_rule = IconSet(
-        iconSet=rule.icon_set,
+        iconSet=cast(ClassicIconSet, rule.icon_set),  # the newer sets are extended
         cfvo=points,
-        showValue=False if rule.icon_only else None,
+        showValue=False if rule.hide_values else None,
         reverse=rule.reverse or None,
     )
     return Rule(type="iconSet", iconSet=icons_rule)
+
+
+def _plain(value: float) -> float:
+    return int(value) if value == int(value) else value

@@ -4,9 +4,11 @@ from typing import Annotated
 
 from pydantic import Field
 
-from excel_mcp.operations import chart_index, charts, tables
+from excel_mcp.operations import chart_index, charts, sparklines, tables
 from excel_mcp.operations.charts_data import SeriesIn
 from excel_mcp.operations.charts_options import ChartOptions, ChartType, SeriesSpec
+from excel_mcp.operations.sparkline_style import SparklineStyle
+from excel_mcp.refs import parse_range
 from excel_mcp.server.params import SheetName, WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
 from excel_mcp.workspace import Workspace, get_sheet
@@ -120,3 +122,40 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             removed = chart_index.delete_chart(get_sheet(workbook, sheet), index)
         label = f" {removed.title!r}" if removed.title else ""
         return f"Deleted {removed.type} chart {index}{label} from {sheet}."
+
+    @tools.writer("Add sparklines")
+    def add_sparklines(
+        path: WorkbookPath,
+        sheet: SheetName,
+        location: Annotated[
+            str, Field(description="Cells that get a sparkline: one row or column, e.g. 'G2:G9'.")
+        ],
+        data: Annotated[
+            str,
+            Field(
+                description="Data, on any sheet: 'B2:F9' or 'Data!B2:F9'. One sparkline per row."
+            ),
+        ],
+        style: Annotated[SparklineStyle, Field(default_factory=SparklineStyle)],
+    ) -> str:
+        """Add a group of sparklines (Insert > Sparklines): a line, column or win/loss chart in
+        each cell of `location`, one per row of `data` (or per column when the cell count
+        matches the columns). Sparklines already in those cells are replaced.
+
+        describe_sheet lists sparklines; delete_sparklines removes them.
+        """
+        with workspace.edit(path) as workbook:
+            return sparklines.add_sparklines(
+                get_sheet(workbook, sheet), location, data, style, workspace.limits.max_cells
+            )
+
+    @tools.destroyer("Delete sparklines")
+    def delete_sparklines(
+        path: WorkbookPath,
+        sheet: SheetName,
+        range: Annotated[str, Field(description="Cells whose sparklines to remove.")],
+    ) -> str:
+        """Remove the sparklines in a range (Clear Sparklines). The data is left untouched."""
+        with workspace.edit(path) as workbook:
+            removed = sparklines.delete_sparklines(get_sheet(workbook, sheet), parse_range(range))
+        return f"Deleted {removed} sparklines from {sheet}!{range}."
