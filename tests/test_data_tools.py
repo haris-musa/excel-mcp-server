@@ -117,6 +117,10 @@ async def test_find_cells(call: ToolCall, sample: Path) -> None:
         ("format_range", {"range": "A1:XFD1048576", "style": {"bold": True}}),
         ("merge_cells", {"range": "A1:XFD1048576"}),
         ("read_range", {"range": "A1:XFD1"}),
+        (
+            "transform_range",
+            {"range": "A1:XFD1048576", "transform": {"operation": "remove_duplicates"}},
+        ),
     ],
 )
 async def test_huge_ranges_are_rejected_quickly(

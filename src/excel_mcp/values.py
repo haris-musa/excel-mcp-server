@@ -19,6 +19,9 @@ CellValue = str | int | float | bool | None
 
 _ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 _ISO_DATETIME = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?")
+_NUMBER = re.compile(r"[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?")
+_THOUSANDS = re.compile(r"[+-]?\d{1,3}(,\d{3})+(\.\d+)?")
+_PERCENT = re.compile(r"[+-]?(\d+(\.\d*)?|\.\d+)%")
 
 DATE_FORMAT = "yyyy-mm-dd"
 DATETIME_FORMAT = "yyyy-mm-dd hh:mm:ss"
@@ -70,3 +73,45 @@ def date_number_format(value: object) -> str | None:
     if isinstance(value, dt.date):
         return DATE_FORMAT
     return None
+
+
+def parse_iso_date(text: str) -> dt.date | None:
+    """The date written as ``2026-01-31``, or None if ``text`` is not in that form."""
+    if not _ISO_DATE.fullmatch(text):
+        return None
+    try:
+        return dt.date.fromisoformat(text)
+    except ValueError:
+        raise InvalidArgumentError(f"{text!r} looks like a date but is not valid.") from None
+
+
+def typed_value(
+    text: str, sheet_names: Iterable[str]
+) -> tuple[CellValue | dt.date | dt.datetime, str | None]:
+    """What Excel stores when ``text`` is typed into a General cell, and the format it applies.
+
+    Numbers (also with thousands separators or a percent sign), TRUE/FALSE, ISO dates and
+    formulas become values; anything else stays text.
+    """
+    stripped = text.strip()
+    if stripped.upper() in ("TRUE", "FALSE"):
+        return stripped.upper() == "TRUE", None
+    if _NUMBER.fullmatch(stripped):
+        return _number(stripped), None
+    if _THOUSANDS.fullmatch(stripped):
+        return _number(stripped.replace(",", "")), "#,##0" + _decimals(stripped)
+    if _PERCENT.fullmatch(stripped):
+        return _number(stripped[:-1]) / 100, "0" + _decimals(stripped[:-1]) + "%"
+    value = to_cell(text, sheet_names)
+    return value, date_number_format(value)
+
+
+def _number(text: str) -> int | float:
+    if text.lstrip("+-").isdigit() and len(text.lstrip("+-")) <= 15:
+        return int(text)
+    return float(text)
+
+
+def _decimals(number: str) -> str:
+    fraction = number.partition(".")[2]
+    return "." + "0" * len(fraction) if fraction else ""

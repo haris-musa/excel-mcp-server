@@ -16,7 +16,10 @@ create, read and edit Excel workbooks. It needs no Microsoft Excel installation.
   group rows, columns and sheets; set up printing; protect sheets
 - **Structure** sheets, rows and columns, merged cells, tables, charts (column, bar, line, area, pie, doughnut, radar, scatter and
   bubble, with combos, secondary axes, trendlines and error bars), images and PivotTables
-- **Rules**: conditional formatting and data validation (dropdowns, number limits)
+- **Data tools**: paste special, fill series, remove duplicates, text to columns, find and
+  replace, sheet and table filters with criteria
+- **Rules**: conditional formatting (scales, icon sets, top/bottom, duplicates, text, dates and
+  more) and data validation (dropdowns from cells, limits, input messages, alert styles)
 - **Macros**: read the VBA code in `.xlsm` files, module by module (never run). Writing VBA
   is off unless you start the server with `--allow-vba-write` (see below)
 - **Safe by design**: optional folder confinement, a formula safety check, read-only mode,
@@ -152,7 +155,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
 | --- | --- |
 | Workbooks | `create_workbook`, `describe_workbook`, `list_workbooks`, `export_workbook`, `import_workbook` |
 | Sheets | `describe_sheet`, `create_sheet`, `rename_sheet`, `copy_sheet`, `delete_sheet`, `insert_rows_or_columns`, `delete_rows_or_columns` |
-| Cells | `read_range`, `write_range`, `clear_range`, `copy_range`, `sort_range`, `find_cells` |
+| Cells | `read_range`, `write_range`, `clear_range`, `copy_range`, `sort_range`, `transform_range`, `find_cells`, `replace_cells` |
 | Formatting | `format_range`, `merge_cells`, `set_sheet_layout`, `add_conditional_format`, `add_data_validation` |
 | Objects | `create_table`, `create_chart`, `delete_chart`, `create_pivot_table`, `delete_pivot_table`, `insert_image`, `delete_image` |
 | Names and notes | `set_defined_name`, `delete_defined_name`, `set_note`, `delete_note` |

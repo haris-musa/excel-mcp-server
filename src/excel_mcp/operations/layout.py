@@ -11,11 +11,12 @@ from pydantic import Field
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.inputs import InputModel
 from excel_mcp.operations.cells import stored_cells
+from excel_mcp.operations.filters import AutoFilter, FormulaValues, apply_auto_filter
 from excel_mcp.operations.formatting import parse_color
 from excel_mcp.operations.print_setup import PrintSetup, apply_print_setup
 from excel_mcp.operations.protection import Protection, apply_protection
 from excel_mcp.operations.spans import Axis, parse_span, to_spans
-from excel_mcp.refs import MAX_ROW, parse_cell, parse_range
+from excel_mcp.refs import MAX_ROW, parse_cell
 
 MIN_AUTOFIT_WIDTH = 8
 MAX_AUTOFIT_WIDTH = 80
@@ -48,7 +49,10 @@ class SheetLayout(InputModel):
     freeze_panes: str | None = Field(
         default=None, description="First unfrozen cell: 'A2' freezes row 1, 'A1' unfreezes."
     )
-    auto_filter: str | None = Field(default=None, description="Range, e.g. 'A1:F100'.")
+    auto_filter: AutoFilter | None = Field(
+        default=None,
+        description="Filter dropdowns and criteria; rows that fail them are hidden, as in Excel.",
+    )
     tab_color: str | None = Field(default=None, description="Hex color.")
     rows: list[LineAction] | None = None
     columns: list[LineAction] | None = None
@@ -59,7 +63,9 @@ class SheetLayout(InputModel):
     protection: Protection | None = None
 
 
-def apply_layout(sheet: Worksheet, layout: SheetLayout) -> None:
+def apply_layout(
+    sheet: Worksheet, layout: SheetLayout, formula_values: FormulaValues, max_cells: int
+) -> None:
     if layout.column_widths or layout.autofit_columns or layout.columns:
         split_column_dimensions(sheet)
     for column, width in (layout.column_widths or {}).items():
@@ -75,13 +81,7 @@ def apply_layout(sheet: Worksheet, layout: SheetLayout) -> None:
         parse_cell(layout.freeze_panes)
         sheet.freeze_panes = layout.freeze_panes.upper()
     if layout.auto_filter is not None:
-        area = parse_range(layout.auto_filter)
-        for table in sheet.tables.values():
-            if area.overlaps(parse_range(table.ref)):
-                raise InvalidArgumentError(
-                    f"{area} overlaps table {table.displayName!r}, which has its own filter."
-                )
-        sheet.auto_filter.ref = str(area)
+        apply_auto_filter(sheet, layout.auto_filter, formula_values, max_cells)
     if layout.tab_color is not None:
         sheet.sheet_properties.tabColor = parse_color(layout.tab_color)
     for action in layout.rows or []:

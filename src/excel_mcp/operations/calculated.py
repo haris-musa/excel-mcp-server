@@ -1,13 +1,18 @@
 """Results for formula cells that Excel has not calculated yet."""
 
+import datetime as dt
+
 from openpyxl.styles.numbers import is_date_format
 from openpyxl.utils.datetime import from_excel
 from openpyxl.worksheet._read_only import ReadOnlyWorksheet
+from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.calc.engine import Engine
 from excel_mcp.calc.values import ExcelError, Scalar, UncalculableError
+from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.operations import cells
 from excel_mcp.operations.cells import RangeData
+from excel_mcp.operations.comparison import FormulaResults
 from excel_mcp.refs import CellRange, cell_name, parse_range
 from excel_mcp.values import CellValue, to_json
 from excel_mcp.workspace import Workspace, get_sheet, get_streamed_sheet
@@ -36,6 +41,45 @@ def read_calculated(
     if pending:
         _fill(workspace, path, sheet, data, pending)
     return data
+
+
+def formula_values(
+    workspace: Workspace, path: str, sheet: Worksheet, area: CellRange
+) -> FormulaResults:
+    """The results of the formula cells in ``area``, with dates as datetimes.
+
+    Reads the saved file, so call it before changes made in the same edit are saved.
+    """
+    formula_cells = [
+        (cell, row_number, col_number)
+        for row_number, row in enumerate(
+            sheet.iter_rows(
+                min_row=area.min_row,
+                max_row=area.max_row,
+                min_col=area.min_col,
+                max_col=area.max_col,
+            ),
+            start=area.min_row,
+        )
+        for col_number, cell in enumerate(row, start=area.min_col)
+        if cell.data_type == "f"
+    ]
+    if not formula_cells:
+        return {}
+    data = read_calculated(workspace, path, sheet.title, str(area), area.size)
+    if data.uncalculated:
+        cells_list = ", ".join(data.uncalculated)
+        raise InvalidArgumentError(
+            f"The result of formulas in {cells_list} is unknown until Excel recalculates, so "
+            "this cannot use them."
+        )
+    results: FormulaResults = {}
+    for cell, row, col in formula_cells:
+        value = _stored(data, parse_range(data.range), row, col)
+        if isinstance(value, str) and is_date_format(cell.number_format):
+            value = dt.datetime.fromisoformat(value)
+        results[cell.coordinate] = value
+    return results
 
 
 def _formula_cells(sheet: ReadOnlyWorksheet, area: CellRange) -> list[tuple[int, int]]:

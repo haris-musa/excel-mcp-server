@@ -115,15 +115,23 @@
     },
     {
       "name": "copy_range",
-      "description": "Copy values and formatting to another place, overwriting the destination."
+      "description": "Copy and paste a range to another place, with Paste Special options."
     },
     {
       "name": "sort_range",
       "description": "Sort a range's rows by one or more columns, like Data > Sort in Excel."
     },
     {
+      "name": "transform_range",
+      "description": "Remove duplicate rows, split text into columns, or fill down, right or with a series."
+    },
+    {
       "name": "find_cells",
       "description": "Find cells whose value contains (or equals) the query."
+    },
+    {
+      "name": "replace_cells",
+      "description": "Find and replace text in cells, including formulas, like Excel's Replace All."
     },
     {
       "name": "format_range",

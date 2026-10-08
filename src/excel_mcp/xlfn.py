@@ -6,6 +6,7 @@ opening at all, so formulas are prefixed when they are written. The names that L
 declares are stored with a ``_xlpm.`` prefix.
 """
 
+import re
 from dataclasses import dataclass, field
 
 from openpyxl.formula import Tokenizer
@@ -152,6 +153,9 @@ FUTURE_FUNCTIONS: dict[str, str] = {
 }
 
 
+_PREFIXES = re.compile(r"^(?:_xl(?:fn|ws|pm)\.)+")
+
+
 @dataclass
 class _Call:
     name: str
@@ -192,6 +196,15 @@ def add_prefixes(formula: str) -> str:
         tokens[position].value = "_xlpm." + tokens[position].value
         changed = True
     return tokenizer.render() if changed else formula
+
+
+def remove_prefixes(formula: str) -> str:
+    """Return the formula as Excel shows it, without the prefixes `add_prefixes` adds."""
+    tokenizer = Tokenizer(formula)
+    for token in tokenizer.items:
+        if token.type == Token.FUNC or token.subtype == Token.RANGE:
+            token.value = _PREFIXES.sub("", token.value)
+    return tokenizer.render()
 
 
 def _is_name(token: Token) -> bool:

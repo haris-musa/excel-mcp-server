@@ -1,17 +1,13 @@
 """Reading, writing, clearing, copying and searching cell contents."""
 
 from collections.abc import Iterator
-from copy import copy
 
 from openpyxl.cell.cell import Cell, MergedCell
-from openpyxl.formula.translate import Translator
 from openpyxl.worksheet._read_only import ReadOnlyWorksheet
-from openpyxl.worksheet.formula import ArrayFormula
 from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
 
 from excel_mcp.errors import InvalidArgumentError, LimitExceededError
-from excel_mcp.formulas import storable_formula
 from excel_mcp.refs import (
     MAX_COLUMN,
     MAX_ROW,
@@ -22,7 +18,7 @@ from excel_mcp.refs import (
     parse_range,
 )
 from excel_mcp.spill import show_spills
-from excel_mcp.values import CellValue, date_number_format, to_cell, to_json
+from excel_mcp.values import CellValue, date_number_format, to_cell, to_json, typed_value
 from excel_mcp.workspace import sheet_names
 
 
@@ -119,6 +115,24 @@ def _displayed(value: CellValue) -> CellValue:
     return show_spills(value) if isinstance(value, str) and value.startswith("=") else value
 
 
+def store_typed(cell: Cell, text: str, names: list[str]) -> None:
+    """Store ``text`` as if it were typed into the cell: a number, date, formula or text.
+
+    Cells formatted as Text keep it as text; a General cell takes the number format the
+    typed value implies (a percent sign gives a percentage).
+    """
+    if cell.number_format == "@":
+        store_value(cell, text)
+        return
+    value, number_format = typed_value(text, names)
+    if text.startswith("="):
+        cell.value = value  # pyright: ignore[reportArgumentType]
+    else:
+        store_value(cell, value)  # pyright: ignore[reportArgumentType]
+    if number_format and cell.number_format == "General":
+        cell.number_format = number_format
+
+
 def read_range(sheet: ReadOnlyWorksheet, ref: str | None, max_cells: int) -> RangeData:
     target = read_window(sheet, ref)
     if target.cols > max_cells:
@@ -190,43 +204,6 @@ def clear_range(sheet: Worksheet, ref: str, contents: bool, formats: bool, max_c
             if formats:
                 cell.style = "Normal"
     return str(target)
-
-
-def copy_range(
-    source: Worksheet, ref: str, target: Worksheet, target_cell: str, max_cells: int
-) -> str:
-    """Copy values and styles; relative references in formulas shift the way Excel shifts them."""
-    area = parse_range(ref).within(max_cells)
-    target_row, target_col = parse_cell(target_cell)
-    destination_area = CellRange(
-        target_row, target_col, target_row + area.rows - 1, target_col + area.cols - 1
-    )
-    snapshot = [
-        [(cell.value, cell.data_type, copy(cell._style), cell.coordinate) for cell in row]
-        for row in source.iter_rows(
-            min_row=area.min_row,
-            max_row=area.max_row,
-            min_col=area.min_col,
-            max_col=area.max_col,
-        )
-    ]
-    for row_offset, row in enumerate(snapshot):
-        for col_offset, (value, data_type, style, origin) in enumerate(row):
-            destination = writable_cell(target, target_row + row_offset, target_col + col_offset)
-            if isinstance(value, ArrayFormula):
-                raise InvalidArgumentError(
-                    f"{origin} holds an array formula, which cannot be copied."
-                )
-            if data_type == "f":
-                formula = Translator(str(value), origin=origin).translate_formula(
-                    destination.coordinate
-                )
-                destination.value = storable_formula(formula, sheet_names(target))
-            else:
-                destination.value = value
-                destination.data_type = data_type
-            destination._style = style
-    return str(destination_area)
 
 
 def find_cells(
