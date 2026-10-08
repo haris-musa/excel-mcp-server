@@ -7,7 +7,7 @@ from mcp.types import BlobResourceContents, CallToolResult, EmbeddedResource, Te
 from pydantic import Field
 
 from excel_mcp.operations import files, inspect, vba
-from excel_mcp.operations.inspect import WorkbookFile, WorkbookInfo
+from excel_mcp.operations.inspect import WorkbookInfo
 from excel_mcp.operations.sheets import validate_sheet_name
 from excel_mcp.server.params import WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
@@ -37,19 +37,13 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
 
     @tools.reader("Describe workbook")
     def describe_workbook(path: WorkbookPath) -> WorkbookInfo:
-        """List a workbook's sheets with their used ranges, plus its defined names.
+        """List a workbook's sheets with their used ranges, and its defined names.
 
-        Start here to learn a workbook's structure before reading or editing it.
-        `has_vba` tells whether the workbook contains macros, which read_vba can show.
+        Start here. Streams the file, so large workbooks are fine, but each sheet is read
+        once in full. `has_vba` (macros) is only present when true; see read_vba.
         """
-        resolved = workspace.resolve_existing(path)
-        with workspace.read(path) as workbook:
-            return inspect.describe_workbook(
-                workbook,
-                workspace.display(resolved),
-                resolved.stat().st_size,
-                vba.has_vba(resolved),
-            )
+        with workspace.stream(path) as workbook:
+            return inspect.describe_workbook(workbook, vba.has_vba(workspace.resolve(path)))
 
     @tools.reader("List workbooks")
     def list_workbooks(
@@ -61,21 +55,18 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             ),
         ] = "",
         recursive: Annotated[bool, Field(description="Also search subdirectories.")] = False,
-    ) -> list[WorkbookFile]:
-        """List Excel files in a directory."""
+    ) -> dict[str, int]:
+        """List Excel files in a directory as path to size in bytes."""
         folder = workspace.resolve_directory(directory)
-        return [
-            WorkbookFile(path=workspace.display(found), size_bytes=found.stat().st_size)
+        return {
+            workspace.display(found): found.stat().st_size
             for found in inspect.list_workbooks(folder, recursive, limit=500)
             if workspace.paths.allows(found.resolve())
-        ]
+        }
 
     @tools.reader("Export workbook")
     def export_workbook(path: WorkbookPath) -> CallToolResult:
-        """Return the workbook file itself as an embedded base64 resource.
-
-        Use this to hand a workbook to the user when the server runs remotely.
-        """
+        """Return the workbook file as an embedded base64 resource, for remote servers."""
         resolved = workspace.resolve_existing(path)
         name = workspace.display(resolved)
         return CallToolResult(

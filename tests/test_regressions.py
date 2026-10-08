@@ -185,7 +185,7 @@ async def test_find_cells_ignores_empty_grid(call: ToolCall, sample: Path) -> No
     workbook["Report"]["XFD1048576"] = "far away"
     workbook.save(sample)
     found = await call("find_cells", path="sales.xlsx", query="far", sheet="Report")
-    assert found["matches"] == [{"sheet": "Report", "cell": "XFD1048576", "value": "far away"}]
+    assert found["matches"] == {"Report": {"XFD1048576": "far away"}}
 
 
 async def test_list_workbooks_skips_links_outside(
@@ -197,7 +197,7 @@ async def test_list_workbooks_skips_links_outside(
         (files / "link.xlsx").symlink_to(outside)
     except OSError:
         pytest.skip("symlinks are not available")
-    assert await call("list_workbooks") == []
+    assert await call("list_workbooks") == {}
 
 
 async def test_tables_and_sheet_filters_cannot_overlap(

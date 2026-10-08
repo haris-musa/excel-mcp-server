@@ -20,9 +20,11 @@ AxisParam = Annotated[Axis, Field(description="Whether to act on rows or columns
 def register(tools: ToolRegistry, workspace: Workspace) -> None:
     @tools.reader("Describe sheet")
     def describe_sheet(path: WorkbookPath, sheet: SheetName) -> SheetDetails:
-        """Describe a sheet's structure: used range, frozen panes, merged ranges, tables,
-        charts, PivotTables, images, data validation, conditional formats, custom column
-        widths, hidden rows and columns, print area and whether it is protected."""
+        """Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables,
+        images, notes, validation, conditional formats, custom column widths, hidden rows and
+        columns, print area and protection. Empty items are omitted.
+
+        Loads the whole workbook into memory, so it is slow on very large files."""
         with workspace.read(path) as workbook:
             return inspect.describe_sheet(get_sheet(workbook, sheet))
 
@@ -48,7 +50,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
 
     @tools.writer("Copy sheet")
     def copy_sheet(path: WorkbookPath, sheet: SheetName, new_name: NewSheetName) -> str:
-        """Duplicate a worksheet (values, styles and dimensions) within the workbook."""
+        """Duplicate a worksheet (values, styles, dimensions)."""
         with workspace.edit(path) as workbook:
             sheets.copy_sheet(workbook, sheet, new_name)
         return f"Copied sheet {sheet!r} to {new_name!r}."
@@ -64,10 +66,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     def insert_rows_or_columns(
         path: WorkbookPath, sheet: SheetName, axis: AxisParam, at: LineIndex, count: LineCount = 1
     ) -> str:
-        """Insert empty rows or columns before position `at`, shifting the rest down or right.
+        """Insert empty rows or columns before position `at`.
 
-        Formulas, merged ranges, charts and tables that refer to shifted cells are not
-        updated, so check them afterwards.
+        References in formulas, merged ranges, charts and tables are not updated.
         """
         with workspace.edit(path) as workbook:
             sheets.insert_lines(get_sheet(workbook, sheet), axis, at, count)
@@ -77,10 +78,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     def delete_rows_or_columns(
         path: WorkbookPath, sheet: SheetName, axis: AxisParam, at: LineIndex, count: LineCount = 1
     ) -> str:
-        """Delete rows or columns starting at position `at`, shifting the rest up or left.
+        """Delete rows or columns starting at position `at`.
 
-        Formulas, merged ranges, charts and tables that refer to shifted cells are not
-        updated, so check them afterwards.
+        References in formulas, merged ranges, charts and tables are not updated.
         """
         with workspace.edit(path) as workbook:
             sheets.delete_lines(get_sheet(workbook, sheet), axis, at, count)

@@ -6,7 +6,7 @@ from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
 
-from excel_mcp.operations.cells import used_range
+from excel_mcp.operations.cells import streamed_used_range, used_range
 from excel_mcp.operations.chart_index import ChartInfo, list_charts
 from excel_mcp.operations.images import ImageInfo, list_images
 from excel_mcp.operations.layout import hidden_lines
@@ -14,36 +14,27 @@ from excel_mcp.operations.names import DefinedNameInfo, list_defined_names
 from excel_mcp.operations.notes import NoteInfo, list_notes
 from excel_mcp.operations.pivot_index import PivotInfo, list_pivots
 from excel_mcp.paths import EXCEL_SUFFIXES
-from excel_mcp.workspace import worksheets
+from excel_mcp.workspace import streamed_worksheets
 
 
 class SheetSummary(BaseModel):
     name: str
     used_range: str
-    rows: int
-    columns: int
-    visible: bool
+    hidden: bool = False
 
 
 class WorkbookInfo(BaseModel):
-    path: str
-    size_bytes: int
-    has_vba: bool
     sheets: list[SheetSummary]
-    defined_names: list[DefinedNameInfo]
-
-
-class NamedRange(BaseModel):
-    name: str
-    range: str
+    defined_names: list[DefinedNameInfo] = []
+    has_vba: bool = False
 
 
 class DataValidationInfo(BaseModel):
     range: str
-    type: str | None
-    operator: str | None
-    formula1: str | None
-    formula2: str | None
+    type: str | None = None
+    operator: str | None = None
+    formula1: str | None = None
+    formula2: str | None = None
 
 
 class ConditionalFormatInfo(BaseModel):
@@ -52,64 +43,49 @@ class ConditionalFormatInfo(BaseModel):
 
 
 class SheetDetails(BaseModel):
-    name: str
     used_range: str
-    freeze_panes: str | None
-    auto_filter: str | None
-    merged_ranges: list[str]
-    notes: list[NoteInfo]
-    tables: list[NamedRange]
-    charts: list[ChartInfo]
-    pivot_tables: list[PivotInfo]
-    data_validations: list[DataValidationInfo]
-    conditional_formats: list[ConditionalFormatInfo]
-    column_widths: dict[str, float]
-    hidden_rows: list[str]
-    hidden_columns: list[str]
-    images: list[ImageInfo]
-    print_area: str | None
-    protected: bool
+    freeze_panes: str | None = None
+    auto_filter: str | None = None
+    merged_ranges: list[str] = []
+    notes: list[NoteInfo] = []
+    tables: dict[str, str] = {}
+    charts: list[ChartInfo] = []
+    pivot_tables: list[PivotInfo] = []
+    data_validations: list[DataValidationInfo] = []
+    conditional_formats: list[ConditionalFormatInfo] = []
+    column_widths: dict[str, float] = {}
+    hidden_rows: list[str] = []
+    hidden_columns: list[str] = []
+    images: list[ImageInfo] = []
+    print_area: str | None = None
+    protected: bool = False
 
 
-class WorkbookFile(BaseModel):
-    path: str
-    size_bytes: int
-
-
-def summarize_sheet(sheet: Worksheet) -> SheetSummary:
-    area = used_range(sheet)
-    return SheetSummary(
-        name=sheet.title,
-        used_range=str(area),
-        rows=area.rows,
-        columns=area.cols,
-        visible=sheet.sheet_state == "visible",
-    )
-
-
-def describe_workbook(
-    workbook: Workbook, display_path: str, size_bytes: int, has_vba: bool
-) -> WorkbookInfo:
+def describe_workbook(workbook: Workbook, has_vba: bool) -> WorkbookInfo:
+    """Summarize a streamed workbook: each sheet costs one pass over its cells."""
     return WorkbookInfo(
-        path=display_path,
-        size_bytes=size_bytes,
-        has_vba=has_vba,
-        sheets=[summarize_sheet(sheet) for sheet in worksheets(workbook)],
+        sheets=[
+            SheetSummary(
+                name=sheet.title,
+                used_range=str(streamed_used_range(sheet)),
+                hidden=sheet.sheet_state != "visible",
+            )
+            for sheet in streamed_worksheets(workbook)
+        ],
         defined_names=list_defined_names(workbook),
+        has_vba=has_vba,
     )
 
 
 def describe_sheet(sheet: Worksheet) -> SheetDetails:
-    charts = list_charts(sheet)
     return SheetDetails(
-        name=sheet.title,
         used_range=str(used_range(sheet)),
         freeze_panes=sheet.freeze_panes,
         auto_filter=sheet.auto_filter.ref,
         merged_ranges=sorted(str(merged) for merged in sheet.merged_cells.ranges),
         notes=list_notes(sheet),
-        tables=[NamedRange(name=name, range=ref) for name, ref in sheet.tables.items()],
-        charts=charts,
+        tables=dict(sheet.tables.items()),
+        charts=list_charts(sheet),
         pivot_tables=list_pivots(sheet),
         data_validations=[
             DataValidationInfo(

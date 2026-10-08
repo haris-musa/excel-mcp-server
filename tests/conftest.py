@@ -66,6 +66,8 @@ def call(client: Client) -> ToolCall:
         result = await client.call_tool(tool, arguments)
         assert not result.is_error, result.content
         structured = result.structured_content
+        if structured is None:
+            return error_text(result)
         if isinstance(structured, dict) and set(structured) == {"result"}:
             return structured["result"]
         return structured

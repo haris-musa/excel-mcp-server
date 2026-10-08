@@ -13,7 +13,7 @@ from excel_mcp.operations.tables import is_valid_name, table_names
 class DefinedNameInfo(BaseModel):
     name: str
     refers_to: str
-    sheet: str | None
+    sheet: str | None = None
 
 
 def list_defined_names(workbook: Workbook) -> list[DefinedNameInfo]:

@@ -29,6 +29,8 @@ def to_json(value: object) -> CellValue:
     match value:
         case None | bool() | int() | float() | str():
             return value
+        case dt.datetime() if value.time() == dt.time():
+            return value.date().isoformat()
         case dt.datetime() | dt.date() | dt.time():
             return value.isoformat()
         case dt.timedelta():

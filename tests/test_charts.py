@@ -318,7 +318,7 @@ async def test_describe_sheet_lists_charts(call: ToolCall, sample: Path) -> None
         {"index": 2, "type": "column", "title": None, "anchor": "B2"},
         {"index": 3, "type": "pie", "title": None, "anchor": "B2"},
     ]
-    assert (await call("describe_sheet", path="sales.xlsx", sheet="Data"))["charts"] == []
+    assert "charts" not in await call("describe_sheet", path="sales.xlsx", sheet="Data")
 
 
 async def test_delete_chart(call: ToolCall, sample: Path) -> None:

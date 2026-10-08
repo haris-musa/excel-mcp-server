@@ -11,7 +11,7 @@
 A [Model Context Protocol](https://modelcontextprotocol.io) server that lets AI assistants
 create, read and edit Excel workbooks. It needs no Microsoft Excel installation.
 
-- **Read and write** cells, formulas and dates, with paging for large sheets and search
+- **Read and write** cells, formulas and dates, with paging and streaming reads for large sheets, and search
 - **Format** fonts, fills, borders, number formats, column widths and frozen panes; hide or
   group rows, columns and sheets; set up printing; protect sheets
 - **Structure** sheets, rows and columns, merged cells, tables, charts, images and PivotTables
