@@ -85,8 +85,10 @@ async def test_streamable_http(tmp_path: Path) -> None:
             result = await client.call_tool("create_workbook", {"path": "http.xlsx"})
             assert not result.is_error
     finally:
-        process.terminate()
-        process.wait(timeout=10)
+        # Uvicorn waits for open connections before exiting on SIGTERM. A server
+        # left running keeps the CI step's output pipe open until the job times out.
+        process.kill()
+        process.wait()
     assert (tmp_path / "http.xlsx").is_file()
 
 
