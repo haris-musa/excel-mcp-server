@@ -8,6 +8,22 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `create_table` and the new `edit_table` take `options` like Excel's Table Design tab: a totals
+  row with a function per column (sum, average, count, count numbers, max, min, standard
+  deviation, variance, or a custom formula) or a label, written as Excel writes them
+  (`totalsRowFunction`, `SUBTOTAL(109,...)` cells, `totalsRowLabel`); calculated columns from
+  a formula with structured references such as `=[@Price]*[@Qty]`, filled into every row, into
+  rows added by `edit_table` and into rows inserted later (`calculatedColumnFormula`); header
+  row on or off, banded columns, first and last column emphasis, filter buttons; and resizing
+  (`range`). Checked against the same steps in Excel.
+- The formula calculator reads structured references: `Sales[Price]`, `[@Price]`,
+  `Sales[[#This Row],[Price]]`, `Sales[#Headers]`, `[#Data]`, `[#Totals]`, `[#All]`,
+  combinations and column ranges. 34 cases recorded from Excel were added to its test fixture.
+- `clear_range` has `clear: "rules"`, which removes conditional formats and data validation
+  (Clear Rules and Data Validation > Clear All) from the range, splitting rules that cover more
+  cells; `formats` also clears conditional formats and `all` also clears validation, as in
+  Excel. Rules in Excel 2010 extensions (data bars, icon sets, cross-sheet validation) follow.
+
 - `create_chart` makes the Excel 2016 chart types `waterfall` (`totals`, `connector_lines`),
   `histogram` (`bins`: width, count, underflow, overflow), `pareto`, `box_whisker` (`box`:
   quartile method, mean marker and line, inner points, outliers), `treemap`
@@ -211,6 +227,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Breaking:** `create_table` no longer takes `style` and `striped_rows`; they are fields of
+  `options`.
+
 - **Breaking:** `options.legend` defaults to Excel's own for the chart type instead of
   always the bottom: none for a single series (except pie and doughnut: bottom), bottom for
   several, top for radar with several series, waterfall and treemap, none for the other
@@ -307,6 +326,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- `format_range` `font_name` took no effect in Excel on files this server creates: the font
+  kept its theme font scheme, so Excel used the theme's font. Setting a name now clears the
+  scheme, as picking a font in Excel does.
 - CI: a stuck test now dumps every thread's stack after 60 seconds and fails after 120,
   and the test job times out after 8 minutes instead of 15.
 - Editing a workbook no longer damages its charts: openpyxl dropped the chart style

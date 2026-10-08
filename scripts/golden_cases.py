@@ -253,8 +253,30 @@ INPUTS: dict[str, list[list[object]]] = {
     "Jan": [[1]],
     "Feb": [[2]],
     "Mar": [[3]],
+    "Orders": [
+        ["Item", "Qty", "Price", "Total"],
+        ["a", 2, 1.5, None],
+        ["b", 3, 2.5, None],
+        ["c", 4, 3.5, None],
+        ["a", 5, 1.25, None],
+    ],
     "Cases": [],
 }
+TABLES = [
+    {
+        "sheet": "Orders",
+        "range": "A1:D5",
+        "name": "Orders",
+        "options": {
+            "totals_row": True,
+            "columns": [
+                {"name": "Total", "formula": "=[@Qty]*[@Price]", "total": "sum"},
+                {"name": "Qty", "total": "sum"},
+                {"name": "Price", "total": "average"},
+            ],
+        },
+    }
+]
 HIDDEN_ROWS = {"Sub": [3]}
 NAMES = {"Rate": "Data!$D$2", "Units": "Data!$C$2:$C$11", "Tax": "0.2"}
 
@@ -799,4 +821,40 @@ CASES += [
     "=SUM(Data!A2#)",
     "=ISREF(Spill!K1#)",
     "=ROWS(Spill!K1#)",
+]
+CASES += [
+    "=SUM(Orders[Qty])",
+    "=SUM(Orders[Total])",
+    "=SUM(Orders[[#All],[Qty]])",
+    "=SUM(Orders[[#Headers],[#Data],[Qty]])",
+    "=SUM(Orders[[#Data],[#Totals],[Qty]])",
+    "=Orders[[#Totals],[Qty]]",
+    "=Orders[[#Totals],[Total]]",
+    "=Orders[[#Totals],[Price]]",
+    "=Orders[[#Totals],[Item]]",
+    "=Orders[[#Headers],[Total]]",
+    "=COUNTA(Orders[#Headers])",
+    "=COUNTA(Orders[#All])",
+    "=ROWS(Orders)",
+    "=COLUMNS(Orders)",
+    "=ROWS(Orders[#All])",
+    "=ROWS(Orders[[#Data],[#Totals]])",
+    "=INDEX(Orders[Price],2)",
+    "=INDEX(Orders,2,3)",
+    "=SUM(Orders[[Qty]:[Price]])",
+    "=COLUMNS(Orders[[Qty]:[Total]])",
+    "=SUM(Orders[[#Totals],[Qty]:[Price]])",
+    "=SUMPRODUCT(Orders[Qty],Orders[Price])",
+    "=SUM(Orders[Qty]*2)",
+    "=MAX(Orders[Total])",
+    "=AVERAGE(Orders[[#Data],[Price]])",
+    '=COUNTIF(Orders[Item],"a")',
+    '=SUMIFS(Orders[Total],Orders[Item],"a")',
+    '=VLOOKUP("c",Orders[[Item]:[Price]],3,FALSE)',
+    '=MATCH("c",Orders[Item],0)',
+    "=SUBTOTAL(109,Orders[Qty])",
+    "=Orders[[#Headers],[Item]]&Orders[[#Totals],[Item]]",
+    "=ISREF(Orders[Qty])",
+    "=SUM(Orders[Missing])",
+    "=SUM(Orders[[#This Row],[Qty]])",
 ]

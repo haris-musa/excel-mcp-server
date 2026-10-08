@@ -300,6 +300,38 @@
     3
    ]
   ],
+  "Orders": [
+   [
+    "Item",
+    "Qty",
+    "Price",
+    "Total"
+   ],
+   [
+    "a",
+    2,
+    1.5,
+    null
+   ],
+   [
+    "b",
+    3,
+    2.5,
+    null
+   ],
+   [
+    "c",
+    4,
+    3.5,
+    null
+   ],
+   [
+    "a",
+    5,
+    1.25,
+    null
+   ]
+  ],
   "Cases": [],
   "Chain": [
    [
@@ -11245,6 +11277,31 @@
    3
   ]
  },
+ "tables": [
+  {
+   "sheet": "Orders",
+   "range": "A1:D5",
+   "name": "Orders",
+   "options": {
+    "totals_row": true,
+    "columns": [
+     {
+      "name": "Total",
+      "formula": "=[@Qty]*[@Price]",
+      "total": "sum"
+     },
+     {
+      "name": "Qty",
+      "total": "sum"
+     },
+     {
+      "name": "Price",
+      "total": "average"
+     }
+    ]
+   }
+  }
+ ],
  "cases": [
   {
    "formula": "=1+2*3",
@@ -21771,6 +21828,142 @@
   {
    "formula": "=ROWS(Spill!K1#)",
    "expected": 1.0
+  },
+  {
+   "formula": "=SUM(Orders[Qty])",
+   "expected": 14.0
+  },
+  {
+   "formula": "=SUM(Orders[Total])",
+   "expected": 30.75
+  },
+  {
+   "formula": "=SUM(Orders[[#All],[Qty]])",
+   "expected": 28.0
+  },
+  {
+   "formula": "=SUM(Orders[[#Headers],[#Data],[Qty]])",
+   "expected": 14.0
+  },
+  {
+   "formula": "=SUM(Orders[[#Data],[#Totals],[Qty]])",
+   "expected": 28.0
+  },
+  {
+   "formula": "=Orders[[#Totals],[Qty]]",
+   "expected": 14.0
+  },
+  {
+   "formula": "=Orders[[#Totals],[Total]]",
+   "expected": 30.75
+  },
+  {
+   "formula": "=Orders[[#Totals],[Price]]",
+   "expected": 2.1875
+  },
+  {
+   "formula": "=Orders[[#Totals],[Item]]",
+   "expected": "Total"
+  },
+  {
+   "formula": "=Orders[[#Headers],[Total]]",
+   "expected": "Total"
+  },
+  {
+   "formula": "=COUNTA(Orders[#Headers])",
+   "expected": 4.0
+  },
+  {
+   "formula": "=COUNTA(Orders[#All])",
+   "expected": 24.0
+  },
+  {
+   "formula": "=ROWS(Orders)",
+   "expected": "#NAME?"
+  },
+  {
+   "formula": "=COLUMNS(Orders)",
+   "expected": "#NAME?"
+  },
+  {
+   "formula": "=ROWS(Orders[#All])",
+   "expected": 6.0
+  },
+  {
+   "formula": "=ROWS(Orders[[#Data],[#Totals]])",
+   "expected": 5.0
+  },
+  {
+   "formula": "=INDEX(Orders[Price],2)",
+   "expected": 2.5
+  },
+  {
+   "formula": "=INDEX(Orders,2,3)",
+   "expected": "#NAME?"
+  },
+  {
+   "formula": "=SUM(Orders[[Qty]:[Price]])",
+   "expected": 22.75
+  },
+  {
+   "formula": "=COLUMNS(Orders[[Qty]:[Total]])",
+   "expected": 3.0
+  },
+  {
+   "formula": "=SUM(Orders[[#Totals],[Qty]:[Price]])",
+   "expected": 16.1875
+  },
+  {
+   "formula": "=SUMPRODUCT(Orders[Qty],Orders[Price])",
+   "expected": 30.75
+  },
+  {
+   "formula": "=SUM(Orders[Qty]*2)",
+   "expected": 28.0
+  },
+  {
+   "formula": "=MAX(Orders[Total])",
+   "expected": 14.0
+  },
+  {
+   "formula": "=AVERAGE(Orders[[#Data],[Price]])",
+   "expected": 2.1875
+  },
+  {
+   "formula": "=COUNTIF(Orders[Item],\"a\")",
+   "expected": 2.0
+  },
+  {
+   "formula": "=SUMIFS(Orders[Total],Orders[Item],\"a\")",
+   "expected": 9.25
+  },
+  {
+   "formula": "=VLOOKUP(\"c\",Orders[[Item]:[Price]],3,FALSE)",
+   "expected": 3.5
+  },
+  {
+   "formula": "=MATCH(\"c\",Orders[Item],0)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=SUBTOTAL(109,Orders[Qty])",
+   "expected": 14.0
+  },
+  {
+   "formula": "=Orders[[#Headers],[Item]]&Orders[[#Totals],[Item]]",
+   "expected": "ItemTotal"
+  },
+  {
+   "formula": "=ISREF(Orders[Qty])",
+   "expected": true
+  },
+  {
+   "formula": "=SUM(Orders[Missing])",
+   "expected": "#REF!"
+  },
+  {
+   "formula": "=SUM(Orders[[#This Row],[Qty]])",
+   "expected": "#VALUE!"
   }
  ],
  "uncalculated": [
@@ -21830,6 +22023,10 @@
   1915,
   1916,
   1917,
-  2598
+  2598,
+  2612,
+  2613,
+  2617,
+  2631
  ]
 }

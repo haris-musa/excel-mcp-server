@@ -8,6 +8,7 @@ from excel_mcp.operations import chart_index, charts, sparklines, tables
 from excel_mcp.operations.charts_data import SeriesIn
 from excel_mcp.operations.charts_options import ChartOptions, ChartType, SeriesSpec
 from excel_mcp.operations.sparkline_style import SparklineStyle
+from excel_mcp.operations.table_options import TableOptions
 from excel_mcp.refs import parse_range
 from excel_mcp.server.params import SheetName, WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
@@ -20,18 +21,47 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         path: WorkbookPath,
         sheet: SheetName,
         range: Annotated[str, Field(description="Including the header row, e.g. 'A1:D20'.")],
+        options: Annotated[TableOptions, Field(default_factory=TableOptions)],
         name: Annotated[
             str | None, Field(description="Unique in the workbook. Default: TableN.")
         ] = None,
-        style: Annotated[str, Field(description="Excel table style.")] = "TableStyleMedium9",
-        striped_rows: Annotated[bool, Field(description="Shade alternate rows.")] = True,
     ) -> str:
-        """Turn a range with a header row of unique text labels into an Excel table."""
+        """Turn a range with a header row of unique text labels into an Excel table.
+
+        Options set the style, banding, header and totals rows, filter buttons, calculated
+        columns and totals. Defaults are Excel's: striped rows, filter buttons.
+        """
         with workspace.edit(path) as workbook:
             table_name, area = tables.create_table(
-                workbook, get_sheet(workbook, sheet), range, name, style, striped_rows
+                workbook,
+                get_sheet(workbook, sheet),
+                range,
+                name,
+                options,
+                workspace.limits.max_cells,
             )
         return f"Created table {table_name!r} at {sheet}!{area}."
+
+    @tools.destroyer("Edit table")
+    def edit_table(
+        path: WorkbookPath,
+        sheet: SheetName,
+        table: Annotated[str, Field(description="Table name (describe_sheet lists them).")],
+        options: Annotated[TableOptions, Field(default_factory=TableOptions)],
+        range: Annotated[
+            str | None,
+            Field(
+                description="Resize: the new range, with the same top-left cell. Not with a "
+                "totals row. New columns take their header cell's text, or 'ColumnN'."
+            ),
+        ] = None,
+    ) -> str:
+        """Change a table's options, add calculated columns and totals, or resize it."""
+        with workspace.edit(path) as workbook:
+            area = tables.edit_table(
+                get_sheet(workbook, sheet), table, range, options, workspace.limits.max_cells
+            )
+        return f"Table {table!r} is now at {sheet}!{area}."
 
     @tools.writer("Create chart")
     def create_chart(
