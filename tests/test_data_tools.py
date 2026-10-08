@@ -47,7 +47,7 @@ async def test_read_modes(call: ToolCall, sample: Path) -> None:
     formulas = await call("read_range", path="sales.xlsx", sheet="Report", mode="formulas")
     assert formulas["values"] == [["=1+1"]]
     values = await call("read_range", path="sales.xlsx", sheet="Report", mode="values")
-    assert values["values"] == []
+    assert values["values"] == [[2]]
 
 
 async def test_write_rejects_unsafe_formulas_without_saving(

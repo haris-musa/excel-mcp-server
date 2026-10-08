@@ -14,6 +14,7 @@ from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.formulas import check_formula
+from excel_mcp.xlfn import add_prefixes
 
 CellValue = str | int | float | bool | None
 
@@ -53,7 +54,7 @@ def to_cell(value: CellValue, sheet_names: Iterable[str]) -> CellValue | dt.date
         raise InvalidArgumentError("Text cannot contain control characters such as '\x01'.")
     if value.startswith("="):
         check_formula(value, sheet_names)
-        return value
+        return add_prefixes(value)
     try:
         if _ISO_DATE.fullmatch(value):
             return dt.date.fromisoformat(value)
