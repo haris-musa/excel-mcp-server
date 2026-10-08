@@ -67,6 +67,12 @@ def _project(workbook: Workbook) -> Project:
         raise InvalidArgumentError(
             "Macros can only be stored in .xlsm or .xltm workbooks, not in .xlsx or .xltx files."
         )
+    if any(part.startswith("xl/vbaProjectSignature") for part in workbook.vba_archive.namelist()):
+        raise InvalidArgumentError(
+            "This workbook's VBA project is digitally signed; changing it would invalidate "
+            "the signature. Remove the signature in Excel (Tools > Digital Signature) or work "
+            "on an unsigned copy."
+        )
     return macros.read_project(workbook) or macros.new_project(workbook)
 
 

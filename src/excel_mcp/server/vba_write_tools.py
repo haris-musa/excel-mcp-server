@@ -38,7 +38,8 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         """Set the VBA code of a module in an .xlsm or .xltm workbook, creating it if new.
 
         Existing modules keep their type; other modules and forms are untouched. A macro
-        workbook without a VBA project gets one. .xlsx files cannot hold macros. The code is
+        workbook without a VBA project gets one. .xlsx files cannot hold macros, and digitally
+        signed projects are refused (changing them would invalidate the signature). The code is
         only stored, never run here: tell the user to review it before enabling macros in Excel.
         """
         with workspace.edit(path) as workbook:
