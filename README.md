@@ -225,8 +225,9 @@ Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
   recalculated from the source, which Excel confirms on refresh (about 200 PivotTables are
   checked against Excel, and the slicer variants against Excel's own results). One slicer can
   filter several PivotTables that share a cache, such as those of copied sheets. Limits: a
-  PivotTable that Excel refreshed after this server made it keeps its figures, so only
-  selecting every item works on it; fields grouped in a PivotTable take no slicer.
+  PivotTable made or refreshed by Excel keeps its figures in the cells (the hidden items and
+  a refresh-on-open mark are stored, so Excel recalculates when it opens the file); fields
+  grouped in a PivotTable take no slicer.
 - Inserting or deleting rows and columns, and renaming a sheet, update references like
   Excel. Hyperlink targets and 3D references (`Sheet1:Sheet3!A1`) are left alone (Excel does
   the same). An edit that cuts through an array formula, a PivotTable, a table header or two

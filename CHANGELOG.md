@@ -39,7 +39,10 @@ All notable changes to this project are documented here. The format follows
   or period, and one slicer connected to several PivotTables that share a cache. Selecting
   items filters like the buttons do: PivotTable items are hidden and the figures recalculated
   from the source (equal to Excel's after a refresh), table rows are filtered and hidden.
-  `describe_sheet` lists slicers and timelines with their selection.
+  `describe_sheet` lists slicers and timelines with their selection. On PivotTables made or
+  refreshed by Excel the items are hidden in the definition and the cache is marked to refresh
+  on load, so Excel recalculates when it opens the file (the tool result says so); checked
+  against Excel's own slicer selections on Excel-made PivotTables.
 - `copy_sheet` copies slicers and timelines as Excel does (a copy of a sheet with its
   PivotTables and slicers filters itself; slicers elsewhere gain the copied PivotTables).
 - Deleting a table, or the column of a table slicer, with `delete_rows_or_columns` removes
