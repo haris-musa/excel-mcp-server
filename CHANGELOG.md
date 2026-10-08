@@ -17,7 +17,9 @@ All notable changes to this project are documented here. The format follows
   `uncalculated` with the reason. It is checked against 2,500+ results recorded from real
   Excel, and its work per call is bounded.
 - Formulas written with functions Excel added after 2007 are stored with the `_xlfn.`
-  prefix (and `_xlpm.` for `LET` names).
+  prefix (and `_xlpm.` for `LET` names): in cells, `copy_range`, `sort_range`, conditional
+  formats, data validation and defined names.
+- Formula chains of any length (running balances, amortization schedules) are calculated.
 
 - `set_sheet_layout` can hide, show, group and ungroup rows and columns (`rows`, `columns`),
   hide or show a whole sheet (`visibility`; the last visible sheet cannot be hidden), set

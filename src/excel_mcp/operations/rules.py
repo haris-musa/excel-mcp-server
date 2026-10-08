@@ -9,7 +9,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel, Field
 
 from excel_mcp.errors import InvalidArgumentError
-from excel_mcp.formulas import check_formula
+from excel_mcp.formulas import storable_operand
 from excel_mcp.operations.formatting import parse_color
 from excel_mcp.refs import parse_range
 from excel_mcp.workspace import sheet_names
@@ -113,8 +113,8 @@ def _build_conditional_rule(rule: ConditionalFormat, names: list[str]):
         case "formula":
             if not rule.formula:
                 raise InvalidArgumentError("formula rules need a formula.")
-            check_formula(rule.formula, names)
-            return FormulaRule(formula=[rule.formula.removeprefix("=")], fill=fill, font=font)
+            formula = storable_operand(rule.formula, names)
+            return FormulaRule(formula=[formula], fill=fill, font=font)
 
 
 def add_data_validation(sheet: Worksheet, ref: str, rule: DataValidationRule) -> str:
@@ -146,10 +146,8 @@ def _build_validation(rule: DataValidationRule, names: list[str]) -> DataValidat
         case "custom":
             if not rule.formula:
                 raise InvalidArgumentError("custom validation needs a formula.")
-            check_formula(rule.formula, names)
-            return DataValidation(
-                type="custom", formula1=rule.formula.removeprefix("="), **messages
-            )
+            formula = storable_operand(rule.formula, names)
+            return DataValidation(type="custom", formula1=formula, **messages)
         case _:
             if rule.operator is None or rule.minimum is None:
                 raise InvalidArgumentError(f"{rule.type} validation needs an operator and minimum.")
@@ -164,5 +162,4 @@ def _build_validation(rule: DataValidationRule, names: list[str]) -> DataValidat
 
 def _checked_operand(value: str, names: list[str]) -> str:
     """Rule operands are stored as formulas without the leading '='."""
-    check_formula(value if value.startswith("=") else f"={value}", names)
-    return value.removeprefix("=")
+    return storable_operand(value, names)

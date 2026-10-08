@@ -199,8 +199,8 @@ Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
   calculated. The calculator is checked against more than 2,500 formulas recorded from real
   Excel (`tests/fixtures/formula_golden.json`).
 - Functions Excel added after 2007 (`IFS`, `XLOOKUP`, `STDEV.S`, `SORT`, ...) are written
-  with the `_xlfn.` prefix Excel expects; formulas in conditional formats and data
-  validation are not prefixed.
+  with the `_xlfn.` prefix Excel expects, wherever formulas are stored (cells, copied and
+  sorted cells, conditional formats, data validation, defined names).
 - Legacy `.xls` and `.csv` files are not supported.
 - PivotTables are created from a snapshot and can use text, number and date columns of up to
   100,000 cells; Excel refreshes them from the live source data. Filters start with all items

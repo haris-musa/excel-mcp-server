@@ -11,7 +11,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
 
 from excel_mcp.errors import InvalidArgumentError, LimitExceededError
-from excel_mcp.formulas import check_formula
+from excel_mcp.formulas import storable_formula
 from excel_mcp.refs import MAX_COLUMN, MAX_ROW, CellRange, cell_name, parse_cell, parse_range
 from excel_mcp.values import CellValue, date_number_format, to_cell, to_json
 from excel_mcp.workspace import sheet_names
@@ -201,8 +201,7 @@ def copy_range(
                 formula = Translator(str(value), origin=origin).translate_formula(
                     destination.coordinate
                 )
-                check_formula(formula, sheet_names(target))
-                destination.value = formula
+                destination.value = storable_formula(formula, sheet_names(target))
             else:
                 destination.value = value
                 destination.data_type = data_type

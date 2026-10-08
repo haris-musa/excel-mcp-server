@@ -721,3 +721,38 @@ for _span in (30, 90, 182, 183, 200, 300, 364, 365, 366):
         f"=TBILLYIELD(DATE(2024,3,1),DATE(2024,3,1)+{_span},97.5)",
         f"=TBILLEQ(DATE(2024,3,1),DATE(2024,3,1)+{_span},0.045)",
     ]
+
+
+# Long chains: a running balance and a 30-year amortization schedule.
+INPUTS["Chain"] = [[i % 7 + 1, "=A1" if i == 0 else f"=B{i}+A{i + 1}"] for i in range(2000)]
+INPUTS["Loan"] = [
+    [250000, None, None, None, None, None],
+    [0.065, None, None, None, None, None],
+    [360, None, None, None, None, None],
+    ["Month", "Opening", "Payment", "Interest", "Principal", "Closing"],
+] + [
+    [
+        month,
+        "=$A$1" if month == 1 else f"=F{month + 3}",
+        "=-PMT($A$2/12,$A$3,$A$1)",
+        f"=-IPMT($A$2/12,A{month + 4},$A$3,$A$1)",
+        f"=-PPMT($A$2/12,A{month + 4},$A$3,$A$1)",
+        f"=B{month + 4}-E{month + 4}",
+    ]
+    for month in range(1, 361)
+]
+CASES += [
+    "=Chain!B2000",
+    "=Chain!B1000",
+    "=Chain!B1",
+    "=SUM(Chain!B1:B2000)",
+    "=MAX(Chain!B1:B2000)",
+    ("=Loan!F364", 1e-8),
+    ("=Loan!B364", 1e-8),
+    "=Loan!F200",
+    "=Loan!B5",
+    "=SUM(Loan!D5:D364)",
+    "=SUM(Loan!E5:E364)",
+    "=MAX(Loan!F5:F364)",
+    "=Loan!C364*Loan!A3-SUM(Loan!D5:D364)",
+]
