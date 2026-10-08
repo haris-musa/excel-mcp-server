@@ -7,6 +7,7 @@ from excel_mcp.errors import PathNotAllowedError
 EXCEL_SUFFIXES = frozenset({".xlsx", ".xlsm", ".xltx", ".xltm"})
 MACRO_SUFFIXES = frozenset({".xlsm", ".xltm"})
 TEMPLATE_SUFFIXES = frozenset({".xltx", ".xltm"})
+IMAGE_SUFFIXES = frozenset({".png", ".jpg", ".jpeg"})
 
 
 class PathPolicy:
@@ -31,6 +32,13 @@ class PathPolicy:
         if path.suffix.lower() not in EXCEL_SUFFIXES:
             allowed = ", ".join(sorted(EXCEL_SUFFIXES))
             raise PathNotAllowedError(f"Path {raw_path!r} must point to an Excel file ({allowed}).")
+        return path
+
+    def resolve_image(self, raw_path: str) -> Path:
+        path = self._resolve(raw_path)
+        if path.suffix.lower() not in IMAGE_SUFFIXES:
+            allowed = ", ".join(sorted(IMAGE_SUFFIXES))
+            raise PathNotAllowedError(f"Path {raw_path!r} must point to an image ({allowed}).")
         return path
 
     def resolve_directory(self, raw_path: str) -> Path:

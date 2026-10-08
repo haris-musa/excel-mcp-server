@@ -21,7 +21,8 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     @tools.reader("Describe sheet")
     def describe_sheet(path: WorkbookPath, sheet: SheetName) -> SheetDetails:
         """Describe a sheet's structure: used range, frozen panes, merged ranges, tables,
-        charts, data validation, conditional formats and custom column widths."""
+        charts, images, data validation, conditional formats, custom column widths, hidden
+        rows and columns, print area and whether it is protected."""
         with workspace.read(path) as workbook:
             return inspect.describe_sheet(get_sheet(workbook, sheet))
 

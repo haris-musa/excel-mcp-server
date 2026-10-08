@@ -13,7 +13,7 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`list_workbooks`](#list_workbooks) | List Excel files in a directory. |
 | [`export_workbook`](#export_workbook) | Return the workbook file itself as an embedded base64 resource. |
 | [`import_workbook`](#import_workbook) | Save an uploaded workbook file on the server, e.g. to edit it remotely. |
-| [`describe_sheet`](#describe_sheet) | Describe a sheet's structure: used range, frozen panes, merged ranges, tables, charts, data validation, conditional formats and custom column widths. |
+| [`describe_sheet`](#describe_sheet) | Describe a sheet's structure: used range, frozen panes, merged ranges, tables, charts, images, data validation, conditional formats, custom column widths, hidden rows and columns, print area and whether it is protected. |
 | [`create_sheet`](#create_sheet) | Add an empty worksheet. |
 | [`rename_sheet`](#rename_sheet) | Rename a worksheet. Formulas that refer to the old name are not updated. |
 | [`copy_sheet`](#copy_sheet) | Duplicate a worksheet (values, styles and dimensions) within the workbook. |
@@ -28,7 +28,7 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`find_cells`](#find_cells) | Find cells whose value contains (or equals) the query. |
 | [`format_range`](#format_range) | Change fonts, fill, borders, alignment or number format of a range. |
 | [`merge_cells`](#merge_cells) | Merge a range into one cell, or split a merged range again. |
-| [`set_sheet_layout`](#set_sheet_layout) | Set column widths, row heights, frozen panes, the auto filter and the tab color. |
+| [`set_sheet_layout`](#set_sheet_layout) | Set column widths, row heights, hidden or grouped lines, frozen panes, the auto filter, the tab color, sheet visibility, print setup and sheet protection. |
 | [`add_conditional_format`](#add_conditional_format) | Add a conditional format rule to a range. |
 | [`add_data_validation`](#add_data_validation) | Restrict what can be entered in a range, e.g. a dropdown list. |
 | [`create_table`](#create_table) | Turn a range with a header row of unique text labels into an Excel table. |
@@ -39,6 +39,8 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`delete_defined_name`](#delete_defined_name) | Delete a defined name. Formulas that use it are not changed and will show #NAME?. |
 | [`set_note`](#set_note) | Add a note to a cell, replacing the cell's existing note. |
 | [`delete_note`](#delete_note) | Remove the note from a cell. |
+| [`insert_image`](#insert_image) | Place a PNG or JPEG picture with its top-left corner at a cell. |
+| [`delete_image`](#delete_image) | Remove a picture from a sheet. |
 | [`read_vba`](#read_vba) | Show the VBA macro code in an .xlsm or .xltm workbook, module by module. |
 
 ## create_workbook
@@ -106,7 +108,8 @@ Save an uploaded workbook file on the server, e.g. to edit it remotely.
 **Describe sheet** (read-only)
 
 Describe a sheet's structure: used range, frozen panes, merged ranges, tables,
-charts, data validation, conditional formats and custom column widths.
+charts, images, data validation, conditional formats, custom column widths, hidden
+rows and columns, print area and whether it is protected.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -350,11 +353,15 @@ Merging keeps only the top-left value.
 
 **Set sheet layout** (modifies files)
 
-Set column widths, row heights, frozen panes, the auto filter and the tab color.
+Set column widths, row heights, hidden or grouped lines, frozen panes, the auto
+filter, the tab color, sheet visibility, print setup and sheet protection.
 
-`autofit_columns` estimates widths from the text length of the column's values.
-`freeze_panes` is the first unfrozen cell: 'A2' freezes the top row, 'B2' the top row
-and first column, and 'A1' unfreezes. `auto_filter` is a range such as 'A1:F100'.
+Every part is optional and only the parts you give change. `autofit_columns` estimates
+widths from the text length of the column's values. `freeze_panes` is the first
+unfrozen cell: 'A2' freezes the top row, 'B2' the top row and first column, and 'A1'
+unfreezes. `auto_filter` is a range such as 'A1:F100'. `rows` and `columns` take spans
+like '3:5' and 'B:D'. Sheet protection discourages edits in Excel but is not security:
+it does not stop this server, and the password is weakly hashed.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -372,6 +379,71 @@ and first column, and 'A1' unfreezes. `auto_filter` is a range such as 'A1:F100'
 | `freeze_panes` | string | no | First unfrozen cell: 'A2' freezes row 1, 'A1' unfreezes. |
 | `auto_filter` | string | no | Range with filter buttons, e.g. 'A1:F100'. |
 | `tab_color` | string | no | Sheet tab hex color. |
+| `rows` | array of object | no | Hide, show or group rows. |
+| `columns` | array of object | no | Hide, show or group columns. |
+| `visibility` | `visible` \| `hidden` | no | Show or hide the whole sheet; one sheet must stay visible. |
+| `print_setup` | object | no | Page setup for printing. |
+| `protection` | object | no | Protect or unprotect the sheet. |
+
+`print_setup` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `orientation` | `portrait` \| `landscape` | no | Page orientation. |
+| `paper_size` | `letter` \| `legal` \| `tabloid` \| `a3` \| `a4` \| `a5` | no | Paper size. |
+| `scale` | integer | no | Print at this percent; not with fit_to_pages. |
+| `fit_to_pages` | object | no | Fit the printout to a number of pages. |
+| `margins_cm` | object | no | Page margins. |
+| `print_area` | string | no | Range to print, e.g. 'A1:H40'; '' prints the whole sheet. |
+| `title_rows` | string | no | Rows repeated on every page, e.g. '1:2'; '' clears. |
+| `title_columns` | string | no | Columns repeated on every page, e.g. 'A:B'; '' clears. |
+| `center_horizontally` | boolean | no | Center the data between the left and right margins. |
+| `center_vertically` | boolean | no | Center the data between the top and bottom margins. |
+| `gridlines` | boolean | no | Print cell gridlines. |
+| `header` | object | no | Page header. Codes: &P page, &N page count, &D date, &A sheet, &F file. |
+| `footer` | object | no | Page footer, same codes. |
+
+`fit_to_pages` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `wide` | integer | no | Pages across; 0 = as many as needed. Default: `1`. |
+| `tall` | integer | no | Pages down; 0 = as many as needed. Default: `1`. |
+
+`margins_cm` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `left` | number | no | Left margin in cm. |
+| `right` | number | no | Right margin in cm. |
+| `top` | number | no | Top margin in cm. |
+| `bottom` | number | no | Bottom margin in cm. |
+| `header` | number | no | Header distance in cm. |
+| `footer` | number | no | Footer distance in cm. |
+
+`header` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `left` | string | no | Left text; '' clears it. |
+| `center` | string | no | Center text; '' clears it. |
+| `right` | string | no | Right text; '' clears it. |
+
+`footer` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `left` | string | no | Left text; '' clears it. |
+| `center` | string | no | Center text; '' clears it. |
+| `right` | string | no | Right text; '' clears it. |
+
+`protection` fields:
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `enabled` | boolean | yes | True protects the sheet, false unprotects it. |
+| `password` | string | no | Password to set; when unprotecting, the password the sheet has. |
+| `allow` | array of `select_locked_cells` \| `select_unlocked_cells` \| `format_cells` \| `format_columns` \| `format_rows` \| `insert_columns` \| `insert_rows` \| `insert_hyperlinks` \| `delete_columns` \| `delete_rows` \| `sort` \| `auto_filter` \| `pivot_tables` | no | Actions users may still do on a protected sheet. Default: `['select_locked_cells', 'select_unlocked_cells']`. |
 
 ## add_conditional_format
 
@@ -579,6 +651,39 @@ Remove the note from a cell.
 | `path` | string | yes | Path to an .xlsx, .xlsm, .xltx or .xltm file. Relative paths are resolved in the server's workbook directory when one is configured; otherwise use an absolute path. |
 | `sheet` | string | yes | Worksheet name, e.g. 'Sheet1'. |
 | `cell` | string | yes | A single cell in A1 notation, e.g. 'B2'. |
+
+## insert_image
+
+**Insert image** (modifies files)
+
+Place a PNG or JPEG picture with its top-left corner at a cell.
+
+Give width_cm or height_cm to resize it; give both only to stretch it. List a
+sheet's images with describe_sheet and remove one with delete_image.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Path to an .xlsx, .xlsm, .xltx or .xltm file. Relative paths are resolved in the server's workbook directory when one is configured; otherwise use an absolute path. |
+| `sheet` | string | yes | Worksheet name, e.g. 'Sheet1'. |
+| `image_path` | string | yes | PNG or JPEG file, in the same folders as workbooks. |
+| `cell` | string | yes | A single cell in A1 notation, e.g. 'B2'. |
+| `width_cm` | number | no | Width in cm. Default: natural size. |
+| `height_cm` | number | no | Height in cm; with only one size the ratio is kept. |
+
+## delete_image
+
+**Delete image** (modifies files, may overwrite data)
+
+Remove a picture from a sheet.
+
+Images after the removed one move up by one index, so call describe_sheet again
+before deleting another.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Path to an .xlsx, .xlsm, .xltx or .xltm file. Relative paths are resolved in the server's workbook directory when one is configured; otherwise use an absolute path. |
+| `sheet` | string | yes | Worksheet name, e.g. 'Sheet1'. |
+| `index` | integer | yes | 1-based image number, as listed under 'images' by describe_sheet. |
 
 ## read_vba
 

@@ -12,8 +12,9 @@ A [Model Context Protocol](https://modelcontextprotocol.io) server that lets AI 
 create, read and edit Excel workbooks. It needs no Microsoft Excel installation.
 
 - **Read and write** cells, formulas and dates, with paging for large sheets and search
-- **Format** fonts, fills, borders, number formats, column widths and frozen panes
-- **Structure** sheets, rows and columns, merged cells, tables, charts and summary tables
+- **Format** fonts, fills, borders, number formats, column widths and frozen panes; hide or
+  group rows, columns and sheets; set up printing; protect sheets
+- **Structure** sheets, rows and columns, merged cells, tables, charts, images and summary tables
 - **Rules**: conditional formatting and data validation (dropdowns, number limits)
 - **Macros**: read the VBA code in `.xlsm` files, module by module (read-only, never run)
 - **Safe by design**: optional folder confinement, a formula safety check, read-only mode,
@@ -150,7 +151,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
 | Sheets | `describe_sheet`, `create_sheet`, `rename_sheet`, `copy_sheet`, `delete_sheet`, `insert_rows_or_columns`, `delete_rows_or_columns` |
 | Cells | `read_range`, `write_range`, `clear_range`, `copy_range`, `sort_range`, `find_cells` |
 | Formatting | `format_range`, `merge_cells`, `set_sheet_layout`, `add_conditional_format`, `add_data_validation` |
-| Objects | `create_table`, `create_chart`, `delete_chart`, `create_summary_table` |
+| Objects | `create_table`, `create_chart`, `delete_chart`, `create_summary_table`, `insert_image`, `delete_image` |
 | Names and notes | `set_defined_name`, `delete_defined_name`, `set_note`, `delete_note` |
 | Macros | `read_vba` |
 

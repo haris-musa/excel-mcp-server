@@ -22,7 +22,9 @@ or anyone who can reach the HTTP endpoint. Its defences are:
 
 - **Files**: only Excel files (`.xlsx`, `.xlsm`, `.xltx`, `.xltm`), confined to the
   `--allow-dir` folders when they are set (always in HTTP mode), after resolving symlinks.
-  Existing files are only replaced when a tool is asked to overwrite them.
+  Existing files are only replaced when a tool is asked to overwrite them. Pictures for
+  `insert_image` follow the same folder rules, must be PNG or JPEG files up to 10 MB and
+  50 megapixels, and are validated with Pillow before they are embedded.
 - **Formulas**: every formula is tokenized and rejected if it uses a function that reaches
   the network, other programs or host information, a DDE link, or another workbook. A
   reference can only name sheets of the workbook it is in. Uploaded workbooks are checked

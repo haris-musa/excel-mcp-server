@@ -25,6 +25,8 @@ from excel_mcp.errors import (
 )
 from excel_mcp.paths import MACRO_SUFFIXES, TEMPLATE_SUFFIXES, PathPolicy
 
+MAX_IMAGE_BYTES = 10 * 1024 * 1024
+
 
 class Workspace:
     """Resolves client paths and gives access to workbooks within the limits.
@@ -51,6 +53,18 @@ class Workspace:
                 f"Workbook is {size:,} bytes; the limit is {self.limits.max_file_bytes:,}."
             )
         return path
+
+    def read_image(self, raw_path: str) -> bytes:
+        """Read an image file confined like workbooks; its content is checked by the caller."""
+        path = self.paths.resolve_image(raw_path)
+        if not path.is_file():
+            raise InvalidArgumentError(f"Image {self.display(path)} does not exist.")
+        size = path.stat().st_size
+        if size > MAX_IMAGE_BYTES:
+            raise LimitExceededError(
+                f"Image is {size:,} bytes; the limit is {MAX_IMAGE_BYTES:,}. Use a smaller image."
+            )
+        return path.read_bytes()
 
     def resolve_directory(self, raw_path: str) -> Path:
         return self.paths.resolve_directory(raw_path)
