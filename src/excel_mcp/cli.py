@@ -1,9 +1,12 @@
 """Command line entry point: ``excel-mcp-server stdio`` or ``excel-mcp-server streamable-http``."""
 
 import argparse
+import logging
 import os
 import sys
+import warnings
 from pathlib import Path
+from typing import TextIO
 
 from excel_mcp import __version__
 from excel_mcp.config import Limits, Settings
@@ -14,11 +17,14 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8017
 DEFAULT_HTTP_DIRECTORY = "./excel_files"
 
+logger = logging.getLogger(__name__)
+
 
 def main(argv: list[str] | None = None) -> None:
     args = _parser().parse_args(argv)
     settings = _settings(args)
     server = create_server(settings)
+    warnings.showwarning = _log_warning
 
     if args.transport == "stdio":
         if not settings.allowed_dirs:
@@ -39,6 +45,19 @@ def main(argv: list[str] | None = None) -> None:
     for directory in settings.allowed_dirs:
         directory.mkdir(parents=True, exist_ok=True)
     serve(server, args.host, args.port, token)
+
+
+def _log_warning(
+    message: Warning | str,
+    category: type[Warning],
+    filename: str,
+    lineno: int,
+    file: TextIO | None = None,
+    line: str | None = None,
+) -> None:
+    # Library warnings can quote workbook content (openpyxl echoes defined names),
+    # so they are only shown at --log-level DEBUG.
+    logger.debug("%s: %s", category.__name__, message)
 
 
 def _settings(args: argparse.Namespace) -> Settings:

