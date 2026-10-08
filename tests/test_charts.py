@@ -175,11 +175,10 @@ async def test_axis_range_and_number_format(call: ToolCall, sample: Path) -> Non
     assert number_format.get("sourceLinked") == "0"
 
 
-@pytest.mark.parametrize("chart_type", ["column", "bar"])
-async def test_secondary_axis_line_combo(call: ToolCall, sample: Path, chart_type: str) -> None:
+async def test_secondary_axis_line_combo(call: ToolCall, sample: Path) -> None:
     await add_chart(
         call,
-        chart_type,
+        "column",
         secondary_line_columns=["Price"],
         colors=["#111111", "#222222"],
         data_labels=True,
@@ -232,6 +231,7 @@ async def test_secondary_column_errors(call_error: ToolCall, sample: Path) -> No
         ("column", {"markers": True}, "markers does not apply to column"),
         ("area", {"smooth": True}, "smooth does not apply to area"),
         ("line", {"secondary_line_columns": ["Units"]}, "does not apply to line"),
+        ("bar", {"secondary_line_columns": ["Units"]}, "does not apply to bar"),
         ("doughnut", {"y_axis_min": 0}, "y_axis_min does not apply to doughnut"),
         ("pie", {"y_axis_number_format": "0%"}, "y_axis_number_format does not apply"),
         ("column", {"y_axis_min": 5, "y_axis_max": 5}, "must be below"),

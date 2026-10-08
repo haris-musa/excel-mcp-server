@@ -11,7 +11,7 @@ All notable changes to this project are documented here. The format follows
 - `create_chart` options: `legend_position`, `data_labels`, `grouping` (stacked and
   100% stacked column, bar, line and area charts), `colors`, `markers`, `smooth`,
   `y_axis_min`, `y_axis_max`, `y_axis_number_format` and `secondary_line_columns` (combo
-  charts with lines on a secondary axis). Options that do not fit the chart type are
+  column charts with lines on a secondary axis). Options that do not fit the chart type are
   rejected with an explanation.
 - `create_chart` draws `doughnut` and `radar` charts.
 - `describe_sheet` lists each chart with its 1-based `index`, `type`, `title` and `anchor`
