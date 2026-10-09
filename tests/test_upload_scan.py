@@ -280,3 +280,36 @@ def test_parts_that_claim_an_excel_content_type_are_checked_in_any_namespace() -
     body = f'<item xmlns="urn:company:properties"><f>{ATTACK}</f></item>'.encode()
     content = _package([("customXml/item1.xml", body)], replace={"[Content_Types].xml": types})
     assert "not allowed" in _rejected(content)
+
+
+_X14 = 'xmlns="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main"'
+
+
+def test_form_control_links_are_checked() -> None:
+    plain = f'<formControlPr {_X14} fmlaLink="$A$1" fmlaRange="Sheet!$B$1:$B$5"/>'
+    _decode(_package([("xl/ctrlProps/ctrlProp1.xml", plain.encode())]))
+    hostile = f'<formControlPr {_X14} fmlaLink="{_QUOTED}"/>'
+    assert "not allowed" in _rejected(_package([("xl/ctrlProps/ctrlProp1.xml", hostile.encode())]))
+    elsewhere = f'<formControlPr {_X14} fmlaRange="[1]Sheet1!$B$1:$B$5"/>'
+    assert "other workbooks" in _rejected(
+        _package([("xl/ctrlProps/ctrlProp2.xml", elsewhere.encode())])
+    )
+
+
+async def test_uploads_are_scanned_before_macros_are_stripped(
+    call_error: ToolCall, files: Path
+) -> None:
+    sheet = (
+        f"<worksheet {MAIN}><sheetData><row><c><f>{ATTACK}</f></c></row></sheetData></worksheet>"
+    )
+    content = _package(
+        [
+            ("xl/vbaProject.bin", b"\xd0\xcf\x11\xe0 not really a project"),
+            ("x/s.dat", sheet.encode()),
+        ]
+    )
+    message = await call_error(
+        "import_workbook", path="up.xlsx", content_base64=base64.b64encode(content).decode()
+    )
+    assert "not allowed" in message
+    assert not (files / "up.xlsx").exists()

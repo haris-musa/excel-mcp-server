@@ -32,6 +32,7 @@ _FORMULA_ELEMENTS = frozenset(
     }
 )
 _PIVOT_FORMULA_ELEMENTS = frozenset({"cacheField", "calculatedItem"})
+_CONTROL_LINKS = ("fmlaLink", "fmlaRange", "fmlaGroup", "fmlaTxbx")
 _CONTENT_TYPES = "[Content_Types].xml"
 # Namespaces whose formulas Excel evaluates: SpreadsheetML (and its 2009-2016 extensions: x14,
 # x15, slicers, timelines), the Excel macro namespace "xm", charts and Excel 2016 charts.
@@ -183,6 +184,11 @@ def _formulas(name: str, element: ElementTree.Element) -> Iterator[Formula]:
     # Calculated PivotTable fields and items.
     elif name in _PIVOT_FORMULA_ELEMENTS and (value := element.get("formula")):
         yield Formula(value, pivot=True)
+    # Form controls name the cells and ranges they are linked to.
+    elif name == "formControlPr":
+        for attribute in _CONTROL_LINKS:
+            if value := element.get(attribute):
+                yield Formula(value, pivot=True)
     # Color scale, data bar and icon set thresholds can be formulas too.
     elif name == "cfvo" and (value := element.get("val")):
         yield Formula(value)
