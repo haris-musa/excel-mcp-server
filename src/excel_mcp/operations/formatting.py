@@ -20,8 +20,6 @@ _HEX_COLOR = re.compile(r"#?([0-9A-Fa-f]{6})")
 
 
 class CellFormat(InputModel):
-    """Fields left out keep the cell's current setting."""
-
     bold: bool | None = None
     italic: bool | None = None
     underline: bool | None = None
@@ -31,21 +29,21 @@ class CellFormat(InputModel):
     font_color: str | None = Field(default=None, description="Hex, e.g. '#1F4E78'.")
     fill_color: str | None = Field(default=None, description="Hex.")
     number_format: str | None = Field(
-        default=None, description="Excel code: '#,##0.00', '0%', 'yyyy-mm-dd' or '@' (text)."
+        default=None, description="Excel code: '#,##0.00', '0%', 'yyyy-mm-dd', '@' (text)."
     )
     horizontal_alignment: HorizontalAlignment | None = None
     vertical_alignment: VerticalAlignment | None = None
     wrap_text: bool | None = None
     border_style: BorderStyle | None = Field(
-        default=None, description="On all four sides of every cell; 'none' removes it."
+        default=None, description="All four sides of every cell."
     )
     border_color: str | None = Field(default=None, description="Hex. Default: black.")
     locked: bool | None = Field(
         default=None,
-        description="Locked cells (the default) cannot be edited on a protected sheet.",
+        description="Default on: locked cells cannot be edited on a protected sheet.",
     )
     formula_hidden: bool | None = Field(
-        default=None, description="Hide the formula in the formula bar on a protected sheet."
+        default=None, description="Hide the formula on a protected sheet."
     )
 
 

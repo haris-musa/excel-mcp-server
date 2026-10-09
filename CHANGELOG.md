@@ -366,8 +366,18 @@ All notable changes to this project are documented here. The format follows
   rule type are rejected. New rules take the next free priority instead of a count-based one.
 - **Breaking:** `add_data_validation`'s `error_message` and `prompt` are limited to Excel's
   255 characters, and a list needs either `options` or `source`.
+- Tool descriptions and schemas are about 30% smaller (68,900 to 47,900 characters for the
+  default tools), which every client pays for in context: shorter docstrings and parameter
+  descriptions, no `additionalProperties: false` (unknown fields are still rejected by the
+  server), no `type` next to an `enum`, no `default` for an absent boolean or list, no
+  `null` option for optional parameters, plain type unions as one `type` list, and no
+  `minimum` of 0 or 1. `path`, `sheet`, cell and range parameters have no description of their own; the
+  server instructions explain paths and A1 notation. A test keeps the total under a budget.
 
 ### Fixed
+
+- A parameter's own description was replaced by the one of its type in the schema (for
+  example `at` and `source` of `create_chart` read "Cell" and "Range").
 
 - `format_range` `font_name` took no effect in Excel on files this server creates: the font
   kept its theme font scheme, so Excel used the theme's font. Setting a name now clears the

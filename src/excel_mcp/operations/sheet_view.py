@@ -12,13 +12,13 @@ from excel_mcp.refs import parse_cell
 
 
 class ViewOptions(InputModel):
-    zoom: int | None = Field(default=None, ge=10, le=400, description="Percent.")
+    zoom: int | None = Field(default=None, ge=10, le=400)
     gridlines: bool | None = None
-    headings: bool | None = Field(default=None, description="Row numbers and column letters.")
+    headings: bool | None = Field(default=None, description="Row and column labels.")
     show_formulas: bool | None = None
-    right_to_left: bool | None = Field(default=None, description="Columns run right to left.")
+    right_to_left: bool | None = None
     active: Literal[True] | None = Field(
-        default=None, description="Make this the sheet that is shown when the file opens."
+        default=None, description="Show this sheet when the file opens."
     )
     selected_cell: str | None = Field(default=None, description="e.g. 'B2'.")
 

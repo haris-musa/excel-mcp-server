@@ -130,8 +130,22 @@ def _compact(result: Any) -> Any:
 
 
 def _slim_schema(schema: dict[str, Any]) -> None:
-    """Drop generated titles and turn ``X | null`` optional parameters into plain ``X``."""
+    """Drop generated titles and keywords the model does not need, and turn ``X | null`` into ``X``.
+
+    Unknown fields are rejected on the server, an enum states its own type, an absent optional
+    boolean or list is false or empty anyway, and a count or size is obviously not negative.
+    """
     schema.pop("title", None)
+    if schema.get("additionalProperties") is False:
+        del schema["additionalProperties"]
+    if "enum" in schema:
+        schema.pop("type", None)
+    if schema.get("default") is False or schema.get("default") == []:
+        del schema["default"]
+    if schema.get("exclusiveMinimum") == 0:
+        del schema["exclusiveMinimum"]
+    if schema.get("minimum") in (0, 1):
+        del schema["minimum"]
     for key in ("properties", "$defs"):
         for sub_schema in schema.get(key, {}).values():
             _slim_schema(sub_schema)
@@ -142,6 +156,22 @@ def _slim_schema(schema: dict[str, Any]) -> None:
         _slim_schema(option)
     if "anyOf" in schema and schema.get("default", 0) is None:
         remaining = [option for option in schema["anyOf"] if option != {"type": "null"}]
+        del schema["default"]
         if len(remaining) == 1:
-            del schema["anyOf"], schema["default"]
-            schema.update(remaining[0])
+            del schema["anyOf"]
+            schema.update(remaining[0] | schema)  # the parameter's own description wins
+        else:
+            schema["anyOf"] = remaining
+    _merge_plain_types(schema)
+
+
+def _merge_plain_types(schema: dict[str, Any]) -> None:
+    """Write a union of plain types as one ``type`` list; ``number`` already includes integers."""
+    options = schema.get("anyOf", [])
+    if not options or any(option.keys() != {"type"} for option in options):
+        return
+    types = [option["type"] for option in options]
+    if "number" in types and "integer" in types:
+        types.remove("integer")
+    del schema["anyOf"]
+    schema["type"] = types[0] if len(types) == 1 else types

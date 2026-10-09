@@ -37,18 +37,16 @@ Results = Callable[[Worksheet, CellRange], FormulaResults]
 
 
 class Source(InputModel):
-    sheet: str = Field(description="Sheet the table or PivotTable is on.")
-    name: str = Field(description="Table or PivotTable name, as describe_sheet lists it.")
+    sheet: str = Field(description="Sheet it is on.")
+    name: str = Field(description="Table or PivotTable name.")
 
 
 class Timeline(InputModel):
-    level: Literal["years", "quarters", "months", "days"] = Field(
-        default="months", description="Unit of the time scale."
-    )
+    level: Literal["years", "quarters", "months", "days"] = Field(default="months")
     start: dt.date | None = Field(
-        default=None, description="First day of the period shown, e.g. '2025-03-01'. With end."
+        default=None, description="First day shown, '2025-03-01'. With end."
     )
-    end: dt.date | None = Field(default=None, description="Last day of the period shown.")
+    end: dt.date | None = Field(default=None, description="Last day shown.")
 
 
 @dataclass(frozen=True)

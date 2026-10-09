@@ -24,16 +24,14 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     @tools.writer("Create pivot table")
     def create_pivot_table(
         path: WorkbookPath,
-        sheet: Annotated[SheetName, Field(description="Sheet to put the PivotTable on.")],
-        at: Annotated[
-            CellRef, Field(description="Top-left cell of the PivotTable; the area must be empty.")
-        ],
+        sheet: Annotated[SheetName, Field(description="Sheet for the PivotTable.")],
+        at: Annotated[CellRef, Field(description="Top-left cell; the area must be empty.")],
         source: Annotated[
             RangeRef,
             Field(
-                description="Header row of unique text labels, then one record per row, e.g. "
-                "'Data!A1:E200' (`sheet` if no sheet is given). Each column holds only text, "
-                "only numbers or only dates (blanks are fine), not formulas."
+                description="Header row of unique text labels, then records, e.g. "
+                "'Data!A1:E200' (no sheet: `sheet`). Each column holds only text, numbers or "
+                "dates (blanks fine), not formulas."
             ),
         ],
         row_fields: Annotated[
@@ -50,44 +48,38 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         ],
         column_fields: Annotated[
             list[str],
-            Field(max_length=64, description="Headers to spread across the top, outermost first."),
+            Field(max_length=64, description="Headers across the top, outermost first."),
         ] = [],  # noqa: B006
         filter_fields: Annotated[
             list[str],
-            Field(max_length=64, description="Headers offered as page filters above the table."),
+            Field(max_length=64, description="Headers as page filters."),
         ] = [],  # noqa: B006
         field_settings: Annotated[
             list[PivotField],
             Field(
                 max_length=64,
-                description="Per-field settings for headers used in row, column or filter fields: "
-                "items to show (`show_items`), sort order, date or number grouping.",
+                description="Items to show, sort order and grouping for row, column or "
+                "filter headers.",
             ),
         ] = [],  # noqa: B006
         calculated_fields: Annotated[
             list[CalculatedField],
-            Field(max_length=64, description="Fields calculated from others, usable in values."),
+            Field(max_length=64, description="Usable in value_fields."),
         ] = [],  # noqa: B006
-        layout: Annotated[
-            Layout, Field(description="Report layout of the row labels.")
-        ] = "tabular",
-        subtotals: Annotated[bool, Field(description="Show subtotals of outer fields.")] = True,
+        layout: Annotated[Layout, Field(description="Row label layout.")] = "tabular",
+        subtotals: Annotated[bool, Field(description="Of outer fields.")] = True,
         values_in: Annotated[
-            ValuesIn, Field(description="Where several value fields go: as columns or as rows.")
+            ValuesIn, Field(description="Where several value fields go.")
         ] = "columns",
         name: Annotated[
             str | None, Field(description="PivotTable name. Default: PivotTableN.")
         ] = None,
     ) -> Changed:
-        """Add an Excel PivotTable that summarizes a block of data. Returns its name and cells.
+        """Add a PivotTable that summarizes a block of data. Returns its name and cells.
 
-        Excel can refresh it (Data > Refresh All) when the source changes, and shows the same
-        figures. They are also written into the cells, laid out as Excel does (subtotals, Grand
-        Total row and column), so other tools can read them; leave the Grand Total out of a
-        chart's source. A field can be used only once among row, column and filter fields;
-        filters show every item unless `field_settings` sets `show_items`. Items that tie when
-        sorted by value may swap places when Excel refreshes. describe_sheet lists PivotTables;
-        delete_pivot_table removes one.
+        Excel can refresh it; its figures (with subtotals and Grand Totals) are also
+        written into the cells. A field can be used only once among row, column and filter
+        fields.
         """
         request = PivotRequest(
             row_fields,
@@ -118,12 +110,10 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     def delete_pivot_table(
         path: WorkbookPath,
         sheet: SheetName,
-        name: Annotated[str, Field(description="PivotTable name, as listed by describe_sheet.")],
+        name: Annotated[str, Field(description="Name from describe_sheet.")],
     ) -> Changed:
-        """Remove a PivotTable and clear the cells it fills. The source data is left untouched.
-
-        Fails while slicers or timelines are connected to it.
-        """
+        """Remove a PivotTable and clear its cells; the source stays. Fails while slicers or
+        timelines are connected to it."""
         with workspace.edit(path) as workbook:
             removed = pivot_index.delete_pivot(
                 get_sheet(workbook, sheet), name, workspace.limits.max_cells

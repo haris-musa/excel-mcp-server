@@ -22,61 +22,49 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     @tools.writer("Add slicer")
     def add_slicer(
         path: WorkbookPath,
-        sheet: Annotated[SheetName, Field(description="Sheet to put the slicer on.")],
-        target: Annotated[Source, Field(description="The table or PivotTable to filter.")],
-        field: Annotated[str, Field(description="Header of the column or field to filter by.")],
-        at: Annotated[CellRef, Field(description="Top-left cell of the slicer.")],
+        sheet: Annotated[SheetName, Field(description="Sheet for the slicer.")],
+        target: Annotated[Source, Field(description="Table or PivotTable to filter.")],
+        field: Annotated[str, Field(description="Column header or field.")],
+        at: CellRef,
         width_cm: Annotated[
             float | None, Field(gt=0, le=100, description="Default: 5.1 (timeline: 9.3).")
         ] = None,
         height_cm: Annotated[
             float | None, Field(gt=0, le=100, description="Default: 7.4 (timeline: 3.8).")
         ] = None,
-        caption: Annotated[
-            str | None, Field(description="Header text. Default: the field.")
-        ] = None,
+        caption: Annotated[str | None, Field(description="Default: the field.")] = None,
         name: Annotated[str | None, Field(description="Default: the field name.")] = None,
-        columns: Annotated[int, Field(ge=1, le=20, description="Columns of buttons.")] = 1,
+        columns: Annotated[int, Field(ge=1, le=20, description="Button columns.")] = 1,
         style: Annotated[
             str | None,
             Field(
                 pattern=r"^(Time)?SlicerStyle(Light|Dark|Other)\d$",
-                description="Built-in style, e.g. SlicerStyleDark2 (timeline: "
-                "TimeSlicerStyleLight1). Default: Excel's.",
+                description="e.g. SlicerStyleDark2, TimeSlicerStyleLight1 (timeline).",
             ),
         ] = None,
         selected_items: Annotated[
             list[str], Field(max_length=10_000, description="Items to show. Default: all.")
         ] = [],  # noqa: B006
         sort: Annotated[
-            Literal["ascending", "descending"], Field(description="Order of the items.")
+            Literal["ascending", "descending"], Field(description="Item order.")
         ] = "ascending",
-        hide_empty_items: Annotated[
-            bool, Field(description="Hide items that have no data.")
-        ] = False,
+        hide_empty_items: Annotated[bool, Field(description="Hide items without data.")] = False,
         connect: Annotated[
             list[Source],
             Field(
                 max_length=50,
-                description="More PivotTables that share the target's data cache, as copies of "
-                "a sheet do; the slicer filters them all.",
+                description="More PivotTables sharing the target's data cache.",
             ),
         ] = [],  # noqa: B006
         timeline: Annotated[
             Timeline | None,
-            Field(
-                description="Make a timeline instead of a slicer, for a date field of a "
-                "PivotTable: time scale and the period shown."
-            ),
+            Field(description="Make a timeline instead, for a date field of a PivotTable."),
         ] = None,
     ) -> Changed:
-        """Add a slicer (Insert > Slicer) or timeline to a sheet, to filter a PivotTable or table.
+        """Add a slicer (Insert > Slicer) or timeline that filters a PivotTable or table.
 
-        `selected_items` limits the data as clicking the buttons does: PivotTable items are hidden
-        and its figures recalculated from the source; table rows are filtered and hidden.
-        On a PivotTable Excel made or refreshed, the cells keep their old figures and Excel
-        recalculates them when the file is opened. describe_sheet lists slicers; delete_slicer
-        removes one.
+        `selected_items` filters as clicking buttons does. A PivotTable not made by
+        create_pivot_table keeps its old figures until Excel recalculates on open.
         """
         request = SlicerRequest(
             target, connect, field, at, width_cm, height_cm, caption, name, columns, style,
@@ -97,13 +85,10 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     def delete_slicer(
         path: WorkbookPath,
         sheet: SheetName,
-        name: Annotated[str, Field(description="Slicer or timeline name, from describe_sheet.")],
+        name: Annotated[str, Field(description="Name from describe_sheet.")],
     ) -> Changed:
-        """Remove a slicer or timeline.
-
-        As in Excel, a table and a PivotTable row, column or filter field stay filtered; a
-        timeline's period and the hidden items of a field the PivotTable does not show are cleared.
-        """
+        """Remove a slicer or timeline. As in Excel, tables and PivotTable fields stay filtered;
+        a timeline's period is cleared."""
         with workspace.edit(path) as workbook:
             slicer_manage.delete_slicer(
                 workbook, get_sheet(workbook, sheet), name, workspace.limits.max_cells

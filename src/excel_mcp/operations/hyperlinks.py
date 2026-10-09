@@ -20,12 +20,12 @@ _MAX_TARGET = 2_079
 
 
 class Link(InputModel):
-    cell: str = Field(description="A cell of the written block, e.g. 'B2'.")
+    cell: str = Field(description="A cell of the block, e.g. 'B2'.")
     target: str = Field(
-        description="'https://...' or 'mailto:...', or a place in this workbook: "
-        "\"#'Sheet 2'!A1\" or '#DefinedName'."
+        description="'https://...', 'mailto:...', or in this workbook \"#'Sheet 2'!A1\" or "
+        "'#DefinedName'."
     )
-    tooltip: str | None = Field(default=None, description="Text shown on hover.")
+    tooltip: str | None = None
 
 
 class LinkInfo(BaseModel):

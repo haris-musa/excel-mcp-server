@@ -23,47 +23,43 @@ _FIELDS = {
 
 
 class Transform(InputModel):
-    """Only the fields named for the ``operation`` apply."""
-
     operation: Operation = Field(
-        description="remove_duplicates keeps the first of equal rows and moves the rest of the "
-        "range up. text_to_columns splits one column into the columns to its right. fill fills "
-        "the range from its first row or column."
+        description="remove_duplicates keeps the first of equal rows. text_to_columns "
+        "splits one column into the columns to its right. fill fills from the first row or "
+        "column."
     )
     columns: list[str] | None = Field(
         default=None,
-        description="remove_duplicates: columns that must match (header text or letter). "
+        description="remove_duplicates: columns that must match, by header or letter. "
         "Default: all.",
     )
-    has_header: bool = Field(default=True, description="remove_duplicates: first row is a header.")
+    has_header: bool = Field(default=True, description="remove_duplicates.")
     delimiters: list[str] | None = Field(
         default=None,
         description="text_to_columns: 'tab', 'semicolon', 'comma', 'space' or a character.",
     )
     fixed_widths_chars: list[int] | None = Field(
         default=None,
-        description="text_to_columns instead of delimiters: widths of all fields but the last.",
+        description="text_to_columns, instead of delimiters: widths of all but the last field.",
     )
     text_qualifier: Literal['"', "'", ""] = Field(
-        default='"', description="text_to_columns: quote that protects delimiters; '' for none."
+        default='"', description="text_to_columns: '' for none."
     )
     merge_delimiters: bool = Field(
-        default=False, description="text_to_columns: consecutive delimiters count as one."
+        default=False, description="text_to_columns: treat consecutive delimiters as one."
     )
-    direction: Direction | None = Field(
-        default=None, description="fill: down from the first row, or right from the first column."
-    )
+    direction: Direction | None = Field(default=None, description="fill.")
     series: Series = Field(
         default="copy",
-        description="fill: copy repeats the first line; the others continue each seed cell.",
+        description="fill: copy repeats the first line; the others continue it.",
     )
     step: float = Field(
-        default=1, description="fill series: amount added (linear, date) or multiplied by (growth)."
+        default=1, description="fill series: added (linear, date) or multiplied by (growth)."
     )
     stop: str | float | None = Field(
-        default=None, description="fill series: last value; dates as '2026-12-31'."
+        default=None, description="fill series: last value, dates '2026-12-31'."
     )
-    unit: DateUnit = Field(default="day", description="fill date series: step unit.")
+    unit: DateUnit = Field(default="day", description="fill date series.")
 
 
 def apply_transform(

@@ -1,5 +1,6 @@
 """Checks on what clients see: schemas, annotations, errors and modes."""
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +12,12 @@ from excel_mcp.server import create_server
 from tests.conftest import error_text
 
 pytestmark = pytest.mark.anyio
+
+# Parameters whose name says it all; the server instructions explain paths and A1 notation.
+SELF_EXPLAINING = {
+    "path", "sheet", "range", "at", "cell", "query", "text", "author", "name", "count",
+    "max_results", "content_base64",
+}  # fmt: skip
 
 
 def _untyped_schemas(schema: Any, where: str = "") -> list[str]:
@@ -39,7 +46,23 @@ async def test_every_tool_is_documented_and_typed(client: Client) -> None:
         assert tool.annotations.open_world_hint is False, tool.name
         assert _untyped_schemas(tool.input_schema) == [], tool.name
         for name, prop in tool.input_schema["properties"].items():
-            assert "description" in prop or "$ref" in prop, (tool.name, name)
+            explained = (
+                bool({"description", "$ref", "enum"} & prop.keys()) or prop.get("type") == "boolean"
+            )
+            assert explained or name in SELF_EXPLAINING, (tool.name, name)
+
+
+async def test_schema_budget(files: Path) -> None:
+    """Every tool's description and schema is paid for in each client's context."""
+    for allow_vba_write, budget in ((False, 48_000), (True, 49_000)):
+        settings = Settings(allowed_dirs=[files], allow_vba_write=allow_vba_write)
+        async with Client(create_server(settings)) as client:
+            tools = (await client.list_tools()).tools
+        size = sum(
+            len(tool.description or "") + len(json.dumps(tool.input_schema, separators=(",", ":")))
+            for tool in tools
+        )
+        assert size <= budget, f"{size} characters of tool schema; the budget is {budget}"
 
 
 async def test_tool_order_is_stable(files: Path) -> None:
