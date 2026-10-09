@@ -99,7 +99,7 @@ def test_duplicate_parts_are_rejected() -> None:
     ],
 )
 def test_remote_data_parts_are_rejected(name: str, content: bytes) -> None:
-    assert "fetch data" in _rejected(_package([(name, content)]))
+    assert "reach outside the file" in _rejected(_package([(name, content)]))
 
 
 def test_remote_data_content_types_and_relationships_are_rejected() -> None:
@@ -108,13 +108,13 @@ def test_remote_data_content_types_and_relationships_are_rejected() -> None:
         b'<Override PartName="/x/y.bin" ContentType="application/vnd.openxmlformats-'
         b'officedocument.spreadsheetml.connections+xml"/></Types>',
     )
-    assert "fetch data" in _rejected(_package(replace={"[Content_Types].xml": types}))
+    assert "reach outside the file" in _rejected(_package(replace={"[Content_Types].xml": types}))
     relationship = (
         b'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
         b'<Relationship Id="r1" Type="http://x/relationships/queryTable" Target="q.xml"/>'
         b"</Relationships>"
     )
-    assert "fetch data" in _rejected(_package([("xl/_rels/other.rels", relationship)]))
+    assert "reach outside the file" in _rejected(_package([("xl/_rels/other.rels", relationship)]))
 
 
 def test_total_expansion_is_limited() -> None:
@@ -165,7 +165,7 @@ def test_scanning_uses_constant_memory() -> None:
 async def test_import_reports_unsafe_packages(call_error: ToolCall, files: Path) -> None:
     content = base64.b64encode(_package([("docs/c.bin", b"<connections/>")])).decode()
     message = await call_error("import_workbook", path="up.xlsx", content_base64=content)
-    assert "fetch data" in message
+    assert "reach outside the file" in message
     assert not (files / "up.xlsx").exists()
 
 
@@ -313,3 +313,70 @@ async def test_uploads_are_scanned_before_macros_are_stripped(
     )
     assert "not allowed" in message
     assert not (files / "up.xlsx").exists()
+
+
+_RELS = "http://schemas.openxmlformats.org/package/2006/relationships"
+_REL_TYPES = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+
+
+def _rels(kind: str, target: str, external: bool = True) -> bytes:
+    mode = ' TargetMode="External"' if external else ""
+    return (
+        f'<Relationships xmlns="{_RELS}">'
+        f'<Relationship Id="rId1" Type="{_REL_TYPES}/{kind}" Target="{target}"{mode}/>'
+        "</Relationships>"
+    ).encode()
+
+
+@pytest.mark.parametrize(
+    ("part", "kind"),
+    [
+        ("xl/worksheets/_rels/sheet1.xml.rels", "oleObject"),
+        ("xl/drawings/_rels/drawing1.xml.rels", "oleObject"),
+        ("xl/ctrlProps/_rels/ctrlProp1.xml.rels", "image"),
+        ("xl/embeddings/_rels/x.bin.rels", "package"),
+        ("xl/worksheets/_rels/sheet1.xml.rels", "image"),
+        ("xl/worksheets/_rels/sheet1.xml.rels", "oleLink"),
+        ("customXml/_rels/item1.xml.rels", "customXml"),
+    ],
+)
+def test_external_relationships_other_than_hyperlinks_are_rejected(part: str, kind: str) -> None:
+    content = _package([(part, _rels(kind, r"file:///C:/secret.xlsx"))])
+    assert "reach outside the file" in _rejected(content)
+
+
+@pytest.mark.parametrize(
+    "target", ["https://example.com/a?b=1", "http://example.com", "mailto:me@example.com"]
+)
+def test_external_hyperlinks_are_accepted(target: str) -> None:
+    _decode(_package([("xl/worksheets/_rels/sheet1.xml.rels", _rels("hyperlink", target))]))
+
+
+def test_internal_relationships_to_embedded_objects_are_accepted() -> None:
+    rels = _rels("oleObject", "../embeddings/oleObject1.bin", external=False)
+    embedded = b"\xd0\xcf\x11\xe0 embedded object bytes"
+    _decode(
+        _package(
+            [
+                ("xl/worksheets/_rels/sheet1.xml.rels", rels),
+                ("xl/embeddings/oleObject1.bin", embedded),
+            ]
+        )
+    )
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        f'<oleObjects {MAIN}><oleObject progId="Excel.Sheet.12" link="[1]Sheet1!R1C1" shapeId="1"/>'
+        "</oleObjects>",
+        f"<root {MAIN}><oleLink/></root>",
+    ],
+)
+def test_linked_ole_objects_are_rejected(body: str) -> None:
+    assert "reach outside the file" in _rejected(_package([("xl/worksheets/s.dat", body.encode())]))
+
+
+def test_embedded_ole_objects_are_accepted() -> None:
+    body = f'<oleObjects {MAIN}><oleObject progId="Excel.Sheet.12" shapeId="1"/></oleObjects>'
+    _decode(_package([("xl/worksheets/s.dat", body.encode())]))

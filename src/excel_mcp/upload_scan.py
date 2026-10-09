@@ -232,6 +232,13 @@ def _check_declaration(name: str, element: ElementTree.Element, types: _Types) -
             types.defaults[element.get("Extension", "").casefold()] = declared
     elif name == "Relationship":
         declared = element.get("Type", "")
+        external = element.get("TargetMode", "").casefold() == "external"
+        # Only a hyperlink may point outside the file; it is followed when the user clicks it.
+        if external and not declared.casefold().endswith("/hyperlink"):
+            _refuse_remote_data()
+    elif name == "oleLink" or (name == "oleObject" and element.get("link")):
+        _refuse_remote_data()
+        return
     else:
         return
     if any(kind in declared.casefold() for kind in _REMOTE_DATA):
@@ -240,6 +247,6 @@ def _check_declaration(name: str, element: ElementTree.Element, types: _Types) -
 
 def _refuse_remote_data() -> None:
     raise UnsafeFormulaError(
-        "Workbooks with data connections, query tables or links to other workbooks "
-        "cannot be uploaded, because they fetch data from elsewhere."
+        "Workbooks with data connections, query tables, linked objects or links to other "
+        "workbooks or files cannot be uploaded, because they reach outside the file."
     )
