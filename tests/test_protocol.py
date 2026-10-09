@@ -63,6 +63,26 @@ async def test_schema_budget(files: Path) -> None:
             for tool in tools
         )
         assert size <= budget, f"{size} characters of tool schema; the budget is {budget}"
+        outputs = sum(
+            len(json.dumps(tool.output_schema, separators=(",", ":")))
+            for tool in tools
+            if tool.output_schema
+        )
+        assert outputs <= 8_300, f"{outputs} characters of output schemas; the budget is 8,300"
+
+
+async def test_only_tools_that_return_data_advertise_an_output_schema(
+    client: Client, sample: Path
+) -> None:
+    """outputSchema is optional; a receipt still arrives as structured content."""
+    tools = (await client.list_tools()).tools
+    for tool in tools:
+        reads = bool(tool.annotations and tool.annotations.read_only_hint)
+        assert (tool.output_schema is not None) == (reads and tool.name != "export_workbook"), (
+            tool.name
+        )
+    result = await client.call_tool("create_sheet", {"path": "sales.xlsx", "new_name": "Extra"})
+    assert result.structured_content == {"sheet": "Extra"}
 
 
 async def test_tool_order_is_stable(files: Path) -> None:

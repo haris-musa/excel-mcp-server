@@ -60,6 +60,7 @@ def capture(path: Path, workbook: Workbook, budget: int) -> None:
     try:
         with zipfile.ZipFile(path) as archive:
             _capture(Reader(archive, budget), workbook)
+        properties.forget_default_creator(workbook, path)
     except (KeyError, ValueError, IndexError, UnicodeDecodeError, zipfile.BadZipFile) as error:
         raise WorkbookError(
             f"The package of {path.name} is damaged, so it cannot be edited safely ({error!r})."

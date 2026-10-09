@@ -8,15 +8,32 @@ import zipfile
 from pathlib import Path
 from xml.sax.saxutils import escape
 
+from openpyxl import Workbook
 from openpyxl.xml.functions import fromstring
 
 APP_PART = "docProps/app.xml"
+CORE_PART = "docProps/core.xml"
+_DC = "http://purl.org/dc/elements/1.1/"
 _NAMESPACE = "http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"
 
 
 def read_company(path: Path) -> str:
     with zipfile.ZipFile(path) as archive:
         return company_in(archive)
+
+
+def forget_default_creator(workbook: Workbook, path: Path) -> None:
+    """Leave the creator empty for a file that names none.
+
+    openpyxl fills in its own name for a missing creator, and would save it into the file.
+    """
+    if workbook.properties.creator != "openpyxl":
+        return
+    with zipfile.ZipFile(path) as archive:
+        core = fromstring(archive.read(CORE_PART)) if CORE_PART in archive.namelist() else None
+    if core is not None and core.findtext(f"{{{_DC}}}creator") == "openpyxl":
+        return
+    workbook.properties.creator = None
 
 
 def company_in(archive: zipfile.ZipFile) -> str:

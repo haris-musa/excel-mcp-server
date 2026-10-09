@@ -28,8 +28,6 @@ RETIRED = {
     "table",
 }
 RETIRED_UNITLESS = {"column_widths", "row_heights", "line_width", "line_weight", "fixed_widths"}
-# Notes are changed by a separate pull request.
-PROSE_RESULTS = {"set_note", "delete_note"}
 
 
 async def list_tools() -> list[Tool]:
@@ -77,9 +75,7 @@ async def test_a_cell_is_placed_with_at_and_data_comes_from_source() -> None:
     assert "new_name" in tools["create_sheet"] and "new_name" in tools["rename_sheet"]
 
 
-async def test_every_tool_that_changes_a_workbook_returns_an_object() -> None:
+async def test_tools_that_change_a_workbook_list_no_output_schema() -> None:
     for tool in await list_tools():
-        changes = not (tool.annotations and tool.annotations.read_only_hint)
-        if changes and tool.name not in PROSE_RESULTS:
-            assert tool.output_schema is not None, f"{tool.name} returns prose"
-            assert tool.output_schema["type"] == "object"
+        if not (tool.annotations and tool.annotations.read_only_hint):
+            assert tool.output_schema is None, tool.name

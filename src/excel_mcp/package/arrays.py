@@ -23,19 +23,33 @@ def prepare(workbook: Workbook) -> None:
             _realign(sheet)
     for package in state_of(workbook).sheets.values():
         for mark in package.marks:
-            if mark.spill and not (_holds(mark.cell) and mark.cell.value is mark.value[0]):
+            if mark.spill and not (holds(mark.cell) and mark.cell.value is mark.value[0]):
                 release(mark)
+
+
+def dynamic_anchors(workbook: Workbook) -> list[Cell]:
+    """The cells that hold dynamic array formulas, as opposed to legacy (Ctrl+Shift+Enter) ones."""
+    sheets = workbook.worksheets
+    return [
+        mark.cell
+        for package in state_of(workbook).sheets.values()
+        for mark in package.marks
+        if (mark.dynamic or mark.cm)
+        and isinstance(mark.cell.value, ArrayFormula)
+        and holds(mark.cell)
+        and mark.cell.parent in sheets
+    ]
 
 
 def release(mark: CellMark) -> None:
     """Clear the cells an array formula spilled into, unless they were changed since."""
     for cell, value in mark.spill:
-        if _holds(cell) and (cell.value, cell.data_type) == value:
+        if holds(cell) and (cell.value, cell.data_type) == value:
             cell.value = None
     mark.spill = []
 
 
-def _holds(cell: Cell) -> bool:
+def holds(cell: Cell) -> bool:
     """Whether the cell is still in its sheet, at the position it has."""
     sheet = cell.parent
     return isinstance(sheet, Worksheet) and sheet._cells.get((cell.row, cell.column)) is cell

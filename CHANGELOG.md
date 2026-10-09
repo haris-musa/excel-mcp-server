@@ -380,6 +380,24 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Results of dynamic array formulas (`FILTER`, `SORT`, `SEQUENCE`, ...) were stale after the
+  data they use changed. Every save recalculates them, resizing the spill range as Excel does
+  (`#SPILL!` where cells are in the way) and dropping a result the calculator cannot
+  reproduce, which Excel calculates when it opens the file. Every edit also sets
+  `fullCalcOnLoad`, so Excel recalculates the whole workbook on open.
+- `insert_rows_or_columns` and `delete_rows_or_columns` work through a dynamic array's spill
+  range, which spills again, as in Excel. Legacy (Ctrl+Shift+Enter) array formulas still
+  refuse it.
+- `import_workbook` into an `.xlsx` or `.xltx` path removes the VBA project, as Excel does when
+  saving without macros, instead of leaving an orphan `vbaProject.bin`.
+- New workbooks no longer name "openpyxl" as their creator, and editing a file that has no
+  creator does not add one.
+- Dates written with `write_range` into a column of default width widen it to fit, as Excel
+  does, instead of showing `####`.
+- A drive-relative path such as `C:book.xlsx` gets a clear error.
+- **Breaking:** tools that change a workbook no longer list an output schema in `tools/list`
+  (about 5 KB less); they still return the same structured content. Only tools that return
+  data (`read_range`, `describe_*`, `find_cells`, `list_workbooks`, `read_vba`) keep one.
 - A parameter's own description was replaced by the one of its type in the schema (for
   example `at` and `source` of `create_chart` read "Cell" and "Range").
 

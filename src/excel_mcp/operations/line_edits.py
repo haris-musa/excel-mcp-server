@@ -38,6 +38,7 @@ from excel_mcp.operations.workbook_rewrite import (
     rewrite_formulas,
     rewrite_names,
 )
+from excel_mcp.package.arrays import dynamic_anchors
 from excel_mcp.package.lines import Axis, LineEdit
 from excel_mcp.package.references import rewrite_lines
 from excel_mcp.refs import CellRange, cell_name, parse_range
@@ -58,7 +59,7 @@ def edit_lines(
     edit = keep_table_row(sheet, LineEdit(sheet.title, axis, at, count, delete))
     if not delete:
         _check_room(sheet, edit)
-    _check_arrays(sheet, edit)
+    _check_arrays(workbook, sheet, edit)
     check_table_cuts(sheet, edit)
     dead = dead_tables(sheet, edit)
     drop_table_slicers(workbook, sheet, dead)
@@ -93,9 +94,11 @@ def _check_room(sheet: Worksheet, edit: LineEdit) -> None:
         )
 
 
-def _check_arrays(sheet: Worksheet, edit: LineEdit) -> None:
+def _check_arrays(workbook: Workbook, sheet: Worksheet, edit: LineEdit) -> None:
+    """Refuse cutting legacy array formulas; dynamic ones spill again wherever they land."""
+    dynamic = {id(cell) for cell in dynamic_anchors(workbook)}
     for cell in stored_cells(sheet):
-        if isinstance(cell.value, ArrayFormula):
+        if isinstance(cell.value, ArrayFormula) and id(cell) not in dynamic:
             area = parse_range(cell.value.ref)
             first, last = (
                 (area.min_row, area.max_row)
