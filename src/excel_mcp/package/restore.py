@@ -74,7 +74,11 @@ class Restorer:
         if id(part) in self.placed:
             return self.placed[id(part)]
         data = self._with_current_ids(part)
-        same = self.package.exists(part.name) and self.package.read(part.name) == data
+        same = (
+            not part.unique
+            and self.package.exists(part.name)
+            and self.package.read(part.name) == data
+        )
         name = part.name if same else self.package.unique_name(part.name)
         self.placed[id(part)] = name
         if not same:

@@ -3,6 +3,7 @@
 import functools
 import inspect
 import json
+import logging
 from collections.abc import Callable
 from typing import Any, ClassVar, ParamSpec, TypeVar
 
@@ -16,6 +17,7 @@ from excel_mcp.inputs import InputModel
 from excel_mcp.server.validation import format_validation_error
 
 _REJECTED = "_rejected_arguments"
+logger = logging.getLogger(__name__)
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -103,7 +105,8 @@ class _Validated(BaseModel):
 
 
 def _as_tool_errors(function: Callable[P, R]) -> Callable[P, R]:
-    """Report expected errors to the model; the SDK hides the details of anything else."""
+    """Report expected errors to the model. Anything else is logged and reported without details:
+    an exception's text and traceback can hold paths and cell contents."""
 
     @functools.wraps(function)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
@@ -113,6 +116,10 @@ def _as_tool_errors(function: Callable[P, R]) -> Callable[P, R]:
             return _compact(function(*args, **kwargs))
         except ExcelMCPError as error:
             raise ToolError(str(error)) from error
+        except Exception as error:  # the tool boundary: log it, tell the model only that it failed
+            logger.exception("Unexpected error in %s", function.__name__)
+            message = f"Unexpected error in {function.__name__}; see server log"
+            raise ToolError(message) from error
 
     return wrapper
 

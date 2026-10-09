@@ -30,6 +30,7 @@ if TYPE_CHECKING:
 _DRAWING_TYPE = "application/vnd.openxmlformats-officedocument.drawing+xml"
 _VML_TYPE = "application/vnd.openxmlformats-officedocument.vmlDrawing"
 _SHAPE_ID = re.compile(r'(<(?:[\w.-]+:)?cNvPr\b[^>]*?\bid=")(\d+)(")')
+_CONNECTION = re.compile(r'(<(?:[\w.-]+:)?(?:st|end)Cxn\b[^>]*?\bid=")(\d+)(")')
 _RULE_ID = re.compile(r"<x14:id>(\{[^}]*\})</x14:id>")
 _EMPTY_VALUE = re.compile(r"<v\s*/>|<v></v>")
 _TYPE_ATTRIBUTE = re.compile(r'\st="[^"]*"')
@@ -206,19 +207,19 @@ def _shifted(edits: list[Edit], offset: int) -> list[Edit]:
 def _renumber_shapes(anchors: list[str], drawing: bytes) -> list[str]:
     """Give preserved shapes new ids where the written drawing already uses theirs.
 
-    Other parts name shapes by id (form controls, in the VML), so ids stay if they can.
+    Other parts name shapes by id (form controls, in the VML; connectors, in the drawing), so
+    ids stay if they can, and what refers to a changed id changes with it.
     """
     used = {m[2] for m in _SHAPE_ID.finditer(drawing.decode("utf-8"))}
-    following = max((int(i) for i in used), default=0)
+    own = [m[2] for anchor in anchors for m in _SHAPE_ID.finditer(anchor)]
+    following = max((int(i) for i in [*used, *own]), default=0)
     mapping: dict[str, str] = {}
+    for number in own:
+        if number != "0" and number in used and number not in mapping:
+            following += 1
+            mapping[number] = str(following)
 
     def renumber(match: re.Match[str]) -> str:
-        nonlocal following
-        if match[2] == "0" or match[2] not in used:
-            return match[0]
-        if match[2] not in mapping:
-            following += 1
-            mapping[match[2]] = str(following)
-        return match[1] + mapping[match[2]] + match[3]
+        return match[1] + mapping.get(match[2], match[2]) + match[3]
 
-    return [_SHAPE_ID.sub(renumber, anchor) for anchor in anchors]
+    return [_CONNECTION.sub(renumber, _SHAPE_ID.sub(renumber, anchor)) for anchor in anchors]

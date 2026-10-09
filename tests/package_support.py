@@ -3,8 +3,10 @@
 import re
 import shutil
 import zipfile
+from io import BytesIO
 from pathlib import Path
 from posixpath import dirname, join, normpath
+from xml.etree import ElementTree
 
 FIXTURES = Path(__file__).parent / "fixtures"
 RELATIONSHIPS = "{http://schemas.openxmlformats.org/package/2006/relationships}"
@@ -88,3 +90,27 @@ def assert_package_is_consistent(parts: dict[str, bytes]) -> None:
             )
             for rel_id, (_, target) in relationships(parts, source).items():
                 assert target in parts or "://" in target, (name, rel_id, target)
+
+
+MC = "{http://schemas.openxmlformats.org/markup-compatibility/2006}Ignorable"
+
+
+def assert_namespaces_declared(parts: dict[str, bytes]) -> None:
+    """Every XML part parses (Excel refuses an undeclared prefix) and declares what it ignores."""
+    for name, data in parts.items():
+        if name.endswith((".xml", ".rels")):
+            try:
+                _check_ignorable(name, data)
+            except ElementTree.ParseError as error:
+                raise AssertionError(f"{name} is not well-formed XML: {error}") from error
+
+
+def _check_ignorable(name: str, data: bytes) -> None:
+    scope: list[tuple[str, str]] = []
+    for event, item in ElementTree.iterparse(BytesIO(data), events=("start-ns", "start")):
+        if event == "start-ns":
+            scope.append(item)  # pyright: ignore[reportArgumentType]
+        elif MC in item.attrib:  # pyright: ignore[reportAttributeAccessIssue]
+            declared = {prefix for prefix, _ in scope}
+            for prefix in item.attrib[MC].split():  # pyright: ignore[reportAttributeAccessIssue]
+                assert prefix in declared, f"{name} ignores undeclared prefix {prefix!r}"

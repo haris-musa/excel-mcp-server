@@ -195,6 +195,7 @@ __all__ = ["Corner", "SlicerInfo", "delete_slicer", "list_slicers", "sheet_of"]
 
 _SHAPE_ID = re.compile(r'(<xdr:cNvPr\b[^>]*?\bid=")\d+(")')
 _GUID = re.compile(r'(<a16:creationId\b[^>]*?\bid=")[^"]*(")')
+_UID = re.compile(r'(\b\w+:uid=")[^"]*(")')
 
 
 def copy_slicers(
@@ -253,6 +254,7 @@ def _copy_cache(
     new = f"{stem}{number}"
     text = link.target.data.decode("utf-8")  # pyright: ignore[reportAttributeAccessIssue]
     text = text.replace(f'name="{name}"', f'name="{new}"', 1)
+    text = _UID.sub(lambda m: m[1] + _new_guid() + m[2], text, count=1)
     if tab_id is not None:
         text = re.sub(r'(<pivotTable\b[^>]*?\btabId=")\d+', rf"\g<1>{tab_id}", text)
     if table_id is not None:
@@ -264,11 +266,15 @@ def _copy_cache(
 
 def _copy_entry(workbook: Workbook, entry: Entry, target: Worksheet, cache: str, kind: str) -> None:
     taken = {e.name.casefold() for e in entries(workbook)}
+    stem = re.sub(r" \d+$", "", entry.name)
     number = 1
-    while f"{entry.name} {number}".casefold() in taken:
+    while f"{stem} {number}".casefold() in taken:
         number += 1
-    name = f"{entry.name} {number}"
-    values = {**entry.values, "name": name, "cache": cache}
+    name = f"{stem} {number}"
+    values = {k: _new_guid() if k.endswith(":uid") else v for k, v in entry.values.items()} | {
+        "name": name,
+        "cache": cache,
+    }
     tag = entry.kind + "".join(f" {k}={quoteattr(v)}" for k, v in values.items()) + "/>"
     package = state_of(workbook).sheet(entry.sheet)
     shape = _anchor_of(package.anchors, entry.name)
@@ -277,5 +283,9 @@ def _copy_entry(workbook: Workbook, entry: Entry, target: Worksheet, cache: str,
     shape = _SHAPE_ID.sub(
         rf"\g<1>{next_shape_id(state_of(workbook).sheet(target))}\g<2>", shape, count=1
     )
-    shape = _GUID.sub(rf"\g<1>{{{str(uuid.uuid4()).upper()}}}\g<2>", shape)
-    add_entry(workbook, target, kind, "<" + tag, shape)
+    shape = _GUID.sub(rf"\g<1>{_new_guid()}\g<2>", shape)
+    add_entry(workbook, target, kind, "<" + tag, shape, entry.part.data.decode("utf-8"))
+
+
+def _new_guid() -> str:
+    return "{" + str(uuid.uuid4()).upper() + "}"

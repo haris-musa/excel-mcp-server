@@ -11,7 +11,12 @@ from excel_mcp.operations import slicer_xml as xml
 from excel_mcp.package import Link, Part, SheetPackage, state_of
 from excel_mcp.package.anchors import Geometry
 from excel_mcp.package.consistency import SLICER_CACHE, TIMELINE_CACHE
-from excel_mcp.package.scan import relationship_ids
+from excel_mcp.package.scan import (
+    declare_in_root,
+    relationship_ids,
+    root_scope,
+    used_prefixes,
+)
 
 _XDR = "http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing"
 _A = "http://schemas.openxmlformats.org/drawingml/2006/main"
@@ -52,8 +57,18 @@ def add_cache(workbook: Workbook, kind: str, name: str, text: str) -> None:
     workbook.defined_names[name] = DefinedName(name, attr_text="#N/A")
 
 
-def add_entry(workbook: Workbook, sheet: Worksheet, kind: str, entry: str, shape: str) -> None:
-    """Add a slicer or timeline to a sheet's list of them, and its shape to the drawing."""
+def add_entry(
+    workbook: Workbook,
+    sheet: Worksheet,
+    kind: str,
+    entry: str,
+    shape: str,
+    source: str | None = None,
+) -> None:
+    """Add a slicer or timeline to a sheet's list of them, and its shape to the drawing.
+
+    ``source`` is the part an ``entry`` was copied from: prefixes the entry uses are declared
+    on the root of the part it goes into, as that part declares them."""
     package = state_of(workbook).sheet(sheet)
     timeline = kind == "timeline"
     uri, element = xml.sheet_slicer_extension(kind, "")
@@ -61,20 +76,29 @@ def add_entry(workbook: Workbook, sheet: Worksheet, kind: str, entry: str, shape
     if existing is not None:
         text = existing.data.decode("utf-8")
         closing = "</timelines>" if timeline else "</slicers>"
-        existing.data = text.replace(closing, entry + closing).encode("utf-8")
+        text = text.replace(closing, entry + closing)
+        existing.data = _with_prefixes(text, entry, source).encode("utf-8")
     else:
         wrap = xml.timelines_part if timeline else xml.slicers_part
         name = "timelines/timeline1.xml" if timeline else "slicers/slicer1.xml"
         part = Part(
             f"xl/{name}",
             xml.TIMELINE_PART if timeline else xml.SLICER_PART,
-            wrap(entry).encode("utf-8"),
+            _with_prefixes(wrap(entry), entry, source).encode("utf-8"),
         )
         rid = _free_id(package.links, "rIdSlicers")
         package.links.append(Link(rid, xml.relationship_type(kind), part))
         _, element = xml.sheet_slicer_extension(kind, rid)
         package.set_extension(uri, element)
     package.anchors.append(shape)
+
+
+def _with_prefixes(text: str, entry: str, source: str | None) -> str:
+    if source is None:
+        return text
+    namespaces, ignorable = root_scope(source)
+    used = {p: namespaces[p] for p in used_prefixes(entry) if p in namespaces}
+    return declare_in_root(text, used, ignorable & used.keys())
 
 
 def _part_listed(package: SheetPackage, uri: str) -> Part | None:
