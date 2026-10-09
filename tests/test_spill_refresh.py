@@ -103,3 +103,21 @@ async def test_legacy_array_formulas_still_cannot_be_split(
         "insert_rows_or_columns", **BOOK, sheet="S", axis="rows", start=2, count=1
     )
     assert "array formula in D1:D3" in message
+
+
+async def test_legacy_array_formulas_follow_changes_to_the_data(call: ToolCall, book: Path) -> None:
+    workbook = load_workbook(book)
+    sheet = workbook["S"]
+    sheet["D1"] = ArrayFormula("D1:D3", "=A1:A3*2")
+    sheet["F1"] = ArrayFormula("F1", "=SUM(A1:A3*B1:B3)")
+    sheet["H1"] = ArrayFormula("H1:H3", "=A1")
+    for row, value in enumerate([2, 4, 6], 1):
+        if row > 1:
+            sheet[f"D{row}"] = value  # the results Excel stored in the range
+    workbook.save(book)
+
+    await call("write_range", **BOOK, sheet="S", at="A1", rows=[[10]])
+    values = await _values(call, "D1:H3")
+    assert [row[0] for row in values] == [20, 4, 6]
+    assert values[0][2] == 10 * 10 + 2 * 20 + 3 * 30
+    assert [row[4] for row in values] == [10, 10, 10]  # a single value fills the range
