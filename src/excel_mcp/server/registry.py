@@ -39,21 +39,25 @@ class ToolRegistry:
         self.read_only = read_only
 
     def reader(self, title: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        return self._register(title, READ_ONLY)
+        return self._register(title, READ_ONLY, advertises_output=True)
 
     def writer(self, title: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        return self._register(title, ADDITIVE)
+        return self._register(title, ADDITIVE, advertises_output=False)
 
     def destroyer(self, title: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        return self._register(title, DESTRUCTIVE)
+        return self._register(title, DESTRUCTIVE, advertises_output=False)
 
     def _register(
-        self, title: str, annotations: ToolAnnotations
+        self, title: str, annotations: ToolAnnotations, *, advertises_output: bool
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+        """``advertises_output``: list an output schema. Tools that change a workbook return a
+        small receipt that needs none; their results still carry it as structured content."""
+
         def decorate(function: Callable[P, R]) -> Callable[P, R]:
             if self.read_only and not annotations.read_only_hint:
                 return function
             returns_text = inspect.signature(function).return_annotation is str
+            returns_text = returns_text or not advertises_output
             self.server.tool(
                 title=title,
                 description=inspect.cleandoc(function.__doc__ or ""),

@@ -12,6 +12,7 @@ from typing import TypeVar, cast
 
 from openpyxl import Workbook, load_workbook
 from openpyxl.chart import AreaChart
+from openpyxl.workbook.properties import CalcProperties
 from openpyxl.worksheet._read_only import ReadOnlyWorksheet
 from openpyxl.worksheet.worksheet import Worksheet
 
@@ -115,8 +116,14 @@ class Workspace:
             workbook = self._load(path, data_only=False)
             _restore_area_chart_axes(workbook)
             package.capture(path, workbook, self.limits.max_file_bytes)
+            workbook.calculation = workbook.calculation or CalcProperties()
+            workbook.calculation.fullCalcOnLoad = True
             try:
                 yield workbook
+                # Imported here because the calculator imports this module.
+                from excel_mcp.operations.spill import refresh_spills
+
+                refresh_spills(workbook, self.limits.max_cells)
                 _pin_hyperlinks(workbook)
                 save_atomically(workbook, path)
             finally:
@@ -131,6 +138,7 @@ class Workspace:
                 "Create an .xlsx or .xltx file instead."
             )
         workbook = Workbook()
+        workbook.properties.creator = None
         workbook.worksheets[0].title = sheets[0]
         for name in sheets[1:]:
             workbook.create_sheet(name)
@@ -146,8 +154,10 @@ class Workspace:
         return path
 
     def store(self, raw_path: str, content: bytes, *, overwrite: bool) -> Path:
-        """Save uploaded workbook bytes as a file."""
+        """Save uploaded workbook bytes as a file, without macros unless the file may hold them."""
         path = self.resolve(raw_path)
+        if path.suffix.lower() not in MACRO_SUFFIXES:
+            content = macros.without_macros(content)
         with self._write_lock:
             self._check_overwrite(path, overwrite)
             write_atomically(path, content)

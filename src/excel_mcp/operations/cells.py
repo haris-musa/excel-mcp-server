@@ -8,6 +8,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
 
 from excel_mcp.errors import InvalidArgumentError, LimitExceededError
+from excel_mcp.operations.date_width import FITTED_WIDTHS, widen_for_dates
 from excel_mcp.operations.hyperlinks import Link, set_link
 from excel_mcp.operations.spill import spill_formulas
 from excel_mcp.refs import (
@@ -193,14 +194,17 @@ def write_range(
     names = sheet_names(sheet)
     converted = [[to_cell(value, names) for value in row] for row in rows]
     formulas = []
+    needed: dict[int, float] = {}
     for row_offset, row in enumerate(converted):
         for col_offset, value in enumerate(row):
             cell = writable_cell(sheet, start_row + row_offset, start_col + col_offset)
             cell.value = value
             if number_format := date_number_format(value):
                 cell.number_format = number_format
+                needed[cell.column] = max(needed.get(cell.column, 0), FITTED_WIDTHS[number_format])
             if cell.data_type == "f":
                 formulas.append(cell)
+    widen_for_dates(sheet, needed)
     for link in links:
         set_link(writable_cell(sheet, *parse_cell(link.cell)), link)
     blocked = spill_formulas(sheet, formulas, max_cells)

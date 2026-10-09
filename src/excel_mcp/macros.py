@@ -12,8 +12,10 @@ from openpyxl.chartsheet import Chartsheet
 from openpyxl.xml.functions import Element, SubElement, fromstring, tostring
 
 from excel_mcp.ovba_write import Project
+from excel_mcp.package.opc import Package, rels_name
 
 VBA_PART = "xl/vbaProject.bin"
+WORKBOOK_PART = "xl/workbook.xml"
 _CONTENT_TYPES_PART = "[Content_Types].xml"
 _ROOT_RELS_PART = "_rels/.rels"
 _VBA_CONTENT_TYPE = "application/vnd.ms-office.vbaProject"
@@ -92,3 +94,37 @@ def _with_vba_override(content_types: bytes | None) -> bytes:
         )
     # openpyxl's type stub says str, but it returns bytes.
     return tostring(types)  # pyright: ignore[reportReturnType]
+
+
+_MACRO_FREE_TYPES = {
+    "application/vnd.ms-excel.sheet.macroEnabled.main+xml": (
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"
+    ),
+    "application/vnd.ms-excel.template.macroEnabled.main+xml": (
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.template.main+xml"
+    ),
+}
+
+
+def without_macros(content: bytes) -> bytes:
+    """A workbook file with its VBA project removed, as Excel saves it as .xlsx or .xltx.
+
+    Excel refuses a macro-free extension on a file that still declares macros.
+    """
+    package = Package(content)
+    projects = [name for name in package.names() if name.startswith("xl/vbaProject")]
+    if not projects:
+        return content
+    for part in projects:
+        package.write(part, b"")
+        package.write(rels_name(part), b"")
+        package.content_types.overrides.pop(part, None)
+    workbook_rels = package.rels(WORKBOOK_PART)
+    workbook_rels[:] = [rel for rel in workbook_rels if not rel.type.endswith("/vbaProject")]
+    defaults = package.content_types.defaults
+    for extension in [e for e, kind in defaults.items() if kind == _VBA_CONTENT_TYPE]:
+        del defaults[extension]
+    types = package.content_types.overrides
+    for part, content_type in types.items():
+        types[part] = _MACRO_FREE_TYPES.get(content_type, content_type)
+    return package.to_bytes()

@@ -49,6 +49,39 @@ def spill_formulas(sheet: Worksheet, cells: list[Cell], max_cells: int) -> list[
     return blocked
 
 
+def refresh_spills(workbook: Workbook, max_cells: int) -> None:
+    """Recalculate the stored results of every dynamic array formula in the workbook.
+
+    Their values are cached in the cells, so they are stale once anything they use changed.
+    Each result is calculated again and its spill range resized as Excel does, including
+    #SPILL! where cells are in the way. A result the calculator cannot reproduce is dropped:
+    Excel calculates it when it opens the file.
+    """
+    anchors = arrays.dynamic_anchors(workbook)
+    previous = None
+    for _ in range(max(len(anchors), 1)):
+        # A formula can use the spill range of another, so repeat until the results settle.
+        results = [_recalculate(workbook, cell, max_cells) for cell in anchors]
+        if len(anchors) < 2 or results == previous:
+            return
+        previous = results
+
+
+def _recalculate(workbook: Workbook, anchor: Cell, max_cells: int) -> str:
+    sheet = cast(Worksheet, anchor.parent)
+    formula = str(cast(ArrayFormula, anchor.value).text)
+    try:
+        grid: Grid | None = Engine(Workbook(), workbook).spill(
+            sheet, anchor.row, anchor.column, formula
+        )
+    except UncalculableError:
+        grid = None
+    if grid is not None and (_has_new_errors(grid) or grid.height * grid.width > max_cells):
+        grid = None
+    _store(sheet, anchor, formula, grid, max_cells)
+    return repr(grid.rows if grid else None)
+
+
 def _has_new_errors(grid: Grid) -> bool:
     """Whether a result holds an error such as #CALC! that a file cannot store as a value.
 

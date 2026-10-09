@@ -61,6 +61,11 @@ class PathPolicy:
         path = Path(raw_path).expanduser()
         if ":" in str(path)[len(path.drive) :]:
             raise PathNotAllowedError(f"Path {raw_path!r} cannot contain ':' after the drive.")
+        if path.drive and not path.root:
+            raise PathNotAllowedError(
+                f"Path {raw_path!r} is relative to a drive's current directory. Give the full "
+                r"path, e.g. 'C:\Reports\q1.xlsx'."
+            )
         if not path.is_absolute():
             if not self.confined:
                 raise PathNotAllowedError(
