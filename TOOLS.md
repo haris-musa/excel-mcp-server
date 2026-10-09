@@ -9,22 +9,22 @@ Cells use A1 notation and row and column numbers are 1-based.
 | Tool | Summary |
 | --- | --- |
 | [`create_workbook`](#create_workbook) | Create a new, empty Excel workbook. |
-| [`describe_workbook`](#describe_workbook) | List a workbook's sheets with their used ranges, and its defined names, properties and calculation settings. |
+| [`describe_workbook`](#describe_workbook) | List a workbook's sheets (visibility, used range, how many tables, charts, PivotTables, slicers and images each holds), defined names, properties and calculation settings. |
 | [`set_workbook_settings`](#set_workbook_settings) | Set document properties (title, subject, author, keywords, company), calculation options (manual or automatic, iterative calculation, recalculation on load) and workbook structure protection. |
 | [`list_workbooks`](#list_workbooks) | List Excel files in a directory as path to size in bytes. |
 | [`export_workbook`](#export_workbook) | Return the workbook file as an embedded base64 resource, for remote servers. |
 | [`import_workbook`](#import_workbook) | Save an uploaded workbook file on the server, e.g. to edit it remotely. |
-| [`describe_sheet`](#describe_sheet) | Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables, slicers, timelines, images, notes, hyperlinks, validation, conditional formats, sparklines, custom column widths, hidden rows and columns, print area and protection. Empty items are omitted. |
+| [`describe_sheet`](#describe_sheet) | Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables, slicers, timelines, images, notes, hyperlinks, validation, conditional formats, sparklines, custom column widths, hidden rows and columns, print area and protection. Empty items are omitted. Charts and images are listed by name, with the cells they cover. |
 | [`create_sheet`](#create_sheet) | Add an empty worksheet. |
 | [`rename_sheet`](#rename_sheet) | Rename a worksheet. References to it are updated as in Excel: formulas, names, rules, charts and PivotTable sources. |
 | [`copy_sheet`](#copy_sheet) | Copy a worksheet to a new sheet at the end, as Excel's "Create a copy" does. |
 | [`delete_sheet`](#delete_sheet) | Delete a worksheet or chart sheet and everything on it. |
-| [`insert_rows_or_columns`](#insert_rows_or_columns) | Insert empty rows or columns before position `at`. |
-| [`delete_rows_or_columns`](#delete_rows_or_columns) | Delete rows or columns starting at position `at`. |
+| [`insert_rows_or_columns`](#insert_rows_or_columns) | Insert empty rows or columns before position `start`. |
+| [`delete_rows_or_columns`](#delete_rows_or_columns) | Delete rows or columns from position `start`. |
 | [`read_range`](#read_range) | Read cell values as rows, without trailing empty cells or rows. Dates are ISO 8601. |
-| [`write_range`](#write_range) | Write values into cells, overwriting them. |
+| [`write_range`](#write_range) | Write values into cells, overwriting them, whatever the sheet's protection. |
 | [`clear_range`](#clear_range) | Clear a range's values, formatting and/or rules; other cells do not move. |
-| [`copy_range`](#copy_range) | Copy and paste a range, overwriting the destination. |
+| [`copy_range`](#copy_range) | Copy and paste a range, overwriting the destination. Returns the destination. |
 | [`sort_range`](#sort_range) | Sort a range's rows by one or more columns, like Data > Sort in Excel. |
 | [`transform_range`](#transform_range) | Remove duplicate rows, split text into columns, or fill down or right or with a series (like Excel's Data and Fill commands). |
 | [`find_cells`](#find_cells) | Find cells whose value contains (or equals) the query. |
@@ -36,11 +36,11 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`add_data_validation`](#add_data_validation) | Restrict what can be entered in a range: a dropdown list (typed in, or from cells or a name), whole numbers, decimals, dates, times, text length or a custom formula, with an optional input message and error alert. |
 | [`create_table`](#create_table) | Turn a range with a header row of unique text labels into an Excel table. |
 | [`edit_table`](#edit_table) | Change a table's options, add calculated columns and totals, or resize it. |
-| [`create_chart`](#create_chart) | Add a chart to `sheet`, or replace one. |
+| [`create_chart`](#create_chart) | Add a chart to `sheet`, or replace one. Returns its name and the cells it covers. |
 | [`delete_chart`](#delete_chart) | Remove a chart from a sheet. The data it plotted is left untouched. |
-| [`add_sparklines`](#add_sparklines) | Add a group of sparklines (Insert > Sparklines): a line, column or win/loss chart in each cell of `location`, one per row of `data` (or per column when the cell count matches the columns). Sparklines already in those cells are replaced. |
+| [`add_sparklines`](#add_sparklines) | Add a group of sparklines (Insert > Sparklines): a line, column or win/loss chart in each cell of `range`, one per row of `source` (or per column when the cell count matches the columns). Sparklines already in those cells are replaced. |
 | [`delete_sparklines`](#delete_sparklines) | Remove the sparklines in a range (Clear Sparklines). The data is left untouched. |
-| [`create_pivot_table`](#create_pivot_table) | Add an Excel PivotTable that summarizes a block of data. |
+| [`create_pivot_table`](#create_pivot_table) | Add an Excel PivotTable that summarizes a block of data. Returns its name and cells. |
 | [`delete_pivot_table`](#delete_pivot_table) | Remove a PivotTable and clear the cells it fills. The source data is left untouched. |
 | [`add_slicer`](#add_slicer) | Add a slicer (Insert > Slicer) or timeline to a sheet, to filter a PivotTable or table. |
 | [`delete_slicer`](#delete_slicer) | Remove a slicer or timeline. |
@@ -48,8 +48,8 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`delete_defined_name`](#delete_defined_name) | Delete a defined name. Formulas that use it are not changed and will show #NAME?. |
 | [`set_note`](#set_note) | Add a note to a cell, replacing the cell's existing note. |
 | [`delete_note`](#delete_note) | Remove the note from a cell. |
-| [`insert_image`](#insert_image) | Place a picture with its top-left corner at a cell. |
-| [`delete_image`](#delete_image) | Remove a picture from a sheet. |
+| [`insert_image`](#insert_image) | Place an image at a cell. Returns its name and the cells it covers. |
+| [`delete_image`](#delete_image) | Remove an image from a sheet. |
 | [`read_vba`](#read_vba) | Show the VBA macro code in an .xlsm or .xltm workbook, module by module. |
 
 ## create_workbook
@@ -68,8 +68,9 @@ Create a new, empty Excel workbook.
 
 **Describe workbook** (read-only)
 
-List a workbook's sheets with their used ranges, and its defined names, properties and
-calculation settings.
+List a workbook's sheets (visibility, used range, how many tables, charts,
+PivotTables, slicers and images each holds), defined names, properties and calculation
+settings.
 
 Start here. Reads each sheet once in full. Default and empty values are omitted;
 `has_vba` is only present when true, see read_vba.
@@ -170,7 +171,7 @@ Save an uploaded workbook file on the server, e.g. to edit it remotely.
 Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables,
 slicers, timelines, images, notes, hyperlinks, validation, conditional formats, sparklines,
 custom column widths, hidden rows and columns, print area and protection. Empty items are
-omitted.
+omitted. Charts and images are listed by name, with the cells they cover.
 
 Loads the whole workbook into memory, so it is slow on very large files.
 
@@ -188,7 +189,7 @@ Add an empty worksheet.
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
-| `sheet` | string | yes | New sheet name: 1-31 characters, none of [ ] : * ? / \. |
+| `new_name` | string | yes | New sheet name: 1-31 characters, none of [ ] : * ? / \. |
 | `position` | integer | no | 1-based position. Default: after the last. |
 
 ## rename_sheet
@@ -239,7 +240,7 @@ Fails while slicers on other sheets use its PivotTables or tables.
 
 **Insert rows or columns** (modifies files)
 
-Insert empty rows or columns before position `at`.
+Insert empty rows or columns before position `start`.
 
 Like Excel, every reference moves: formulas on all sheets, names, conditional formats,
 validation, merged cells, tables, charts, PivotTables, filters and print settings.
@@ -251,14 +252,14 @@ fails.
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
 | `axis` | `rows` \| `columns` | yes | Rows or columns. |
-| `at` | integer | yes | 1-based row number, or 1-based column number (A=1). |
+| `start` | integer | yes | 1-based row number, or 1-based column number (A=1). |
 | `count` | integer | no | How many. Default: `1`. |
 
 ## delete_rows_or_columns
 
 **Delete rows or columns** (modifies files, may overwrite data)
 
-Delete rows or columns starting at position `at`.
+Delete rows or columns from position `start`.
 
 Like Excel, every reference moves, and one to a deleted cell becomes #REF!. See
 insert_rows_or_columns.
@@ -268,7 +269,7 @@ insert_rows_or_columns.
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
 | `axis` | `rows` \| `columns` | yes | Rows or columns. |
-| `at` | integer | yes | 1-based row number, or 1-based column number (A=1). |
+| `start` | integer | yes | 1-based row number, or 1-based column number (A=1). |
 | `count` | integer | no | How many. Default: `1`. |
 
 ## read_range
@@ -294,12 +295,12 @@ in them.
 
 **Write range** (modifies files, may overwrite data)
 
-Write values into cells, overwriting them.
+Write values into cells, overwriting them, whatever the sheet's protection.
 
-Values are text, numbers, booleans, or null to empty a cell. Text starting with '='
-is a formula such as '=SUM(B2:B9)'; formulas that reach the network, other programs
-or other workbooks are rejected. '2026-01-31' or '2026-01-31T09:30:00' is stored as
-a date. Send long numeric IDs as text.
+JSON numbers, booleans and null (empties the cell) are stored as given; a string is
+text, even '00123' (send long IDs as strings), except that '=SUM(B2:B9)' is a
+formula (ones that reach the network, other programs or other workbooks are
+rejected) and '2026-01-31' or '2026-01-31T09:30:00' a date.
 
 `links` makes written cells clickable, with their value as the display text, e.g.
 [{"cell": "B2", "target": "https://example.com"}]. Only http, https, mailto and places in
@@ -313,8 +314,8 @@ spill because a cell in the way holds data (Excel shows #SPILL!).
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
-| `start_cell` | string | yes | Cell, e.g. 'B2'. |
-| `rows` | array of array of string \| integer \| number \| boolean | yes | Rows of values, written right and down from start_cell. |
+| `at` | string | yes | Top-left cell of the block, e.g. 'B2'. |
+| `rows` | array of array of string \| integer \| number \| boolean | yes | Rows of values, written right and down from `at`. |
 | `links` | array of object | no | Cells of the written block to turn into hyperlinks. Default: `[]`. |
 
 ## clear_range
@@ -337,7 +338,7 @@ To clear a whole sheet's rules, use its whole range, e.g. 'A1:XFD1048576'.
 
 **Copy range** (modifies files, may overwrite data)
 
-Copy and paste a range, overwriting the destination.
+Copy and paste a range, overwriting the destination. Returns the destination.
 
 Relative references in copied formulas shift as when pasting in Excel (and swap rows
 and columns when transposing).
@@ -347,8 +348,8 @@ and columns when transposing).
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
 | `range` | string | yes | Cell or range, e.g. 'A1:D20'. |
-| `target_cell` | string | yes | Top-left cell of the destination. |
-| `target_sheet` | string | no | Destination sheet. Default: the same sheet. |
+| `at` | string | yes | Top-left cell of the destination. |
+| `to_sheet` | string | no | Destination sheet. Default: `sheet`. |
 | `paste` | `all` \| `values` \| `formulas` \| `formats` | no | Like Paste Special. 'values': formula results; 'formulas': formulas and values; 'formats': formatting only. All but 'all' leave the destination's formatting, so dates paste as serial numbers. Default: `all`. |
 | `transpose` | boolean | no | Swap rows and columns. Default: `False`. |
 | `skip_blanks` | boolean | no | Leave destination cells unchanged under empty source cells. Default: `False`. |
@@ -396,7 +397,7 @@ must have a calculable result when they are compared (remove_duplicates).
 | `columns` | array of string | no | remove_duplicates: columns that must match (header text or letter). Default: all. |
 | `has_header` | boolean | no | remove_duplicates: first row is a header. Default: `True`. |
 | `delimiters` | array of string | no | text_to_columns: 'tab', 'semicolon', 'comma', 'space' or a character. |
-| `fixed_widths` | array of integer | no | text_to_columns instead of delimiters: widths of all fields but the last. |
+| `fixed_widths_chars` | array of integer | no | text_to_columns instead of delimiters: widths of all fields but the last. |
 | `text_qualifier` | `"` \| `'` \| `` | no | text_to_columns: quote that protects delimiters; '' for none. Default: `"`. |
 | `merge_delimiters` | boolean | no | text_to_columns: consecutive delimiters count as one. Default: `False`. |
 | `direction` | `down` \| `right` | no | fill: down from the first row, or right from the first column. |
@@ -517,8 +518,8 @@ server, and the password is weakly hashed.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
-| `column_widths` | object | no | Column letter to width in characters, e.g. {'A': 20}. |
-| `row_heights` | object | no | Row number to height in points, e.g. {'1': 30}. |
+| `column_widths_chars` | object | no | Column letter to width in characters, e.g. {'A': 20}. |
+| `row_heights_pt` | object | no | Row number to height in points, e.g. {'1': 30}. |
 | `autofit_columns` | array of string | no | Column letters sized to their text, e.g. ['A', 'C']. |
 | `freeze_panes` | string | no | First unfrozen cell: 'A2' freezes row 1, 'A1' unfreezes. |
 | `auto_filter` | object | no | Filter dropdowns and criteria; rows that fail them are hidden, as in Excel. |
@@ -739,9 +740,9 @@ Change a table's options, add calculated columns and totals, or resize it.
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
-| `table` | string | yes | Table name (describe_sheet lists them). |
+| `name` | string | yes | Table name (describe_sheet lists them). |
 | `options` | object | no | Fields left out keep the table's setting; a new table gets Excel's defaults. |
-| `range` | string | no | Resize: the new range, with the same top-left cell. The totals row moves to the end. New columns take their header cell's text, or 'ColumnN'. |
+| `range` | string | no | Cell or range, e.g. 'A1:D20'. |
 
 `options` fields:
 
@@ -761,26 +762,27 @@ Change a table's options, add calculated columns and totals, or resize it.
 
 **Create chart** (modifies files)
 
-Add a chart to `sheet`, or replace one.
+Add a chart to `sheet`, or replace one. Returns its name and the cells it covers.
 
-Give data_range for a plain block, or series for ranges that are not adjacent, sit in
+Give `source` for a plain block, or `series` for ranges that are not adjacent, sit in
 rows, have their own names or live on other sheets. Combo charts take a `type` and
-`secondary_axis` per series. To change a chart, create it again with `index`.
-Options that do not fit the chart type are rejected. describe_sheet lists the charts
-(those of Excel 2016 after the others); delete_chart removes one.
+`secondary_axis` per series. Options that do not fit the chart type are rejected.
+To chart a PivotTable, leave out its Grand Total row and column.
+describe_sheet lists charts; delete_chart removes one.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
-| `chart_type` | `column` \| `bar` \| `line` \| `area` \| `pie` \| `doughnut` \| `radar` \| `scatter` \| `bubble` \| `waterfall` \| `histogram` \| `pareto` \| `box_whisker` \| `treemap` \| `sunburst` \| `funnel` | yes | Kind of chart. waterfall, histogram, pareto, box_whisker, treemap, sunburst and funnel are Excel 2016 charts: they need anchor_cell and take no combo, trendline, colors or secondary axis. |
+| `chart_type` | `column` \| `bar` \| `line` \| `area` \| `pie` \| `doughnut` \| `radar` \| `scatter` \| `bubble` \| `waterfall` \| `histogram` \| `pareto` \| `box_whisker` \| `treemap` \| `sunburst` \| `funnel` | yes | Kind of chart. waterfall, histogram, pareto, box_whisker, treemap, sunburst and funnel are Excel 2016 charts: they need `at` and take no combo, trendline, colors or secondary axis. |
 | `options` | object | no |  |
-| `anchor_cell` | string | no | Top-left cell, e.g. 'E2'. Omit to put the chart on a new chart sheet named `sheet`. |
-| `data_range` | string | no | A block with a header row, labels in the first column and one series per further column, e.g. 'A1:C13' or 'Data!A1:C13'. Scatter: x values first. Bubble: x, y, size. Excel 2016 charts: leading text columns are labels (the levels, for treemap and sunburst), the number columns the series. |
-| `series_in` | `columns` \| `rows` | no | 'rows': series are the rows of data_range. Default: `columns`. |
-| `series` | array of object | no | Explicit series instead of data_range, for any ranges on any sheet. Default: `[]`. |
+| `at` | string | no | Cell, e.g. 'B2'. |
+| `source` | string | no | Cell or range, e.g. 'A1:D20'. |
+| `series_in` | `columns` \| `rows` | no | 'rows': series are the rows of `source`. Default: `columns`. |
+| `series` | array of object | no | Explicit series instead of `source`, for any ranges on any sheet. Default: `[]`. |
 | `categories` | string | no | Category labels (x values) for series without their own. |
-| `index` | integer | no | Replace chart N of `sheet` (from describe_sheet) with this one, rebuilt from these arguments, instead of adding a chart. |
+| `name` | string | no | Unique among the sheet's charts and images. |
+| `replace` | string | no | Name of the chart to replace with this one (in the same position, keeping its name unless `name` is given), instead of adding a chart. |
 
 `options` fields:
 
@@ -886,20 +888,18 @@ Options that do not fit the chart type are rejected. describe_sheet lists the ch
 
 Remove a chart from a sheet. The data it plotted is left untouched.
 
-Later charts move up one index; call describe_sheet again before deleting another.
-
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
-| `index` | integer | yes | Chart number from describe_sheet. |
+| `name` | string | yes | Chart name from describe_sheet. |
 
 ## add_sparklines
 
 **Add sparklines** (modifies files)
 
 Add a group of sparklines (Insert > Sparklines): a line, column or win/loss chart in
-each cell of `location`, one per row of `data` (or per column when the cell count
+each cell of `range`, one per row of `source` (or per column when the cell count
 matches the columns). Sparklines already in those cells are replaced.
 
 describe_sheet lists sparklines; delete_sparklines removes them.
@@ -908,8 +908,8 @@ describe_sheet lists sparklines; delete_sparklines removes them.
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
-| `location` | string | yes | Cells that get a sparkline: one row or column, e.g. 'G2:G9'. |
-| `data` | string | yes | Data, on any sheet: 'B2:F9' or 'Data!B2:F9'. One sparkline per row. |
+| `range` | string | yes | Cells that get a sparkline: one row or column, e.g. 'G2:G9'. |
+| `source` | string | yes | Data, on any sheet: 'B2:F9' or 'Data!B2:F9'. One sparkline per row. |
 | `style` | object | no |  |
 
 `style` fields:
@@ -926,7 +926,7 @@ describe_sheet lists sparklines; delete_sparklines removes them.
 | `dates` | string | no | Range of dates, one per data point, to plot on a date axis, e.g. 'Data!B1:F1'. |
 | `empty_cells` | `gap` \| `zero` \| `connect` | no | Show empty cells as gaps or zeros, or connect the points. Default: `gap`. |
 | `hidden` | boolean | no | Plot data in hidden rows and columns. Default: `False`. |
-| `line_weight` | number | no | Line only, points. Default: `0.75`. |
+| `line_width_pt` | number | no | Line only, points. Default: `0.75`. |
 
 `colors` fields:
 
@@ -957,31 +957,31 @@ Remove the sparklines in a range (Clear Sparklines). The data is left untouched.
 
 **Create pivot table** (modifies files)
 
-Add an Excel PivotTable that summarizes a block of data.
+Add an Excel PivotTable that summarizes a block of data. Returns its name and cells.
 
 Excel can refresh it (Data > Refresh All) when the source changes, and shows the same
-figures. They are also written into the cells, laid out as Excel does (subtotals, grand
-totals), so other tools can read them. A field can be used only once among rows, columns
-and filters; filters show every item unless `fields` sets `show_items`. Items that tie when
+figures. They are also written into the cells, laid out as Excel does (subtotals, Grand
+Total row and column), so other tools can read them; leave the Grand Total out of a
+chart's source. A field can be used only once among row, column and filter fields;
+filters show every item unless `field_settings` sets `show_items`. Items that tie when
 sorted by value may swap places when Excel refreshes. describe_sheet lists PivotTables;
 delete_pivot_table removes one.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
-| `source_sheet` | string | yes | Worksheet name. |
-| `source_range` | string | yes | Header row of unique text labels, then one record per row, e.g. 'A1:E200'. Each column holds only text, only numbers or only dates (blanks are fine), not formulas. |
-| `rows` | array of string | yes | Headers to group by down the side, outermost first. |
-| `values` | array of object | yes | Headers to summarize. |
-| `target_sheet` | string | yes | Worksheet name. |
-| `target_cell` | string | yes | Top-left cell of the PivotTable; the area must be empty. |
-| `columns` | array of string | no | Headers to spread across the top, outermost first. Default: `[]`. |
-| `filters` | array of string | no | Headers offered as page filters above the table. Default: `[]`. |
-| `fields` | array of object | no | Per-field settings for headers used in rows, columns or filters: items to show (`show_items`), sort order, date or number grouping. Default: `[]`. |
+| `sheet` | string | yes | Sheet to put the PivotTable on. |
+| `at` | string | yes | Top-left cell of the PivotTable; the area must be empty. |
+| `source` | string | yes | Header row of unique text labels, then one record per row, e.g. 'Data!A1:E200' (`sheet` if no sheet is given). Each column holds only text, only numbers or only dates (blanks are fine), not formulas. |
+| `row_fields` | array of string | yes | Headers to group by down the side, outermost first. |
+| `value_fields` | array of object | yes | Headers to summarize. |
+| `column_fields` | array of string | no | Headers to spread across the top, outermost first. Default: `[]`. |
+| `filter_fields` | array of string | no | Headers offered as page filters above the table. Default: `[]`. |
+| `field_settings` | array of object | no | Per-field settings for headers used in row, column or filter fields: items to show (`show_items`), sort order, date or number grouping. Default: `[]`. |
 | `calculated_fields` | array of object | no | Fields calculated from others, usable in values. Default: `[]`. |
 | `layout` | `compact` \| `outline` \| `tabular` | no | Report layout of the row labels. Default: `tabular`. |
 | `subtotals` | boolean | no | Show subtotals of outer fields. Default: `True`. |
-| `values_in` | `columns` \| `rows` | no | Where several values fields go: as columns or as rows. Default: `columns`. |
+| `values_in` | `columns` \| `rows` | no | Where several value fields go: as columns or as rows. Default: `columns`. |
 | `name` | string | no | PivotTable name. Default: PivotTableN. |
 
 ## delete_pivot_table
@@ -1014,9 +1014,9 @@ removes one.
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Sheet to put the slicer on. |
-| `source` | object | yes | The table or PivotTable to filter. |
+| `target` | object | yes | The table or PivotTable to filter. |
 | `field` | string | yes | Header of the column or field to filter by. |
-| `cell` | string | yes | Top-left cell of the slicer. |
+| `at` | string | yes | Top-left cell of the slicer. |
 | `width_cm` | number | no | Default: 5.1 (timeline: 9.3). |
 | `height_cm` | number | no | Default: 7.4 (timeline: 3.8). |
 | `caption` | string | no | Header text. Default: the field. |
@@ -1026,10 +1026,10 @@ removes one.
 | `selected_items` | array of string | no | Items to show. Default: all. Default: `[]`. |
 | `sort` | `ascending` \| `descending` | no | Order of the items. Default: `ascending`. |
 | `hide_empty_items` | boolean | no | Hide items that have no data. Default: `False`. |
-| `connect` | array of object | no | More PivotTables that share the source's data cache, as copies of a sheet do; the slicer filters them all. Default: `[]`. |
+| `connect` | array of object | no | More PivotTables that share the target's data cache, as copies of a sheet do; the slicer filters them all. Default: `[]`. |
 | `timeline` | object | no | Make a timeline instead of a slicer, for a date field of a PivotTable: time scale and the period shown. |
 
-`source` fields:
+`target` fields:
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -1119,7 +1119,7 @@ Remove the note from a cell.
 
 **Insert image** (modifies files)
 
-Place a picture with its top-left corner at a cell.
+Place an image at a cell. Returns its name and the cells it covers.
 
 Give width_cm or height_cm to resize it keeping the ratio; give both to stretch it.
 describe_sheet lists images; delete_image removes one.
@@ -1129,23 +1129,22 @@ describe_sheet lists images; delete_image removes one.
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
 | `image_path` | string | yes | PNG or JPEG file, in a workbook folder. |
-| `cell` | string | yes | Cell, e.g. 'B2'. |
+| `at` | string | yes | Cell of the picture's top-left corner. |
 | `width_cm` | number | no | Default: natural size. |
 | `height_cm` | number | no | Alone, the ratio is kept. |
+| `name` | string | no | Unique among the sheet's charts and images. |
 
 ## delete_image
 
 **Delete image** (modifies files, may overwrite data)
 
-Remove a picture from a sheet.
-
-Later images move up one index; call describe_sheet again before deleting another.
+Remove an image from a sheet.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path` | string | yes | Workbook path: relative to the server's workbook folder, or absolute. |
 | `sheet` | string | yes | Worksheet name. |
-| `index` | integer | yes | Image number from describe_sheet. |
+| `name` | string | yes | Image name from describe_sheet. |
 
 ## read_vba
 

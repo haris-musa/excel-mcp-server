@@ -10,8 +10,8 @@ from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
 
 from excel_mcp.errors import InvalidArgumentError
+from excel_mcp.operations import drawings, slicer_table
 from excel_mcp.operations import slicer_pivot as pivots
-from excel_mcp.operations import slicer_table
 from excel_mcp.operations import slicer_xml as xml
 from excel_mcp.operations.pivot_fields import item_text
 from excel_mcp.operations.slicer_index import (
@@ -27,19 +27,16 @@ from excel_mcp.operations.slicer_index import (
 from excel_mcp.operations.slicer_place import add_cache, add_entry, next_shape_id
 from excel_mcp.package import state_of
 from excel_mcp.package.anchors import Corner
-from excel_mcp.refs import cell_name
 from excel_mcp.text import quoted
-
-_CORNER = re.compile(r"<xdr:col>(\d+)</xdr:col>.*?<xdr:row>(\d+)</xdr:row>", re.S)
 
 
 class SlicerInfo(BaseModel):
     name: str
     kind: str
     caption: str
-    source: str
+    target: str
     field: str
-    cell: str | None
+    range: str | None = None
     selected_items: list[str] = []
     level: str | None = None
     start: str | None = None
@@ -61,15 +58,15 @@ def list_slicers(workbook: Workbook, sheet: Worksheet) -> list[SlicerInfo]:
 def _describe(workbook: Workbook, entry: Entry, cache: xml.CacheInfo) -> SlicerInfo:
     values = entry.values
     selected: list[str] = []
-    source = ""
+    target = ""
     if cache.kind == "table":
         owner, table = table_of(workbook, cache.table_id or 0)
-        source = f"{owner.title}!{table.displayName}"
+        target = f"{owner.title}!{table.displayName}"
         index, _ = slicer_table.table_column(table, cache.field)
         selected = slicer_table.shown_values(table, index) or []
     else:
         owner, pivot = pivot_of(workbook, *cache.pivots[0])
-        source = ", ".join(f"{pivot_of(workbook, *p)[0].title}!{p[1]}" for p in cache.pivots)
+        target = ", ".join(f"{pivot_of(workbook, *p)[0].title}!{p[1]}" for p in cache.pivots)
         if cache.kind == "pivot":
             selected = _selected_items(pivot, cache)
     chosen = cache.selection
@@ -81,9 +78,9 @@ def _describe(workbook: Workbook, entry: Entry, cache: xml.CacheInfo) -> SlicerI
         if cache.kind == "table"
         else "pivot",
         caption=values.get("caption", ""),
-        source=source,
+        target=target,
         field=cache.field,
-        cell=_cell(workbook, entry),
+        range=_range(workbook, entry),
         selected_items=selected,
         level=xml.LEVELS[int(values.get("level", "2"))] if entry.kind == "timeline" else None,
         start=f"{chosen[0]:%Y-%m-%d}" if chosen else None,
@@ -102,11 +99,14 @@ def _selected_items(pivot: TableDefinition, cache: xml.CacheInfo) -> list[str]:
     return chosen[::-1] if cache.sort == "descending" else chosen
 
 
-def _cell(workbook: Workbook, entry: Entry) -> str | None:
-    package = state_of(workbook).sheet(entry.sheet)
-    shape = _anchor_of(package.anchors, entry.name)
-    found = _CORNER.search(shape) if shape else None
-    return cell_name(int(found[2]) + 1, int(found[1]) + 1) if found else None
+def _range(workbook: Workbook, entry: Entry) -> str | None:
+    return placed_range(workbook, entry.sheet, entry.name)
+
+
+def placed_range(workbook: Workbook, sheet: Worksheet, name: str) -> str | None:
+    """The cells the shape of a slicer or timeline covers."""
+    shape = _anchor_of(state_of(workbook).sheet(sheet).anchors, name)
+    return drawings.anchored_range(shape) if shape else None
 
 
 def _anchor_of(anchors: list[str], name: str) -> str | None:

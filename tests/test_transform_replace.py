@@ -32,7 +32,7 @@ def data(path: Path, name: str = "Data") -> Worksheet:
     return load_workbook(path)[name]
 
 
-async def transform(call: ToolCall, range: str, **spec: Any) -> str:
+async def transform(call: ToolCall, range: str, **spec: Any) -> dict[str, str]:
     return await call("transform_range", **BOOK, range=range, transform=spec)
 
 
@@ -43,7 +43,7 @@ async def test_remove_duplicates_matches_excel(call: ToolCall, book: Path) -> No
     # The same data went through Excel's Remove Duplicates on column A with a header.
     rows = [["h", "n"], ["A", 1], ["a", 2], ["A ", 3], [1, 4], ["1", 5], ["A", 6]]
     rows += [[None, 7], [None, 8], [1.0, 9]]
-    await call("write_range", **BOOK, start_cell="A1", rows=rows)
+    await call("write_range", **BOOK, at="A1", rows=rows)
     workbook = load_workbook(book)
     for row in range(2, 11):
         workbook["Data"].cell(row, 1).fill = RED
@@ -53,7 +53,7 @@ async def test_remove_duplicates_matches_excel(call: ToolCall, book: Path) -> No
     message = await transform(
         call, "A1:B10", operation="remove_duplicates", columns=["h"], has_header=True
     )
-    assert message == "Removed 4 duplicate rows from A1:B10."
+    assert message["note"] == "Removed 4 duplicate rows."
     sheet = data(book)
     assert [[sheet.cell(r, c).value for c in (1, 2)] for r in range(1, 11)] == [
         ["h", "n"],
@@ -83,9 +83,9 @@ async def test_remove_duplicates_compares_only_the_chosen_columns(
         ["S", "x", 1],
         ["N", "x", 2],
     ]
-    await call("write_range", **BOOK, start_cell="A1", rows=rows)
+    await call("write_range", **BOOK, at="A1", rows=rows)
     message = await transform(call, "A1:C5", operation="remove_duplicates", columns=["Region", "B"])
-    assert message == "Removed 1 duplicate rows from A1:C5."
+    assert message["note"] == "Removed 1 duplicate rows."
     sheet = data(book)
     assert [[c.value for c in row] for row in sheet["A1:C5"]] == [
         ["Region", "Product", "Units"],
@@ -97,9 +97,9 @@ async def test_remove_duplicates_compares_only_the_chosen_columns(
 
 
 async def test_remove_duplicates_defaults_to_every_column(call: ToolCall, book: Path) -> None:
-    await call("write_range", **BOOK, start_cell="A1", rows=[["a", 1], ["a", 1], ["a", 2]])
+    await call("write_range", **BOOK, at="A1", rows=[["a", 1], ["a", 1], ["a", 2]])
     message = await transform(call, "A1:B3", operation="remove_duplicates", has_header=False)
-    assert message == "Removed 1 duplicate rows from A1:B3."
+    assert message["note"] == "Removed 1 duplicate rows."
     assert [[c.value for c in row] for row in data(book)["A1:B3"]] == [
         ["a", 1],
         ["a", 2],
@@ -113,13 +113,13 @@ async def test_remove_duplicates_without_a_header_and_with_formulas(
     await call(
         "write_range",
         **BOOK,
-        start_cell="A1",
+        at="A1",
         rows=[[2, "=A1*2"], [1, "=A2*2"], [4, "=A3*2"], [1, "=A4*2"], [2, "=A5*2"]],
     )
     message = await transform(
         call, "A1:B5", operation="remove_duplicates", columns=["B"], has_header=False
     )
-    assert message == "Removed 2 duplicate rows from A1:B5."
+    assert message["note"] == "Removed 2 duplicate rows."
     sheet = data(book)
     # The results are 4, 2, 8, 2, 4: the last two repeat earlier ones.
     assert [sheet.cell(r, 2).value for r in range(1, 6)] == ["=A1*2", "=A2*2", "=A3*2", None, None]
@@ -127,7 +127,7 @@ async def test_remove_duplicates_without_a_header_and_with_formulas(
 
 
 async def test_remove_duplicates_errors(call: ToolCall, call_error: ToolCall, book: Path) -> None:
-    await call("write_range", **BOOK, start_cell="A1", rows=[["a"], ["a"]])
+    await call("write_range", **BOOK, at="A1", rows=[["a"], ["a"]])
     await call("merge_cells", **BOOK, range="C1:D1")
     spec = {"operation": "remove_duplicates"}
     assert "merged" in await call_error("transform_range", **BOOK, range="A1:D2", transform=spec)
@@ -144,9 +144,9 @@ async def test_remove_duplicates_errors(call: ToolCall, call_error: ToolCall, bo
 
 async def test_text_to_columns_types_pieces_like_excel(call: ToolCall, book: Path) -> None:
     text = "a|007|5%|TRUE|=1+1|2026-01-31| 12 |1.5|1,234|x y|-4"
-    await call("write_range", **BOOK, start_cell="A1", rows=[[text], ["no delimiter"], [42]])
+    await call("write_range", **BOOK, at="A1", rows=[[text], ["no delimiter"], [42]])
     message = await transform(call, "A1:A3", operation="text_to_columns", delimiters=["|"])
-    assert message == "Split 2 cells of A1:A3."
+    assert message["note"] == "Split 2 cells."
     sheet = data(book)
     values = [sheet.cell(1, col).value for col in range(1, 12)]
     assert values == [
@@ -181,14 +181,14 @@ async def test_text_to_columns_types_pieces_like_excel(call: ToolCall, book: Pat
         ("a,,b", {"delimiters": ["comma"], "merge_delimiters": True}, ["a", "b"]),
         ("a b;c\td", {"delimiters": ["space", "semicolon", "tab"]}, ["a", "b", "c", "d"]),
         ("a-b", {"delimiters": ["-"]}, ["a", "b"]),
-        ("AB12XYZ", {"fixed_widths": [2, 2]}, ["AB", 12, "XYZ"]),
-        ("AB", {"fixed_widths": [5]}, ["AB"]),
+        ("AB12XYZ", {"fixed_widths_chars": [2, 2]}, ["AB", 12, "XYZ"]),
+        ("AB", {"fixed_widths_chars": [5]}, ["AB"]),
     ],
 )
 async def test_text_to_columns_splitting(
     call: ToolCall, book: Path, text: str, options: dict[str, Any], expected: list[object]
 ) -> None:
-    await call("write_range", **BOOK, start_cell="A1", rows=[[text]])
+    await call("write_range", **BOOK, at="A1", rows=[[text]])
     await transform(call, "A1", operation="text_to_columns", **options)
     sheet = data(book)
     assert [sheet.cell(1, col).value for col in range(1, len(expected) + 1)] == expected
@@ -208,8 +208,12 @@ async def test_text_to_columns_keeps_text_cells_as_text(call: ToolCall, book: Pa
     ("range", "spec", "message"),
     [
         ("A1:B2", {"delimiters": [","]}, "single column"),
-        ("A1", {}, "either delimiters or fixed_widths"),
-        ("A1", {"delimiters": [","], "fixed_widths": [1]}, "either delimiters or fixed_widths"),
+        ("A1", {}, "either delimiters or fixed_widths_chars"),
+        (
+            "A1",
+            {"delimiters": [","], "fixed_widths_chars": [1]},
+            "either delimiters or fixed_widths_chars",
+        ),
         ("A1", {"delimiters": [",,"]}, "single character"),
         ("A1:A2", {"delimiters": [","]}, "B1 is not empty"),
         ("A2", {"delimiters": [","]}, "WEBSERVICE is not allowed"),
@@ -222,10 +226,10 @@ async def test_invalid_text_to_columns(
     await call(
         "write_range",
         **BOOK,
-        start_cell="A1",
+        at="A1",
         rows=[["a,b"], ['x,=WEBSERVICE("https://example.test")']],
     )
-    await call("write_range", **BOOK, start_cell="B1", rows=[["in the way"]])
+    await call("write_range", **BOOK, at="B1", rows=[["in the way"]])
     before = book.read_bytes()
     result = await call_error(
         "transform_range",
@@ -308,7 +312,7 @@ async def test_replace_in_formulas_can_be_switched_off(call: ToolCall, texts: Pa
 
 
 async def test_replace_keeps_function_prefixes(call: ToolCall, book: Path) -> None:
-    await call("write_range", **BOOK, start_cell="A1", rows=[["=IFS(C1>2,1,TRUE,0)"]])
+    await call("write_range", **BOOK, at="A1", rows=[["=IFS(C1>2,1,TRUE,0)"]])
     assert await replace(call, "C1", "D1", sheet="Data") == {"Data": 1}
     assert data(book)["A1"].value == "=_xlfn.IFS(D1>2,1,TRUE,0)"
     assert data(book)["A1"].data_type == "f"

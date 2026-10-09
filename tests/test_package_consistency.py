@@ -34,7 +34,7 @@ async def test_preserved_parts_are_copied_byte_for_byte(call: ToolCall, files: P
     ):
         source = copy_fixture(files, fixture)
         before = {n: d for n, d in read_parts(source).items() if n.startswith(prefixes)}
-        await call("write_range", **BOOK, sheet="Data", start_cell="Z1", rows=[[1]])
+        await call("write_range", **BOOK, sheet="Data", at="Z1", rows=[[1]])
         after = read_parts(files / "book.xlsx")
         assert before
         for name, data in before.items():
@@ -122,7 +122,7 @@ async def test_preserved_content_beyond_the_size_limit_is_refused(files: Path) -
 
     async with Client(server) as client:
         result = await client.call_tool(
-            "write_range", {**BOOK, "sheet": "Sheet", "start_cell": "A1", "rows": [[1]]}
+            "write_range", {**BOOK, "sheet": "Sheet", "at": "A1", "rows": [[1]]}
         )
 
     assert result.is_error

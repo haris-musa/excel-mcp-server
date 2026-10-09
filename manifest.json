@@ -59,7 +59,7 @@
     },
     {
       "name": "describe_workbook",
-      "description": "List a workbook's sheets with their used ranges, plus its defined names, properties and calculation settings."
+      "description": "List a workbook's sheets (visibility, used range, counts of tables, charts, PivotTables, slicers and images), plus its defined names, properties and calculation settings."
     },
     {
       "name": "set_workbook_settings",
@@ -99,11 +99,11 @@
     },
     {
       "name": "insert_rows_or_columns",
-      "description": "Insert empty rows or columns before position `at`, updating every reference like Excel."
+      "description": "Insert empty rows or columns before position `start`, updating every reference like Excel."
     },
     {
       "name": "delete_rows_or_columns",
-      "description": "Delete rows or columns starting at position `at`, updating every reference like Excel."
+      "description": "Delete rows or columns from position `start`, updating every reference like Excel."
     },
     {
       "name": "read_range",
@@ -167,15 +167,15 @@
     },
     {
       "name": "create_chart",
-      "description": "Add a chart to `sheet`, or replace one."
+      "description": "Add a chart to `sheet`, or replace one by name."
     },
     {
       "name": "delete_chart",
-      "description": "Remove a chart from a sheet. The data it plotted is left untouched."
+      "description": "Remove a chart from a sheet by name. The data it plotted is left untouched."
     },
     {
       "name": "add_sparklines",
-      "description": "Add a group of sparklines (Insert > Sparklines): a line, column or win/loss chart in each cell of `location`, one per row of `data` (or per column when the cell count matches the columns)."
+      "description": "Add a group of sparklines (Insert > Sparklines): a line, column or win/loss chart in each cell of `range`, one per row of `source` (or per column when the cell count matches the columns)."
     },
     {
       "name": "delete_sparklines",
@@ -215,11 +215,11 @@
     },
     {
       "name": "insert_image",
-      "description": "Place a PNG or JPEG picture with its top-left corner at a cell."
+      "description": "Place a PNG or JPEG image with its top-left corner at a cell."
     },
     {
       "name": "delete_image",
-      "description": "Remove a picture from a sheet."
+      "description": "Remove an image from a sheet."
     },
     {
       "name": "read_vba",

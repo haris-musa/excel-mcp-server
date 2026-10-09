@@ -7,12 +7,13 @@ drawing, a link to the chart part and the hidden names the part's data refers to
 import re
 import uuid
 from dataclasses import dataclass
-from html import unescape
+from html import escape, unescape
 from pathlib import Path
 
 from openpyxl import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
+from excel_mcp.operations import drawings
 from excel_mcp.operations.chart_info import ChartInfo
 from excel_mcp.operations.chartex_xml import KINDS, NameBook, chart_xml
 from excel_mcp.operations.charts_data import Plot
@@ -21,7 +22,8 @@ from excel_mcp.operations.sheet_refs import SheetCopyRefs
 from excel_mcp.package import Link, Part, state_of
 from excel_mcp.package.anchors import Geometry
 from excel_mcp.package.model import SheetPackage
-from excel_mcp.refs import cell_name, parse_cell
+from excel_mcp.package.shape_names import anchored_name
+from excel_mcp.refs import parse_cell
 
 EMU_PER_CM = 360000
 _URI = "http://schemas.microsoft.com/office/drawing/2014/chartex"
@@ -37,7 +39,6 @@ _PARTS = Path(__file__).with_name("chartex_parts")
 _CHART_ID = re.compile(r"<cx:chart\b[^>]*\br:id=\"([^\"]+)\"")
 _FORMULA = re.compile(r"(<cx:f\b[^>]*>)([^<]*)(</cx:f>)")
 _NAME = re.compile(r"_xlchart\.v(\d+)\.\d+")
-_FROM = re.compile(r"<(?:\w+:)?from>.*?<(?:\w+:)?col>(\d+)<.*?<(?:\w+:)?row>(\d+)<", re.S)
 _TITLE = re.compile(r"<cx:chart>\s*<cx:title\b.*?<cx:v>(.*?)</cx:v>.*?<cx:plotArea", re.S)
 _DATA = re.compile(r'<cx:data id="(\d+)">.*?<cx:numDim\b[^>]*><cx:f\b[^>]*>(.*?)</cx:f>', re.S)
 _LAYOUT = re.compile(r'<cx:series layoutId="(\w+)"')
@@ -64,6 +65,10 @@ class Modern:
     def xml(self) -> str:
         return self.part.data.decode("utf-8")
 
+    @property
+    def name(self) -> str:
+        return anchored_name(self.anchor) or ""
+
 
 def _workbook(sheet: Worksheet) -> Workbook:
     assert sheet.parent is not None
@@ -81,21 +86,19 @@ def modern_charts(sheet: Worksheet) -> list[Modern]:
     return found
 
 
-def describe(sheet: Worksheet, first: int) -> list[ChartInfo]:
-    """The charts of the sheet, numbered from `first`."""
+def describe(sheet: Worksheet) -> list[ChartInfo]:
     names = _workbook(sheet).defined_names
     infos = []
-    for index, chart in enumerate(modern_charts(sheet), start=first):
+    for chart in modern_charts(sheet):
         xml = chart.xml
         title = _TITLE.search(xml)
-        corner = _FROM.search(chart.anchor)
         series = [names[n].attr_text if n in names else n for _, n in _DATA.findall(xml)]
         infos.append(
             ChartInfo(
-                index=index,
+                name=chart.name,
                 type=_type(xml),
                 title=unescape(title[1]) if title else None,
-                anchor=cell_name(int(corner[2]) + 1, int(corner[1]) + 1) if corner else None,
+                range=drawings.anchored_range(chart.anchor),
                 series=[s or "" for s in series],
             )
         )
@@ -118,8 +121,10 @@ def add(
     plots: list[Plot],
     options: ChartOptions,
     replacing: Modern | None,
-) -> None:
-    """Put a chart on the sheet: in the place of `replacing` if given, else after the others."""
+    name: str,
+) -> str:
+    """Put a chart on the sheet: in the place of `replacing` if given, else after the others.
+    Returns the cells it covers."""
     package = state_of(workbook).sheet(sheet)
     position = len(package.anchors)
     if replacing is not None:
@@ -129,8 +134,9 @@ def add(
     link = Link(_free_id(package), _CHART_REL, _chart_part(workbook, chart_type, plots, options))
     package.drawing_links.append(link)
     version = KINDS[chart_type].version
-    anchor = _anchor(sheet, anchor_cell, options, number, link.id, version)
+    anchor = _anchor(sheet, anchor_cell, options, number, link.id, version, name)
     package.anchors.insert(position, anchor)
+    return drawings.anchored_range(anchor) or ""
 
 
 def remove(sheet: Worksheet, chart: Modern) -> None:
@@ -210,7 +216,13 @@ def _colors() -> Part:
 
 
 def _anchor(
-    sheet: Worksheet, anchor_cell: str, options: ChartOptions, number: int, rid: str, version: int
+    sheet: Worksheet,
+    anchor_cell: str,
+    options: ChartOptions,
+    number: int,
+    rid: str,
+    version: int,
+    name: str,
 ) -> str:
     row, col = parse_cell(anchor_cell)
     geometry = Geometry(sheet)
@@ -229,7 +241,7 @@ def _anchor(
         '<mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">'
         f'<mc:Choice xmlns:cx{version}="{_REQUIRED[version]}" Requires="cx{version}">'
         '<xdr:graphicFrame macro=""><xdr:nvGraphicFramePr>'
-        f'<xdr:cNvPr id="{number + 1}" name="Chart {number}"><a:extLst>'
+        f'<xdr:cNvPr id="{number + 1}" name="{escape(name)}"><a:extLst>'
         '<a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}"><a16:creationId '
         'xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" '
         f'id="{{{str(uuid.uuid4()).upper()}}}"/></a:ext></a:extLst></xdr:cNvPr>'

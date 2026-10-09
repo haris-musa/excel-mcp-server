@@ -10,6 +10,7 @@ from excel_mcp.operations.inspect import SheetDetails
 from excel_mcp.package.lines import Axis
 from excel_mcp.server.params import LineCount, LineIndex, SheetName, WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
+from excel_mcp.server.results import Changed
 from excel_mcp.workspace import Workspace, get_sheet
 
 AxisParam = Annotated[Axis, Field(description="Rows or columns.")]
@@ -24,7 +25,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         """Describe a sheet's used range, frozen panes, merged ranges, tables, charts, PivotTables,
         slicers, timelines, images, notes, hyperlinks, validation, conditional formats, sparklines,
         custom column widths, hidden rows and columns, print area and protection. Empty items are
-        omitted.
+        omitted. Charts and images are listed by name, with the cells they cover.
 
         Loads the whole workbook into memory, so it is slow on very large files."""
         with workspace.read(path, with_package=True) as workbook:
@@ -33,26 +34,26 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     @tools.writer("Create sheet")
     def create_sheet(
         path: WorkbookPath,
-        sheet: NewSheetName,
+        new_name: NewSheetName,
         position: Annotated[
             int | None, Field(ge=1, description="1-based position. Default: after the last.")
         ] = None,
-    ) -> str:
+    ) -> Changed:
         """Add an empty worksheet."""
         with workspace.edit(path) as workbook:
-            sheets.create_sheet(workbook, sheet, position)
-        return f"Created sheet {sheet!r}."
+            sheets.create_sheet(workbook, new_name, position)
+        return Changed(sheet=new_name)
 
     @tools.writer("Rename sheet")
-    def rename_sheet(path: WorkbookPath, sheet: SheetName, new_name: NewSheetName) -> str:
+    def rename_sheet(path: WorkbookPath, sheet: SheetName, new_name: NewSheetName) -> Changed:
         """Rename a worksheet. References to it are updated as in Excel: formulas, names, rules,
         charts and PivotTable sources."""
         with workspace.edit(path) as workbook:
             sheets.rename_sheet(workbook, sheet, new_name)
-        return f"Renamed sheet {sheet!r} to {new_name!r}."
+        return Changed(sheet=new_name)
 
     @tools.writer("Copy sheet")
-    def copy_sheet(path: WorkbookPath, sheet: SheetName, new_name: NewSheetName) -> str:
+    def copy_sheet(path: WorkbookPath, sheet: SheetName, new_name: NewSheetName) -> Changed:
         """Copy a worksheet to a new sheet at the end, as Excel's "Create a copy" does.
 
         Copies cells, styles, merges, sizes, hidden rows and columns, freeze panes, filters, data
@@ -63,23 +64,27 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         """
         with workspace.edit(path) as workbook:
             sheet_copy.copy_sheet(workbook, sheet, new_name)
-        return f"Copied sheet {sheet!r} to {new_name!r}."
+        return Changed(sheet=new_name)
 
     @tools.destroyer("Delete sheet")
-    def delete_sheet(path: WorkbookPath, sheet: SheetName) -> str:
+    def delete_sheet(path: WorkbookPath, sheet: SheetName) -> Changed:
         """Delete a worksheet or chart sheet and everything on it.
 
         Fails while slicers on other sheets use its PivotTables or tables.
         """
         with workspace.edit(path) as workbook:
             sheets.delete_sheet(workbook, sheet)
-        return f"Deleted sheet {sheet!r}."
+        return Changed(sheet=sheet)
 
     @tools.writer("Insert rows or columns")
     def insert_rows_or_columns(
-        path: WorkbookPath, sheet: SheetName, axis: AxisParam, at: LineIndex, count: LineCount = 1
-    ) -> str:
-        """Insert empty rows or columns before position `at`.
+        path: WorkbookPath,
+        sheet: SheetName,
+        axis: AxisParam,
+        start: LineIndex,
+        count: LineCount = 1,
+    ) -> Changed:
+        """Insert empty rows or columns before position `start`.
 
         Like Excel, every reference moves: formulas on all sheets, names, conditional formats,
         validation, merged cells, tables, charts, PivotTables, filters and print settings.
@@ -92,18 +97,22 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 workbook,
                 target,
                 axis,
-                at,
+                start,
                 count,
                 delete=False,
                 formula_values=lambda area: formula_values(workspace, path, target, area),
             )
-        return f"Inserted {sheets.describe_lines(axis, at, count)}."
+        return Changed(sheet=sheet, range=sheets.line_span(axis, start, count))
 
     @tools.destroyer("Delete rows or columns")
     def delete_rows_or_columns(
-        path: WorkbookPath, sheet: SheetName, axis: AxisParam, at: LineIndex, count: LineCount = 1
-    ) -> str:
-        """Delete rows or columns starting at position `at`.
+        path: WorkbookPath,
+        sheet: SheetName,
+        axis: AxisParam,
+        start: LineIndex,
+        count: LineCount = 1,
+    ) -> Changed:
+        """Delete rows or columns from position `start`.
 
         Like Excel, every reference moves, and one to a deleted cell becomes #REF!. See
         insert_rows_or_columns.
@@ -114,9 +123,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 workbook,
                 target,
                 axis,
-                at,
+                start,
                 count,
                 delete=True,
                 formula_values=lambda area: formula_values(workspace, path, target, area),
             )
-        return f"Deleted {sheets.describe_lines(axis, at, count)}."
+        return Changed(sheet=sheet, range=sheets.line_span(axis, start, count))

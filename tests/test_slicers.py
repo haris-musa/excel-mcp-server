@@ -78,9 +78,9 @@ async def test_selected_items_hide_the_others_in_the_pivot_table(call: ToolCall,
             "name": "Region",
             "kind": "pivot",
             "caption": "Region",
-            "source": "Pivot!PivotSales",
+            "target": "Pivot!PivotSales",
             "field": "Region",
-            "cell": "E3",
+            "range": "E3:G16",
             "selected_items": ["North", "South"],
         }
     ]
@@ -90,7 +90,7 @@ async def test_slicers_on_a_row_field_and_on_another_field_combine(
     call: ToolCall, book: str
 ) -> None:
     await add(call, book, field="Product", selected_items=["Apples", "Pears"])
-    await add(call, book, field="Region", cell="E20", selected_items=["North"])
+    await add(call, book, field="Region", at="E20", selected_items=["North"])
     assert pivot_cells(book)[:4] == [
         ["Product", "Sum of Amount"],
         ["Apples", 10],
@@ -109,7 +109,7 @@ async def test_a_timeline_limits_the_period(call: ToolCall, book: str) -> None:
         field="Date",
         timeline={"level": "quarters", "start": "2025-02-01", "end": "2025-05-31"},
     )
-    assert "timeline 'Date'" in name
+    assert name == {"sheet": "Pivot", "range": "E3:J10", "name": "Date"}
     assert pivot_cells(book)[:5] == [
         ["Product", "Sum of Amount"],
         ["Apples", 20],
@@ -129,13 +129,13 @@ async def test_a_timeline_limits_the_period(call: ToolCall, book: str) -> None:
     drawing = next(text(parts, n) for n in parts if re.fullmatch(r"xl/drawings/drawing\d+\.xml", n))
     assert 'Requires="tsle"' in drawing
     info = await call("describe_sheet", path=book, sheet="Pivot")
-    assert info["slicers"][0] | {"cell": None} == {
+    assert info["slicers"][0] | {"range": None} == {
         "name": "Date",
         "kind": "timeline",
         "caption": "Date",
-        "source": "Pivot!PivotSales",
+        "target": "Pivot!PivotSales",
         "field": "Date",
-        "cell": None,
+        "range": None,
         "level": "quarters",
         "start": "2025-02-01",
         "end": "2025-05-31",
@@ -151,7 +151,7 @@ async def test_a_timeline_without_a_period_shows_everything(call: ToolCall, book
 
 async def test_a_table_slicer_filters_the_table(call: ToolCall, book: str) -> None:
     await add(
-        call, book, sheet="Data", source=TABLE, field="Product", cell="G2", selected_items=["Pears"]
+        call, book, sheet="Data", target=TABLE, field="Product", at="G2", selected_items=["Pears"]
     )
     sheet = load_workbook(book)["Data"]
     assert [r for r in range(2, 10) if sheet.row_dimensions[r].hidden] == [2, 3, 6, 7, 8]
@@ -171,7 +171,7 @@ async def test_a_table_slicer_filters_the_table(call: ToolCall, book: str) -> No
 async def test_options_of_the_cache_follow_excel(call: ToolCall, book: str) -> None:
     await add(call, book, field="Product", sort="descending", hide_empty_items=True)
     await add(
-        call, book, sheet="Data", source=TABLE, field="Region", sort="descending",
+        call, book, sheet="Data", target=TABLE, field="Region", sort="descending",
         hide_empty_items=True,
     )  # fmt: skip
     caches = named(parts_of(book), "xl/slicerCaches/")
@@ -182,8 +182,8 @@ async def test_options_of_the_cache_follow_excel(call: ToolCall, book: str) -> N
 
 async def test_names_are_made_unique_as_excel_does(call: ToolCall, book: str) -> None:
     await add(call, book, field="Product")
-    second = await add(call, book, sheet="Data", source=TABLE, field="Product", cell="G2")
-    assert "'Product 1'" in second
+    second = await add(call, book, sheet="Data", target=TABLE, field="Product", at="G2")
+    assert second["name"] == "Product 1"
     workbook = text(parts_of(book), "xl/workbook.xml")
     assert "Slicer_Product1" in workbook
 
@@ -222,11 +222,11 @@ async def test_names_are_made_unique_as_excel_does(call: ToolCall, book: str) ->
             "is the PivotTable the slicer is for",
         ),
         (
-            {"field": "Product", "source": {"sheet": "Pivot", "name": "Missing"}},
+            {"field": "Product", "target": {"sheet": "Pivot", "name": "Missing"}},
             "no table or Pivot",
         ),
-        ({"field": "Product", "source": {"sheet": "Nope", "name": "x"}}, "Nope"),
-        ({"field": "Product", "cell": "A0"}, "Row 0 is not valid"),
+        ({"field": "Product", "target": {"sheet": "Nope", "name": "x"}}, "Nope"),
+        ({"field": "Product", "at": "A0"}, "Row 0 is not valid"),
     ],
 )
 async def test_invalid_requests_are_errors(
@@ -238,7 +238,7 @@ async def test_invalid_requests_are_errors(
 
 
 def _defaults() -> dict[str, Any]:
-    return {"sheet": "Pivot", "source": PIVOT, "cell": "E3"}
+    return {"sheet": "Pivot", "target": PIVOT, "at": "E3"}
 
 
 async def test_a_field_has_one_slicer_and_one_timeline(
@@ -256,24 +256,24 @@ async def test_table_requests_that_do_not_apply_are_errors(
     call: ToolCall, call_error: Callable[..., Coroutine[Any, Any, str]], book: str
 ) -> None:
     error = await call_error(
-        "add_slicer", path=book, sheet="Data", source=TABLE, field="Date", cell="G2", timeline={}
+        "add_slicer", path=book, sheet="Data", target=TABLE, field="Date", at="G2", timeline={}
     )
     assert "tables have no timelines" in error
     error = await call_error(
-        "add_slicer", path=book, sheet="Data", source=TABLE, field="Nope", cell="G2"
+        "add_slicer", path=book, sheet="Data", target=TABLE, field="Nope", at="G2"
     )
     assert "Table 'Sales' has no column 'Nope'" in error
-    await add(call, book, sheet="Data", source=TABLE, field="Region", selected_items=["East"])
+    await add(call, book, sheet="Data", target=TABLE, field="Region", selected_items=["East"])
     error = await call_error(
-        "add_slicer", path=book, sheet="Data", source=TABLE, field="Region", cell="G20"
+        "add_slicer", path=book, sheet="Data", target=TABLE, field="Region", at="G20"
     )
     assert "already has the slicer cache 'Slicer_Region'" in error
 
 
 async def test_slicers_stay_when_the_workbook_is_edited(call: ToolCall, book: str) -> None:
     await add(call, book, field="Region", selected_items=["East"])
-    await call("write_range", path=book, sheet="Data", start_cell="F1", rows=[["note"]])
-    await call("create_sheet", path=book, sheet="Other")
+    await call("write_range", path=book, sheet="Data", at="F1", rows=[["note"]])
+    await call("create_sheet", path=book, new_name="Other")
     info = await call("describe_sheet", path=book, sheet="Pivot")
     assert info["slicers"][0]["selected_items"] == ["East"]
     assert pivot_cells(book)[3][1] == 120
@@ -286,8 +286,8 @@ async def test_the_path_must_be_inside_the_workbook_folder(
         "add_slicer",
         path="../outside.xlsx",
         sheet="Pivot",
-        source=PIVOT,
+        target=PIVOT,
         field="Product",
-        cell="E3",
+        at="E3",
     )
     assert "outside" in error.lower() or "not allowed" in error.lower() or "folder" in error.lower()

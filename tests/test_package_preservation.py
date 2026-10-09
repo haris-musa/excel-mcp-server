@@ -29,7 +29,7 @@ X14 = "http://schemas.microsoft.com/office/spreadsheetml/2009/9/main"
 
 async def _edit_and_read(call: ToolCall, files: Path, fixture: str, sheet: str) -> dict[str, bytes]:
     copy_fixture(files, fixture)
-    await call("write_range", **BOOK, sheet=sheet, start_cell="Z1", rows=[[1]])
+    await call("write_range", **BOOK, sheet=sheet, at="Z1", rows=[[1]])
     parts = read_parts(files / "book.xlsx")
     assert_package_is_consistent(parts)
     load_workbook(files / "book.xlsx").close()
@@ -40,8 +40,8 @@ async def test_sparklines_and_extended_rules_survive_edits(call: ToolCall, files
     copy_fixture(files, "excel_sparklines.xlsx")
     original = text(read_parts(files / "book.xlsx"), "xl/worksheets/sheet2.xml")
 
-    await call("write_range", **BOOK, sheet="Data", start_cell="Z1", rows=[[1]])
-    await call("insert_rows_or_columns", **BOOK, sheet="Data", axis="rows", at=3)
+    await call("write_range", **BOOK, sheet="Data", at="Z1", rows=[[1]])
+    await call("insert_rows_or_columns", **BOOK, sheet="Data", axis="rows", start=3)
     parts = read_parts(files / "book.xlsx")
     sheet = text(parts, sheet_part(parts, "Data"))
 
@@ -89,7 +89,7 @@ async def test_new_chart_types_and_shapes_survive(call: ToolCall, files: Path) -
 
 async def test_slicers_and_timelines_follow_the_sheet_numbers(call: ToolCall, files: Path) -> None:
     copy_fixture(files, "excel_slicers.xlsx")
-    await call("create_sheet", **BOOK, sheet="First", position=1)
+    await call("create_sheet", **BOOK, new_name="First", position=1)
     parts = read_parts(files / "book.xlsx")
     ids = sheet_ids(parts)
 
@@ -147,7 +147,7 @@ async def test_form_controls_and_notes_share_the_vml_drawing(call: ToolCall, fil
 
 async def test_threaded_comments_follow_their_notes(call: ToolCall, files: Path) -> None:
     threaded_workbook(files / "book.xlsx")
-    await call("insert_rows_or_columns", **BOOK, sheet="Data", axis="rows", at=1, count=2)
+    await call("insert_rows_or_columns", **BOOK, sheet="Data", axis="rows", start=1, count=2)
     parts = read_parts(files / "book.xlsx")
     threads = text(parts, "xl/threadedComments/threadedComment1.xml")
 
@@ -169,7 +169,7 @@ async def test_threaded_comments_follow_their_notes(call: ToolCall, files: Path)
 
 async def test_cell_metadata_follows_the_values_it_describes(call: ToolCall, files: Path) -> None:
     value_metadata_workbook(files / "book.xlsx")
-    await call("write_range", **BOOK, sheet="Sheet", start_cell="B1", rows=[["changed"]])
+    await call("write_range", **BOOK, sheet="Sheet", at="B1", rows=[["changed"]])
     parts = read_parts(files / "book.xlsx")
     sheet = text(parts, sheet_part(parts, "Sheet"))
 
@@ -188,10 +188,10 @@ async def test_editing_again_changes_nothing_that_was_preserved(
 ) -> None:
     copy_fixture(files, fixture)
     sheet = "Pivot" if "slicers" in fixture else "Data"
-    await call("write_range", **BOOK, sheet=sheet, start_cell="Z1", rows=[[1]])
+    await call("write_range", **BOOK, sheet=sheet, at="Z1", rows=[[1]])
     first = read_parts(files / "book.xlsx")
-    await call("write_range", **BOOK, sheet=sheet, start_cell="Z2", rows=[[2]])
-    await call("write_range", **BOOK, sheet=sheet, start_cell="Z3", rows=[[3]])
+    await call("write_range", **BOOK, sheet=sheet, at="Z2", rows=[[2]])
+    await call("write_range", **BOOK, sheet=sheet, at="Z3", rows=[[3]])
     third = read_parts(files / "book.xlsx")
 
     assert sorted(first) == sorted(third)
@@ -210,7 +210,7 @@ async def test_a_table_slicer_follows_its_table_when_tables_are_renumbered(
     call: ToolCall, files: Path
 ) -> None:
     copy_fixture(files, "excel_slicers.xlsx")
-    await call("write_range", **BOOK, sheet="Pivot", start_cell="H1", rows=[["a", "b"], [1, 2]])
+    await call("write_range", **BOOK, sheet="Pivot", at="H1", rows=[["a", "b"], [1, 2]])
     await call("create_table", **BOOK, sheet="Pivot", range="H1:I2", name="Extra")
     parts = read_parts(files / "book.xlsx")
 

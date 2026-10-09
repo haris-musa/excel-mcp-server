@@ -14,6 +14,7 @@ from excel_mcp.operations.rules import DataValidationRule
 from excel_mcp.refs import CellRange
 from excel_mcp.server.params import RangeRef, SheetName, WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
+from excel_mcp.server.results import Changed
 from excel_mcp.workspace import Workspace, get_sheet
 
 
@@ -21,7 +22,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     @tools.writer("Format range")
     def format_range(
         path: WorkbookPath, sheet: SheetName, range: RangeRef, style: CellFormat
-    ) -> str:
+    ) -> Changed:
         """Change the font, fill, borders, alignment, number format or protection flags of a range.
 
         `locked` and `formula_hidden` take effect once the sheet is protected (set_sheet_layout)."""
@@ -29,7 +30,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             formatted = formatting.format_range(
                 get_sheet(workbook, sheet), range, style, workspace.limits.max_cells
             )
-        return f"Formatted {sheet}!{formatted}."
+        return Changed(sheet=sheet, range=formatted)
 
     @tools.destroyer("Merge or unmerge cells")
     def merge_cells(
@@ -39,7 +40,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         action: Annotated[
             Literal["merge", "unmerge"], Field(description="Merge the range or split it again.")
         ] = "merge",
-    ) -> str:
+    ) -> Changed:
         """Merge a range into one cell, or split a merged range again.
 
         Merging keeps only the top-left value.
@@ -51,10 +52,10 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 done = formatting.merge_cells(target, range, limit)
             else:
                 done = formatting.unmerge_cells(target, range, limit)
-        return f"{action.capitalize()}d {sheet}!{done}."
+        return Changed(sheet=sheet, range=done)
 
     @tools.writer("Set sheet layout")
-    def set_sheet_layout(path: WorkbookPath, sheet: SheetName, layout: SheetLayout) -> str:
+    def set_sheet_layout(path: WorkbookPath, sheet: SheetName, layout: SheetLayout) -> Changed:
         """Set column widths, row heights, hidden or grouped rows and columns, frozen panes,
         auto filter (on a range or a table, with criteria), tab color, sheet visibility and
         position, view options (zoom, gridlines, headings, show formulas, right to left, active
@@ -70,12 +71,12 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 return formula_values(workspace, path, target, area)
 
             apply_layout(target, layout, results, workspace.limits.max_cells)
-        return f"Updated the layout of {sheet!r}."
+        return Changed(sheet=sheet)
 
     @tools.writer("Add conditional format")
     def add_conditional_format(
         path: WorkbookPath, sheet: SheetName, range: RangeRef, rule: ConditionalFormat
-    ) -> str:
+    ) -> Changed:
         """Add a conditional format rule to a range: scales, data bars, icon sets, cell value or
         formula rules, top/bottom, average, duplicates, text, dates, blanks and errors.
 
@@ -84,16 +85,16 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         """
         with workspace.edit(path) as workbook:
             target = conditional.add_conditional_format(get_sheet(workbook, sheet), range, rule)
-        return f"Added a {rule.type} rule to {sheet}!{target}."
+        return Changed(sheet=sheet, range=target)
 
     @tools.writer("Add data validation")
     def add_data_validation(
         path: WorkbookPath, sheet: SheetName, range: RangeRef, rule: DataValidationRule
-    ) -> str:
+    ) -> Changed:
         """Restrict what can be entered in a range: a dropdown list (typed in, or from cells or a
         name), whole numbers, decimals, dates, times, text length or a custom formula, with an
         optional input message and error alert.
         """
         with workspace.edit(path) as workbook:
             target = rules.add_data_validation(get_sheet(workbook, sheet), range, rule)
-        return f"Added {rule.type} validation to {sheet}!{target}."
+        return Changed(sheet=sheet, range=target)

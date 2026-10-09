@@ -16,7 +16,7 @@ def text_to_columns(
     sheet: Worksheet,
     area: CellRange,
     delimiters: list[str] | None,
-    fixed_widths: list[int] | None,
+    fixed_widths_chars: list[int] | None,
     qualifier: str,
     merge_delimiters: bool,
     max_cells: int,
@@ -28,15 +28,15 @@ def text_to_columns(
     """
     if area.cols != 1:
         raise InvalidArgumentError(f"Text to columns needs a single column, not {area}.")
-    if bool(delimiters) == bool(fixed_widths):
-        raise InvalidArgumentError("Give either delimiters or fixed_widths.")
+    if bool(delimiters) == bool(fixed_widths_chars):
+        raise InvalidArgumentError("Give either delimiters or fixed_widths_chars.")
     separators = {_NAMED_DELIMITERS.get(name, name) for name in delimiters or []}
     if any(len(separator) != 1 for separator in separators):
         raise InvalidArgumentError(
             "Each delimiter is 'tab', 'semicolon', 'comma', 'space' or a single character."
         )
     split = [
-        (row, _split(text, separators, fixed_widths, qualifier, merge_delimiters))
+        (row, _split(text, separators, fixed_widths_chars, qualifier, merge_delimiters))
         for row in range(area.min_row, area.max_row + 1)
         if isinstance(text := sheet.cell(row, area.min_col).value, str)
         and sheet.cell(row, area.min_col).data_type == "s"
@@ -63,12 +63,12 @@ def text_to_columns(
 def _split(
     text: str,
     separators: set[str],
-    fixed_widths: list[int] | None,
+    fixed_widths_chars: list[int] | None,
     qualifier: str,
     merge_delimiters: bool,
 ) -> list[str]:
-    if fixed_widths:
-        edges = [0, *accumulate(fixed_widths)]
+    if fixed_widths_chars:
+        edges = [0, *accumulate(fixed_widths_chars)]
         pieces = [
             text[start:end] for start, end in zip(edges, [*edges[1:], len(text)], strict=True)
         ]

@@ -30,7 +30,7 @@ async def chart(
         path="sales.xlsx",
         sheet="Report",
         chart_type=chart_type,
-        anchor_cell="B2",
+        at="B2",
         series=series or [{"values": "Data!C2:C5"}],
         **arguments,
     )
@@ -44,7 +44,7 @@ async def chart_error(call_error: ToolCall, chart_type: str = "column", **argume
         path="sales.xlsx",
         sheet="Report",
         chart_type=chart_type,
-        anchor_cell="B2",
+        at="B2",
         **arguments,
     )
 
@@ -94,7 +94,7 @@ async def test_series_in_rows(call: ToolCall, sample: Path) -> None:
         "write_range",
         path="sales.xlsx",
         sheet="Report",
-        start_cell="A10",
+        at="A10",
         rows=[["", "Q1", "Q2"], ["North", 1, 2], ["South", 3, 4]],
     )
     await call(
@@ -102,8 +102,8 @@ async def test_series_in_rows(call: ToolCall, sample: Path) -> None:
         path="sales.xlsx",
         sheet="Report",
         chart_type="line",
-        anchor_cell="E2",
-        data_range="A10:C12",
+        at="E2",
+        source="A10:C12",
         series_in="rows",
     )
     root = chart_xml(sample)
@@ -115,8 +115,8 @@ async def test_series_in_rows(call: ToolCall, sample: Path) -> None:
 @pytest.mark.parametrize(
     ("arguments", "fragment"),
     [
-        ({"data_range": "Data!A1:C5"}, "either data_range"),
-        ({"series": [], "data_range": None}, "either data_range"),
+        ({"source": "Data!A1:C5"}, "either source"),
+        ({"series": [], "source": None}, "either source"),
         ({"series": [{"values": "Data!C2:D5"}]}, "one row or one column"),
         ({"series": [{"values": "Nope!C2:C5"}]}, "'Nope' not found"),
         ({"series": [{"values": "C2:C5", "extra": 1}]}, "unknown field"),
@@ -160,8 +160,8 @@ async def test_bubble_chart_from_a_block_and_from_series(call: ToolCall, sample:
         path="sales.xlsx",
         sheet="Report",
         chart_type="bubble",
-        anchor_cell="B2",
-        data_range="Data!C1:E5",
+        at="B2",
+        source="Data!C1:E5",
     )
     await chart(
         call,
@@ -438,8 +438,8 @@ async def test_grouping_applies_to_the_charts_own_type(call: ToolCall, sample: P
         ),
         (
             "column",
-            [{"values": "Data!C2:C5", "line_width": 2}],
-            "line_width does not apply to column",
+            [{"values": "Data!C2:C5", "line_width_pt": 2}],
+            "line_width_pt does not apply to column",
         ),
         ("column", [{"values": "Data!C2:C5", "color": "red"}], "Invalid color"),
     ],
@@ -458,7 +458,7 @@ async def test_series_formatting(call: ToolCall, sample: Path) -> None:
             {
                 "values": "Data!C2:C5",
                 "color": "#C00000",
-                "line_width": 3,
+                "line_width_pt": 3,
                 "marker": "diamond",
                 "marker_size": 9,
             }
@@ -567,7 +567,7 @@ async def test_chart_details_survive_later_edits(call: ToolCall, sample: Path) -
         options={"style": 5, "plot_color": "#F2F2F2", "x_axis": {"title": "Axis"}},
     )
     await chart(call, options={"title": "Title"})
-    await call("write_range", path="sales.xlsx", sheet="Report", start_cell="A1", rows=[["x"]])
+    await call("write_range", path="sales.xlsx", sheet="Report", at="A1", rows=[["x"]])
     root = chart_xml(sample, 1)
     assert values(root, "style") == ["5"] and values(root, "roundedCorners") == ["0"]
     assert values(elements(root, "plotArea")[0], "srgbClr")[-1] == "F2F2F2"
@@ -587,7 +587,7 @@ async def test_chart_on_its_own_sheet(call: ToolCall, call_error: ToolCall, samp
         series=[{"values": "Data!C2:C5"}],
         options={"title": "Units"},
     )
-    assert "chart sheet 'Units chart'" in message
+    assert message == {"sheet": "Units chart"}
     workbook = load_workbook(sample)
     assert workbook.sheetnames == ["Data", "Report", "Units chart"]
     assert [sheet.title for sheet in workbook.chartsheets] == ["Units chart"]
@@ -595,7 +595,7 @@ async def test_chart_on_its_own_sheet(call: ToolCall, call_error: ToolCall, samp
         assert "xl/chartsheets/sheet1.xml" in archive.namelist()
     info = await call("describe_workbook", path="sales.xlsx")
     assert info["chart_sheets"] == ["Units chart"]
-    await call("write_range", path="sales.xlsx", sheet="Report", start_cell="A1", rows=[["x"]])
+    await call("write_range", path="sales.xlsx", sheet="Report", at="A1", rows=[["x"]])
     assert saved_chart_count(sample) == 1
     await call("delete_sheet", path="sales.xlsx", sheet="Units chart")
     assert load_workbook(sample).sheetnames == ["Data", "Report"]
@@ -606,8 +606,8 @@ async def test_chart_on_its_own_sheet(call: ToolCall, call_error: ToolCall, samp
     [
         ({"sheet": "Data"}, "already exists"),
         ({"sheet": "Bad/name"}, "cannot contain"),
-        ({"sheet": "New", "index": 1}, "holds one chart"),
-        ({"sheet": "Report", "index": 1}, "holds one chart"),
+        ({"sheet": "New", "replace": "Chart 1"}, "holds one chart"),
+        ({"sheet": "Report", "name": "Sales"}, "holds one chart"),
     ],
 )
 async def test_chart_sheet_errors(
@@ -632,37 +632,53 @@ async def test_replace_a_chart_in_place(call: ToolCall, sample: Path) -> None:
         path="sales.xlsx",
         sheet="Report",
         chart_type="area",
-        anchor_cell="H9",
-        index=1,
+        at="H9",
+        replace="Chart 1",
         series=[{"values": "Data!D2:D5"}],
         options={"title": "Replaced"},
     )
-    assert "Replaced chart 1" in message
+    assert message == {"sheet": "Report", "name": "Chart 1", "range": "H9:P23"}
     details = await call("describe_sheet", path="sales.xlsx", sheet="Report")
     assert [
-        (item["index"], item["type"], item["title"], item["anchor"]) for item in details["charts"]
+        (item["name"], item["type"], item["title"], item["range"]) for item in details["charts"]
     ] == [
-        (1, "area", "Replaced", "H9"),
-        (2, "line", "Second", "B2"),
+        ("Chart 1", "area", "Replaced", "H9:P23"),
+        ("Chart 2", "line", "Second", "B2:J16"),
     ]
     assert saved_chart_count(sample) == 2
 
 
-async def test_replace_rejects_bad_indices(
+async def test_replace_can_rename_the_chart(call: ToolCall, sample: Path) -> None:
+    await chart(call, "bar")
+    replaced = await call(
+        "create_chart",
+        path="sales.xlsx",
+        sheet="Report",
+        chart_type="line",
+        at="B2",
+        replace="Chart 1",
+        name="Totals",
+        series=[{"values": "Data!C2:C5"}],
+    )
+    assert replaced["name"] == "Totals"
+    details = await call("describe_sheet", path="sales.xlsx", sheet="Report")
+    assert [item["name"] for item in details["charts"]] == ["Totals"]
+
+
+async def test_replace_rejects_unknown_names(
     call: ToolCall, call_error: ToolCall, sample: Path
 ) -> None:
     await chart(call)
-    for index in (0, 2):
-        message = await call_error(
-            "create_chart",
-            path="sales.xlsx",
-            sheet="Report",
-            chart_type="line",
-            anchor_cell="B2",
-            index=index,
-            series=[{"values": "Data!C2:C5"}],
-        )
-        assert f"no chart {index}" in message and "1 to 1" in message
+    message = await call_error(
+        "create_chart",
+        path="sales.xlsx",
+        sheet="Report",
+        chart_type="line",
+        at="B2",
+        replace="Chart 2",
+        series=[{"values": "Data!C2:C5"}],
+    )
+    assert "no chart named 'Chart 2'" in message and "'Chart 1'" in message
     assert saved_chart_count(sample) == 1
 
 
@@ -676,7 +692,7 @@ async def test_create_chart_stays_inside_the_allowed_folder(
         path=str(outside),
         sheet="Report",
         chart_type="column",
-        anchor_cell="B2",
+        at="B2",
         series=[{"values": "Data!C2:C5"}],
     )
     assert "outside" in message

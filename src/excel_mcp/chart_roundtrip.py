@@ -5,7 +5,8 @@ corners flag (Excel draws a missing flag as rounded corners) and the plot area's
 also gives every text paragraph an empty run, which comes back as the text "None" after the
 next save, and it ignores which axes an area chart uses, so their settings are lost. Its data
 label number formats are written without ``sourceLinked="0"``, which Excel reads as "use the
-cell's format".
+cell's format". It writes every chart as "Chart <n>" and every picture
+as "Image <n>", so charts and pictures are written with the names they have instead.
 """
 
 # pyright: reportArgumentType=false, reportAttributeAccessIssue=false, reportOptionalMemberAccess=false
@@ -17,14 +18,20 @@ from openpyxl.chart._chart import ChartBase
 from openpyxl.chart.chartspace import ChartSpace
 from openpyxl.chart.label import DataLabel, DataLabelList
 from openpyxl.drawing import text
+from openpyxl.drawing.spreadsheet_drawing import SpreadsheetDrawing
 from openpyxl.reader import drawings
 from openpyxl.xml.functions import Element
+
+from excel_mcp.package.shape_names import name_of
 
 _read_chart = reader.read_chart
 _init_paragraph = text.Paragraph.__init__
 _init_area_chart = AreaChart.__init__
 _labels_to_tree = DataLabelList.to_tree
 _label_to_tree = DataLabel.to_tree
+_write_drawing = SpreadsheetDrawing._write
+_chart_frame = SpreadsheetDrawing._chart_frame
+_picture_frame = SpreadsheetDrawing._picture_frame
 
 
 def _read_chart_completely(chartspace: ChartSpace) -> ChartBase:
@@ -58,6 +65,29 @@ def _label_with_own_format(self, *args, **kw):
     return _unlink_number_format(_label_to_tree(self, *args, **kw))
 
 
+def _write_named_drawing(self):
+    self.shape_names = [name_of(shape) for shape in self.charts + self.images]
+    for shape in self.images:
+        anchor = shape.anchor
+        if not isinstance(anchor, str) and anchor.pic is not None and name_of(shape):
+            anchor.pic.nvPicPr.cNvPr.name = name_of(shape)
+    return _write_drawing(self)
+
+
+def _named_chart_frame(self, idx):
+    frame = _chart_frame(self, idx)
+    frame.nvGraphicFramePr.cNvPr.name = (
+        self.shape_names[idx - 1] or frame.nvGraphicFramePr.cNvPr.name
+    )
+    return frame
+
+
+def _named_picture_frame(self, idx):
+    frame = _picture_frame(self, idx)
+    frame.nvPicPr.cNvPr.name = self.shape_names[idx - 1] or frame.nvPicPr.cNvPr.name
+    return frame
+
+
 def install() -> None:
     """Make openpyxl read charts completely. Safe to call again."""
     drawings.read_chart = _read_chart_completely
@@ -65,3 +95,6 @@ def install() -> None:
     AreaChart.__init__ = _area_chart_with_axes
     DataLabelList.to_tree = _labels_with_own_format
     DataLabel.to_tree = _label_with_own_format
+    SpreadsheetDrawing._write = _write_named_drawing
+    SpreadsheetDrawing._chart_frame = _named_chart_frame
+    SpreadsheetDrawing._picture_frame = _named_picture_frame

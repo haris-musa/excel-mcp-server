@@ -70,8 +70,8 @@ def delete_sheet(workbook: Workbook, name: str) -> None:
     workbook.remove(sheet)
 
 
-def describe_lines(axis: Axis, at: int, count: int) -> str:
-    """``1 row at row 2`` or ``3 columns at column C``."""
-    unit = axis.removesuffix("s")
-    position = at if axis == "rows" else get_column_letter(at)
-    return f"{count} {axis if count != 1 else unit} at {unit} {position}"
+def line_span(axis: Axis, start: int, count: int) -> str:
+    """The rows or columns from ``start``, like ``3:5`` or ``C:E``."""
+    if axis == "rows":
+        return f"{start}:{start + count - 1}"
+    return f"{get_column_letter(start)}:{get_column_letter(start + count - 1)}"

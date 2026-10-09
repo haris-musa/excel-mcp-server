@@ -32,7 +32,7 @@ All notable changes to this project are documented here. The format follows
   (`parent_labels`), `sunburst` and `funnel`, with title, legend, data labels and, where
   Excel has them, axis titles and scale. They are written as Excel writes them (chartex
   parts, hidden `_xlchart` names, style and colour parts) and are listed by `describe_sheet`
-  after the other charts, removed by `delete_chart`, replaced with `index` and copied by
+  after the other charts, removed by `delete_chart`, replaced with `replace` and copied by
   `copy_sheet`. Checked against the same charts made in Excel; Excel opens them without repair. A new
   chart looks like an inserted one: labels on waterfall and funnel bars (values) and on treemap
   and sunburst tiles (categories), overlapping treemap group labels; `data_labels` with
@@ -133,7 +133,7 @@ All notable changes to this project are documented here. The format follows
 - `insert_image` places a PNG or JPEG file at a cell, optionally sized in cm with the
   aspect ratio kept; `delete_image` removes one. `describe_sheet` lists the images and now
   also reports hidden rows and columns, the print area and whether the sheet is protected.
-- `create_chart` takes either a `data_range` block (series in columns, or in rows with
+- `create_chart` takes either a `source` block (series in columns, or in rows with
   `series_in`) or explicit `series`: any ranges on any sheet (`'Sheet'!B2:B13`), not
   necessarily adjacent, with their own `name` (text, or a cell the name follows) and
   `categories`. Options that do not fit the chart type are rejected with an explanation.
@@ -146,16 +146,16 @@ All notable changes to this project are documented here. The format follows
   `log` scale, `reverse` order, `number_format`, major and minor gridlines, and the position
   of the tick `labels`. Any series can sit on the secondary axis (`secondary_axis`), and
   a series `type` (column, line, area) makes combo charts in either direction.
-- Series formatting: `color`, `line_width`, `marker` and `marker_size`, `data_labels`
+- Series formatting: `color`, `line_width_pt`, `marker` and `marker_size`, `data_labels`
   (which content, `position`, `number_format`), plus the chart's `colors`, `grouping`,
   `title_size`, `plot_color` and Excel 2007 `style` number.
-- A chart can sit on its own chart sheet (omit `anchor_cell`); `describe_workbook` lists
+- A chart can sit on its own chart sheet (omit `at`); `describe_workbook` lists
   `chart_sheets` and `delete_sheet` removes one.
-- `create_chart` with `index` replaces that chart of `describe_sheet` in place, so a chart
+- `create_chart` with `replace` (the name of a chart) replaces that chart in place, so a chart
   is changed by describing it again; `describe_sheet` lists each chart's `series` ranges.
 - `create_chart` draws `doughnut` and `radar` charts.
-- `describe_sheet` lists each chart with its 1-based `index`, `type`, `title` and `anchor`.
-- `delete_chart` removes a chart by the index `describe_sheet` shows.
+- `describe_sheet` lists each chart with its `name`, `type`, `title` and `range`.
+- `delete_chart` removes a chart by the name `describe_sheet` shows.
 - `sort_range` sorts a range's rows by one or more columns (header text or column letter),
   ascending or descending, in Excel's order. Formatting, notes, links and formulas move
   with their rows.
@@ -205,7 +205,7 @@ All notable changes to this project are documented here. The format follows
 - `create_pivot_table` reproduces what Excel's PivotTable dialogs offer: `number_format` and
   `show_as` per values field (percent of total, row, column or parent, difference from, percent
   difference from, percent of, running total, percent of running total, rank, with
-  `base_field` and `base_item`), `fields` settings per row, column or filter field (`show_items`,
+  `base_field` and `base_item`), `field_settings` per row, column or filter field (`show_items`,
   `sort` by label or by a values field with `sort_by`, `group_dates` for years,
   quarters, months and days, `group_numbers` for ranges), `calculated_fields` (formulas over
   the source fields, checked by the formula safety check), `layout` (`compact`, `outline`
@@ -250,8 +250,6 @@ All notable changes to this project are documented here. The format follows
 - Range errors say what is wrong (`Column ZZZ is past XFD, the last column.`), and messages
   that list names (sheets, fields, indices) share one format. An empty list reads
   `Sheet 'Data' has no images.` instead of `Valid image indices: none: ...`.
-- `insert_rows_or_columns` and `delete_rows_or_columns` report `Inserted 1 row at row 2.` or
-  `Deleted 3 columns at column C.`.
 - Formulas that are not valid syntax fail with `InvalidFormulaError`; the formula safety
   policy still raises `UnsafeFormulaError`.
 - `write_range` stores a formula that returns several values as a dynamic array formula.
@@ -280,17 +278,59 @@ All notable changes to this project are documented here. The format follows
 - **Breaking:** `describe_workbook` returns `defined_names` as objects with `name`,
   `refers_to` and `sheet` (null for workbook scope), and includes sheet-scoped names.
 - **Breaking:** `create_summary_table` is removed; `create_pivot_table` replaces it
-  (`group_by` is now `rows`, `aggregation` is `function`, and the result is a PivotTable).
+  (`group_by` is now `row_fields`, `aggregation` is `function`, and the result is a PivotTable).
 - `read_range`, `find_cells` and `describe_workbook` stream the workbook instead of loading
   it: memory stays flat (about 20 MB instead of 850 MB for a 200,000 x 10 sheet) and
   large files no longer risk exhausting memory. `describe_sheet` still loads the file.
 - **Breaking:** compact results. `read_range` returns `{range, values, next_range?}`
   (no `sheet` or `truncated`; page on while `next_range` is present) and omits trailing
   empty cells and rows. `find_cells` returns `matches` grouped as `{sheet: {cell: value}}`.
-  `describe_workbook` returns `sheets` (`name`, `used_range`, `hidden` when true),
+  `describe_workbook` returns `sheets` (`name`, `used_range`, `visibility` when not visible),
   `defined_names` (when any) and `has_vba` (when true), without path, size, row and column counts.
-  `describe_sheet` omits empty fields and its `name`, and lists `tables` as `{name: range}`.
+  `describe_sheet` omits empty fields and its `name`.
   `list_workbooks` returns `{path: size_bytes}`. Dates at midnight read as `2026-01-31`.
+- **Breaking:** consistent tool parameters and results, the last API change before 2.0. One
+  name per concept: `sheet`, `range`, `at` (the top-left cell of whatever is placed or
+  written), `source` (where data comes from, optionally `Data!A1:E200`) and `name` (of an
+  object). Units are in the name. Charts and images are selected by name, which survives
+  other deletions. No shims or aliases; behaviour is unchanged. Renames, old to new
+  (many of these tools are new in 2.0, so the old names never shipped):
+  - `create_sheet`: `sheet` to `new_name`, as in `rename_sheet` and `copy_sheet`.
+  - `insert_rows_or_columns`, `delete_rows_or_columns`: `at` to `start`, so that `at` always
+    is a cell.
+  - `write_range`: `start_cell` to `at`.
+  - `copy_range`: `target_cell` to `at`, `target_sheet` to `to_sheet`.
+  - `create_pivot_table`: `source_sheet` and `source_range` to `source` (`Data!A1:E200`),
+    `target_sheet` to `sheet`, `target_cell` to `at`, `rows` to `row_fields`, `columns` to
+    `column_fields`, `values` to `value_fields`, `filters` to `filter_fields`, `fields` to
+    `field_settings`.
+  - `create_chart`: `anchor_cell` to `at`, `data_range` to `source`; `index` is replaced by
+    `replace` (the name of the chart to replace) and `name` is new.
+  - `delete_chart`, `delete_image`: `index` to `name`. `describe_sheet` lists each chart and
+    image by `name` (instead of `index`) with the `range` of cells it covers (instead of
+    `anchor`), and keeps the names Excel gave them, which edits no longer rewrite to
+    `Chart 1`, `Image 2`.
+  - `insert_image`: `cell` to `at`; `name` is new.
+  - `add_slicer`: `cell` to `at`, `source` to `target`. `describe_sheet` lists slicers with
+    `target` and `range` instead of `source` and `cell`.
+  - `add_sparklines`: `location` to `range`, `data` to `source`.
+  - `edit_table`: `table` to `name`.
+  - `set_sheet_layout`: `column_widths` to `column_widths_chars`, `row_heights` to
+    `row_heights_pt`. Chart series `line_width` and sparkline `line_weight` become
+    `line_width_pt`. `describe_sheet` returns `column_widths_chars` as a list of
+    `{column, width}`, `tables` as `{name, range}` and `hyperlinks` as `{cell, target,
+    tooltip}` objects like its other collections.
+  - `describe_workbook`: a sheet's `hidden` becomes `visibility` (`hidden` or `very_hidden`,
+    omitted when visible), and `objects` counts its tables, charts, PivotTables, slicers and
+    images.
+- **Breaking:** tools that change a workbook return a small object instead of a sentence, with
+  what the next call needs: `sheet`, `range`, `name` (and `path`, and a `note` where there
+  is something to say). `create_chart` returns the chart's `name` and `range`,
+  `create_pivot_table` and `create_table` their `name` and `range`, `insert_image` and
+  `add_slicer` theirs; `insert_rows_or_columns` the `range` of the new lines (`3:4`).
+- Tool descriptions say how `write_range` stores strings (text, unless `=` or an ISO date),
+  that sheet protection does not stop this server's writes, and to leave a PivotTable's Grand
+  Total out of a chart's source.
 - Tool results are sent as compact JSON without default values, tools that return a message
   no longer advertise an output schema, and tool schemas lose generated titles and `null`
   unions: `tools/list` shrinks by about a third.
@@ -301,7 +341,7 @@ All notable changes to this project are documented here. The format follows
   and `secondary_line_columns` (give a series `type: "line"` and `secondary_axis`). Its
   `data_labels` option is an object (`{}` for values), `y_axis_min`, `y_axis_max`,
   `y_axis_number_format` and `x_axis_title`/`y_axis_title` move into `y_axis` and `x_axis`,
-  and `anchor_cell` is optional.
+  and `at` is optional.
 - Charts are drawn as current Excel draws them: gray text and light gridlines, no rounded
   corners, one color per series (not per category), a gap between clustered columns.
 - **Breaking:** `describe_sheet` no longer returns `chart_count`; use the length of `charts`.
@@ -315,7 +355,7 @@ All notable changes to this project are documented here. The format follows
   parameter descriptions, no repetition between docstrings and fields, and `create_chart`
   no longer embeds the default options in its schema. The workbook directory is explained
   once in the server instructions instead of in every `path` description.
-- **Breaking:** `set_sheet_layout` takes `column_widths` and `row_heights` as objects,
+- **Breaking:** `set_sheet_layout` takes `column_widths_chars` and `row_heights_pt` as objects,
   `{"A": 20}` and `{"1": 30}`, instead of lists of `{column, width}` and `{row, height}`;
   this matches what `describe_sheet` returns for column widths.
 - **Breaking:** `set_sheet_layout`'s `auto_filter` is an object (`range`, `filters`,

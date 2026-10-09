@@ -28,8 +28,8 @@ def _sheet(path: Path, name: str) -> Worksheet:
 
 
 async def _decorate_data_sheet(call: ToolCall) -> None:
-    await call("write_range", **BOOK, sheet="Data", start_cell="C6", rows=[["=SUM(Sales[Units])"]])
-    await call("write_range", **BOOK, sheet="Data", start_cell="D6", rows=[["=SUM(Data!D2:D5)"]])
+    await call("write_range", **BOOK, sheet="Data", at="C6", rows=[["=SUM(Sales[Units])"]])
+    await call("write_range", **BOOK, sheet="Data", at="D6", rows=[["=SUM(Data!D2:D5)"]])
     await call("create_table", **BOOK, sheet="Data", range="A1:D5", name="Sales")
     await call(
         "add_data_validation",
@@ -51,22 +51,22 @@ async def _decorate_data_sheet(call: ToolCall) -> None:
         },
     )
     await call("set_note", **BOOK, sheet="Data", cell="A2", text="check")
-    await call("insert_image", **BOOK, sheet="Data", image_path="logo.png", cell="G2")
+    await call("insert_image", **BOOK, sheet="Data", image_path="logo.png", at="G2")
     await call(
         "create_chart",
         **BOOK,
         sheet="Data",
-        data_range="A1:C5",
+        source="A1:C5",
         chart_type="column",
-        anchor_cell="G10",
+        at="G10",
     )
     await call(
         "create_chart",
         **BOOK,
         sheet="Data",
-        data_range="Report!A1:B3",
+        source="Report!A1:B3",
         chart_type="line",
-        anchor_cell="G30",
+        at="G30",
     )
     await call("set_defined_name", **BOOK, name="Local", refers_to="Data!$A$1:$A$3", sheet="Data")
     await call("merge_cells", **BOOK, sheet="Data", range="A8:C8")
@@ -75,7 +75,7 @@ async def _decorate_data_sheet(call: ToolCall) -> None:
         **BOOK,
         sheet="Data",
         layout={
-            "column_widths": {"A": 22},
+            "column_widths_chars": {"A": 22},
             "freeze_panes": "A2",
             "rows": [{"span": "3", "action": "hide"}],
             "print_setup": {"orientation": "landscape", "print_area": "A1:D6", "title_rows": "1:1"},
@@ -85,19 +85,18 @@ async def _decorate_data_sheet(call: ToolCall) -> None:
     await call(
         "create_pivot_table",
         **BOOK,
-        source_sheet="Data",
-        source_range="A1:D5",
-        rows=["Region"],
-        values=[{"field": "Units"}],
-        target_sheet="Data",
-        target_cell="N2",
+        source="Data!A1:D5",
+        row_fields=["Region"],
+        value_fields=[{"field": "Units"}],
+        sheet="Data",
+        at="N2",
     )
 
 
 async def test_copy_includes_everything_the_server_supports(
     call: ToolCall, sample: Path, picture: Path
 ) -> None:
-    await call("write_range", **BOOK, sheet="Report", start_cell="A1", rows=[["k", "v"], ["a", 1]])
+    await call("write_range", **BOOK, sheet="Report", at="A1", rows=[["k", "v"], ["a", 1]])
     await _decorate_data_sheet(call)
     await call("copy_sheet", **BOOK, sheet="Data", new_name="Copy")
 
@@ -131,7 +130,7 @@ async def test_copy_includes_everything_the_server_supports(
 async def test_copied_charts_point_at_the_copy_only_when_their_data_is_on_the_source(
     call: ToolCall, sample: Path, picture: Path
 ) -> None:
-    await call("write_range", **BOOK, sheet="Report", start_cell="A1", rows=[["k", "v"], ["a", 1]])
+    await call("write_range", **BOOK, sheet="Report", at="A1", rows=[["k", "v"], ["a", 1]])
     await _decorate_data_sheet(call)
     await call("copy_sheet", **BOOK, sheet="Data", new_name="Copy")
 

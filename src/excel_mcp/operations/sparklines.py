@@ -26,16 +26,18 @@ _GROUPS = re.compile(r"<x14:sparklineGroups\b[^>]*>")
 
 
 def add_sparklines(
-    sheet: Worksheet, location: str, data: str, style: SparklineStyle, max_cells: int
-) -> str:
-    """Add a group of sparklines; sparklines already in those cells are replaced."""
+    sheet: Worksheet, cells: str, source: str, style: SparklineStyle, max_cells: int
+) -> tuple[CellRange, int]:
+    """Add a group of sparklines, replacing those already in the cells.
+
+    Returns the cells and how many sparklines they replaced."""
     check_style(style)
     workbook = cast(Workbook, sheet.parent)
-    area = parse_range(location).within(max_cells)
+    area = parse_range(cells).within(max_cells)
     if min(area.rows, area.cols) != 1:
-        raise InvalidArgumentError("The location must be one row or one column of cells.")
-    title, source = _source(workbook, sheet.title, data)
-    lines = _lines(area, source)
+        raise InvalidArgumentError("The range must be one row or one column of cells.")
+    title, data = _source(workbook, sheet.title, source)
+    lines = _lines(area, data)
     if style.dates:
         style = style.model_copy(
             update={"dates": _dates(workbook, sheet.title, style.dates, lines)}
@@ -45,8 +47,7 @@ def add_sparklines(
     extensions = state_of(workbook).sheet(sheet).extensions
     replaced = _delete(extensions, lambda cell: cell in lines)
     _insert(extensions, group)
-    note = f" Replaced {replaced} existing." if replaced else ""
-    return f"Added {len(lines)} {style.type} sparklines to {sheet.title}!{area}.{note}"
+    return area, replaced
 
 
 def delete_sparklines(sheet: Worksheet, area: CellRange) -> int:
@@ -68,7 +69,7 @@ def _source(workbook: Workbook, default: str, text: str) -> tuple[str, CellRange
     """The sheet title and cells of ``Data!B2:F9`` or ``B2:F9`` (on the sheet itself)."""
     parts = split_top_level(text.strip(), "!")
     if len(parts) > 2:
-        raise InvalidArgumentError(f"Invalid data range {text!r}. Use 'B2:F9' or 'Data!B2:F9'.")
+        raise InvalidArgumentError(f"Invalid source {text!r}. Use 'B2:F9' or 'Data!B2:F9'.")
     title = get_sheet(workbook, unquote(parts[0])).title if len(parts) == 2 else default
     return title, parse_range(parts[-1])
 

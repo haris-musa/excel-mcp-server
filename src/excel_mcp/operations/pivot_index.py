@@ -18,7 +18,7 @@ from excel_mcp.workspace import worksheets
 class PivotInfo(BaseModel):
     name: str
     range: str
-    source: str | None
+    source: str | None = None
 
 
 def sheet_pivots(sheet: Worksheet) -> list[TableDefinition]:

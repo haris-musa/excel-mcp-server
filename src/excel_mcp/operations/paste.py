@@ -31,7 +31,7 @@ def copy_range(
     source: Worksheet,
     ref: str,
     target: Worksheet,
-    target_cell: str,
+    at: str,
     *,
     paste: PasteMode,
     transpose: bool,
@@ -44,7 +44,7 @@ def copy_range(
     ``results`` holds the calculated results of the source's formulas, for pasting values.
     """
     area = parse_range(ref).within(max_cells)
-    first_row, first_col = parse_cell(target_cell)
+    first_row, first_col = parse_cell(at)
     rows, cols = (area.cols, area.rows) if transpose else (area.rows, area.cols)
     destination = CellRange(first_row, first_col, first_row + rows - 1, first_col + cols - 1)
     snapshot = [

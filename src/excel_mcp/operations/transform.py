@@ -17,7 +17,7 @@ Operation = Literal["remove_duplicates", "text_to_columns", "fill"]
 
 _FIELDS = {
     "remove_duplicates": {"columns", "has_header"},
-    "text_to_columns": {"delimiters", "fixed_widths", "text_qualifier", "merge_delimiters"},
+    "text_to_columns": {"delimiters", "fixed_widths_chars", "text_qualifier", "merge_delimiters"},
     "fill": {"direction", "series", "step", "stop", "unit"},
 }
 
@@ -40,7 +40,7 @@ class Transform(InputModel):
         default=None,
         description="text_to_columns: 'tab', 'semicolon', 'comma', 'space' or a character.",
     )
-    fixed_widths: list[int] | None = Field(
+    fixed_widths_chars: list[int] | None = Field(
         default=None,
         description="text_to_columns instead of delimiters: widths of all fields but the last.",
     )
@@ -72,28 +72,28 @@ def apply_transform(
     spec: Transform,
     results: FormulaResults,
     max_cells: int,
-) -> str:
-    """Run the transform and describe what it did."""
+) -> tuple[CellRange, str | None]:
+    """Run the transform; return the cells it changed and, if it counted something, a note."""
     spec.reject_unused(_FIELDS[spec.operation] | {"operation"}, spec.operation)
     match spec.operation:
         case "remove_duplicates":
             removed = remove_duplicates(sheet, area, spec.columns, spec.has_header, results)
-            return f"Removed {removed} duplicate rows from {area}."
+            return area, f"Removed {removed} duplicate rows."
         case "text_to_columns":
             split = text_to_columns(
                 sheet,
                 area,
                 spec.delimiters,
-                spec.fixed_widths,
+                spec.fixed_widths_chars,
                 spec.text_qualifier,
                 spec.merge_delimiters,
                 max_cells,
             )
-            return f"Split {split} cells of {area}."
+            return area, f"Split {split} cells."
         case "fill":
             if spec.direction is None:
                 raise InvalidArgumentError("fill needs a direction, 'down' or 'right'.")
             filled = fill_range(
                 sheet, area, spec.direction, spec.series, spec.step, spec.stop, spec.unit, max_cells
             )
-            return f"Filled {filled}."
+            return filled, None

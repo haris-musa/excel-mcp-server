@@ -9,8 +9,8 @@ pytestmark = pytest.mark.anyio
 
 
 async def test_create_table(call: ToolCall, call_error: ToolCall, sample: Path) -> None:
-    message = await call("create_table", path="sales.xlsx", sheet="Data", range="A1:D5")
-    assert "Table1" in message
+    created = await call("create_table", path="sales.xlsx", sheet="Data", range="A1:D5")
+    assert created == {"sheet": "Data", "name": "Table1", "range": "A1:D5"}
     assert load_workbook(sample)["Data"].tables["Table1"].ref == "A1:D5"
     assert "already used" in await call_error(
         "create_table", path="sales.xlsx", sheet="Report", range="A1:A2", name="table1"
@@ -28,9 +28,9 @@ async def test_create_chart(call: ToolCall, sample: Path, chart_type: str) -> No
         "create_chart",
         path="sales.xlsx",
         sheet="Report",
-        data_range="Data!B1:C5",
+        source="Data!B1:C5",
         chart_type=chart_type,
-        anchor_cell="B2",
+        at="B2",
         options={"title": "Units"},
     )
     details = await call("describe_sheet", path="sales.xlsx", sheet="Report")
@@ -42,8 +42,8 @@ async def test_chart_needs_labels_and_a_series(call_error: ToolCall, sample: Pat
         "create_chart",
         path="sales.xlsx",
         sheet="Data",
-        data_range="C1:C5",
+        source="C1:C5",
         chart_type="line",
-        anchor_cell="F2",
+        at="F2",
     )
     assert "header row" in message

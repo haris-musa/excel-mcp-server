@@ -32,18 +32,18 @@ def resolve_series(
     workbook: Workbook,
     sheet: str,
     chart_type: ChartType,
-    data_range: str | None,
+    source: str | None,
     series_in: SeriesIn,
     series: list[SeriesSpec],
     categories: str | None,
 ) -> list[Plot]:
-    if (data_range is None) == (not series):
+    if (source is None) == (not series):
         raise InvalidArgumentError(
-            "Pass either data_range (a block of data) or series (explicit ranges), not both "
+            "Pass either source (a block of data) or series (explicit ranges), not both "
             "and not neither."
         )
-    if data_range is not None:
-        series = _block_series(workbook, sheet, data_range, chart_type, series_in)
+    if source is not None:
+        series = _block_series(workbook, sheet, source, chart_type, series_in)
         categories = None
     return [_resolve(workbook, sheet, item, categories) for item in series]
 
@@ -81,7 +81,7 @@ def one_line(workbook: Workbook, default: str, text: str, what: str) -> tuple[st
     if area.rows > 1 and area.cols > 1:
         raise InvalidArgumentError(
             f"Series {what} must be one row or one column, got {text!r}. List one series per "
-            "column, or use data_range for a block."
+            "column, or use source for a block."
         )
     return qualified(sheet, area), area.size
 
@@ -99,14 +99,14 @@ def series_name(workbook: Workbook, text: str | None) -> SeriesLabel | None:
 
 
 def _block_series(
-    workbook: Workbook, default: str, data_range: str, chart_type: ChartType, series_in: SeriesIn
+    workbook: Workbook, default: str, source: str, chart_type: ChartType, series_in: SeriesIn
 ) -> list[SeriesSpec]:
     """Series for a block with a header line and a label line, by columns or by rows."""
-    sheet, cells = split_sheet(workbook, default, data_range)
+    sheet, cells = split_sheet(workbook, default, source)
     area = parse_range(cells)
     if area.rows < 2 or area.cols < 2:
         raise InvalidArgumentError(
-            "data_range needs a header row and a label column plus at least one series, "
+            "source needs a header row and a label column plus at least one series, "
             "e.g. 'A1:C10' with labels in A and series in B and C."
         )
     by_columns = series_in == "columns"
@@ -127,7 +127,7 @@ def _block_series(
 
     if chart_type == "bubble" and lines != 3:
         raise InvalidArgumentError(
-            f"A bubble data_range has three {series_in}: x values, y values and sizes."
+            f"A bubble source has three {series_in}: x values, y values and sizes."
         )
     if chart_type == "pie" and lines > 2:
         raise InvalidArgumentError(f"A pie chart plots one series; use two {series_in} of data.")

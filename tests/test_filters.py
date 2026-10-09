@@ -247,7 +247,7 @@ async def test_formula_results_are_filtered(call: ToolCall, book: Path) -> None:
         "write_range",
         path="filter.xlsx",
         sheet="Data",
-        start_cell="G1",
+        at="G1",
         rows=[["Double"], *[[f"=B{row}*2"] for row in range(2, 22)]],
     )
     await apply(

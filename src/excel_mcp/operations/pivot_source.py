@@ -47,9 +47,7 @@ class Source:
 def read_source(sheet: Worksheet, source_range: str, max_cells: int) -> Source:
     area = parse_range(source_range).within(max_cells)
     if area.rows < 2:
-        raise InvalidArgumentError(
-            f"source_range {area} needs a header row and at least one data row."
-        )
+        raise InvalidArgumentError(f"source {area} needs a header row and at least one data row.")
     rows = [
         list(row)
         for row in sheet.iter_rows(
@@ -68,7 +66,7 @@ def _header(cell: Cell | MergedCell) -> str:
     if cell.data_type != "s" or not str(cell.value).strip():
         raise InvalidArgumentError(
             f"Header cell {cell.coordinate} must contain text: the first row of "
-            "source_range is the header row, with one label per column."
+            "source is the header row, with one label per column."
         )
     return str(cell.value)
 
@@ -79,7 +77,7 @@ def _column(name: str, cells: list[Cell | MergedCell]) -> Column:
     if len(kinds) > 1:
         raise InvalidArgumentError(
             f"Column {name!r} mixes {' and '.join(sorted(kinds))} values. Clean it, or "
-            "leave it out of source_range."
+            "leave it out of source."
         )
     first = next((cell for cell in cells if cell.value is not None), None)
     return Column(

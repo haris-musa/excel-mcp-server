@@ -82,7 +82,7 @@ async def test_data_validation_formulas(call: ToolCall, book: Path) -> None:
 
 
 async def test_copy_range_prefixes_formulas(call: ToolCall, book: Path) -> None:
-    await call("copy_range", path="book.xlsx", sheet="Data", range="C1", target_cell="D1")
+    await call("copy_range", path="book.xlsx", sheet="Data", range="C1", at="D1")
 
     assert load_workbook(book)["Data"]["D1"].value == "=_xlfn.IFS(B1>2,1,TRUE,0)"
 

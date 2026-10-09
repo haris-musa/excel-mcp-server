@@ -12,13 +12,13 @@ pytestmark = pytest.mark.anyio
 
 async def insert(call: ToolCall, sheet: str, axis: str, at: int, count: int = 1) -> None:
     await call(
-        "insert_rows_or_columns", path="sales.xlsx", sheet=sheet, axis=axis, at=at, count=count
+        "insert_rows_or_columns", path="sales.xlsx", sheet=sheet, axis=axis, start=at, count=count
     )
 
 
 async def delete(call: ToolCall, sheet: str, axis: str, at: int, count: int = 1) -> None:
     await call(
-        "delete_rows_or_columns", path="sales.xlsx", sheet=sheet, axis=axis, at=at, count=count
+        "delete_rows_or_columns", path="sales.xlsx", sheet=sheet, axis=axis, start=at, count=count
     )
 
 
@@ -27,14 +27,14 @@ async def test_formulas_everywhere_follow_the_move(call: ToolCall, sample: Path)
         "write_range",
         path="sales.xlsx",
         sheet="Data",
-        start_cell="F1",
+        at="F1",
         rows=[["=B3+A5"], ["=SUM(C2:C5)"], ["=SUM(C:C)"], ["=$C$5*D$2"]],
     )
     await call(
         "write_range",
         path="sales.xlsx",
         sheet="Report",
-        start_cell="A1",
+        at="A1",
         rows=[["=Data!C3+Data!C5"], ["=SUM(Data!C2:C5)"], ["=A1+1"]],
     )
     await insert(call, "Data", "rows", 4, 3)
@@ -59,7 +59,7 @@ async def test_deleted_cells_become_ref_errors(call: ToolCall, sample: Path) -> 
         "write_range",
         path="sales.xlsx",
         sheet="Report",
-        start_cell="A1",
+        at="A1",
         rows=[["=Data!C3"], ["=SUM(Data!C2:C4)"], ["=SUM(Data!C3:C4)"], ["=Data!C5"]],
     )
     await delete(call, "Data", "rows", 3, 2)
@@ -77,7 +77,7 @@ async def test_columns(call: ToolCall, sample: Path) -> None:
         "write_range",
         path="sales.xlsx",
         sheet="Data",
-        start_cell="F2",
+        at="F2",
         rows=[["=C2+D2", "=SUM(B2:D2)", "=B2"]],
     )
     await delete(call, "Data", "columns", 2)
@@ -114,7 +114,7 @@ async def test_names_rules_merges_and_layout(call: ToolCall, sample: Path) -> No
         sheet="Data",
         layout={
             "freeze_panes": "A3",
-            "row_heights": {"3": 30},
+            "row_heights_pt": {"3": 30},
             "print_setup": {"print_area": "A1:D5", "title_rows": "1:2"},
         },
     )
@@ -172,9 +172,9 @@ async def test_chart_and_hyperlink_and_note_move(call: ToolCall, sample: Path) -
         "create_chart",
         path="sales.xlsx",
         sheet="Report",
-        data_range="Data!B1:C5",
+        source="Data!B1:C5",
         chart_type="column",
-        anchor_cell="B2",
+        at="B2",
     )
     await call("set_note", path="sales.xlsx", sheet="Data", cell="A3", text="hello")
     book = load_workbook(sample)
@@ -196,7 +196,7 @@ async def test_table_columns_and_structured_references(call: ToolCall, sample: P
         "write_range",
         path="sales.xlsx",
         sheet="Report",
-        start_cell="A1",
+        at="A1",
         rows=[["=SUM(Sales[Units])"], ["=SUM(Sales[Price])"]],
     )
     await insert(call, "Data", "columns", 2)
@@ -227,7 +227,7 @@ async def test_table_columns_and_structured_references(call: ToolCall, sample: P
 async def test_table_rows(call: ToolCall, call_error: ToolCall, sample: Path) -> None:
     await call("create_table", path="sales.xlsx", sheet="Data", range="A1:D5", name="Sales")
     message = await call_error(
-        "delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="rows", at=1, count=2
+        "delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="rows", start=1, count=2
     )
     assert "header row of table 'Sales'" in message
     await insert(call, "Data", "rows", 3)
@@ -247,7 +247,7 @@ async def test_array_formulas_move_but_cannot_be_split(
     book["Report"]["A5"] = ArrayFormula("A5:A7", "=Data!C2:C4*2")
     book.save(sample)
     for tool in ("insert_rows_or_columns", "delete_rows_or_columns"):
-        message = await call_error(tool, path="sales.xlsx", sheet="Report", axis="rows", at=6)
+        message = await call_error(tool, path="sales.xlsx", sheet="Report", axis="rows", start=6)
         assert "array formula in A5:A7" in message
     await insert(call, "Data", "rows", 2)
     await insert(call, "Report", "rows", 1)
@@ -262,15 +262,14 @@ async def test_pivot_tables_move_and_cannot_be_split(
     await call(
         "create_pivot_table",
         path="sales.xlsx",
-        source_sheet="Data",
-        source_range="A1:D5",
-        rows=["Region"],
-        values=[{"field": "Units"}],
-        target_sheet="Report",
-        target_cell="B3",
+        source="Data!A1:D5",
+        row_fields=["Region"],
+        value_fields=[{"field": "Units"}],
+        sheet="Report",
+        at="B3",
     )
     message = await call_error(
-        "insert_rows_or_columns", path="sales.xlsx", sheet="Report", axis="rows", at=4
+        "insert_rows_or_columns", path="sales.xlsx", sheet="Report", axis="rows", start=4
     )
     assert "PivotTable" in message
     await insert(call, "Report", "rows", 1)
@@ -281,13 +280,13 @@ async def test_pivot_tables_move_and_cannot_be_split(
 
 
 async def test_limits_and_paths(call: ToolCall, call_error: ToolCall, sample: Path) -> None:
-    await call("write_range", path="sales.xlsx", sheet="Data", start_cell="A1048500", rows=[[1]])
+    await call("write_range", path="sales.xlsx", sheet="Data", at="A1048500", rows=[[1]])
     message = await call_error(
-        "insert_rows_or_columns", path="sales.xlsx", sheet="Data", axis="rows", at=1, count=1000
+        "insert_rows_or_columns", path="sales.xlsx", sheet="Data", axis="rows", start=1, count=1000
     )
     assert "past the last" in message
     outside = await call_error(
-        "delete_rows_or_columns", path="../outside.xlsx", sheet="Data", axis="rows", at=1
+        "delete_rows_or_columns", path="../outside.xlsx", sheet="Data", axis="rows", start=1
     )
     assert "outside" in outside.lower() or "not allowed" in outside.lower()
 
@@ -298,7 +297,9 @@ async def test_nothing_is_saved_when_an_edit_is_refused(call_error: ToolCall, sa
     path = sample.parent / "array.xlsx"
     book.save(path)
     before = path.read_bytes()
-    await call_error("insert_rows_or_columns", path="array.xlsx", sheet="Sheet", axis="rows", at=2)
+    await call_error(
+        "insert_rows_or_columns", path="array.xlsx", sheet="Sheet", axis="rows", start=2
+    )
     assert path.read_bytes() == before
 
 
@@ -308,8 +309,8 @@ async def test_inserted_lines_inherit_sizes_and_rule_ranges(call: ToolCall, samp
         path="sales.xlsx",
         sheet="Data",
         layout={
-            "row_heights": {"3": 30},
-            "column_widths": {"B": 20},
+            "row_heights_pt": {"3": 30},
+            "column_widths_chars": {"B": 20},
             "columns": [{"span": "D", "action": "hide"}],
             "rows": [{"span": "4", "action": "hide"}],
         },

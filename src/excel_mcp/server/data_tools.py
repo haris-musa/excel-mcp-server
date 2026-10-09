@@ -16,6 +16,7 @@ from excel_mcp.operations.transform import Transform, apply_transform
 from excel_mcp.refs import parse_range
 from excel_mcp.server.params import CellRef, RangeRef, SheetName, WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
+from excel_mcp.server.results import Changed
 from excel_mcp.values import CellValue
 from excel_mcp.workspace import (
     Workspace,
@@ -70,21 +71,21 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     def write_range(
         path: WorkbookPath,
         sheet: SheetName,
-        start_cell: CellRef,
+        at: Annotated[CellRef, Field(description="Top-left cell of the block, e.g. 'B2'.")],
         rows: Annotated[
             list[list[CellValue]],
-            Field(description="Rows of values, written right and down from start_cell."),
+            Field(description="Rows of values, written right and down from `at`."),
         ],
         links: Annotated[
             list[Link], Field(description="Cells of the written block to turn into hyperlinks.")
         ] = [],  # noqa: B006
     ) -> cells.WriteResult:
-        """Write values into cells, overwriting them.
+        """Write values into cells, overwriting them, whatever the sheet's protection.
 
-        Values are text, numbers, booleans, or null to empty a cell. Text starting with '='
-        is a formula such as '=SUM(B2:B9)'; formulas that reach the network, other programs
-        or other workbooks are rejected. '2026-01-31' or '2026-01-31T09:30:00' is stored as
-        a date. Send long numeric IDs as text.
+        JSON numbers, booleans and null (empties the cell) are stored as given; a string is
+        text, even '00123' (send long IDs as strings), except that '=SUM(B2:B9)' is a
+        formula (ones that reach the network, other programs or other workbooks are
+        rejected) and '2026-01-31' or '2026-01-31T09:30:00' a date.
 
         `links` makes written cells clickable, with their value as the display text, e.g.
         [{"cell": "B2", "target": "https://example.com"}]. Only http, https, mailto and places in
@@ -95,9 +96,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         spill because a cell in the way holds data (Excel shows #SPILL!).
         """
         with workspace.edit(path) as workbook:
-            return cells.write_range(
-                get_sheet(workbook, sheet), start_cell, rows, links, limits.max_cells
-            )
+            return cells.write_range(get_sheet(workbook, sheet), at, rows, links, limits.max_cells)
 
     @tools.destroyer("Clear range")
     def clear_range(
@@ -112,7 +111,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 "'all': everything."
             ),
         ] = "contents",
-    ) -> str:
+    ) -> Changed:
         """Clear a range's values, formatting and/or rules; other cells do not move.
 
         A conditional format or validation that covers more than the range keeps the rest.
@@ -134,16 +133,16 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 rule_clear.clear_conditional_formats(target, area)
             if clear in ("rules", "all"):
                 rule_clear.clear_validation(target, area)
-        return f"Cleared {clear} of {sheet}!{cleared}."
+        return Changed(sheet=sheet, range=cleared)
 
     @tools.destroyer("Copy range")
     def copy_range(
         path: WorkbookPath,
         sheet: SheetName,
         range: RangeRef,
-        target_cell: Annotated[str, Field(description="Top-left cell of the destination.")],
-        target_sheet: Annotated[
-            str | None, Field(description="Destination sheet. Default: the same sheet.")
+        at: Annotated[CellRef, Field(description="Top-left cell of the destination.")],
+        to_sheet: Annotated[
+            str | None, Field(description="Destination sheet. Default: `sheet`.")
         ] = None,
         paste: Annotated[
             PasteMode,
@@ -157,8 +156,8 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         skip_blanks: Annotated[
             bool, Field(description="Leave destination cells unchanged under empty source cells.")
         ] = False,
-    ) -> str:
-        """Copy and paste a range, overwriting the destination.
+    ) -> Changed:
+        """Copy and paste a range, overwriting the destination. Returns the destination.
 
         Relative references in copied formulas shift as when pasting in Excel (and swap rows
         and columns when transposing).
@@ -170,15 +169,15 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             copied = paste_cells(
                 source,
                 range,
-                get_sheet(workbook, target_sheet or sheet),
-                target_cell,
+                get_sheet(workbook, to_sheet or sheet),
+                at,
                 paste=paste,
                 transpose=transpose,
                 skip_blanks=skip_blanks,
                 results=results,
                 max_cells=limits.max_cells,
             )
-        return f"Copied {sheet}!{range} to {target_sheet or sheet}!{copied}."
+        return Changed(sheet=to_sheet or sheet, range=copied)
 
     @tools.destroyer("Sort range")
     def sort_range(
@@ -194,7 +193,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         has_header: Annotated[
             bool, Field(description="The first row holds headers and stays in place.")
         ] = True,
-    ) -> str:
+    ) -> Changed:
         """Sort a range's rows by one or more columns, like Data > Sort in Excel.
 
         Numbers come before text, then booleans; text ignores case; blanks go last. Rows
@@ -202,15 +201,15 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         columns must hold values, not formulas, and the range cannot contain merged cells.
         """
         with workspace.edit(path) as workbook:
-            count = sorting.sort_range(
+            sorting.sort_range(
                 get_sheet(workbook, sheet), range, sort_by, has_header, limits.max_cells
             )
-        return f"Sorted {count} rows of {sheet}!{range}."
+        return Changed(sheet=sheet, range=range)
 
     @tools.destroyer("Transform range")
     def transform_range(
         path: WorkbookPath, sheet: SheetName, range: RangeRef, transform: Transform
-    ) -> str:
+    ) -> Changed:
         """Remove duplicate rows, split text into columns, or fill down or right or with a
         series (like Excel's Data and Fill commands).
 
@@ -225,7 +224,8 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 if transform.operation == "remove_duplicates"
                 else {}
             )
-            return apply_transform(target, area, transform, results, limits.max_cells)
+            changed, note = apply_transform(target, area, transform, results, limits.max_cells)
+        return Changed(sheet=sheet, range=str(changed), note=note)
 
     @tools.reader("Find cells")
     def find_cells(

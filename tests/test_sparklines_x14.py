@@ -56,8 +56,8 @@ def _line(items: dict[str, str]) -> str:
 
 
 async def test_a_line_group_is_what_excel_writes(call: ToolCall, sample: Path) -> None:
-    result = await call("add_sparklines", **BOOK, sheet="Data", location="F2:F5", data="C2:D5")
-    assert "Added 4 line sparklines to Data!F2:F5" in result
+    result = await call("add_sparklines", **BOOK, sheet="Data", range="F2:F5", source="C2:D5")
+    assert result == {"sheet": "Data", "range": "F2:F5"}
     (group,) = _groups(sample)
     cells = {f"F{row}": f"Data!C{row}:D{row}" for row in range(2, 6)}
     expected = (
@@ -78,7 +78,7 @@ async def test_every_option_is_what_excel_writes(call: ToolCall, sample: Path) -
         "empty_cells": "zero",
         "hidden": True,
     }
-    await call("add_sparklines", **BOOK, sheet="Data", location="F2:F3", data="C2:D3", style=style)
+    await call("add_sparklines", **BOOK, sheet="Data", range="F2:F3", source="C2:D3", style=style)
     (group,) = _groups(sample)
     assert group.startswith(
         '<x14:sparklineGroup manualMax="10" manualMin="-5" type="column" high="1" low="1" '
@@ -95,8 +95,8 @@ async def test_win_loss_dates_and_line_options(call: ToolCall, sample: Path) -> 
         "add_sparklines",
         **BOOK,
         sheet="Data",
-        location="F2:F3",
-        data="C2:D3",
+        range="F2:F3",
+        source="C2:D3",
         style={
             "type": "win_loss",
             "show": ["negative"],
@@ -109,9 +109,9 @@ async def test_win_loss_dates_and_line_options(call: ToolCall, sample: Path) -> 
         "add_sparklines",
         **BOOK,
         sheet="Data",
-        location="G2",
-        data="C2:D2",
-        style={"show": ["markers"], "line_weight": 2.25, "dates": "C1:D1"},
+        range="G2",
+        source="C2:D2",
+        style={"show": ["markers"], "line_width_pt": 2.25, "dates": "C1:D1"},
     )
     line, win_loss = _groups(sample)  # Excel puts the newest group first
     assert line.startswith(
@@ -125,13 +125,13 @@ async def test_win_loss_dates_and_line_options(call: ToolCall, sample: Path) -> 
 
 
 async def test_sparklines_are_listed_replaced_and_deleted(call: ToolCall, sample: Path) -> None:
-    await call("add_sparklines", **BOOK, sheet="Data", location="F2:F5", data="C2:D5")
+    await call("add_sparklines", **BOOK, sheet="Data", range="F2:F5", source="C2:D5")
     await call(
         "add_sparklines",
         **BOOK,
         sheet="Data",
-        location="G2:G3",
-        data="C2:D3",
+        range="G2:G3",
+        source="C2:D3",
         style={"type": "column", "show": ["high"], "colors": {"high": "FF0000"}},
     )
     listed = (await call("describe_sheet", **BOOK, sheet="Data"))["sparklines"]
@@ -143,8 +143,8 @@ async def test_sparklines_are_listed_replaced_and_deleted(call: ToolCall, sample
     }
     assert listed[1]["sparklines"]["F5"] == "Data!C5:D5"
 
-    replaced = await call("add_sparklines", **BOOK, sheet="Data", location="F4:F5", data="A4:B5")
-    assert "Replaced 2 existing" in replaced
+    replaced = await call("add_sparklines", **BOOK, sheet="Data", range="F4:F5", source="A4:B5")
+    assert replaced["note"] == "Replaced 2 existing sparklines."
     await call("delete_sparklines", **BOOK, sheet="Data", range="G2:G3")
     listed = (await call("describe_sheet", **BOOK, sheet="Data"))["sparklines"]
     assert [g["sparklines"] for g in listed] == [
@@ -159,13 +159,13 @@ async def test_sparklines_are_listed_replaced_and_deleted(call: ToolCall, sample
 async def test_columns_of_data_when_the_cell_count_matches_them(
     call: ToolCall, sample: Path
 ) -> None:
-    await call("add_sparklines", **BOOK, sheet="Data", location="F1:G1", data="C2:D5")
+    await call("add_sparklines", **BOOK, sheet="Data", range="F1:G1", source="C2:D5")
     listed = (await call("describe_sheet", **BOOK, sheet="Data"))["sparklines"]
     assert listed[0]["sparklines"] == {"F1": "Data!C2:C5", "G1": "Data!D2:D5"}
 
 
 async def test_data_on_another_sheet(call: ToolCall, sample: Path) -> None:
-    await call("add_sparklines", **BOOK, sheet="Report", location="A1:A4", data="Data!C2:D5")
+    await call("add_sparklines", **BOOK, sheet="Report", range="A1:A4", source="Data!C2:D5")
     listed = (await call("describe_sheet", **BOOK, sheet="Report"))["sparklines"]
     assert listed[0]["sparklines"]["A1"] == "Data!C2:D2"
 
@@ -173,16 +173,16 @@ async def test_data_on_another_sheet(call: ToolCall, sample: Path) -> None:
 @pytest.mark.parametrize(
     ("arguments", "message"),
     [
-        ({"location": "F2:G3", "data": "C2:D3"}, "one row or one column"),
-        ({"location": "F2:F4", "data": "C2:D5"}, "3 cells need 3 rows or columns"),
-        ({"location": "F2", "data": "Missing!C2:D2"}, "Sheet 'Missing' not found"),
+        ({"range": "F2:G3", "source": "C2:D3"}, "one row or one column"),
+        ({"range": "F2:F4", "source": "C2:D5"}, "3 cells need 3 rows or columns"),
+        ({"range": "F2", "source": "Missing!C2:D2"}, "Sheet 'Missing' not found"),
         (
-            {"location": "F2", "data": "C2:D2", "style": {"type": "column", "show": ["markers"]}},
+            {"range": "F2", "source": "C2:D2", "style": {"type": "column", "show": ["markers"]}},
             "line",
         ),
-        ({"location": "F2", "data": "C2:D2", "style": {"dates": "C1:E1"}}, "dates must be"),
-        ({"location": "F2", "data": "C2:D2", "style": {"axis_min": "other"}}, "axis_min"),
-        ({"location": "F2", "data": "C2:D2", "style": {"colors": {"series": "red"}}}, "color"),
+        ({"range": "F2", "source": "C2:D2", "style": {"dates": "C1:E1"}}, "dates must be"),
+        ({"range": "F2", "source": "C2:D2", "style": {"axis_min": "other"}}, "axis_min"),
+        ({"range": "F2", "source": "C2:D2", "style": {"colors": {"series": "red"}}}, "color"),
     ],
 )
 async def test_invalid_sparklines_are_rejected(
@@ -200,14 +200,14 @@ async def test_deleting_what_is_not_there_is_an_error(call_error: ToolCall, samp
 
 async def test_sparklines_stay_inside_the_allowed_folder(call_error: ToolCall) -> None:
     message = await call_error(
-        "add_sparklines", path="../x.xlsx", sheet="Data", location="F2", data="C2:D2"
+        "add_sparklines", path="../x.xlsx", sheet="Data", range="F2", source="C2:D2"
     )
     assert "outside" in message or "not allowed" in message
 
 
 async def test_sparklines_survive_edits_and_sheet_copies(call: ToolCall, sample: Path) -> None:
-    await call("add_sparklines", **BOOK, sheet="Data", location="F2:F3", data="C2:D3")
-    await call("write_range", **BOOK, sheet="Data", start_cell="H1", rows=[[1]])
+    await call("add_sparklines", **BOOK, sheet="Data", range="F2:F3", source="C2:D3")
+    await call("write_range", **BOOK, sheet="Data", at="H1", rows=[[1]])
     await call("copy_sheet", **BOOK, sheet="Data", new_name="My Copy")
     (original,) = _groups(sample)
     (copy,) = _groups(sample, "My Copy")
@@ -220,8 +220,8 @@ async def test_sparklines_follow_row_edits_and_renames_as_in_excel(
     call: ToolCall, sample: Path
 ) -> None:
     style = {"dates": "C1:D1"}
-    await call("add_sparklines", **BOOK, sheet="Data", location="F3:F4", data="C3:D4", style=style)
-    await call("insert_rows_or_columns", **BOOK, sheet="Data", axis="rows", at=2, count=2)
+    await call("add_sparklines", **BOOK, sheet="Data", range="F3:F4", source="C3:D4", style=style)
+    await call("insert_rows_or_columns", **BOOK, sheet="Data", axis="rows", start=2, count=2)
     (group,) = _groups(sample)
     assert "<xm:f>Data!C1:D1</xm:f><x14:sparklines>" in group  # above the edit
     sparklines = (await call("describe_sheet", **BOOK, sheet="Data"))["sparklines"]
@@ -450,7 +450,7 @@ async def test_extended_rules_survive_edits_and_sheet_copies(call: ToolCall, sam
         range="D2:D5",
         rule={"type": "icon_set", "icon_set": "5Boxes"},
     )
-    await call("write_range", **BOOK, sheet="Data", start_cell="H1", rows=[[1]])
+    await call("write_range", **BOOK, sheet="Data", at="H1", rows=[[1]])
     await call("copy_sheet", **BOOK, sheet="Data", new_name="Copy")
     source, copied = _x14_rules(sample), _x14_rules(sample, "Copy")
     assert len(source) == len(copied) == 2
@@ -476,14 +476,14 @@ async def test_extended_rules_follow_row_edits(call: ToolCall, sample: Path) -> 
         range="D3:D5",
         rule={"type": "icon_set", "icon_set": "3Stars"},
     )
-    await call("insert_rows_or_columns", **BOOK, sheet="Data", axis="rows", at=2)
+    await call("insert_rows_or_columns", **BOOK, sheet="Data", axis="rows", start=2)
     xml = _sheet_xml(sample)
     assert 'conditionalFormatting sqref="C4:C6"' in xml
     guid = re.search(r"<x14:id>(\{[^}]*\})</x14:id>", xml)[1]  # type: ignore[index]
     rules = _x14_rules(sample)
     assert f'id="{guid}"' in rules[0] and "<xm:sqref>C4:C6</xm:sqref>" in rules[0]
     assert "<xm:sqref>D4:D6</xm:sqref>" in rules[1]
-    await call("delete_rows_or_columns", **BOOK, sheet="Data", axis="rows", at=1, count=3)
+    await call("delete_rows_or_columns", **BOOK, sheet="Data", axis="rows", start=1, count=3)
     assert 'conditionalFormatting sqref="C1:C3"' in _sheet_xml(sample)
     assert "<xm:sqref>C1:C3</xm:sqref>" in _x14_rules(sample)[0]
     assert_package_is_consistent(read_parts(sample))
@@ -492,13 +492,13 @@ async def test_extended_rules_follow_row_edits(call: ToolCall, sample: Path) -> 
 async def test_deleting_a_sheet_that_sparklines_and_rules_read_is_what_excel_does(
     call: ToolCall, sample: Path
 ) -> None:
-    await call("add_sparklines", **BOOK, sheet="Data", location="F2:F3", data="Report!A1:B2")
+    await call("add_sparklines", **BOOK, sheet="Data", range="F2:F3", source="Report!A1:B2")
     await call(
         "add_sparklines",
         **BOOK,
         sheet="Data",
-        location="G2:G3",
-        data="C2:D3",
+        range="G2:G3",
+        source="C2:D3",
         style={"dates": "Report!A4:B4"},
     )
     rule = {"type": "data_bar", "colors": ["#638EC6"], "max_type": "formula"}

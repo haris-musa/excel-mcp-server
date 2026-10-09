@@ -129,7 +129,7 @@ async def test_defined_names_roundtrip(call: ToolCall, sample: Path) -> None:
     await call("set_defined_name", path="sales.xlsx", name="Tax", refers_to="0.075")
     await call("set_defined_name", path="sales.xlsx", name="Tax", refers_to="0.1", sheet="Report")
     result = await call("set_defined_name", path="sales.xlsx", name="Tax", refers_to="0.2")
-    assert "Updated" in result
+    assert result == {"name": "Tax", "note": "Replaced the earlier definition."}
     names = (await call("describe_workbook", path="sales.xlsx"))["defined_names"]
     assert names == [
         {"name": "Tax", "refers_to": "0.2"},

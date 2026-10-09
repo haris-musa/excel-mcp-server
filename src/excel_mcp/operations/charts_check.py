@@ -101,7 +101,7 @@ def _check_series(plot: Plot, chart_type: ChartType, options: ChartOptions) -> N
     kind = spec.type or chart_type
     require(spec.secondary_axis, "secondary_axis", kind, _SECONDARY)
     require(spec.marker is not None or spec.marker_size is not None, "marker", kind, _MARKED)
-    require(spec.line_width is not None, "line_width", kind, _LINED)
+    require(spec.line_width_pt is not None, "line_width_pt", kind, _LINED)
     if (plot.sizes is not None) != (chart_type == "bubble"):
         raise InvalidArgumentError(
             "sizes are required for bubble charts, and only for them."

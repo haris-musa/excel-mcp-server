@@ -164,7 +164,18 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
 | Names and notes | `set_defined_name`, `delete_defined_name`, `set_note`, `delete_note` |
 | Macros | `read_vba`; with `--allow-vba-write`: `write_vba_module`, `delete_vba_module` |
 
-Every parameter is documented in [TOOLS.md](TOOLS.md).
+Every parameter is documented in [TOOLS.md](TOOLS.md). Parameters mean the same in every tool:
+
+| Parameter | Meaning |
+| --- | --- |
+| `path`, `sheet` | The workbook and the worksheet |
+| `range`, `at` | A block of cells (`A1:D20`), and the top-left cell of whatever is placed there: written values, copies, charts, images, PivotTables, slicers |
+| `source` | Where data comes from, optionally on another sheet (`Data!A1:E200`) |
+| `name` | The name of a table, chart, image, PivotTable, slicer or defined name |
+| `_cm`, `_pt`, `_chars` | Units of sizes: `width_cm`, `row_heights_pt`, `column_widths_chars` |
+
+Tools that change a workbook return what they changed (`sheet`, `range`, `name`) so that the
+next call can refer to it. Charts and images are selected by name, as listed by `describe_sheet`.
 
 ### Writing macros (opt-in)
 
@@ -214,11 +225,11 @@ Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
   "show values as" (percent of total, row, column or parent, difference from, running total,
   rank), sorting by label or value, date and number grouping, calculated fields, compact,
   outline and tabular layouts, subtotals on or off, filters with chosen items and several
-  values fields as columns or rows. The figures written into the cells are the ones Excel shows
+  value fields as columns or rows. The figures written into the cells are the ones Excel shows
   after a refresh, checked against about 200 PivotTables recorded from real Excel
   (`tests/fixtures/pivot_golden.json`). The exceptions: items that tie when sorted by value may
   swap places on refresh, and `values_in: "rows"` cannot be combined with rank figures or, with
-  subtotals, other figures along a field, because Excel mixes the values fields up there.
+  subtotals, other figures along a field, because Excel mixes the value fields up there.
 - `add_slicer` adds slicers (Insert > Slicer) for tables and PivotTables, and timelines for date
   fields of PivotTables: field, caption, position and size, columns, style, sort, selected
   items (or a period) and "hide items with no data". Selecting items filters as clicking
@@ -255,7 +266,8 @@ Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
 
 Version 1.0 renames and redesigns the tools, removes the SSE transport and requires
 Python 3.11 or newer. The [changelog](CHANGELOG.md#100---2026-09-28) maps every old tool to
-its replacement.
+its replacement. Version 2.0 makes parameter names consistent across tools; the
+[changelog](CHANGELOG.md#unreleased) lists every rename.
 
 ## Contributing
 
