@@ -41,6 +41,21 @@ def dynamic_anchors(workbook: Workbook) -> list[Cell]:
     ]
 
 
+def legacy_anchors(workbook: Workbook) -> list[Cell]:
+    """The cells that hold legacy array formulas over more than one cell."""
+    dynamic = {id(cell) for cell in dynamic_anchors(workbook)}
+    return [
+        cell
+        for sheet in workbook.worksheets
+        if isinstance(sheet, Worksheet)
+        for cell in sheet._cells.values()
+        if isinstance(cell, Cell)
+        and isinstance(cell.value, ArrayFormula)
+        and id(cell) not in dynamic
+        and parse_range(cell.value.ref).size > 1
+    ]
+
+
 def release(mark: CellMark) -> None:
     """Clear the cells an array formula spilled into, unless they were changed since."""
     for cell, value in mark.spill:

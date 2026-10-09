@@ -11,10 +11,10 @@ from openpyxl.worksheet.worksheet import Worksheet
 from excel_mcp.calc.dynamic import is_dynamic_array
 from excel_mcp.calc.engine import Engine
 from excel_mcp.calc.parser import Name
-from excel_mcp.calc.values import ExcelError, Grid, Scalar, UncalculableError
+from excel_mcp.calc.values import NA, ExcelError, Grid, Scalar, UncalculableError
 from excel_mcp.errors import LimitExceededError
 from excel_mcp.package import CellMark, arrays, state_of
-from excel_mcp.refs import MAX_COLUMN, MAX_ROW, CellRange
+from excel_mcp.refs import MAX_COLUMN, MAX_ROW, CellRange, parse_range
 from excel_mcp.values import store_value
 
 _STORED_ERRORS = frozenset(["#NULL!", "#DIV/0!", "#VALUE!", "#REF!", "#NAME?", "#NUM!", "#N/A"])
@@ -50,24 +50,27 @@ def spill_formulas(sheet: Worksheet, cells: list[Cell], max_cells: int) -> list[
 
 
 def refresh_spills(workbook: Workbook, max_cells: int) -> None:
-    """Recalculate the stored results of every dynamic array formula in the workbook.
+    """Recalculate the stored results of every array formula in the workbook.
 
     Their values are cached in the cells, so they are stale once anything they use changed.
-    Each result is calculated again and its spill range resized as Excel does, including
-    #SPILL! where cells are in the way. A result the calculator cannot reproduce is dropped:
-    Excel calculates it when it opens the file.
+    A dynamic array formula's result is calculated again and its spill range resized as Excel
+    does, including #SPILL! where cells are in the way; a legacy (Ctrl+Shift+Enter) formula
+    fills its declared range. A result the calculator cannot reproduce is dropped: Excel
+    calculates it when it opens the file.
     """
-    anchors = arrays.dynamic_anchors(workbook)
+    dynamic = arrays.dynamic_anchors(workbook)
+    legacy = arrays.legacy_anchors(workbook)
     previous = None
-    for _ in range(max(len(anchors), 1)):
-        # A formula can use the spill range of another, so repeat until the results settle.
-        results = [_recalculate(workbook, cell, max_cells) for cell in anchors]
-        if len(anchors) < 2 or results == previous:
+    for _ in range(max(len(dynamic) + len(legacy), 1)):
+        # A formula can use the results of another, so repeat until they settle.
+        results = [_recalculate(workbook, cell, max_cells) for cell in dynamic]
+        results += [_recalculate_legacy(workbook, cell, max_cells) for cell in legacy]
+        if len(results) < 2 or results == previous:
             return
         previous = results
 
 
-def _recalculate(workbook: Workbook, anchor: Cell, max_cells: int) -> str:
+def _calculate(workbook: Workbook, anchor: Cell, max_cells: int) -> tuple[str, Grid | None]:
     sheet = cast(Worksheet, anchor.parent)
     formula = str(cast(ArrayFormula, anchor.value).text)
     try:
@@ -78,7 +81,38 @@ def _recalculate(workbook: Workbook, anchor: Cell, max_cells: int) -> str:
         grid = None
     if grid is not None and (_has_new_errors(grid) or grid.height * grid.width > max_cells):
         grid = None
-    _store(sheet, anchor, formula, grid, max_cells)
+    return formula, grid
+
+
+def _recalculate(workbook: Workbook, anchor: Cell, max_cells: int) -> str:
+    formula, grid = _calculate(workbook, anchor, max_cells)
+    _store(cast(Worksheet, anchor.parent), anchor, formula, grid, max_cells)
+    return repr(grid.rows if grid else None)
+
+
+def _recalculate_legacy(workbook: Workbook, anchor: Cell, max_cells: int) -> str:
+    """Fill the range of a legacy array formula as Excel does: a scalar fills all of it, an
+    array that is smaller leaves #N/A."""
+    sheet = cast(Worksheet, anchor.parent)
+    area = parse_range(cast(ArrayFormula, anchor.value).ref)
+    _, grid = _calculate(workbook, anchor, max_cells)
+    for row in range(area.min_row, area.max_row + 1):
+        for col in range(area.min_col, area.max_col + 1):
+            target = sheet._cells.get((row, col))
+            if target is anchor or isinstance(target, MergedCell):
+                continue
+            target = cast(Cell, sheet.cell(row, col))
+            if grid is None:
+                target.value = None
+                continue
+            row_offset, col_offset = row - area.min_row, col - area.min_col
+            if grid.height == grid.width == 1:
+                item = grid.rows[0][0]
+            elif row_offset < grid.height and col_offset < grid.width:
+                item = grid.rows[row_offset][col_offset]
+            else:
+                item = NA
+            store_value(target, _stored(item))
     return repr(grid.rows if grid else None)
 
 

@@ -383,7 +383,8 @@ All notable changes to this project are documented here. The format follows
 - Results of dynamic array formulas (`FILTER`, `SORT`, `SEQUENCE`, ...) were stale after the
   data they use changed. Every save recalculates them, resizing the spill range as Excel does
   (`#SPILL!` where cells are in the way) and dropping a result the calculator cannot
-  reproduce, which Excel calculates when it opens the file. Every edit also sets
+  reproduce, which Excel calculates when it opens the file. Legacy (Ctrl+Shift+Enter) array
+  formulas are recalculated into their range too. Every edit also sets
   `fullCalcOnLoad`, so Excel recalculates the whole workbook on open.
 - `insert_rows_or_columns` and `delete_rows_or_columns` work through a dynamic array's spill
   range, which spills again, as in Excel. Legacy (Ctrl+Shift+Enter) array formulas still

@@ -129,9 +129,12 @@ def _fill(
 def _fill_spill(engine: Engine, anchor: Cell, data: RangeData, area: CellRange) -> None:
     """Show an array formula and what it spills into, as Excel would once it calculated it."""
     sheet = cast(Worksheet, anchor.parent)
-    grid = engine.spill(
-        sheet, anchor.row, anchor.column, str(cast(ArrayFormula, anchor.value).text)
-    )
+    formula = cast(ArrayFormula, anchor.value)
+    grid = engine.spill(sheet, anchor.row, anchor.column, str(formula.text))
+    if parse_range(formula.ref).size > 1:
+        # A legacy array formula: the other cells of its range hold their own results.
+        _put(data, area, anchor.row, anchor.column, _json(grid.rows[0][0], anchor.number_format))
+        return
     spilled = CellRange(
         anchor.row, anchor.column, anchor.row + grid.height - 1, anchor.column + grid.width - 1
     )
