@@ -321,4 +321,4 @@ async def test_a_slicer_works_on_a_pivot_table_with_grouped_dates(
     error = await call_error(
         "add_slicer", path=book, sheet="Pivot", target=grouped, field="Date", at="A40"
     )
-    assert "Field 'Date' is grouped" in error
+    assert "Field 'Date' is grouped" in error and "timeline" in error

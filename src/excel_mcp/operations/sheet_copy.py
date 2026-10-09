@@ -13,7 +13,7 @@ from excel_mcp.formulas import storable_formula, storable_operand
 from excel_mcp.operations import chartex
 from excel_mcp.operations.cells import stored_cells
 from excel_mcp.operations.sheet_refs import SheetCopyRefs
-from excel_mcp.operations.sheet_shapes import copy_shapes
+from excel_mcp.operations.sheet_shapes import copy_shapes, copy_sheet_elements
 from excel_mcp.operations.sheets import validate_sheet_name
 from excel_mcp.operations.slicer_manage import copy_slicers
 from excel_mcp.operations.tables import table_names
@@ -22,8 +22,8 @@ from excel_mcp.rewrite import chart_references
 from excel_mcp.workspace import get_sheet
 
 
-def copy_sheet(workbook: Workbook, name: str, new_name: str) -> None:
-    """Add a copy of a sheet at the end of the workbook."""
+def copy_sheet(workbook: Workbook, name: str, new_name: str) -> list[str]:
+    """Add a copy of a sheet at the end of the workbook. Returns what could not be copied."""
     source = get_sheet(workbook, name)
     validate_sheet_name(new_name, workbook.sheetnames)
     target = workbook.create_sheet(new_name)
@@ -39,6 +39,7 @@ def copy_sheet(workbook: Workbook, name: str, new_name: str) -> None:
     _copy_pivots(source, target)
     arrays.copy_marks(source, target)
     copy_slicers(workbook, source, target, tables)
+    return copy_sheet_elements(workbook, source, target)
 
 
 def _copy_tables(workbook: Workbook, source: Worksheet, target: Worksheet) -> dict[str, str]:
