@@ -46,9 +46,14 @@ or anyone who can reach the HTTP endpoint. Its defences are:
 - **Uploads**: `import_workbook` scans every XML part of the package, found by content and not
   by name, in constant memory, including defined names, conditional formats, data validation,
   tables and chart references. It rejects packages with duplicate or traversing part names,
-  data connections, query tables and external links, and packages that expand beyond
+  data connections, query tables, external workbook links, linked OLE objects and any other
+  external relationship that is not a hyperlink, and packages that expand beyond
   `max_unpack_factor` times the file size limit or compress more densely than
-  `max_compression_ratio`, both checked while reading.
+  `max_compression_ratio`, both checked while reading. Hyperlinks are not refused but
+  neutralised: external links to anything other than `http`, `https` and `mailto` addresses
+  without credentials (file paths, network shares, `smb:`, `ms-excel:`, `javascript:` and so
+  on) are removed from cells, shapes, pictures and legacy drawings, the cell text and format
+  stay, and the import result lists what was removed. `write_range` still refuses such links.
 - **Calculator**: `read_range` evaluates formulas with a built-in interpreter that has no
   access to files, the network or other programs. It never evaluates the functions the
   formula check rejects, and its work (cells evaluated, nesting depth, text and array

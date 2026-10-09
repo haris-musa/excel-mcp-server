@@ -15,6 +15,7 @@ from excel_mcp.package.properties import read_company
 from excel_mcp.server.params import WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
 from excel_mcp.server.results import Changed
+from excel_mcp.upload_links import describe
 from excel_mcp.workspace import Workspace
 
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -102,6 +103,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         overwrite: bool = False,
     ) -> Changed:
         """Save an uploaded workbook file on the server (remote editing)."""
-        content = files.decode_workbook(content_base64, workspace.limits)
-        stored = workspace.store(path, content, overwrite=overwrite)
-        return Changed(path=workspace.display(stored))
+        upload = files.decode_workbook(content_base64, workspace.limits)
+        stored = workspace.store(path, upload.content, overwrite=overwrite)
+        note = describe(upload.removed) if upload.removed else None
+        return Changed(path=workspace.display(stored), note=note)

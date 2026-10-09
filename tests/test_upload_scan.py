@@ -8,8 +8,9 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 import pytest
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 
+from excel_mcp import upload_links
 from excel_mcp.config import Limits
 from excel_mcp.errors import ExcelMCPError
 from excel_mcp.operations.files import decode_workbook
@@ -45,7 +46,7 @@ def _package(
 
 
 def _decode(content: bytes, limits: Limits = LIMITS) -> bytes:
-    return decode_workbook(base64.b64encode(content).decode(), limits)
+    return decode_workbook(base64.b64encode(content).decode(), limits).content
 
 
 def _rejected(content: bytes, limits: Limits = LIMITS) -> str:
@@ -406,28 +407,6 @@ BAD_LINKS = [
 ]
 
 
-@pytest.mark.parametrize("target", BAD_LINKS)
-@pytest.mark.parametrize(
-    "part",
-    [
-        "xl/worksheets/_rels/sheet1.xml.rels",
-        "xl/drawings/_rels/drawing1.xml.rels",
-        "xl/drawings/_rels/drawing2.xml.rels",
-    ],
-)
-def test_hyperlinks_with_other_targets_are_rejected(part: str, target: str) -> None:
-    rels = _rels("hyperlink", escape(target, {'"': "&quot;"}))
-    message = _rejected(_package([(part, rels)]))
-    assert "hyperlink" in message
-    assert "not allowed" in message
-
-
-@pytest.mark.parametrize("target", BAD_LINKS[:12])
-def test_vml_links_with_other_targets_are_rejected(target: str) -> None:
-    vml = f'<xml><v:shape href="{escape(target, {chr(34): "&quot;"})}"/></xml>'.encode()
-    assert "not allowed" in _rejected(_package([("xl/drawings/vmlDrawing1.vml", vml)]))
-
-
 @pytest.mark.parametrize(
     "target", ["https://example.com/a?b=1", "mailto:me@example.com", "#Sheet1!A1"]
 )
@@ -444,19 +423,137 @@ def test_drawing_and_vml_links_to_web_pages_are_accepted(target: str) -> None:
     )
 
 
-@pytest.mark.parametrize("target", ["file:///C:/x.exe", r"\\host\share\x.xlsx", "http://u:p@h/"])
-async def test_uploaded_cell_hyperlinks_are_checked(
-    call: ToolCall, call_error: ToolCall, files: Path, target: str
-) -> None:
-    def build(address: str) -> str:
-        workbook = Workbook()
-        workbook.worksheets[0]["A1"] = "link"
-        workbook.worksheets[0]["A1"].hyperlink = address
-        buffer = io.BytesIO()
-        workbook.save(buffer)
-        return base64.b64encode(buffer.getvalue()).decode()
+_R = 'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"'
+_A = 'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"'
 
-    message = await call_error("import_workbook", path="bad.xlsx", content_base64=build(target))
-    assert "hyperlink" in message
-    assert not (files / "bad.xlsx").exists()
-    await call("import_workbook", path="good.xlsx", content_base64=build("https://example.com/"))
+
+def _relationships(*links: tuple[str, str]) -> bytes:
+    body = "".join(
+        f'<Relationship Id="{rel_id}" Type="{_REL_TYPES}/hyperlink" '
+        f'Target="{escape(target, {chr(34): "&quot;"})}" TargetMode="External"/>'
+        for rel_id, target in links
+    )
+    return f'<Relationships xmlns="{_RELS}">{body}</Relationships>'.encode()
+
+
+def _upload(
+    parts: list[tuple[str, bytes]],
+) -> tuple[zipfile.ZipFile, list[upload_links.RemovedLink]]:
+    result = decode_workbook(base64.b64encode(_package(parts)).decode(), LIMITS)
+    return zipfile.ZipFile(io.BytesIO(result.content)), list(result.removed)
+
+
+@pytest.mark.parametrize("target", BAD_LINKS)
+def test_unsafe_cell_hyperlinks_are_removed_and_the_rest_kept(target: str) -> None:
+    sheet = (
+        f'<worksheet {MAIN} {_R}><sheetData><row r="5"><c r="A5" t="inlineStr"><is><t>doc</t>'
+        '</is></c></row></sheetData><hyperlinks><hyperlink ref="A5" r:id="rId1"/>'
+        '<hyperlink ref="A6" r:id="rId2"/><hyperlink ref="A7" location="Sheet1!B2"/>'
+        "</hyperlinks></worksheet>"
+    )
+    rels = _relationships(("rId1", target), ("rId2", "https://example.com/"))
+    archive, removed = _upload(
+        [
+            ("xl/worksheets/sheet9.xml", sheet.encode()),
+            ("xl/worksheets/_rels/sheet9.xml.rels", rels),
+        ]
+    )
+    assert [link.where for link in removed] == ["A5"]
+    assert removed[0].target == target
+    text = archive.read("xl/worksheets/sheet9.xml").decode()
+    assert 'ref="A5"' not in text.split("<hyperlinks>")[1]
+    assert "<t>doc</t>" in text
+    assert 'ref="A6"' in text
+    assert 'location="Sheet1!B2"' in text
+    kept = archive.read("xl/worksheets/_rels/sheet9.xml.rels").decode()
+    assert "rId1" not in kept
+    assert "https://example.com/" in kept
+
+
+def test_unsafe_shape_and_picture_links_are_removed_with_their_relationship() -> None:
+    drawing = (
+        f"<xdr:wsDr {_R} {_A} "
+        'xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing">'
+        '<xdr:pic><xdr:nvPicPr><xdr:cNvPr id="2" name="Logo">'
+        '<a:hlinkClick r:id="rId1"><a:extLst/></a:hlinkClick></xdr:cNvPr></xdr:nvPicPr></xdr:pic>'
+        '<xdr:sp><xdr:nvSpPr><xdr:cNvPr id="3" name="Box"><a:hlinkClick r:id="rId2"/>'
+        "</xdr:cNvPr></xdr:nvSpPr></xdr:sp></xdr:wsDr>"
+    )
+    rels = _relationships(("rId1", r"\\host\share\doc.pdf"), ("rId2", "https://example.com/"))
+    archive, removed = _upload(
+        [
+            ("xl/drawings/drawing1.xml", drawing.encode()),
+            ("xl/drawings/_rels/drawing1.xml.rels", rels),
+        ]
+    )
+    assert [link.target for link in removed] == [r"\\host\share\doc.pdf"]
+    text = archive.read("xl/drawings/drawing1.xml").decode()
+    assert 'r:id="rId1"' not in text
+    assert 'r:id="rId2"' in text
+    assert 'name="Logo"' in text
+    assert "rId1" not in archive.read("xl/drawings/_rels/drawing1.xml.rels").decode()
+
+
+@pytest.mark.parametrize("target", BAD_LINKS[:12])
+def test_unsafe_vml_links_are_removed(target: str) -> None:
+    quoted = escape(target, {'"': "&quot;"})
+    vml = f'<xml><v:shape id="s1" href="{quoted}"/><v:shape id="s2" href="https://example.com/"/></xml>'
+    archive, removed = _upload([("xl/drawings/vmlDrawing1.vml", vml.encode())])
+    assert [link.target for link in removed] == [target]
+    text = archive.read("xl/drawings/vmlDrawing1.vml").decode()
+    assert 'id="s1"' in text
+    assert "https://example.com/" in text
+    assert "href" not in text.replace('href="https://example.com/"', "")
+
+
+def test_a_link_that_cannot_be_removed_safely_rejects_the_upload() -> None:
+    sheet = f'<worksheet {MAIN} {_R}><somethingElse r:id="rId1"/></worksheet>'
+    rels = _relationships(("rId1", r"\\host\share\doc.pdf"))
+    parts = [
+        ("xl/worksheets/sheet9.xml", sheet.encode()),
+        ("xl/worksheets/_rels/sheet9.xml.rels", rels),
+    ]
+    assert "cannot be removed safely" in _rejected(_package(parts))
+
+
+def test_the_note_names_a_few_links_and_counts_the_rest() -> None:
+    removed = [upload_links.RemovedLink(f"A{n}", rf"\\server\share\{n}.pdf") for n in range(1, 6)]
+    note = upload_links.describe(removed)
+    assert note.startswith("Removed 5 links to files or network locations: A1 (")
+    assert r"\\server\share\3.pdf" in note
+    assert "A4" not in note
+    assert note.endswith("and 2 more.")
+
+
+async def test_import_reports_the_links_it_removed(call: ToolCall, files: Path) -> None:
+    workbook = Workbook()
+    sheet = workbook.worksheets[0]
+    for row, address in enumerate([r"\\server\share\x.pdf", "https://example.com/"], start=1):
+        sheet.cell(row=row, column=1, value="doc").hyperlink = address
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+
+    result = await call(
+        "import_workbook",
+        path="up.xlsx",
+        content_base64=base64.b64encode(buffer.getvalue()).decode(),
+    )
+
+    assert (
+        result["note"]
+        == r"Removed 1 link to files or network locations: A1 (\\server\share\x.pdf)."
+    )
+    links = load_workbook(files / "up.xlsx").worksheets[0]
+    assert links["A1"].hyperlink is None
+    assert links["A1"].value == "doc"
+    second = links["A2"].hyperlink
+    assert second is not None
+    assert second.target == "https://example.com/"
+
+
+@pytest.mark.parametrize(
+    "kind", ["oleObject", "externalLink", "connections", "queryTable", "package", "image"]
+)
+def test_external_relationships_that_cannot_be_neutralised_are_still_rejected(kind: str) -> None:
+    content = _package([("xl/worksheets/_rels/sheet1.xml.rels", _rels(kind, r"\\host\share\x"))])
+    assert "reach outside the file" in _rejected(content)

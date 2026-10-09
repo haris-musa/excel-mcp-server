@@ -502,7 +502,10 @@ All notable changes to this project are documented here. The format follows
 - `import_workbook` checks every XML part of the package wherever it is stored, rejects
   packages with duplicate or unsafe part names, data connections, query tables or external
   links, caps the expanded size and the compression ratio (also while reading), and scans
-  in constant memory with a nesting limit.
+  in constant memory with a nesting limit. It also rejects linked OLE objects and external
+  relationships other than hyperlinks. Hyperlinks to files, network locations and other
+  schemes than `http`, `https` and `mailto` (or with credentials) are removed instead of
+  refusing the upload, and `import_workbook` reports in `note` which links were removed.
 - Network (UNC) paths, Windows device paths and reserved device names are rejected for
   every file the server opens, with or without `--allow-dir`, unless the allowed folder is
   on that share. The rules are applied again to the resolved path, so a link that leads to a

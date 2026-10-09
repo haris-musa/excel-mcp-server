@@ -64,7 +64,7 @@ class Formula(NamedTuple):
     pivot: bool = False
 
 
-def scan_package(content: bytes, limits: Limits) -> Iterator[Formula]:
+def scan_package(content: bytes, limits: Limits, *, check_links: bool = True) -> Iterator[Formula]:
     """Check an uploaded package and yield each formula in it; raises when it is unsafe.
 
     Nothing is vouched for until the iterator is exhausted.
@@ -74,7 +74,7 @@ def scan_package(content: bytes, limits: Limits) -> Iterator[Formula]:
             infos = archive.infolist()
             _check_entries(infos, limits)
             remaining = limits.max_unpacked_bytes
-            types = _Types()
+            types = _Types(check_links)
             # The content types come first: they say which parts Excel reads as its own.
             for info in sorted(infos, key=lambda i: i.filename != _CONTENT_TYPES):
                 if info.is_dir():
@@ -82,7 +82,7 @@ def scan_package(content: bytes, limits: Limits) -> Iterator[Formula]:
                 with archive.open(info) as source:
                     entry = _Entry(source, info, limits, remaining)
                     if info.filename.casefold().endswith(".vml"):
-                        _scan_vml(entry)
+                        _scan_vml(entry, check_links)
                     elif entry.is_xml:
                         yield from _scan_xml(entry, info.filename, types)
                     entry.drain()
@@ -169,7 +169,8 @@ def _looks_like_xml(head: bytes) -> bool:
 class _Types:
     """The content types a package declares, by part name and by file extension."""
 
-    def __init__(self) -> None:
+    def __init__(self, check_links: bool) -> None:
+        self.check_links = check_links
         self.overrides: dict[str, str] = {}
         self.defaults: dict[str, str] = {}
 
@@ -243,7 +244,7 @@ def _check_declaration(name: str, element: ElementTree.Element, types: _Types) -
         # Only a hyperlink may point outside the file; it is followed when the user clicks it.
         if external and not declared.casefold().endswith("/hyperlink"):
             _refuse_remote_data()
-        if external:
+        if external and types.check_links:
             _check_link(element.get("Target", ""))
     elif name == "oleLink" or (name == "oleObject" and element.get("link")):
         _refuse_remote_data()
@@ -254,13 +255,13 @@ def _check_declaration(name: str, element: ElementTree.Element, types: _Types) -
         _refuse_remote_data()
 
 
-def _scan_vml(entry: _Entry) -> None:
+def _scan_vml(entry: _Entry, check_links: bool) -> None:
     """Check the links of a legacy drawing. Excel reads these as lenient HTML, so the text is
     searched instead of parsed, which a broken tag cannot get around."""
     tail = ""
     while chunk := entry.read():
         text = tail + chunk.decode("utf-8", "ignore")
-        for found in _HREF.finditer(text):
+        for found in _HREF.finditer(text) if check_links else ():
             _check_link(unescape(found[1] if found[1] is not None else found[2]))
         tail = text[-_MAX_LINK:]
 
