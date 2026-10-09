@@ -222,7 +222,7 @@ async def test_a_workbook_with_everything_the_server_can_add_is_accepted(
     call: ToolCall, sample: Path
 ) -> None:
     book = {"path": "sales.xlsx"}
-    await call("create_table", **book, sheet="Data", range="A1:D5", name="Sales")
+    await call("set_table", **book, sheet="Data", range="A1:D5", name="Sales")
     await call("add_sparklines", **book, sheet="Data", range="F2:F5", source="C2:D5")
     await call(
         "create_chart",
