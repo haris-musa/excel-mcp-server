@@ -291,3 +291,34 @@ async def test_the_path_must_be_inside_the_workbook_folder(
         at="E3",
     )
     assert "outside" in error.lower() or "not allowed" in error.lower() or "folder" in error.lower()
+
+
+async def test_a_slicer_works_on_a_pivot_table_with_grouped_dates(
+    call: ToolCall, call_error: Callable[..., Coroutine[Any, Any, str]], book: str
+) -> None:
+    grouped = {"sheet": "Pivot", "name": "ByMonth"}
+    await call(
+        "create_pivot_table",
+        path=book,
+        source="Data!A1:D9",
+        row_fields=["Date"],
+        value_fields=[{"field": "Amount"}],
+        field_settings=[{"field": "Date", "group_dates": ["months"]}],
+        sheet="Pivot",
+        at="H3",
+        name="ByMonth",
+    )
+    await add(call, book, target=grouped, field="Region", selected_items=["North"], at="A20")
+    cells = load_workbook(book)["Pivot"]
+    shown = [[cells.cell(r, c).value for c in (8, 9)] for r in range(3, 8)]
+    assert shown == [
+        ["Months (Date)", "Sum of Amount"],
+        ["Jan", 10],
+        ["Mar", 30],
+        ["Grand Total", 40],
+        [None, None],
+    ]
+    error = await call_error(
+        "add_slicer", path=book, sheet="Pivot", target=grouped, field="Date", at="A40"
+    )
+    assert "Field 'Date' is grouped" in error

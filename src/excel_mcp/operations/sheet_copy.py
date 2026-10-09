@@ -13,6 +13,7 @@ from excel_mcp.formulas import storable_formula, storable_operand
 from excel_mcp.operations import chartex
 from excel_mcp.operations.cells import stored_cells
 from excel_mcp.operations.sheet_refs import SheetCopyRefs
+from excel_mcp.operations.sheet_shapes import copy_shapes
 from excel_mcp.operations.sheets import validate_sheet_name
 from excel_mcp.operations.slicer_manage import copy_slicers
 from excel_mcp.operations.tables import table_names
@@ -34,7 +35,7 @@ def copy_sheet(workbook: Workbook, name: str, new_name: str) -> None:
     _copy_extensions(workbook, source, target, refs)
     _copy_names(workbook, source, target, refs)
     _copy_sheet_settings(source, target)
-    _copy_drawings(source, target, refs)
+    _copy_drawings(workbook, source, target, refs)
     _copy_pivots(source, target)
     arrays.copy_marks(source, target)
     copy_slicers(workbook, source, target, tables)
@@ -97,7 +98,8 @@ def _copy_rules(
 def _copy_extensions(
     workbook: Workbook, source: Worksheet, target: Worksheet, refs: SheetCopyRefs
 ) -> None:
-    """Sparklines and the Excel 2010 half of conditional formats."""
+    """Sparklines and the Excel 2010 half of conditional formats. The copy declares the prefixes
+    of the original's XML, which the shapes and parts copied later rely on."""
     state = state_of(workbook)
     package = state.sheets.get(source)
     if package is None:
@@ -108,6 +110,9 @@ def _copy_extensions(
         lambda text: refs.operand(text, target.title),
     )
     copy = state.sheet(target)
+    copy.namespaces = dict(package.namespaces)
+    copy.drawing_namespaces = dict(package.drawing_namespaces)
+    copy.vml_namespaces = dict(package.vml_namespaces)
     copy.extensions.update(found)
     copy.rule_extensions.update(rules)
 
@@ -139,7 +144,9 @@ def _copy_sheet_settings(source: Worksheet, target: Worksheet) -> None:
     target.print_title_cols = source.print_title_cols
 
 
-def _copy_drawings(source: Worksheet, target: Worksheet, refs: SheetCopyRefs) -> None:
+def _copy_drawings(
+    workbook: Workbook, source: Worksheet, target: Worksheet, refs: SheetCopyRefs
+) -> None:
     for image in source._images:  # pyright: ignore[reportAttributeAccessIssue]
         clone = Image(BytesIO(image.ref.getvalue()))
         clone.width, clone.height = image.width, image.height
@@ -152,6 +159,7 @@ def _copy_drawings(source: Worksheet, target: Worksheet, refs: SheetCopyRefs) ->
                 reference.f = refs.operand(str(reference.f), target.title)
         target.add_chart(clone)
     chartex.copy(source, target, refs)
+    copy_shapes(workbook, source, target, refs)
 
 
 def _copy_pivots(source: Worksheet, target: Worksheet) -> None:

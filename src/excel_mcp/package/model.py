@@ -14,13 +14,19 @@ Sheet = Worksheet | Chartsheet
 
 @dataclass(eq=False)
 class Part:
-    """A file inside the package. Its ``name`` is made unique when the package is written."""
+    """A file inside the package. Its ``name`` is made unique when the package is written.
+
+    A part is written once for an identical part of the same name, as an image of two shapes
+    is, unless it is ``unique``: one that belongs to a single object, such as the properties of
+    a form control.
+    """
 
     name: str
     content_type: str
     data: bytes
     links: list["Link"] = field(default_factory=list)
     by_default: bool = False
+    unique: bool = False
 
 
 @dataclass(eq=False)
@@ -170,3 +176,19 @@ def state_of(workbook: Workbook) -> PackageState:
 
 def set_state(workbook: Workbook, state: PackageState) -> None:
     workbook.__dict__[_KEY] = state
+
+
+def cloned(links: list[Link]) -> list[Link]:
+    """Copies of relationships and of the parts they lead to, for a second owner of the content."""
+    return [
+        Link(
+            link.id, link.type, link.target if isinstance(link.target, str) else _clone(link.target)
+        )
+        for link in links
+    ]
+
+
+def _clone(part: Part) -> Part:
+    return Part(
+        part.name, part.content_type, part.data, cloned(part.links), part.by_default, part.unique
+    )

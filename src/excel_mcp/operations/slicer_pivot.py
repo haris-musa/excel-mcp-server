@@ -59,6 +59,8 @@ def values_of(cache: CacheDefinition, position: int) -> list[Value]:
 def ensure_items(cache: CacheDefinition, position: int) -> None:
     """Give the cache the field's items, as Excel does when a slicer needs them."""
     field = cache.cacheFields[position]
+    if field.sharedItems is None:  # a date group keeps its items in its fieldGroup
+        return
     if field.sharedItems._fields or cache.records is None:  # pyright: ignore[reportAttributeAccessIssue]
         return
     records = cache.records.r

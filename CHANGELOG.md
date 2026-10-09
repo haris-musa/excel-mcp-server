@@ -399,6 +399,24 @@ All notable changes to this project are documented here. The format follows
 - **Breaking:** tools that change a workbook no longer list an output schema in `tools/list`
   (about 5 KB less); they still return the same structured content. Only tools that return
   data (`read_range`, `describe_*`, `find_cells`, `list_workbooks`, `read_vba`) keep one.
+
+- `copy_sheet` of a sheet with slicers or timelines (from Excel, or made here) wrote a slicer
+  part that Excel could not open: the copied entry used the `xr10:` prefix without declaring
+  it. Prefixes used by copied content are now declared on the root of the part it lands in
+  and listed in `mc:Ignorable` as in the original, the copies get new `xr10:uid`s and new
+  slicer names the way Excel numbers them ("Region 1" is copied as "Region 2", not
+  "Region 1 1"), and the XML namespaces of the original's drawing and sheet are kept, so the
+  newer chart anchors a copy made undeclared `xdr:` prefixes too.
+- `copy_sheet` dropped shapes, text boxes, connectors, groups, picture fills and form controls.
+  It copies them as Excel's "Create a copy" does: connectors stay attached to the copied
+  shapes, controls get their own properties parts and ids, and what they read or set on the
+  original they read or set on the copy. Shape ids that collide with ones openpyxl wrote are
+  renumbered with the connectors that name them.
+- `add_slicer` on a PivotTable with grouped dates failed with an opaque "Error executing tool".
+  Slicers on the other fields work (checked in Excel); a slicer on the grouped field itself is
+  refused with a clear message.
+- A tool that fails unexpectedly now reports "Unexpected error in <tool>; see server log" and
+  logs the exception, instead of the SDK's "Error executing tool <tool>".
 - A parameter's own description was replaced by the one of its type in the schema (for
   example `at` and `source` of `create_chart` read "Cell" and "Range").
 

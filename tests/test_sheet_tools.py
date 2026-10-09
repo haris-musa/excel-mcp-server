@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 from openpyxl import load_workbook
 
+from excel_mcp.operations import sheets
 from tests.conftest import ToolCall
 
 pytestmark = pytest.mark.anyio
@@ -17,6 +18,26 @@ async def test_create_rename_copy_delete(call: ToolCall, sample: Path) -> None:
     workbook = load_workbook(sample)
     assert workbook.sheetnames == ["Readme", "Data", "Data copy"]
     assert workbook["Data copy"]["C2"].value == 10
+
+
+async def test_an_unexpected_exception_is_logged_and_reported_without_details(
+    call_error: ToolCall,
+    sample: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    def crash(*_: object) -> None:
+        raise AttributeError("secret cell contents at C:/private/path")
+
+    monkeypatch.setattr(sheets, "delete_sheet", crash)
+    error = await call_error("delete_sheet", path="sales.xlsx", sheet="Report")
+
+    assert (
+        error
+        == "Error executing tool delete_sheet: Unexpected error in delete_sheet; see server log"
+    )
+    assert "secret" in caplog.text
+    assert load_workbook(sample).sheetnames == ["Data", "Report"]
 
 
 async def test_sheet_name_rules(call_error: ToolCall, sample: Path) -> None:

@@ -12,6 +12,7 @@ from xml.parsers import expat
 from excel_mcp.errors import WorkbookError
 
 REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+MC_NS = "http://schemas.openxmlformats.org/markup-compatibility/2006"
 _START_TAG = re.compile(rb"<[^\s>/]+(?:\s+[^\s=>/]+\s*=\s*(?:\"[^\"]*\"|'[^']*'))*\s*/?>")
 _ROOT = re.compile(rb"<[A-Za-z_][^\s>/]*")
 _NAME = re.compile(r"<([^\s>/]+)")
@@ -187,3 +188,36 @@ def rel_id(values: dict[str, str], document: Scan) -> str:
     """The relationship id (``r:id``) among the attributes of a tag of ``document``."""
     prefix = next((p for p, uri in document.namespaces.items() if uri == REL_NS), None)
     return values.get(f"{prefix}:id", "") if prefix else ""
+
+
+_ROOT_TAG = re.compile(r"<[A-Za-z_][^\s>/]*[^>]*?(/?)>")
+_IGNORABLE = re.compile(r'(\b[\w.-]+:Ignorable=")([^"]*)(")')
+
+
+def root_scope(xml: str) -> tuple[dict[str, str], set[str]]:
+    """The prefixes the root element declares, and those it lists in ``mc:Ignorable``."""
+    tag = _ROOT_TAG.search(xml)
+    text = tag[0] if tag else ""
+    ignorable = _IGNORABLE.search(text)
+    return dict(_DECLARED.findall(text)), set(ignorable[2].split()) if ignorable else set()
+
+
+def declare_in_root(xml: str, declarations: dict[str, str], ignorable: set[str]) -> str:
+    """Declare prefixes on the root element where it lacks them, and list the ``ignorable`` ones
+    in its ``mc:Ignorable``. Needed whenever content moves into a part whose root does not know
+    the prefixes it uses: Excel rejects a prefix that is not declared."""
+    tag = _ROOT_TAG.search(xml)
+    assert tag is not None
+    text, declared = tag[0], dict(_DECLARED.findall(tag[0]))
+    missing = {p: u for p, u in declarations.items() if p and declared.get(p) != u}
+    found = _IGNORABLE.search(text)
+    unlisted = sorted(ignorable - (set(found[2].split()) if found else set()))
+    if unlisted and not found and "mc" not in declared and "mc" not in missing:
+        missing["mc"] = MC_NS
+    if found and unlisted:
+        text = _IGNORABLE.sub(lambda m: f"{m[1]}{' '.join([*m[2].split(), *unlisted])}{m[3]}", text)
+    elif unlisted:
+        text = text.replace(" ", f' mc:Ignorable="{" ".join(unlisted)}" ', 1)
+    added = "".join(f' xmlns:{p}="{u}"' for p, u in sorted(missing.items()))
+    closing = len(text) - 2 if tag[1] else len(text) - 1
+    return xml[: tag.start()] + text[:closing] + added + text[closing:] + xml[tag.end() :]

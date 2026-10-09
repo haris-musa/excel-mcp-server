@@ -21,7 +21,7 @@ from excel_mcp.operations.charts_options import ChartOptions
 from excel_mcp.operations.sheet_refs import SheetCopyRefs
 from excel_mcp.package import Link, Part, state_of
 from excel_mcp.package.anchors import Geometry
-from excel_mcp.package.model import SheetPackage
+from excel_mcp.package.model import SheetPackage, cloned
 from excel_mcp.package.shape_names import anchored_name
 from excel_mcp.refs import parse_cell
 
@@ -165,18 +165,10 @@ def copy(source: Worksheet, target: Worksheet, refs: SheetCopyRefs) -> None:
             return f"{match[1]}{text}{match[3]}"
 
         data = _FORMULA.sub(repoint, chart.xml).encode("utf-8")
-        part = Part(chart.part.name, _CHART_EX, data, links=_cloned(chart.part.links))
+        part = Part(chart.part.name, _CHART_EX, data, links=cloned(chart.part.links))
         link = Link(chart.link.id, chart.link.type, part)
         package.drawing_links.append(link)
         package.anchors.append(chart.anchor)
-
-
-def _cloned(links: list[Link]) -> list[Link]:
-    return [
-        Link(link.id, link.type, Part(t.name, t.content_type, t.data, by_default=t.by_default))
-        for link in links
-        if isinstance(t := link.target, Part)
-    ]
 
 
 def _free_id(package: SheetPackage) -> str:
