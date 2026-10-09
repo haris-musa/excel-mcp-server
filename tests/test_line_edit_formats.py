@@ -66,7 +66,7 @@ async def test_inserted_cells_keep_only_borders_shared_with_the_far_side(
 async def test_rows_inserted_into_a_table_get_calculated_columns(
     call: ToolCall, sample: Path
 ) -> None:
-    await call("create_table", path="sales.xlsx", sheet="Data", range="A1:D5", name="Sales")
+    await call("set_table", path="sales.xlsx", sheet="Data", range="A1:D5", name="Sales")
     book = load_workbook(sample)
     book["Data"].tables["Sales"].tableColumns[3].calculatedColumnFormula = TableFormula(
         attr_text="Sales[[#This Row],[Units]]*2"
@@ -84,8 +84,8 @@ async def test_rows_inserted_into_a_table_get_calculated_columns(
 async def test_two_tables_cannot_be_cut_at_once(
     call: ToolCall, call_error: ToolCall, sample: Path
 ) -> None:
-    await call("create_table", path="sales.xlsx", sheet="Data", range="A1:B5", name="Left")
-    await call("create_table", path="sales.xlsx", sheet="Data", range="D1:D3", name="Right")
+    await call("set_table", path="sales.xlsx", sheet="Data", range="A1:B5", name="Left")
+    await call("set_table", path="sales.xlsx", sheet="Data", range="D1:D3", name="Right")
     message = await call_error(
         "insert_rows_or_columns", path="sales.xlsx", sheet="Data", axis="rows", start=2
     )
@@ -138,7 +138,7 @@ async def test_rename_sheet_rewrites_references(call: ToolCall, sample: Path) ->
 async def test_deleting_the_totals_row_removes_it_from_the_table(
     call: ToolCall, sample: Path
 ) -> None:
-    await call("create_table", path="sales.xlsx", sheet="Data", range="A1:D5", name="Sales")
+    await call("set_table", path="sales.xlsx", sheet="Data", range="A1:D5", name="Sales")
     book = load_workbook(sample)
     table = book["Data"].tables["Sales"]
     table.ref, table.totalsRowCount = "A1:D5", 1

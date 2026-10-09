@@ -303,7 +303,7 @@ async def test_moving_the_filter_shows_the_old_rows_and_keeps_other_hidden_rows(
 
 
 async def test_tables_can_be_filtered(call: ToolCall, book: Path) -> None:
-    await call("create_table", path="filter.xlsx", sheet="Data", range=RANGE, name="People")
+    await call("set_table", path="filter.xlsx", sheet="Data", range=RANGE, name="People")
     await call(
         "set_sheet_layout",
         path="filter.xlsx",
@@ -335,7 +335,7 @@ async def test_tables_can_be_filtered(call: ToolCall, book: Path) -> None:
 async def test_a_range_inside_a_table_points_to_the_table(
     call: ToolCall, call_error: ToolCall, book: Path
 ) -> None:
-    await call("create_table", path="filter.xlsx", sheet="Data", range=RANGE, name="People")
+    await call("set_table", path="filter.xlsx", sheet="Data", range=RANGE, name="People")
     message = await call_error(
         "set_sheet_layout",
         path="filter.xlsx",

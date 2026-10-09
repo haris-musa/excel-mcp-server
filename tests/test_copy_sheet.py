@@ -30,7 +30,7 @@ def _sheet(path: Path, name: str) -> Worksheet:
 async def _decorate_data_sheet(call: ToolCall) -> None:
     await call("write_range", **BOOK, sheet="Data", at="C6", rows=[["=SUM(Sales[Units])"]])
     await call("write_range", **BOOK, sheet="Data", at="D6", rows=[["=SUM(Data!D2:D5)"]])
-    await call("create_table", **BOOK, sheet="Data", range="A1:D5", name="Sales")
+    await call("set_table", **BOOK, sheet="Data", range="A1:D5", name="Sales")
     await call(
         "add_data_validation",
         **BOOK,

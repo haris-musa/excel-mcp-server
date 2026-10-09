@@ -233,7 +233,7 @@ async def test_deleting_a_sliced_column_removes_the_table_slicer(call: ToolCall,
 async def test_deleting_the_rows_of_a_table_removes_its_slicers(call: ToolCall, book: str) -> None:
     await call("create_sheet", path=book, new_name="Lists")
     await call("write_range", path=book, sheet="Lists", at="A1", rows=[["Tag"], ["a"], ["b"]])
-    await call("create_table", path=book, sheet="Lists", range="A1:A3", name="Tags")
+    await call("set_table", path=book, sheet="Lists", range="A1:A3", name="Tags")
     await add(
         call, book, sheet="Lists", target={"sheet": "Lists", "name": "Tags"}, field="Tag", at="D1"
     )

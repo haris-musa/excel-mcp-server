@@ -9,16 +9,16 @@ pytestmark = pytest.mark.anyio
 
 
 async def test_create_table(call: ToolCall, call_error: ToolCall, sample: Path) -> None:
-    created = await call("create_table", path="sales.xlsx", sheet="Data", range="A1:D5")
+    created = await call("set_table", path="sales.xlsx", sheet="Data", range="A1:D5")
     assert created == {"sheet": "Data", "name": "Table1", "range": "A1:D5"}
     assert load_workbook(sample)["Data"].tables["Table1"].ref == "A1:D5"
     assert "already used" in await call_error(
-        "create_table", path="sales.xlsx", sheet="Report", range="A1:A2", name="table1"
+        "set_table", path="sales.xlsx", sheet="Report", range="A1:A2", name="table1"
     )
 
 
 async def test_create_table_requires_text_headers(call_error: ToolCall, sample: Path) -> None:
-    message = await call_error("create_table", path="sales.xlsx", sheet="Data", range="C2:D5")
+    message = await call_error("set_table", path="sales.xlsx", sheet="Data", range="C2:D5")
     assert "header" in message
 
 

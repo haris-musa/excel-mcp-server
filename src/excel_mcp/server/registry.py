@@ -132,14 +132,12 @@ def _compact(result: Any) -> Any:
 def _slim_schema(schema: dict[str, Any]) -> None:
     """Drop generated titles and keywords the model does not need, and turn ``X | null`` into ``X``.
 
-    Unknown fields are rejected on the server, an enum states its own type, an absent optional
+    Unknown fields are rejected on the server, an absent optional
     boolean or list is false or empty anyway, and a count or size is obviously not negative.
     """
     schema.pop("title", None)
     if schema.get("additionalProperties") is False:
         del schema["additionalProperties"]
-    if "enum" in schema:
-        schema.pop("type", None)
     if schema.get("default") is False or schema.get("default") == []:
         del schema["default"]
     if schema.get("exclusiveMinimum") == 0:

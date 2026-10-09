@@ -147,7 +147,7 @@ async def test_results_tell_where_the_object_went(
 async def test_describe_workbook_counts_the_objects_of_each_sheet(
     call: ToolCall, sample: Path, picture: Path
 ) -> None:
-    await call("create_table", path="sales.xlsx", sheet="Data", range="A1:D5")
+    await call("set_table", path="sales.xlsx", sheet="Data", range="A1:D5")
     await chart(call, "H2")
     await chart(call, "H20")
     await call("insert_image", **BOOK, image_path="logo.png", at="H40")
