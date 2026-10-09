@@ -11,6 +11,7 @@ Workbooks that tests cannot build in code.
 | `excel_slicers.xlsx` | Created in Microsoft Excel (COM) for this project | Same as the project |
 | `excel_shapes.xlsx` | Created in Microsoft Excel (COM) for this project | Same as the project |
 | `excel_shapes.xlsx` | Created in Microsoft Excel (COM) for this project | Same as the project |
+| `excel_objects.xlsx` | Created in Microsoft Excel (COM) for this project | Same as the project |
 | `excel_controls.xlsx` | Created in Microsoft Excel (COM) for this project | Same as the project |
 | `excel_dynamic_arrays.xlsx` | Created in Microsoft Excel (COM) for this project | Same as the project |
 | `formula_golden.json` | Results recorded from Microsoft Excel by `scripts/excel_golden.py` | Same as the project |
@@ -21,6 +22,6 @@ only parse them; the macros are never run.
 The `excel_*.xlsx` files hold what openpyxl cannot model, as Excel itself saved it, so that
 tests check the package layer against the real thing: sparklines with extended conditional
 formats and data validation; a waterfall, histogram, treemap and funnel chart with a text box,
-shape and picture; shapes, a text box, a connector, a group and a picture fill; table, PivotTable and timeline slicers; form controls with a note; and the
+shape and picture; shapes, a text box, a connector, a group and a picture fill; an embedded object, a protected range and an ignored error; table, PivotTable and timeline slicers; form controls with a note; and the
 dynamic array formulas `FILTER`, `SORT`, `SEQUENCE`, `UNIQUE` and `SUM(range*2)`. The local
 path and user name that Excel records were removed.

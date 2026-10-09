@@ -44,7 +44,8 @@ def source_field(cache: CacheDefinition, name: str) -> int:
         if column.strip().casefold() == name.strip().casefold():
             if cache.cacheFields[position].fieldGroup is not None:
                 raise InvalidArgumentError(
-                    f"Field {column!r} is grouped; slicers need an ungrouped field."
+                    f"Field {column!r} is grouped; slicers need an ungrouped field. "
+                    "To filter dates, add a timeline (add_slicer with timeline)."
                 )
             return position
     raise InvalidArgumentError(

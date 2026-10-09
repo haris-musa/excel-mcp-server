@@ -407,14 +407,16 @@ All notable changes to this project are documented here. The format follows
   slicer names the way Excel numbers them ("Region 1" is copied as "Region 2", not
   "Region 1 1"), and the XML namespaces of the original's drawing and sheet are kept, so the
   newer chart anchors a copy made undeclared `xdr:` prefixes too.
-- `copy_sheet` dropped shapes, text boxes, connectors, groups, picture fills and form controls.
+- `copy_sheet` dropped shapes, text boxes, connectors, groups, picture fills, form controls,
+  embedded (OLE) objects and protected ranges. Ignored errors are not copied, as in Excel. What
+  cannot be copied (other sheet extensions, threaded comments) is named in the result's `note`.
   It copies them as Excel's "Create a copy" does: connectors stay attached to the copied
   shapes, controls get their own properties parts and ids, and what they read or set on the
   original they read or set on the copy. Shape ids that collide with ones openpyxl wrote are
   renumbered with the connectors that name them.
 - `add_slicer` on a PivotTable with grouped dates failed with an opaque "Error executing tool".
   Slicers on the other fields work (checked in Excel); a slicer on the grouped field itself is
-  refused with a clear message.
+  refused with a message that suggests a timeline.
 - A tool that fails unexpectedly now reports "Unexpected error in <tool>; see server log" and
   logs the exception, instead of the SDK's "Error executing tool <tool>".
 - A parameter's own description was replaced by the one of its type in the schema (for

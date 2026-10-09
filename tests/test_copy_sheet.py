@@ -16,6 +16,7 @@ from tests.package_support import (
     read_parts,
     relationships,
     sheet_part,
+    text,
 )
 
 pytestmark = pytest.mark.anyio
@@ -264,5 +265,28 @@ async def test_copy_keeps_form_controls_with_their_own_properties(
     assert sorted(_shape_ids(drawing)) == ["Check Box 1", "Drop Down 1"]
     vml = next(target for kind, target in related.values() if kind == "vmlDrawing")
     assert parts[vml].count(b"<x:ClientData ObjectType=") >= 2
+    assert_namespaces_declared(parts)
+    assert_package_is_consistent(parts)
+
+
+async def test_copy_keeps_protected_ranges_and_embedded_objects_as_excel_does(
+    call: ToolCall, files: Path
+) -> None:
+    copy_fixture(files, "excel_objects.xlsx")
+    result = await call("copy_sheet", path="book.xlsx", sheet="Data", new_name="Copy")
+    assert "note" not in result
+    parts = read_parts(files / "book.xlsx")
+
+    original, copied = (text(parts, sheet_part(parts, s)) for s in ("Data", "Copy"))
+    assert '<protectedRange sqref="B1:B3" name="Editable"/>' in copied
+    assert "ignoredErrors" in original and "ignoredErrors" not in copied
+    assert 'shapeId="2049"' in copied and 'shapeId="1025"' in original
+    embedded = [
+        target
+        for sheet in ("Data", "Copy")
+        for kind, target in relationships(parts, sheet_part(parts, sheet)).values()
+        if kind == "oleObject"
+    ]
+    assert len(set(embedded)) == 2
     assert_namespaces_declared(parts)
     assert_package_is_consistent(parts)
