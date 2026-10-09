@@ -5,6 +5,7 @@ import tracemalloc
 import warnings
 import zipfile
 from pathlib import Path
+from xml.sax.saxutils import escape
 
 import pytest
 from openpyxl import Workbook
@@ -380,3 +381,82 @@ def test_linked_ole_objects_are_rejected(body: str) -> None:
 def test_embedded_ole_objects_are_accepted() -> None:
     body = f'<oleObjects {MAIN}><oleObject progId="Excel.Sheet.12" shapeId="1"/></oleObjects>'
     _decode(_package([("xl/worksheets/s.dat", body.encode())]))
+
+
+BAD_LINKS = [
+    r"file:///\\host\share\x.xlsx",
+    "file:///C:/Windows/System32/calc.exe",
+    "file://evilhost/share/x.xlsx",
+    r"\\host\share\x.xlsx",
+    r"C:\Windows\System32\calc.exe",
+    "smb://host/share",
+    "ms-excel:ofe|u|file://host/share/x.xlsx",
+    "search-ms:query=a&crumb=location:\\\\host\\share",
+    "ftp://host/file",
+    "javascript:alert(1)",
+    "vbscript:msgbox(1)",
+    "data:text/html;base64,PHNjcmlwdD4=",
+    "file:",
+    "http://user:pw@host/",
+    "https://user@host/path",
+    "https://host\\@evil.example/",
+    "http:///nohost",
+    "mailto:",
+    "",
+]
+
+
+@pytest.mark.parametrize("target", BAD_LINKS)
+@pytest.mark.parametrize(
+    "part",
+    [
+        "xl/worksheets/_rels/sheet1.xml.rels",
+        "xl/drawings/_rels/drawing1.xml.rels",
+        "xl/drawings/_rels/drawing2.xml.rels",
+    ],
+)
+def test_hyperlinks_with_other_targets_are_rejected(part: str, target: str) -> None:
+    rels = _rels("hyperlink", escape(target, {'"': "&quot;"}))
+    message = _rejected(_package([(part, rels)]))
+    assert "hyperlink" in message
+    assert "not allowed" in message
+
+
+@pytest.mark.parametrize("target", BAD_LINKS[:12])
+def test_vml_links_with_other_targets_are_rejected(target: str) -> None:
+    vml = f'<xml><v:shape href="{escape(target, {chr(34): "&quot;"})}"/></xml>'.encode()
+    assert "not allowed" in _rejected(_package([("xl/drawings/vmlDrawing1.vml", vml)]))
+
+
+@pytest.mark.parametrize(
+    "target", ["https://example.com/a?b=1", "mailto:me@example.com", "#Sheet1!A1"]
+)
+def test_drawing_and_vml_links_to_web_pages_are_accepted(target: str) -> None:
+    drawing_rels = _rels("hyperlink", target)
+    vml = f'<xml><v:shape href="{target}"/></xml>'.encode()
+    _decode(
+        _package(
+            [
+                ("xl/drawings/_rels/drawing1.xml.rels", drawing_rels),
+                ("xl/drawings/vmlDrawing1.vml", vml),
+            ]
+        )
+    )
+
+
+@pytest.mark.parametrize("target", ["file:///C:/x.exe", r"\\host\share\x.xlsx", "http://u:p@h/"])
+async def test_uploaded_cell_hyperlinks_are_checked(
+    call: ToolCall, call_error: ToolCall, files: Path, target: str
+) -> None:
+    def build(address: str) -> str:
+        workbook = Workbook()
+        workbook.worksheets[0]["A1"] = "link"
+        workbook.worksheets[0]["A1"].hyperlink = address
+        buffer = io.BytesIO()
+        workbook.save(buffer)
+        return base64.b64encode(buffer.getvalue()).decode()
+
+    message = await call_error("import_workbook", path="bad.xlsx", content_base64=build(target))
+    assert "hyperlink" in message
+    assert not (files / "bad.xlsx").exists()
+    await call("import_workbook", path="good.xlsx", content_base64=build("https://example.com/"))

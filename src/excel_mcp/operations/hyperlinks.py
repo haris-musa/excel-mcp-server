@@ -1,7 +1,6 @@
 """Cell hyperlinks: places in the workbook, and plain http, https and mailto addresses."""
 
 from typing import cast
-from urllib.parse import urlsplit
 
 from openpyxl.cell.cell import Cell
 from openpyxl.utils import quote_sheetname
@@ -13,9 +12,9 @@ from pydantic import BaseModel, Field
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.formulas import split_top_level, unquote
 from excel_mcp.inputs import InputModel
+from excel_mcp.links import is_allowed_address
 from excel_mcp.refs import parse_range
 
-_SCHEMES = {"http", "https", "mailto"}
 _MAX_TARGET = 2_079
 
 
@@ -65,13 +64,11 @@ def list_links(sheet: Worksheet) -> list[LinkInfo]:
 
 
 def _check_address(target: str) -> None:
-    parts = urlsplit(target)
-    has_destination = parts.path if parts.scheme == "mailto" else parts.netloc
-    if parts.scheme not in _SCHEMES or not has_destination:
+    if not is_allowed_address(target):
         raise InvalidArgumentError(
-            f"Link {target!r} is not allowed: use a full http://, https:// or mailto: address, "
-            "or '#Sheet!A1' for a place in this workbook. Other kinds, such as file: paths, "
-            "network shares and javascript:, are refused."
+            f"Link {target!r} is not allowed: use a full http://, https:// or mailto: address "
+            "without credentials, or '#Sheet!A1' for a place in this workbook. Other kinds, such "
+            "as file: paths, network shares and javascript:, are refused."
         )
 
 

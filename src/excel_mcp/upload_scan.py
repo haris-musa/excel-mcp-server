@@ -9,14 +9,17 @@ data connections, query tables or external links, which fetch remote data.
 """
 
 import io
+import re
 import zipfile
 import zlib
 from collections.abc import Iterator
 from typing import IO, NamedTuple
 from xml.etree import ElementTree
+from xml.sax.saxutils import unescape
 
 from excel_mcp.config import Limits
 from excel_mcp.errors import InvalidArgumentError, LimitExceededError, UnsafeFormulaError
+from excel_mcp.links import is_allowed_address
 
 # These elements hold formulas: cell formulas and chart or sparkline references
 # ("f"), rule formulas, table column formulas and defined names.
@@ -44,6 +47,8 @@ _EXCEL_NAMESPACES = (
     "http://schemas.microsoft.com/office/drawing/",
 )
 _EXCEL_TYPES = ("spreadsheetml", "drawingml.chart", "vnd.ms-office", "vnd.ms-excel")
+_HREF = re.compile(r"""\bhref\s*=\s*(?:"([^"]*)"|'([^']*)')""", re.IGNORECASE)
+_MAX_LINK = 4096
 _MAX_ENTRIES = 10_000
 _MAX_XML_DEPTH = 100
 _CHUNK = 64 * 1024
@@ -76,7 +81,9 @@ def scan_package(content: bytes, limits: Limits) -> Iterator[Formula]:
                     continue
                 with archive.open(info) as source:
                     entry = _Entry(source, info, limits, remaining)
-                    if entry.is_xml:
+                    if info.filename.casefold().endswith(".vml"):
+                        _scan_vml(entry)
+                    elif entry.is_xml:
                         yield from _scan_xml(entry, info.filename, types)
                     entry.drain()
                     remaining = entry.remaining
@@ -236,6 +243,8 @@ def _check_declaration(name: str, element: ElementTree.Element, types: _Types) -
         # Only a hyperlink may point outside the file; it is followed when the user clicks it.
         if external and not declared.casefold().endswith("/hyperlink"):
             _refuse_remote_data()
+        if external:
+            _check_link(element.get("Target", ""))
     elif name == "oleLink" or (name == "oleObject" and element.get("link")):
         _refuse_remote_data()
         return
@@ -243,6 +252,27 @@ def _check_declaration(name: str, element: ElementTree.Element, types: _Types) -
         return
     if any(kind in declared.casefold() for kind in _REMOTE_DATA):
         _refuse_remote_data()
+
+
+def _scan_vml(entry: _Entry) -> None:
+    """Check the links of a legacy drawing. Excel reads these as lenient HTML, so the text is
+    searched instead of parsed, which a broken tag cannot get around."""
+    tail = ""
+    while chunk := entry.read():
+        text = tail + chunk.decode("utf-8", "ignore")
+        for found in _HREF.finditer(text):
+            _check_link(unescape(found[1] if found[1] is not None else found[2]))
+        tail = text[-_MAX_LINK:]
+
+
+def _check_link(target: str) -> None:
+    """A hyperlink may lead to a place in the workbook or to a plain web or mail address."""
+    if not target.startswith("#") and not is_allowed_address(target):
+        raise UnsafeFormulaError(
+            f"The workbook has a hyperlink to {target[:200]!r}, which is not allowed: only "
+            "http://, https:// and mailto: links without credentials, and places in the "
+            "workbook, can be uploaded."
+        )
 
 
 def _refuse_remote_data() -> None:
