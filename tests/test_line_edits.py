@@ -191,7 +191,7 @@ async def test_chart_and_hyperlink_and_note_move(call: ToolCall, sample: Path) -
 
 
 async def test_table_columns_and_structured_references(call: ToolCall, sample: Path) -> None:
-    await call("create_table", path="sales.xlsx", sheet="Data", range="A1:D5", name="Sales")
+    await call("set_table", path="sales.xlsx", sheet="Data", range="A1:D5", name="Sales")
     await call(
         "write_range",
         path="sales.xlsx",
@@ -225,7 +225,7 @@ async def test_table_columns_and_structured_references(call: ToolCall, sample: P
 
 
 async def test_table_rows(call: ToolCall, call_error: ToolCall, sample: Path) -> None:
-    await call("create_table", path="sales.xlsx", sheet="Data", range="A1:D5", name="Sales")
+    await call("set_table", path="sales.xlsx", sheet="Data", range="A1:D5", name="Sales")
     message = await call_error(
         "delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="rows", start=1, count=2
     )

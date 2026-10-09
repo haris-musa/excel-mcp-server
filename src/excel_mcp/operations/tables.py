@@ -55,18 +55,28 @@ def create_table(
     return table_name, table.ref
 
 
-def edit_table(
-    sheet: Worksheet, name: str, ref: str | None, options: TableOptions, max_cells: int
-) -> str:
+def set_table(
+    workbook: Workbook,
+    sheet: Worksheet,
+    ref: str | None,
+    name: str | None,
+    options: TableOptions,
+    max_cells: int,
+) -> tuple[str, str]:
+    """Change the sheet's table of that name, or create one over ``ref``."""
     found = {table.displayName.casefold(): table for table in sheet.tables.values()}
-    table = found.get(name.casefold())
-    if table is None:
-        listed = ", ".join(table.displayName for table in sheet.tables.values()) or "none"
-        raise InvalidArgumentError(
-            f"Sheet {sheet.title!r} has no table {name!r}. Tables: {listed}."
-        )
+    if name is None or (table := found.get(name.casefold())) is None:
+        if ref is None:
+            listed = ", ".join(table.displayName for table in sheet.tables.values()) or "none"
+            raise InvalidArgumentError(
+                f"Sheet {sheet.title!r} has no table {name!r}; give `range` to create one. "
+                f"Tables: {listed}."
+                if name
+                else "Give `range` to create a table."
+            )
+        return create_table(workbook, sheet, ref, name, options, max_cells)
     apply_options(sheet, table, options, parse_range(ref) if ref else None, max_cells)
-    return table.ref
+    return name, table.ref
 
 
 def is_valid_name(name: str) -> bool:

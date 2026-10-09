@@ -131,15 +131,15 @@ async def test_overlapping_merges_are_rejected(
 async def test_invalid_tables_are_rejected(
     call: ToolCall, call_error: ToolCall, sample: Path
 ) -> None:
-    await call("create_table", path="sales.xlsx", sheet="Data", range="A1:D5")
+    await call("set_table", path="sales.xlsx", sheet="Data", range="A1:D5")
     assert "overlaps" in await call_error(
-        "create_table", path="sales.xlsx", sheet="Data", range="A1:B3"
+        "set_table", path="sales.xlsx", sheet="Data", range="A1:B3"
     )
     assert "Invalid table name" in await call_error(
-        "create_table", path="sales.xlsx", sheet="Data", range="F1:G2", name="AB12"
+        "set_table", path="sales.xlsx", sheet="Data", range="F1:G2", name="AB12"
     )
     assert "Unknown table style" in await call_error(
-        "create_table",
+        "set_table",
         path="sales.xlsx",
         sheet="Data",
         range="F1:G2",
@@ -203,7 +203,7 @@ async def test_list_workbooks_skips_links_outside(
 async def test_sheet_filters_cannot_overlap_tables(
     call: ToolCall, call_error: ToolCall, sample: Path
 ) -> None:
-    await call("create_table", path="sales.xlsx", sheet="Data", range="A1:D5")
+    await call("set_table", path="sales.xlsx", sheet="Data", range="A1:D5")
     message = await call_error(
         "set_sheet_layout",
         path="sales.xlsx",

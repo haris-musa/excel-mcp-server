@@ -34,8 +34,7 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`set_sheet_layout`](#set_sheet_layout) | Set column widths, row heights, hidden or grouped lines, frozen panes, auto filter, tab color, visibility, position, view options, print setup and protection. |
 | [`add_conditional_format`](#add_conditional_format) | Add a conditional format rule to a range. Rules apply in priority order (default: last); of conflicting formats the first rule met wins. |
 | [`add_data_validation`](#add_data_validation) | Restrict what can be entered in a range (list dropdown, numbers, dates, times, text length or custom formula), with optional input message and error alert. |
-| [`create_table`](#create_table) | Turn a range with a header row of unique text labels into a table, as Excel does. |
-| [`edit_table`](#edit_table) | Change a table's options, calculated columns and totals, or resize it. |
+| [`set_table`](#set_table) | Create a table, or change one: options, calculated columns and totals, resizing. |
 | [`create_chart`](#create_chart) | Add or replace a chart. Returns its name and cells. |
 | [`delete_chart`](#delete_chart) | Remove a chart; its data stays. |
 | [`add_sparklines`](#add_sparklines) | Add sparklines (Insert > Sparklines) to the cells of `range`, one per row of `source` (per column when the cells match the columns). Replaces existing ones there. |
@@ -644,47 +643,22 @@ text length or custom formula), with optional input message and error alert.
 | `error_title` | string | no |  |
 | `error_message` | string | no |  |
 
-## create_table
+## set_table
 
-**Create table** (modifies files)
+**Set table** (modifies files, may overwrite data)
 
-Turn a range with a header row of unique text labels into a table, as Excel does.
+Create a table, or change one: options, calculated columns and totals, resizing.
 
-| Parameter | Type | Required | Description |
-| --- | --- | --- | --- |
-| `path` | string | yes |  |
-| `sheet` | string | yes |  |
-| `range` | string | yes | With the header row. |
-| `options` | object | no |  |
-| `name` | string | no | Default: TableN. |
-
-`options` fields:
-
-| Parameter | Type | Required | Description |
-| --- | --- | --- | --- |
-| `style` | string | no | e.g. 'TableStyleMedium2' (Light1-21, Medium1-28, Dark1-11). |
-| `header_row` | boolean | no | Off deletes the header cells; on needs empty cells above. |
-| `totals_row` | boolean | no | Needs an empty row below the table; as in Excel, it says 'Total' and sums or counts the last column. |
-| `striped_rows` | boolean | no |  |
-| `striped_columns` | boolean | no |  |
-| `first_column` | boolean | no |  |
-| `last_column` | boolean | no |  |
-| `filter_button` | boolean | no |  |
-| `columns` | array of object | no | By header text. |
-
-## edit_table
-
-**Edit table** (modifies files, may overwrite data)
-
-Change a table's options, calculated columns and totals, or resize it.
+An existing table of that `name` on the sheet is changed; otherwise `range` (with a
+header row of unique text labels) makes a new one, as in Excel.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path` | string | yes |  |
 | `sheet` | string | yes |  |
-| `name` | string | yes |  |
 | `options` | object | no |  |
-| `range` | string | no | Resize to this range (same top-left cell). |
+| `name` | string | no | Table name. Default for a new table: TableN. |
+| `range` | string | no | New table: the range with its header row. Existing table: resize to this range (same top-left cell). |
 
 `options` fields:
 

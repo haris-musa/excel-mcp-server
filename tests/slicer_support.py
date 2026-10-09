@@ -30,7 +30,7 @@ async def build_book(call: ToolCall, files: Path) -> str:
     path = str(files / "book.xlsx")
     await call("create_workbook", path=path, sheets=["Data", "Pivot"])
     await call("write_range", path=path, sheet="Data", at="A1", rows=SALES)
-    await call("create_table", path=path, sheet="Data", range="A1:D9", name="Sales")
+    await call("set_table", path=path, sheet="Data", range="A1:D9", name="Sales")
     await call(
         "create_pivot_table",
         path=path,

@@ -211,7 +211,7 @@ async def test_a_table_slicer_follows_its_table_when_tables_are_renumbered(
 ) -> None:
     copy_fixture(files, "excel_slicers.xlsx")
     await call("write_range", **BOOK, sheet="Pivot", at="H1", rows=[["a", "b"], [1, 2]])
-    await call("create_table", **BOOK, sheet="Pivot", range="H1:I2", name="Extra")
+    await call("set_table", **BOOK, sheet="Pivot", range="H1:I2", name="Extra")
     parts = read_parts(files / "book.xlsx")
 
     ids = {}

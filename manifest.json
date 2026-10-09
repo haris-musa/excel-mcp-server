@@ -158,12 +158,8 @@
       "description": "Restrict what can be entered in a range, e.g. a dropdown list."
     },
     {
-      "name": "create_table",
-      "description": "Turn a range with a header row of unique text labels into an Excel table, with totals row, calculated columns, banding and filter buttons."
-    },
-    {
-      "name": "edit_table",
-      "description": "Change a table's options, add calculated columns and totals, or resize it."
+      "name": "set_table",
+      "description": "Create a table, or change one: totals row, calculated columns, banding, filter buttons, resizing."
     },
     {
       "name": "create_chart",

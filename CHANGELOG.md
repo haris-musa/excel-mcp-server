@@ -8,12 +8,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
-- `create_table` and the new `edit_table` take `options` like Excel's Table Design tab: a totals
+- `set_table` takes `options` like Excel's Table Design tab: a totals
   row with a function per column (sum, average, count, count numbers, max, min, standard
   deviation, variance, or a custom formula) or a label, written as Excel writes them
   (`totalsRowFunction`, `SUBTOTAL(109,...)` cells, `totalsRowLabel`); calculated columns from
   a formula with structured references such as `=[@Price]*[@Qty]` or relative cells such as
-  `=B2*C2`, filled into every row, into rows added by `edit_table` and into rows inserted
+  `=B2*C2`, filled into every row, into rows added by `set_table` and into rows inserted
   later (`calculatedColumnFormula`); a new totals row is what Excel makes ("Total" first, and
   the last column summed or counted); resizing moves the totals row; header
   row on or off, banded columns, first and last column emphasis, filter buttons; and resizing
@@ -366,10 +366,14 @@ All notable changes to this project are documented here. The format follows
   rule type are rejected. New rules take the next free priority instead of a count-based one.
 - **Breaking:** `add_data_validation`'s `error_message` and `prompt` are limited to Excel's
   255 characters, and a list needs either `options` or `source`.
-- Tool descriptions and schemas are about 30% smaller (68,900 to 47,900 characters for the
+- **Breaking:** `create_table` and `edit_table` are one tool, `set_table(path, sheet, options,
+  name, range)`: a table of that `name` on the sheet is changed (options, calculated columns,
+  totals, resizing to `range`); otherwise `range` creates a new table (named `name`, or
+  TableN). Behaviour and the table XML are unchanged.
+- Tool descriptions and schemas are about 30% smaller (68,900 to 47,600 characters for the
   default tools), which every client pays for in context: shorter docstrings and parameter
   descriptions, no `additionalProperties: false` (unknown fields are still rejected by the
-  server), no `type` next to an `enum`, no `default` for an absent boolean or list, no
+  server), no `default` for an absent boolean or list, no
   `null` option for optional parameters, plain type unions as one `type` list, and no
   `minimum` of 0 or 1. `path`, `sheet`, cell and range parameters have no description of their own; the
   server instructions explain paths and A1 notation. A test keeps the total under a budget.

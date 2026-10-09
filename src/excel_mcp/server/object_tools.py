@@ -17,17 +17,29 @@ from excel_mcp.workspace import Workspace, get_sheet
 
 
 def register(tools: ToolRegistry, workspace: Workspace) -> None:
-    @tools.writer("Create table")
-    def create_table(
+    @tools.destroyer("Set table")
+    def set_table(
         path: WorkbookPath,
         sheet: SheetName,
-        range: Annotated[RangeRef, Field(description="With the header row.")],
         options: Annotated[TableOptions, Field(default_factory=TableOptions)],
-        name: Annotated[str | None, Field(description="Default: TableN.")] = None,
+        name: Annotated[
+            str | None, Field(description="Table name. Default for a new table: TableN.")
+        ] = None,
+        range: Annotated[
+            RangeRef | None,
+            Field(
+                description="New table: the range with its header row. Existing table: "
+                "resize to this range (same top-left cell)."
+            ),
+        ] = None,
     ) -> Changed:
-        """Turn a range with a header row of unique text labels into a table, as Excel does."""
+        """Create a table, or change one: options, calculated columns and totals, resizing.
+
+        An existing table of that `name` on the sheet is changed; otherwise `range` (with a
+        header row of unique text labels) makes a new one, as in Excel.
+        """
         with workspace.edit(path) as workbook:
-            table_name, area = tables.create_table(
+            table_name, area = tables.set_table(
                 workbook,
                 get_sheet(workbook, sheet),
                 range,
@@ -36,24 +48,6 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 workspace.limits.max_cells,
             )
         return Changed(sheet=sheet, name=table_name, range=area)
-
-    @tools.destroyer("Edit table")
-    def edit_table(
-        path: WorkbookPath,
-        sheet: SheetName,
-        name: str,
-        options: Annotated[TableOptions, Field(default_factory=TableOptions)],
-        range: Annotated[
-            RangeRef | None,
-            Field(description="Resize to this range (same top-left cell)."),
-        ] = None,
-    ) -> Changed:
-        """Change a table's options, calculated columns and totals, or resize it."""
-        with workspace.edit(path) as workbook:
-            area = tables.edit_table(
-                get_sheet(workbook, sheet), name, range, options, workspace.limits.max_cells
-            )
-        return Changed(sheet=sheet, name=name, range=area)
 
     @tools.writer("Create chart")
     def create_chart(
