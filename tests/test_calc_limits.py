@@ -5,6 +5,9 @@ import time
 from pathlib import Path
 
 import pytest
+from openpyxl import Workbook
+from openpyxl.worksheet.formula import ArrayFormula
+from openpyxl.worksheet.table import Table
 
 from excel_mcp.calc.parser import MAX_NESTING, parse
 from excel_mcp.calc.values import UncalculableError
@@ -125,3 +128,34 @@ async def test_text_longer_than_a_cell_is_a_value_error(call: ToolCall, files: P
     data = await read_values(call, "A1:A3")
 
     assert data["values"] == [["#VALUE!"], [32767], ["x" * 30000 + "yyyyyyyy"]]
+
+
+async def test_tables_spills_and_indirect_stay_within_limits(call: ToolCall, files: Path) -> None:
+    workbook = Workbook()
+    sheet = workbook.worksheets[0]
+    sheet.title = "Data"
+    sheet.append(["Units", "Price"])
+    for number in range(1, 50):
+        sheet.append([number, number * 2])
+    sheet.add_table(Table(displayName="Sales", ref="A1:B50"))
+    sheet["D1"] = ArrayFormula("D1", "=_xlfn.SEQUENCE(1000000)")
+    sheet["D2"] = ArrayFormula("D2", "=_xlfn.ANCHORARRAY(D2)")
+    formulas = [
+        '=SUM(INDIRECT("A1:XFD1048576"))',
+        '=SUM(INDIRECT("R1C1:R1048576C16384",FALSE))',
+        '=SUM(INDIRECT("1:1048576"))',
+        '=SUM(INDIRECT("Sales[Units]"))',
+        "=SUM(_xlfn.ANCHORARRAY(D1))",
+        "=SUM(_xlfn.ANCHORARRAY(D2))",
+        "=SUM(Sales[Units]*Sales[Price]*Sales[Units])",
+    ]
+    for number, formula in enumerate(formulas, start=1):
+        sheet.cell(row=number, column=6, value=formula)
+    workbook.save(files / "calc.xlsx")
+    started = time.perf_counter()
+
+    data = await read_values(call, "F1:F7")
+
+    assert time.perf_counter() - started < 10
+    assert data["values"][3] == [1225]
+    assert set(data["uncalculated"]) >= {"F1", "F2", "F3", "F5", "F6"}

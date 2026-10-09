@@ -354,9 +354,10 @@ class Engine:
         return value
 
     def charge(self, units: int) -> None:
-        self.work += units
-        if self.work > MAX_WORK:
+        # A request that is too big is refused without using up what is left for other cells.
+        if self.work + units > MAX_WORK:
             raise UncalculableError("too much to calculate")
+        self.work += units
 
     # -- references ------------------------------------------------------------------------
 

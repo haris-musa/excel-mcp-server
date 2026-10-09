@@ -23,7 +23,7 @@ def outside(files: Path) -> Path:
 
 async def _insert(call_error: ToolCall, image_path: str) -> str:
     return await call_error(
-        "insert_image", path="sales.xlsx", sheet="Report", image_path=image_path, cell="A1"
+        "insert_image", path="sales.xlsx", sheet="Report", image_path=image_path, at="A1"
     )
 
 

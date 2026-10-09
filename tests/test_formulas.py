@@ -223,18 +223,18 @@ async def test_macro_functions_are_refused_in_names_and_cells(
     )
     assert "macro function" in message
     message = await call_error(
-        "write_range", path="sales.xlsx", sheet="Data", start_cell="F1", rows=[["=GET.WORKBOOK(1)"]]
+        "write_range", path="sales.xlsx", sheet="Data", at="F1", rows=[["=GET.WORKBOOK(1)"]]
     )
     assert "macro function" in message
     await call(
         "write_range",
         path="sales.xlsx",
         sheet="Data",
-        start_cell="F1",
+        at="F1",
         rows=[['=HYPERLINK("https://example.com","Docs")', '=INDIRECT("A1")']],
     )
     assert "HYPERLINK" in await call_error(
-        "write_range", path="sales.xlsx", sheet="Data", start_cell="F2", rows=[["=HYPERLINK(A2)"]]
+        "write_range", path="sales.xlsx", sheet="Data", at="F2", rows=[["=HYPERLINK(A2)"]]
     )
 
 

@@ -46,7 +46,7 @@ async def test_edits_that_make_the_file_too_large_leave_it_unchanged(
         path="sales.xlsx",
         sheet="Report",
         image_path="noise.png",
-        cell="A1",
+        at="A1",
     )
     assert "limit is" in message
     assert sample.read_bytes() == before

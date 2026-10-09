@@ -10,6 +10,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from excel_mcp.calc.parser import Call, Name, Node, Ref, parse_reference, split_sheet
 from excel_mcp.calc.r1c1 import to_a1
 from excel_mcp.calc.registry import function
+from excel_mcp.calc.tablerefs import bind
 from excel_mcp.calc.values import (
     REF,
     VALUE,
@@ -53,6 +54,8 @@ def indirect(engine: "Engine", ref_text: Node, a1: Node | None = None) -> Value:
     if a1 is not None and not to_bool(engine.scalar(a1)):
         body = to_a1(body, engine.here.row, engine.here.col)
     target = parse_reference(body if qualifier is None else f"{qualifier}!{body}")
+    here = engine.here
+    target = bind(target, engine.workbook, here.sheet, here.row, here.col)
     if isinstance(target, Name) and not engine.is_defined(target):
         raise FormulaError(REF)
     result = engine.eval(target)

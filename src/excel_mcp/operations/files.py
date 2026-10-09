@@ -9,9 +9,14 @@ from pathlib import Path
 from openpyxl import load_workbook
 
 from excel_mcp.config import Limits
-from excel_mcp.errors import InvalidArgumentError, LimitExceededError, UnsafeFormulaError
+from excel_mcp.errors import (
+    InvalidArgumentError,
+    InvalidFormulaError,
+    LimitExceededError,
+    UnsafeFormulaError,
+)
 from excel_mcp.formulas import check_formula
-from excel_mcp.package import scan_package
+from excel_mcp.upload_scan import scan_package
 from excel_mcp.workspace import close_workbook
 
 
@@ -45,7 +50,11 @@ def _check_formulas(content: bytes, limits: Limits) -> None:
         pass
     sheet_names = _sheet_names(content)
     for formula in scan_package(content, limits):
-        check_formula(f"={formula}", sheet_names)
+        try:
+            check_formula(f"={formula.text}", sheet_names)
+        except InvalidFormulaError:
+            if not formula.pivot:
+                raise
 
 
 def _sheet_names(content: bytes) -> list[str]:

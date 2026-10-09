@@ -16713,6 +16713,298 @@
    "expected": 10.0
   },
   {
+   "formula": "=INDIRECT(\"Data!C2\")",
+   "expected": 10.0
+  },
+  {
+   "formula": "=INDIRECT(\"Data!$C$2\")",
+   "expected": 10.0
+  },
+  {
+   "formula": "=INDIRECT(\"data!c2\")",
+   "expected": 10.0
+  },
+  {
+   "formula": "=SUM(INDIRECT(\"Data!C2:C11\"))",
+   "expected": 75.0
+  },
+  {
+   "formula": "=INDIRECT(\"Data!\"&\"D\"&2)",
+   "expected": 1.5
+  },
+  {
+   "formula": "=INDIRECT(\"'My Sheet'!A1\")",
+   "expected": 7.0
+  },
+  {
+   "formula": "=INDIRECT(\"Rate\")",
+   "expected": 1.5
+  },
+  {
+   "formula": "=SUM(INDIRECT(\"Units\"))",
+   "expected": 75.0
+  },
+  {
+   "formula": "=INDIRECT(\"Tax\")",
+   "expected": "#REF!"
+  },
+  {
+   "formula": "=INDIRECT(\"Missing!A1\")",
+   "expected": "#REF!"
+  },
+  {
+   "formula": "=INDIRECT(\"\")",
+   "expected": "#REF!"
+  },
+  {
+   "formula": "=INDIRECT(\"A1:\")",
+   "expected": "#REF!"
+  },
+  {
+   "formula": "=INDIRECT(\"foo bar\")",
+   "expected": "#REF!"
+  },
+  {
+   "formula": "=INDIRECT(1)",
+   "expected": "#REF!"
+  },
+  {
+   "formula": "=SUM(INDIRECT(\"Orders[Qty]\"))",
+   "expected": 14.0
+  },
+  {
+   "formula": "=SUM(INDIRECT(\"Orders[[#All],[Qty]]\"))",
+   "expected": 28.0
+  },
+  {
+   "formula": "=INDIRECT(\"Orders[Missing]\")",
+   "expected": "#REF!"
+  },
+  {
+   "formula": "=INDIRECT(\"Data!C2\",TRUE)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=INDIRECT(\"Data!R2C3\",FALSE)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=INDIRECT(\"Data!r2c3\",FALSE)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=SUM(INDIRECT(\"Data!R2C3:R4C3\",FALSE))",
+   "expected": 22.0
+  },
+  {
+   "formula": "=INDIRECT(\"Data!R[1]C[2]\",FALSE)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDIRECT(\"Data!R[-1]C[2]\",FALSE)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDIRECT(\"Data!R2C\",FALSE)",
+   "expected": "North"
+  },
+  {
+   "formula": "=INDIRECT(\"Data!C3\",FALSE)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDIRECT(\"Data!R2C3\",)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=INDIRECT(\"Data!A1:B2\")",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=INDIRECT(\"Data!A1\")+1",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=INDIRECT(Data!A2&\"!D2\")",
+   "expected": "#REF!"
+  },
+  {
+   "formula": "=INDIRECT(Data!G2)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=ROW(INDIRECT(\"Data!C5\"))",
+   "expected": 5.0
+  },
+  {
+   "formula": "=COLUMN(INDIRECT(\"Data!E2\"))",
+   "expected": 5.0
+  },
+  {
+   "formula": "=ROW(OFFSET(Data!C2,3,0))",
+   "expected": 5.0
+  },
+  {
+   "formula": "=ROWS(INDIRECT(\"Data!C2:C11\"))",
+   "expected": 10.0
+  },
+  {
+   "formula": "=COLUMNS(INDIRECT(\"Data!C2:E2\"))",
+   "expected": 3.0
+  },
+  {
+   "formula": "=SUMPRODUCT(ROW(INDIRECT(\"1:10\")))",
+   "expected": 55.0
+  },
+  {
+   "formula": "=SUMPRODUCT(ROW(INDIRECT(\"Data!C2:C4\"))*2)",
+   "expected": 18.0
+  },
+  {
+   "formula": "=CELL(\"address\",Z5)",
+   "expected": "$Z$5"
+  },
+  {
+   "formula": "=CELL(\"address\",$B$3)",
+   "expected": "$B$3"
+  },
+  {
+   "formula": "=CELL(\"address\",Z5:AA8)",
+   "expected": "$Z$5"
+  },
+  {
+   "formula": "=CELL(\"ADDRESS\",Z5)",
+   "expected": "$Z$5"
+  },
+  {
+   "formula": "=CELL(\"row\",Z5)",
+   "expected": 5.0
+  },
+  {
+   "formula": "=CELL(\"col\",Z5)",
+   "expected": 26.0
+  },
+  {
+   "formula": "=CELL(\"col\",Data!C2)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=CELL(\"row\",Data!C2:D5)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=CELL(\"contents\",Data!C2)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=CELL(\"contents\",Data!A2)",
+   "expected": "North"
+  },
+  {
+   "formula": "=CELL(\"contents\",Z5)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=CELL(\"contents\",Data!G2)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=CELL(\"contents\",Data!S3)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=CELL(\"type\",Data!A2)",
+   "expected": "l"
+  },
+  {
+   "formula": "=CELL(\"type\",Data!C2)",
+   "expected": "v"
+  },
+  {
+   "formula": "=CELL(\"type\",Z5)",
+   "expected": "b"
+  },
+  {
+   "formula": "=CELL(\"type\",Data!P2)",
+   "expected": "v"
+  },
+  {
+   "formula": "=CELL(\"type\",Data!G2)",
+   "expected": "v"
+  },
+  {
+   "formula": "=CELL(\"type\",Data!S2)",
+   "expected": "v"
+  },
+  {
+   "formula": "=CELL(\"protect\",Z5)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=CELL(\"protect\",Data!C2)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=CELL(\"prefix\",Data!A2)",
+   "expected": "'"
+  },
+  {
+   "formula": "=CELL(\"prefix\",Data!C2)",
+   "expected": ""
+  },
+  {
+   "formula": "=CELL(\"prefix\",Z5)",
+   "expected": ""
+  },
+  {
+   "formula": "=CELL(\"width\",Data!C2)",
+   "expected": 8.0
+  },
+  {
+   "formula": "=CELL(\"width\",Z5)",
+   "expected": 8.0
+  },
+  {
+   "formula": "=CELL(\"format\",Data!C2)",
+   "expected": "G"
+  },
+  {
+   "formula": "=CELL(\"format\",Z5)",
+   "expected": "G"
+  },
+  {
+   "formula": "=CELL(\"color\",Data!C2)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=CELL(\"parentheses\",Data!C2)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=CELL(\"bogus\",Z5)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=CELL(1,Z5)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=MID(CELL(\"filename\",Z5),FIND(\"[\",CELL(\"filename\",Z5)),99)",
+   "expected": "[golden.xlsx]Cases"
+  },
+  {
+   "formula": "=MID(CELL(\"filename\",Data!C2),FIND(\"[\",CELL(\"filename\",Data!C2)),99)",
+   "expected": "[golden.xlsx]Data"
+  },
+  {
+   "formula": "=INFO(\"recalc\")",
+   "expected": "Automatic"
+  },
+  {
+   "formula": "=INFO(\"bogus\")",
+   "expected": "#VALUE!"
+  },
+  {
    "formula": "=LET(x,5,x*2)",
    "expected": 10.0
   },
@@ -23017,38 +23309,38 @@
   1213,
   1214,
   1215,
-  1564,
-  1565,
-  1566,
-  1567,
-  1614,
-  1615,
-  1616,
-  1617,
-  1714,
-  1715,
-  1716,
-  1717,
-  1764,
-  1765,
-  1766,
-  1767,
-  1814,
-  1815,
-  1816,
-  1817,
-  1864,
-  1865,
-  1866,
-  1867,
-  1914,
-  1915,
-  1916,
-  1917,
-  2598,
-  2612,
-  2613,
-  2617,
-  2631
+  1637,
+  1638,
+  1639,
+  1640,
+  1687,
+  1688,
+  1689,
+  1690,
+  1787,
+  1788,
+  1789,
+  1790,
+  1837,
+  1838,
+  1839,
+  1840,
+  1887,
+  1888,
+  1889,
+  1890,
+  1937,
+  1938,
+  1939,
+  1940,
+  1987,
+  1988,
+  1989,
+  1990,
+  2671,
+  2685,
+  2686,
+  2690,
+  2704
  ]
 }

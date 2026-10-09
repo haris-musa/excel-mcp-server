@@ -9,6 +9,7 @@ from openpyxl.workbook.defined_name import DefinedName
 
 from excel_mcp.calc.engine import Engine
 from excel_mcp.calc.values import ExcelError, UncalculableError
+from excel_mcp.config import Limits
 from excel_mcp.lazy_workbook import Parts, load_lazy
 from excel_mcp.operations.cells import write_range
 from excel_mcp.operations.table_options import TableOptions
@@ -53,7 +54,7 @@ def build_workbook(
             workbook[title].row_dimensions[row].hidden = True
     for name, target in names.items():
         workbook.defined_names[name] = DefinedName(name, attr_text=target)
-    save_atomically(workbook, path)
+    save_atomically(workbook, path, Limits().max_file_bytes)
 
 
 def calculate_cases(path: Path, count: int, *, lazy: bool = False) -> list[object]:

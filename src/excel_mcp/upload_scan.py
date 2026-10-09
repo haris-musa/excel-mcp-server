@@ -12,7 +12,7 @@ import io
 import zipfile
 import zlib
 from collections.abc import Iterator
-from typing import IO
+from typing import IO, NamedTuple
 from xml.etree import ElementTree
 
 from excel_mcp.config import Limits
@@ -31,6 +31,7 @@ _FORMULA_ELEMENTS = frozenset(
         "definedName",
     }
 )
+_PIVOT_FORMULA_ELEMENTS = frozenset({"cacheField", "calculatedItem"})
 _MAX_ENTRIES = 10_000
 _MAX_XML_DEPTH = 100
 _CHUNK = 64 * 1024
@@ -40,7 +41,13 @@ _REMOTE_DATA = ("connections", "querytable", "externallink")
 _REMOTE_DATA_ROOTS = frozenset({"connections", "queryTable", "externalLink"})
 
 
-def scan_package(content: bytes, limits: Limits) -> Iterator[str]:
+class Formula(NamedTuple):
+    text: str
+    # PivotTable formulas name fields and items, so only their safety can be checked.
+    pivot: bool = False
+
+
+def scan_package(content: bytes, limits: Limits) -> Iterator[Formula]:
     """Check an uploaded package and yield each formula in it; raises when it is unsafe.
 
     Nothing is vouched for until the iterator is exhausted.
@@ -138,7 +145,7 @@ def _looks_like_xml(head: bytes) -> bool:
     return head.removeprefix(b"\xef\xbb\xbf").lstrip().startswith(b"<")
 
 
-def _scan_xml(source: _Entry, part: str) -> Iterator[str]:
+def _scan_xml(source: _Entry, part: str) -> Iterator[Formula]:
     stack: list[ElementTree.Element] = []
     try:
         for event, element in ElementTree.iterparse(source, events=("start", "end")):
@@ -153,10 +160,13 @@ def _scan_xml(source: _Entry, part: str) -> Iterator[str]:
                 continue
             stack.pop()
             if name in _FORMULA_ELEMENTS and element.text and element.text.strip():
-                yield element.text
+                yield Formula(element.text)
+            # Calculated PivotTable fields and items.
+            elif name in _PIVOT_FORMULA_ELEMENTS and (value := element.get("formula")):
+                yield Formula(value, pivot=True)
             # Color scale, data bar and icon set thresholds can be formulas too.
             elif name == "cfvo" and (value := element.get("val")):
-                yield value
+                yield Formula(value)
             # Freeing each element keeps memory flat however large the part is.
             element.clear()
             if stack:
