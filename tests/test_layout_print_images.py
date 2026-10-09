@@ -91,7 +91,7 @@ async def test_changing_one_column_of_a_shared_definition(call: ToolCall, files:
         path="wide.xlsx",
         sheet="Sheet",
         layout={
-            "column_widths": {"B": 30},
+            "column_widths_chars": {"B": 30},
             "columns": [{"span": "C", "action": "hide"}],
         },
     )
@@ -291,13 +291,13 @@ async def test_protect_without_password_is_removed_without_one(
 
 
 async def test_insert_list_and_delete_images(call: ToolCall, sample: Path, picture: Path) -> None:
-    await call("insert_image", path="sales.xlsx", sheet="Report", image_path="logo.png", cell="B2")
+    await call("insert_image", path="sales.xlsx", sheet="Report", image_path="logo.png", at="B2")
     await call(
         "insert_image",
         path="sales.xlsx",
         sheet="Report",
         image_path="logo.png",
-        cell="E5",
+        at="E5",
         width_cm=4,
     )
     await call(
@@ -305,7 +305,7 @@ async def test_insert_list_and_delete_images(call: ToolCall, sample: Path, pictu
         path="sales.xlsx",
         sheet="Report",
         image_path="logo.png",
-        cell="H9",
+        at="H9",
         height_cm=3,
     )
     await call(
@@ -313,35 +313,54 @@ async def test_insert_list_and_delete_images(call: ToolCall, sample: Path, pictu
         path="sales.xlsx",
         sheet="Report",
         image_path="logo.png",
-        cell="K1",
+        at="K1",
         width_cm=2,
         height_cm=6,
     )
     listed = (await call("describe_sheet", path="sales.xlsx", sheet="Report"))["images"]
-    assert [(entry["index"], entry["anchor"]) for entry in listed] == [
-        (1, "B2"),
-        (2, "E5"),
-        (3, "H9"),
-        (4, "K1"),
+    assert [(entry["name"], entry["range"].split(":")[0]) for entry in listed] == [
+        ("Picture 1", "B2"),
+        ("Picture 2", "E5"),
+        ("Picture 3", "H9"),
+        ("Picture 4", "K1"),
     ]
     sizes = [entry[key] for entry in listed for key in ("width_cm", "height_cm")]
     assert sizes == pytest.approx([5.29, 2.65, 4, 2, 6, 3, 2, 6], abs=0.02)
 
-    await call("delete_image", path="sales.xlsx", sheet="Report", index=2)
+    deleted = await call("delete_image", path="sales.xlsx", sheet="Report", name="Picture 2")
+    assert deleted["name"] == "Picture 2" and deleted["range"].startswith("E5:")
     remaining = (await call("describe_sheet", path="sales.xlsx", sheet="Report"))["images"]
-    assert [entry["anchor"] for entry in remaining] == ["B2", "H9", "K1"]
+    assert [entry["name"] for entry in remaining] == ["Picture 1", "Picture 3", "Picture 4"]
     assert image_count(open_sheet(sample, "Report")) == 3
 
 
 async def test_images_survive_other_edits(call: ToolCall, sample: Path, picture: Path) -> None:
-    await call("insert_image", path="sales.xlsx", sheet="Data", image_path="logo.png", cell="F1")
-    await call("write_range", path="sales.xlsx", sheet="Data", start_cell="A10", rows=[["x"]])
+    await call("insert_image", path="sales.xlsx", sheet="Data", image_path="logo.png", at="F1")
+    await call("write_range", path="sales.xlsx", sheet="Data", at="A10", rows=[["x"]])
     assert image_count(open_sheet(sample, "Data")) == 1
 
 
-async def test_delete_image_out_of_range(call_error: ToolCall, sample: Path) -> None:
-    message = await call_error("delete_image", path="sales.xlsx", sheet="Data", index=1)
+async def test_delete_unknown_image(
+    call: ToolCall, call_error: ToolCall, sample: Path, picture: Path
+) -> None:
+    message = await call_error("delete_image", path="sales.xlsx", sheet="Data", name="Picture 1")
     assert "no images" in message
+    await call("insert_image", path="sales.xlsx", sheet="Data", image_path="logo.png", at="A1")
+    message = await call_error("delete_image", path="sales.xlsx", sheet="Data", name="Logo")
+    assert "no image named 'Logo'" in message and "'Picture 1'" in message
+
+
+async def test_images_can_be_named_and_names_are_unique(
+    call: ToolCall, call_error: ToolCall, sample: Path, picture: Path
+) -> None:
+    arguments = {"path": "sales.xlsx", "sheet": "Data", "image_path": "logo.png", "at": "A1"}
+    await call("insert_image", **arguments, name="Logo")
+    assert "already exists" in await call_error("insert_image", **arguments, name="logo")
+    other = await call("insert_image", **arguments)
+    assert other["name"] == "Picture 1"
+    await call("delete_image", path="sales.xlsx", sheet="Data", name="Logo")
+    listed = (await call("describe_sheet", path="sales.xlsx", sheet="Data"))["images"]
+    assert [entry["name"] for entry in listed] == ["Picture 1"]
 
 
 async def test_insert_image_rejects_bad_files(
@@ -351,7 +370,7 @@ async def test_insert_image_rejects_bad_files(
     Image.new("RGB", (4, 4)).save(files / "other.png", format="GIF")
     (files / "notes.txt").write_text("hi")
     (files / "big.jpg").write_bytes(b"\xff" * (11 * 1024 * 1024))
-    arguments = {"path": "sales.xlsx", "sheet": "Data", "cell": "A1"}
+    arguments = {"path": "sales.xlsx", "sheet": "Data", "at": "A1"}
     assert "not a valid PNG or JPEG" in await call_error(
         "insert_image", image_path="fake.png", **arguments
     )
@@ -366,7 +385,7 @@ async def test_insert_image_rejects_bad_files(
         "insert_image", image_path="missing.png", **arguments
     )
     assert "Invalid range" in await call_error(
-        "insert_image", image_path="logo.png", **{**arguments, "cell": "nope"}
+        "insert_image", image_path="logo.png", **{**arguments, "at": "nope"}
     )
     assert not image_count(open_sheet(sample, "Data"))
 
@@ -376,7 +395,7 @@ async def test_insert_image_rejects_too_many_pixels(
 ) -> None:
     monkeypatch.setattr(images, "MAX_IMAGE_PIXELS", 1000)
     message = await call_error(
-        "insert_image", path="sales.xlsx", sheet="Data", image_path="logo.png", cell="A1"
+        "insert_image", path="sales.xlsx", sheet="Data", image_path="logo.png", at="A1"
     )
     assert "200x100 pixels" in message
 
@@ -388,7 +407,7 @@ async def test_images_stay_inside_the_allowed_folder(
     Image.new("RGB", (4, 4)).save(outside)
     for image_path in (str(outside), "../outside.png"):
         message = await call_error(
-            "insert_image", path="sales.xlsx", sheet="Data", image_path=image_path, cell="A1"
+            "insert_image", path="sales.xlsx", sheet="Data", image_path=image_path, at="A1"
         )
         assert "outside the allowed directories" in message
 

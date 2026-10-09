@@ -1,6 +1,7 @@
 """Reading from the original file what openpyxl is going to drop from a worksheet."""
 
 import re
+from typing import Literal
 from xml.etree import ElementTree
 
 from openpyxl.cell.cell import Cell
@@ -23,6 +24,7 @@ from excel_mcp.package.scan import (
     unescape,
     with_namespaces,
 )
+from excel_mcp.package.shape_names import anchored_name, restore_names
 from excel_mcp.refs import CellRange, parse_range
 
 MARKUP_NS = "http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -92,7 +94,7 @@ def capture_sheet(reader: Reader, name: str, sheet: Worksheet, keep_vml: bool) -
             if keep_vml:
                 _vml(reader, rel.target, package)
         elif rel.type == REL_BASE + "drawing" and rel.target in reader.names:
-            _drawing(reader, rel.target, package)
+            _drawing(reader, rel.target, package, sheet)
         elif rel.type == REL_BASE + "pivotTable" and rel.target in reader.names:
             _pivot(reader.archive.read(rel.target), package)
     return package
@@ -149,16 +151,31 @@ def _spilled(sheet: Worksheet, anchor: Cell, area: CellRange) -> list[tuple[Cell
     return spilled
 
 
-def _drawing(reader: Reader, name: str, package: SheetPackage) -> None:
+def _drawing(reader: Reader, name: str, package: SheetPackage, sheet: Worksheet) -> None:
     document = scan(reader.archive.read(name))
     package.drawing_namespaces = document.namespaces
     needed: set[str] = set()
+    names: dict[str, dict[str, list[str | None]]] = {"chart": {}, "picture": {}}
     for child in document.children:
         raw = document.raw(child)
-        if not _is_modeled(raw, document.namespaces):
+        kind = _modeled(raw, document.namespaces)
+        if kind is None:
             package.anchors.append(raw)
             needed |= relationship_ids(raw, document.namespaces)
+        else:
+            names[kind].setdefault(child.local, []).append(anchored_name(raw))
     package.drawing_links = reader.links(name, lambda rel: rel.id in needed)
+    restore_names(sheet._charts, _in_openpyxl_order(names["chart"]))  # pyright: ignore[reportAttributeAccessIssue]
+    restore_names(sheet._images, _in_openpyxl_order(names["picture"]))  # pyright: ignore[reportAttributeAccessIssue]
+
+
+def _in_openpyxl_order(by_anchor: dict[str, list[str | None]]) -> list[str | None]:
+    """openpyxl lists absolute anchors first, then one-cell, then two-cell ones."""
+    return [
+        n
+        for tag in ("absoluteAnchor", "oneCellAnchor", "twoCellAnchor")
+        for n in by_anchor.get(tag, [])
+    ]
 
 
 def _vml(reader: Reader, name: str, package: SheetPackage) -> None:
@@ -169,18 +186,18 @@ def _vml(reader: Reader, name: str, package: SheetPackage) -> None:
     package.vml_links = reader.links(name, lambda rel: rel.id in needed)
 
 
-def _is_modeled(anchor: str, namespaces: dict[str, str]) -> bool:
-    """Whether openpyxl turns an anchor into a chart or an image, and so writes it back."""
+def _modeled(anchor: str, namespaces: dict[str, str]) -> Literal["chart", "picture"] | None:
+    """What openpyxl turns an anchor into, and so writes back; None if it drops it."""
     declared = " ".join(f'xmlns{":" + p if p else ""}="{u}"' for p, u in namespaces.items())
     element = ElementTree.fromstring(f"<w {declared}>{anchor}</w>")[0]
     for child in element:
         if child.tag == f"{{{_XDR}}}graphicFrame":
             data = child.find(f".//{{{_DRAWINGML}}}graphicData")
-            return data is not None and data.get("uri") == _CHART_DATA
+            return "chart" if data is not None and data.get("uri") == _CHART_DATA else None
         if child.tag == f"{{{_XDR}}}pic":
             blip = child.find(f".//{{{_DRAWINGML}}}blip")
-            return blip is not None and blip.get(f"{{{REL_NS}}}embed") is not None
-    return False
+            return "picture" if blip is not None and blip.get(f"{{{REL_NS}}}embed") else None
+    return None
 
 
 def _pivot(data: bytes, package: SheetPackage) -> None:

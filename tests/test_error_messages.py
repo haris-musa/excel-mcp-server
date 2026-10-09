@@ -68,7 +68,7 @@ async def test_nested_paths_and_limits(call_error: ToolCall) -> None:
 
 async def test_union_failures_collapse_to_one_line(call_error: ToolCall) -> None:
     message = await call_error(
-        "write_range", path="a.xlsx", sheet="S", start_cell="A1", rows=[[1, {"a": 1}]]
+        "write_range", path="a.xlsx", sheet="S", at="A1", rows=[[1, {"a": 1}]]
     )
     assert message.endswith("rows[0][1]: expected text, number or boolean; got object")
 
@@ -109,26 +109,18 @@ async def test_read_range_accepts_whole_columns_and_rows(call: ToolCall, sample:
 
 async def test_insert_and_delete_results_say_what_changed(call: ToolCall, sample: Path) -> None:
     arguments = {"path": "sales.xlsx", "sheet": "Data"}
-    assert (
-        await call("insert_rows_or_columns", **arguments, axis="rows", at=2)
-        == "Inserted 1 row at row 2."
-    )
-    assert (
-        await call("insert_rows_or_columns", **arguments, axis="columns", at=3, count=3)
-        == "Inserted 3 columns at column C."
-    )
-    assert (
-        await call("delete_rows_or_columns", **arguments, axis="rows", at=5, count=2)
-        == "Deleted 2 rows at row 5."
-    )
-    assert (
-        await call("delete_rows_or_columns", **arguments, axis="columns", at=1)
-        == "Deleted 1 column at column A."
-    )
+    inserted = await call("insert_rows_or_columns", **arguments, axis="rows", start=2)
+    assert inserted == {"sheet": "Data", "range": "2:2"}
+    inserted = await call("insert_rows_or_columns", **arguments, axis="columns", start=3, count=3)
+    assert inserted == {"sheet": "Data", "range": "C:E"}
+    deleted = await call("delete_rows_or_columns", **arguments, axis="rows", start=5, count=2)
+    assert deleted == {"sheet": "Data", "range": "5:6"}
+    deleted = await call("delete_rows_or_columns", **arguments, axis="columns", start=1)
+    assert deleted == {"sheet": "Data", "range": "A:A"}
 
 
 async def test_empty_object_lists_say_so(call_error: ToolCall, sample: Path) -> None:
-    arguments = {"path": "sales.xlsx", "sheet": "Data", "index": 1}
+    arguments = {"path": "sales.xlsx", "sheet": "Data", "name": "Chart 1"}
     images = await call_error("delete_image", **arguments)
     charts = await call_error("delete_chart", **arguments)
     assert images.endswith("Sheet 'Data' has no images.")
@@ -139,12 +131,11 @@ async def test_pivot_and_field_lists_are_quoted(call_error: ToolCall, sample: Pa
     message = await call_error(
         "create_pivot_table",
         path="sales.xlsx",
-        source_sheet="Data",
-        source_range="A1:D5",
-        target_sheet="Report",
-        target_cell="A1",
-        rows=["Nope"],
-        values=[{"field": "Units"}],
+        source="Data!A1:D5",
+        sheet="Report",
+        at="A1",
+        row_fields=["Nope"],
+        value_fields=[{"field": "Units"}],
     )
     assert "Available fields: 'Region', 'Product', 'Units', 'Price'." in message
 
@@ -271,9 +262,7 @@ async def test_every_formula_sink_rejects_invalid_formulas(
 ) -> None:
     expected = "Formula '=SUM(A1:' is not valid: unclosed '('."
     arguments = {"path": "sales.xlsx", "sheet": "Data"}
-    assert expected in await call_error(
-        "write_range", **arguments, start_cell="F1", rows=[["=SUM(A1:"]]
-    )
+    assert expected in await call_error("write_range", **arguments, at="F1", rows=[["=SUM(A1:"]])
     assert expected in await call_error(
         "add_conditional_format",
         **arguments,
@@ -349,9 +338,7 @@ def test_stray_hashes_and_other_workbooks_stay_rejected(formula: str) -> None:
 
 
 async def test_spill_reference_round_trips_through_the_tools(call: ToolCall, sample: Path) -> None:
-    await call(
-        "write_range", path="sales.xlsx", sheet="Data", start_cell="F1", rows=[["=SUM(C2#)"]]
-    )
+    await call("write_range", path="sales.xlsx", sheet="Data", at="F1", rows=[["=SUM(C2#)"]])
     assert load_workbook(sample)["Data"]["F1"].value == "=SUM(_xlfn.ANCHORARRAY(C2))"
     read = await call("read_range", path="sales.xlsx", sheet="Data", range="F1", mode="formulas")
     assert read["values"] == [["=SUM(C2#)"]]

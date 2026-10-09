@@ -51,7 +51,9 @@ class SparklineStyle(InputModel):
         default="gap", description="Show empty cells as gaps or zeros, or connect the points."
     )
     hidden: bool = Field(default=False, description="Plot data in hidden rows and columns.")
-    line_weight: float = Field(default=LINE_WEIGHT, gt=0, le=100, description="Line only, points.")
+    line_width_pt: float = Field(
+        default=LINE_WEIGHT, gt=0, le=100, description="Line only, points."
+    )
 
 
 class SparklineInfo(SparklineStyle):
@@ -60,8 +62,8 @@ class SparklineInfo(SparklineStyle):
 
 def check_style(style: SparklineStyle) -> None:
     if style.type != "line" and (
-        "markers" in style.show or "line_weight" in style.model_fields_set
+        "markers" in style.show or "line_width_pt" in style.model_fields_set
     ):
         raise InvalidArgumentError(
-            f"markers and line_weight are for line sparklines, not {style.type}."
+            f"markers and line_width_pt are for line sparklines, not {style.type}."
         )

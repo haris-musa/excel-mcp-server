@@ -7,6 +7,7 @@ from pydantic import Field
 from excel_mcp.operations import names, notes
 from excel_mcp.server.params import CellRef, SheetName, WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
+from excel_mcp.server.results import Changed
 from excel_mcp.workspace import Workspace, get_sheet
 
 DefinedName = Annotated[
@@ -28,7 +29,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             Field(description="Range with sheet, e.g. 'Data!$B$2:$B$100', or a constant: '0.075'."),
         ],
         sheet: NameScope = None,
-    ) -> str:
+    ) -> Changed:
         """Create a defined name for a range or constant, replacing a name of the same scope.
 
         Formulas can then use it, e.g. '=SUM(Sales)'. The reference follows the formula
@@ -38,14 +39,17 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             replaced = names.set_defined_name(
                 workbook, name, refers_to, get_sheet(workbook, sheet) if sheet else None
             )
-        return f"{'Updated' if replaced else 'Created'} name {name!r} as {refers_to}."
+        note = "Replaced the earlier definition." if replaced else None
+        return Changed(sheet=sheet, name=name, note=note)
 
     @tools.destroyer("Delete defined name")
-    def delete_defined_name(path: WorkbookPath, name: DefinedName, sheet: NameScope = None) -> str:
+    def delete_defined_name(
+        path: WorkbookPath, name: DefinedName, sheet: NameScope = None
+    ) -> Changed:
         """Delete a defined name. Formulas that use it are not changed and will show #NAME?."""
         with workspace.edit(path) as workbook:
             names.delete_defined_name(workbook, name, get_sheet(workbook, sheet) if sheet else None)
-        return f"Deleted name {name!r}."
+        return Changed(sheet=sheet, name=name)
 
     @tools.destroyer("Set note")
     def set_note(

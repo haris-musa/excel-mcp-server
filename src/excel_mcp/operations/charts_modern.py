@@ -38,7 +38,7 @@ _CLASSIC_ONLY = (
     "plot_color",
 )  # fmt: skip
 _SERIES_CLASSIC = (
-    "sizes", "type", "secondary_axis", "color", "line_width", "marker", "marker_size",
+    "sizes", "type", "secondary_axis", "color", "line_width_pt", "marker", "marker_size",
     "trendline", "error_bars",
 )  # fmt: skip
 _Y_AXIS = {"title", "min", "max", "major_unit", "number_format", "major_gridlines"}
@@ -48,17 +48,17 @@ def resolve_modern(
     workbook: Workbook,
     sheet: str,
     chart_type: ChartType,
-    data_range: str | None,
+    source: str | None,
     series: list[SeriesSpec],
     categories: str | None,
 ) -> list[Plot]:
-    if (data_range is None) == (not series):
+    if (source is None) == (not series):
         raise InvalidArgumentError(
-            "Pass either data_range (a block of data) or series (explicit ranges), not both "
+            "Pass either source (a block of data) or series (explicit ranges), not both "
             "and not neither."
         )
-    if data_range is not None:
-        series, categories = _block(workbook, sheet, chart_type, data_range), None
+    if source is not None:
+        series, categories = _block(workbook, sheet, chart_type, source), None
     plots = [_plot(workbook, sheet, chart_type, spec, categories) for spec in series]
     if chart_type not in _MANY and len(plots) != 1:
         raise InvalidArgumentError(f"A {chart_type} chart plots one series, got {len(plots)}.")
@@ -80,16 +80,16 @@ def _plot(
     return Plot(spec, values, found, None, series_name(workbook, spec.name), points)
 
 
-def _block(workbook: Workbook, default: str, chart_type: str, data_range: str) -> list[SeriesSpec]:
+def _block(workbook: Workbook, default: str, chart_type: str, source: str) -> list[SeriesSpec]:
     """Series for a block with a header row, read as Excel reads it: leading text columns are
     labels (one, or the levels of a treemap or sunburst), the number columns are the series."""
-    sheet, cells = split_sheet(workbook, default, data_range)
+    sheet, cells = split_sheet(workbook, default, source)
     area = parse_range(cells)
     if area.rows < 2:
-        raise InvalidArgumentError("data_range needs a header row and at least one row of data.")
+        raise InvalidArgumentError("source needs a header row and at least one row of data.")
     labels = _text_columns(workbook[sheet], area)
     if labels == area.cols:
-        raise InvalidArgumentError(f"data_range {data_range!r} holds no column of numbers.")
+        raise InvalidArgumentError(f"source {source!r} holds no column of numbers.")
     if chart_type not in _HIERARCHIES:
         labels = min(labels, 1)
 

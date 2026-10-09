@@ -4,8 +4,8 @@ from pydantic import BaseModel
 
 
 class ChartInfo(BaseModel):
-    index: int
+    name: str
     type: str
-    title: str | None
-    anchor: str | None
-    series: list[str]
+    title: str | None = None
+    range: str | None = None
+    series: list[str] = []

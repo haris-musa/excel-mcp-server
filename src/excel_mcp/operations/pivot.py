@@ -277,7 +277,7 @@ def _check_free(
     if sheet is source_sheet and area.overlaps(parse_range(source_ref)):
         raise InvalidArgumentError(
             f"The PivotTable would cover its own source data {source_ref}. Choose a "
-            "target_cell outside it, or another target_sheet."
+            "`at` outside it, or another `sheet`."
         )
     for pivot in sheet_pivots(sheet):
         if area.overlaps(pivot_area(pivot)):
@@ -288,7 +288,7 @@ def _check_free(
         if area.min_row <= cell.row <= area.max_row and area.min_col <= cell.column <= area.max_col:
             raise InvalidArgumentError(
                 f"The PivotTable would cover {area}, but {cell.coordinate} already holds a "
-                "value. Choose an empty target_cell, or clear the range first."
+                "value. Choose an empty `at`, or clear the range first."
             )
 
 

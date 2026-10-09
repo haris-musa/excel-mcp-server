@@ -154,8 +154,8 @@ def _fill(series: Series, color: str | None, *, alpha: int | None = None, index:
 
 
 def _draw_line(series: Series, spec: SeriesSpec, color: str | None) -> None:
-    if color or spec.line_width:
-        width = round(spec.line_width * _EMU_PER_POINT) if spec.line_width else None
+    if color or spec.line_width_pt:
+        width = round(spec.line_width_pt * _EMU_PER_POINT) if spec.line_width_pt else None
         series.graphicalProperties = GraphicalProperties(
             ln=LineProperties(w=width, cap="rnd", solidFill=_hex(color) if color else None)
         )

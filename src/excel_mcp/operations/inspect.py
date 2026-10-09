@@ -1,7 +1,7 @@
 """Read-only descriptions of workbooks, sheets and folders."""
 
 from pathlib import Path
-from typing import cast
+from typing import Literal, cast
 
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
@@ -17,6 +17,7 @@ from excel_mcp.operations.layout import hidden_lines
 from excel_mcp.operations.names import DefinedNameInfo, list_defined_names
 from excel_mcp.operations.notes import NoteInfo, list_notes
 from excel_mcp.operations.pivot_index import PivotInfo, list_pivots
+from excel_mcp.operations.sheet_counts import ObjectCounts
 from excel_mcp.operations.sheet_view import ViewInfo, read_view
 from excel_mcp.operations.slicer_manage import SlicerInfo, list_slicers
 from excel_mcp.operations.sparkline_style import SparklineInfo
@@ -31,12 +32,19 @@ from excel_mcp.operations.workbook_settings import (
 from excel_mcp.paths import EXCEL_SUFFIXES
 from excel_mcp.workspace import streamed_worksheets
 
+_VISIBILITY: dict[str, Literal["visible", "hidden", "very_hidden"]] = {
+    "visible": "visible",
+    "hidden": "hidden",
+    "veryHidden": "very_hidden",
+}
+
 
 class SheetSummary(BaseModel):
     name: str
     used_range: str
-    hidden: bool = False
+    visibility: Literal["visible", "hidden", "very_hidden"] = "visible"
     active: bool = False
+    objects: ObjectCounts = ObjectCounts()
 
 
 class WorkbookInfo(BaseModel):
@@ -71,38 +79,51 @@ def list_conditional_formats(sheet: Worksheet) -> list[ConditionalFormatInfo]:
     return rules + [ConditionalFormatInfo(range=r, type=t) for r, t in extended_rules(sheet)]
 
 
+class TableInfo(BaseModel):
+    name: str
+    range: str
+
+
+class ColumnWidth(BaseModel):
+    column: str
+    width: float
+
+
 class SheetDetails(BaseModel):
     used_range: str
     freeze_panes: str | None = None
     auto_filter: str | None = None
     merged_ranges: list[str] = []
     notes: list[NoteInfo] = []
-    tables: dict[str, str] = {}
+    tables: list[TableInfo] = []
     charts: list[ChartInfo] = []
     pivot_tables: list[PivotInfo] = []
     slicers: list[SlicerInfo] = []
     data_validations: list[DataValidationInfo] = []
     conditional_formats: list[ConditionalFormatInfo] = []
     sparklines: list[SparklineInfo] = []
-    column_widths: dict[str, float] = {}
+    column_widths_chars: list[ColumnWidth] = []
     hidden_rows: list[str] = []
     hidden_columns: list[str] = []
     images: list[ImageInfo] = []
-    hyperlinks: dict[str, LinkInfo] = {}
+    hyperlinks: list[LinkInfo] = []
     print_area: str | None = None
     protected: bool = False
     view: ViewInfo = ViewInfo()
 
 
-def describe_workbook(workbook: Workbook, has_vba: bool, company: str) -> WorkbookInfo:
+def describe_workbook(
+    workbook: Workbook, has_vba: bool, company: str, objects: dict[str, ObjectCounts]
+) -> WorkbookInfo:
     """Summarize a streamed workbook: each sheet costs one pass over its cells."""
     return WorkbookInfo(
         sheets=[
             SheetSummary(
                 name=sheet.title,
                 used_range=str(streamed_used_range(sheet)),
-                hidden=sheet.sheet_state != "visible",
+                visibility=_VISIBILITY[sheet.sheet_state],
                 active=workbook.active is sheet,
+                objects=objects.get(sheet.title, ObjectCounts()),
             )
             for sheet in streamed_worksheets(workbook)
         ],
@@ -122,7 +143,7 @@ def describe_sheet(sheet: Worksheet) -> SheetDetails:
         auto_filter=sheet.auto_filter.ref,
         merged_ranges=sorted(str(merged) for merged in sheet.merged_cells.ranges),
         notes=list_notes(sheet),
-        tables=dict(sheet.tables.items()),
+        tables=[TableInfo(name=name, range=ref) for name, ref in sheet.tables.items()],
         charts=list_charts(sheet),
         pivot_tables=list_pivots(sheet),
         slicers=list_slicers(cast(Workbook, sheet.parent), sheet),
@@ -138,11 +159,11 @@ def describe_sheet(sheet: Worksheet) -> SheetDetails:
         ],
         conditional_formats=list_conditional_formats(sheet),
         sparklines=list_sparklines(sheet),
-        column_widths={
-            letter: dimension.width
+        column_widths_chars=[
+            ColumnWidth(column=letter, width=dimension.width)
             for letter, dimension in sorted(sheet.column_dimensions.items())
             if dimension.customWidth
-        },
+        ],
         hidden_rows=hidden_lines(sheet, "rows"),
         hidden_columns=hidden_lines(sheet, "columns"),
         images=list_images(sheet),

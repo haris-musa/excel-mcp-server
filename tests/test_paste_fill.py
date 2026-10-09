@@ -40,12 +40,12 @@ def data(path: Path) -> Worksheet:
     return load_workbook(path)["Data"]
 
 
-async def copy(call: ToolCall, **arguments: Any) -> str:
+async def copy(call: ToolCall, **arguments: Any) -> dict[str, str]:
     return await call("copy_range", **BOOK, **arguments)
 
 
 async def test_paste_values_gives_results_without_formatting(call: ToolCall, book: Path) -> None:
-    await copy(call, range="A1:A3", target_cell="E1", paste="values")
+    await copy(call, range="A1:A3", at="E1", paste="values")
     sheet = data(book)
     assert [sheet.cell(row, 5).value for row in (1, 2, 3)] == [46053, 42, 5]
     assert all(sheet.cell(row, 5).number_format == "General" for row in (1, 2, 3))
@@ -55,15 +55,15 @@ async def test_paste_values_gives_results_without_formatting(call: ToolCall, boo
 async def test_paste_formulas_keeps_formulas_and_leaves_formatting(
     call: ToolCall, book: Path
 ) -> None:
-    await copy(call, range="A2", target_cell="B2", paste="formulas")
+    await copy(call, range="A2", at="B2", paste="formulas")
     sheet = data(book)
     assert sheet["B2"].value == "=D1*2"
     assert sheet["B2"].number_format == "General"
 
 
 async def test_paste_formats_copies_only_styles(call: ToolCall, book: Path) -> None:
-    await call("write_range", **BOOK, start_cell="E1", rows=[["keep"]])
-    await copy(call, range="A1:A3", target_cell="E1", paste="formats")
+    await call("write_range", **BOOK, at="E1", rows=[["keep"]])
+    await copy(call, range="A1:A3", at="E1", paste="formats")
     sheet = data(book)
     assert sheet["E1"].value == "keep"
     assert sheet["E1"].fill.start_color.rgb == "FFFF0000"
@@ -73,7 +73,7 @@ async def test_paste_formats_copies_only_styles(call: ToolCall, book: Path) -> N
 
 
 async def test_paste_all_still_copies_values_and_formats(call: ToolCall, book: Path) -> None:
-    await copy(call, range="A1:A3", target_cell="E1")
+    await copy(call, range="A1:A3", at="E1")
     sheet = data(book)
     assert sheet["E1"].value == dt.datetime(2026, 1, 31)
     assert sheet["E1"].fill.start_color.rgb == "FFFF0000"
@@ -88,13 +88,13 @@ async def test_skip_blanks_leaves_destination_cells_alone(call: ToolCall, book: 
     for row in (1, 2, 3):
         sheet.cell(row, 5, "old").fill = GREEN
     workbook.save(book)
-    await copy(call, range="A1:A3", target_cell="E1", skip_blanks=True)
+    await copy(call, range="A1:A3", at="E1", skip_blanks=True)
     sheet = data(book)
     assert [sheet.cell(row, 5).value for row in (1, 2, 3)] == [dt.datetime(2026, 1, 31), "old", 5]
     assert sheet["E2"].fill.start_color.rgb == "FF00FF00"
     assert sheet["E1"].fill.start_color.rgb == "FFFF0000"
 
-    await copy(call, range="A1:A3", target_cell="E1")
+    await copy(call, range="A1:A3", at="E1")
     assert data(book)["E2"].value is None
 
 
@@ -106,8 +106,8 @@ async def test_transpose_swaps_rows_and_columns_and_formula_offsets(
     sheet["H1"], sheet["I1"], sheet["J1"] = 1, 2, 3
     sheet["H2"], sheet["I2"], sheet["J2"] = "=H1*2", "=I1*2", "=I2+J1"
     workbook.save(book)
-    message = await copy(call, range="H1:J2", target_cell="L5", transpose=True)
-    assert message == "Copied Data!H1:J2 to Data!L5:M7."
+    message = await copy(call, range="H1:J2", at="L5", transpose=True)
+    assert message == {"sheet": "Data", "range": "L5:M7"}
     sheet = data(book)
     # Excel's result: a reference's offset (rows, columns) becomes (columns, rows).
     assert [[sheet.cell(row, col).value for col in (12, 13)] for row in (5, 6, 7)] == [
@@ -118,10 +118,10 @@ async def test_transpose_swaps_rows_and_columns_and_formula_offsets(
 
 
 async def test_transposed_references_follow_excel(call: ToolCall, book: Path) -> None:
-    await call("create_sheet", path="paste.xlsx", sheet="Other")
+    await call("create_sheet", path="paste.xlsx", new_name="Other")
     formula = "=$C$1+C1+$C1+C$1+Other!B1+Other!$B2+SUM(C1:D2)+SUM($C1:D$2)"
-    await call("write_range", **BOOK, start_cell="M10", rows=[[formula]])
-    await copy(call, range="M10", target_cell="O20", transpose=True)
+    await call("write_range", **BOOK, at="M10", rows=[[formula]])
+    await copy(call, range="M10", at="O20", transpose=True)
     # Recorded from Excel: relative references swap their offsets, any "$" reference stays.
     assert data(book)["O20"].value == (
         "=$C$1+F10+$C1+C$1+Other!F9+Other!$B2+SUM(F10:G11)+SUM($C1:D$2)"
@@ -131,18 +131,18 @@ async def test_transposed_references_follow_excel(call: ToolCall, book: Path) ->
 async def test_transposing_formulas_with_whole_lines_or_off_the_sheet_is_refused(
     call: ToolCall, call_error: ToolCall, book: Path
 ) -> None:
-    await call("write_range", **BOOK, start_cell="H1", rows=[["=SUM(C:C)"], ["=A1"]])
-    message = await call_error("copy_range", **BOOK, range="H1", target_cell="H4", transpose=True)
+    await call("write_range", **BOOK, at="H1", rows=[["=SUM(C:C)"], ["=A1"]])
+    message = await call_error("copy_range", **BOOK, range="H1", at="H4", transpose=True)
     assert "whole row or column" in message
-    message = await call_error("copy_range", **BOOK, range="H2", target_cell="A9", transpose=True)
+    message = await call_error("copy_range", **BOOK, range="H2", at="A9", transpose=True)
     assert "off the sheet" in message
 
 
 async def test_paste_values_of_uncalculable_formulas_is_refused(
     call: ToolCall, call_error: ToolCall, book: Path
 ) -> None:
-    await call("write_range", **BOOK, start_cell="H1", rows=[["=NOSUCHFUNCTION(1)"]])
-    message = await call_error("copy_range", **BOOK, range="H1", target_cell="H4", paste="values")
+    await call("write_range", **BOOK, at="H1", rows=[["=NOSUCHFUNCTION(1)"]])
+    message = await call_error("copy_range", **BOOK, range="H1", at="H4", paste="values")
     assert "H1" in message and "recalculates" in message
 
 
@@ -152,14 +152,14 @@ async def test_paste_options_keep_the_array_formula_guard(call_error: ToolCall, 
     workbook = load_workbook(book)
     workbook["Data"]["H1"] = ArrayFormula("H1", "=C1*2")
     workbook.save(book)
-    message = await call_error("copy_range", **BOOK, range="H1", target_cell="H4")
+    message = await call_error("copy_range", **BOOK, range="H1", at="H4")
     assert "array formula" in message
 
 
 # -- fill ------------------------------------------------------------------------------------
 
 
-async def fill(call: ToolCall, range: str, **transform: Any) -> str:
+async def fill(call: ToolCall, range: str, **transform: Any) -> dict[str, str]:
     return await call(
         "transform_range", **BOOK, range=range, transform={"operation": "fill", **transform}
     )
@@ -172,7 +172,7 @@ async def test_fill_down_repeats_the_first_row_with_formats(call: ToolCall, book
     sheet["J1"].fill = sheet["K1"].fill = RED
     sheet["J3"] = "overwritten"
     workbook.save(book)
-    assert await fill(call, "J1:K4", direction="down") == "Filled J1:K4."
+    assert await fill(call, "J1:K4", direction="down") == {"sheet": "Data", "range": "J1:K4"}
     sheet = data(book)
     assert [(sheet.cell(row, 10).value, sheet.cell(row, 11).value) for row in (2, 3, 4)] == [
         (5, "=J2*2"),
@@ -183,7 +183,7 @@ async def test_fill_down_repeats_the_first_row_with_formats(call: ToolCall, book
 
 
 async def test_fill_right_repeats_the_first_column(call: ToolCall, book: Path) -> None:
-    await call("write_range", **BOOK, start_cell="H1", rows=[[1], ["=H1+C1"]])
+    await call("write_range", **BOOK, at="H1", rows=[[1], ["=H1+C1"]])
     await fill(call, "H1:K2", direction="right")
     sheet = data(book)
     assert [sheet.cell(1, col).value for col in range(8, 12)] == [1, 1, 1, 1]
@@ -209,7 +209,7 @@ async def test_fill_right_repeats_the_first_column(call: ToolCall, book: Path) -
 async def test_number_series(
     call: ToolCall, book: Path, seed: float, options: dict[str, Any], expected: list[float]
 ) -> None:
-    await call("write_range", **BOOK, start_cell="H1", rows=[[seed]])
+    await call("write_range", **BOOK, at="H1", rows=[[seed]])
     await fill(call, "H1:H5", direction="down", **options)
     sheet = data(book)
     assert [sheet.cell(row, 8).value for row in range(1, 6)] == expected + [None] * (
@@ -247,7 +247,7 @@ async def test_number_series(
 async def test_date_series(
     call: ToolCall, book: Path, seed: str, options: dict[str, Any], expected: list[str | None]
 ) -> None:
-    await call("write_range", **BOOK, start_cell="H1", rows=[[seed]])
+    await call("write_range", **BOOK, at="H1", rows=[[seed]])
     await fill(call, "H1:H4", direction="down", series="date", **options)
     sheet = data(book)
     found = [sheet.cell(row, 8).value for row in range(1, 5)]
@@ -274,11 +274,11 @@ async def test_series_copy_the_seed_formatting_and_run_per_seed_cell(
 
 
 async def test_series_right_and_single_cell_with_stop(call: ToolCall, book: Path) -> None:
-    await call("write_range", **BOOK, start_cell="H1", rows=[[10]])
-    assert (
-        await fill(call, "H1", direction="right", series="linear", step=2, stop=17)
-        == "Filled H1:K1."
-    )
+    await call("write_range", **BOOK, at="H1", rows=[[10]])
+    assert await fill(call, "H1", direction="right", series="linear", step=2, stop=17) == {
+        "sheet": "Data",
+        "range": "H1:K1",
+    }
     assert [data(book).cell(1, col).value for col in range(8, 13)] == [10, 12, 14, 16, None]
 
 
@@ -304,7 +304,7 @@ async def test_invalid_fills_are_rejected(
     options: dict[str, Any],
     message: str,
 ) -> None:
-    await call("write_range", **BOOK, start_cell="H1", rows=[[1]])
+    await call("write_range", **BOOK, at="H1", rows=[[1]])
     before = book.read_bytes()
     result = await call_error(
         "transform_range", **BOOK, range=range, transform={"operation": "fill", **options}

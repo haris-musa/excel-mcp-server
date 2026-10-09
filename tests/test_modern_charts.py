@@ -41,14 +41,14 @@ LAYOUTS = {
 }
 
 
-async def add(call: ToolCall, chart_type: str, anchor: str = "B2", **extra: Any) -> str:
+async def add(call: ToolCall, chart_type: str, anchor: str = "B2", **extra: Any) -> dict[str, str]:
     arguments = {**CHARTS[chart_type], **extra}
     return await call(
         "create_chart",
         path="sales.xlsx",
         sheet="Report",
         chart_type=chart_type,
-        anchor_cell=anchor,
+        at=anchor,
         **arguments,
     )
 
@@ -222,7 +222,7 @@ async def test_box_defaults_are_excels_and_options_write_visibility(
     )
 
     await add(
-        call, "box_whisker", "B30", index=1,
+        call, "box_whisker", "B30", replace="Chart 1",
         options={"box": {"quartiles": "inclusive", "mean_line": True, "outliers": False}},
     )  # fmt: skip
     chart = chart_text(sample)
@@ -252,7 +252,7 @@ async def test_treemap_parent_labels(call: ToolCall, sample: Path) -> None:
 async def test_treemap_block_reads_levels_then_sizes(call: ToolCall, sample: Path) -> None:
     await call(
         "create_chart", path="sales.xlsx", sheet="Report", chart_type="sunburst",
-        anchor_cell="B2", data_range="Data!A1:C5",
+        at="B2", source="Data!A1:C5",
     )  # fmt: skip
 
     assert list(hidden_names(sample).values()) == [
@@ -265,11 +265,11 @@ async def test_treemap_block_reads_levels_then_sizes(call: ToolCall, sample: Pat
 async def test_blocks_for_labelled_and_value_only_charts(call: ToolCall, sample: Path) -> None:
     await call(
         "create_chart", path="sales.xlsx", sheet="Report", chart_type="waterfall",
-        anchor_cell="B2", data_range="Data!B1:C5",
+        at="B2", source="Data!B1:C5",
     )  # fmt: skip
     await call(
         "create_chart", path="sales.xlsx", sheet="Report", chart_type="histogram",
-        anchor_cell="B20", data_range="Data!C1:C5",
+        at="B20", source="Data!C1:C5",
     )  # fmt: skip
 
     names = list(hidden_names(sample).values())
@@ -291,16 +291,16 @@ async def test_charts_are_listed_after_the_classic_ones(call: ToolCall, sample: 
     await add(call, "waterfall", options={"title": "Bridge"})
     await call(
         "create_chart", path="sales.xlsx", sheet="Report", chart_type="column",
-        anchor_cell="B30", data_range="Data!B1:C5",
+        at="B30", source="Data!B1:C5",
     )  # fmt: skip
     await add(call, "pareto", "B60")
 
     details = await call("describe_sheet", path="sales.xlsx", sheet="Report")
 
-    assert [(c["index"], c["type"], c["title"], c["anchor"]) for c in details["charts"]] == [
-        (1, "column", None, "B30"),
-        (2, "waterfall", "Bridge", "B2"),
-        (3, "pareto", None, "B60"),
+    assert [(c["name"], c["type"], c.get("title"), c["range"]) for c in details["charts"]] == [
+        ("Chart 2", "column", None, "B30:J44"),
+        ("Chart 1", "waterfall", "Bridge", "B2:J16"),
+        ("Chart 3", "pareto", None, "B60:J74"),
     ]
     assert details["charts"][1]["series"] == ["Data!$C$2:$C$5"]
 
@@ -311,14 +311,14 @@ async def test_delete_removes_the_chart_its_parts_and_its_names(
     await add(call, "waterfall")
     await add(call, "funnel", "B30")
 
-    message = await call("delete_chart", path="sales.xlsx", sheet="Report", index=1)
+    deleted = await call("delete_chart", path="sales.xlsx", sheet="Report", name="Chart 1")
 
-    assert "Deleted waterfall chart 1" in message
+    assert deleted["name"] == "Chart 1"
     saved = parts(sample)
     remaining = [n for n in saved if re.fullmatch(r"xl/charts/chartEx\d+\.xml", n)]
     assert len(remaining) == 1 and 'layoutId="funnel"' in saved[remaining[0]]
     assert list(hidden_names(sample)) == [f"_xlchart.v2.{n}" for n in (3, 4, 5)]
-    await call("delete_chart", path="sales.xlsx", sheet="Report", index=1)
+    await call("delete_chart", path="sales.xlsx", sheet="Report", name="Chart 2")
     saved = parts(sample)
     assert not [n for n in saved if "chart" in n.lower() or "drawing" in n.lower()]
     assert not hidden_names(sample)
@@ -328,13 +328,13 @@ async def test_replacing_a_chart_keeps_its_place(call: ToolCall, sample: Path) -
     await add(call, "waterfall")
     await add(call, "funnel", "B30")
 
-    message = await add(call, "treemap", "B60", index=1)
+    replaced = await add(call, "treemap", "B60", replace="Chart 1")
 
-    assert message == "Replaced chart 1 of Report with a treemap chart at B60."
+    assert replaced == {"sheet": "Report", "name": "Chart 1", "range": "B60:J74"}
     details = await call("describe_sheet", path="sales.xlsx", sheet="Report")
-    assert [(c["index"], c["type"], c["anchor"]) for c in details["charts"]] == [
-        (1, "treemap", "B60"),
-        (2, "funnel", "B30"),
+    assert [(c["name"], c["type"], c["range"]) for c in details["charts"]] == [
+        ("Chart 1", "treemap", "B60:J74"),
+        ("Chart 2", "funnel", "B30:J44"),
     ]
     assert len(hidden_names(sample)) == 6
 
@@ -344,20 +344,26 @@ async def test_replacing_across_kinds_moves_the_new_chart_last(
 ) -> None:
     await call(
         "create_chart", path="sales.xlsx", sheet="Report", chart_type="column",
-        anchor_cell="B30", data_range="Data!B1:C5",
+        at="B30", source="Data!B1:C5",
     )  # fmt: skip
     await add(call, "waterfall")
 
-    message = await add(call, "funnel", "B60", index=1)
-    assert "It is now chart 2." in message
-    message = await call(
+    await add(call, "funnel", "B60", replace="Chart 1")
+    details = await call("describe_sheet", path="sales.xlsx", sheet="Report")
+    assert [(c["name"], c["type"]) for c in details["charts"]] == [
+        ("Chart 2", "waterfall"),
+        ("Chart 1", "funnel"),
+    ]
+    await call(
         "create_chart", path="sales.xlsx", sheet="Report", chart_type="line",
-        anchor_cell="B2", data_range="Data!B1:C5", index=2,
+        at="B2", source="Data!B1:C5", replace="Chart 1",
     )  # fmt: skip
-    assert "It is now chart 1." in message
 
     details = await call("describe_sheet", path="sales.xlsx", sheet="Report")
-    assert [c["type"] for c in details["charts"]] == ["line", "waterfall"]
+    assert [(c["name"], c["type"]) for c in details["charts"]] == [
+        ("Chart 1", "line"),
+        ("Chart 2", "waterfall"),
+    ]
     assert len(hidden_names(sample)) == 3
 
 
@@ -366,7 +372,7 @@ async def test_copy_sheet_copies_the_charts_pointing_at_the_copy(
 ) -> None:
     await call(
         "create_chart", path="sales.xlsx", sheet="Data", chart_type="funnel",
-        anchor_cell="F2", **CHARTS["funnel"],
+        at="F2", **CHARTS["funnel"],
     )  # fmt: skip
 
     await call("copy_sheet", path="sales.xlsx", sheet="Data", new_name="Data (2)")
@@ -390,8 +396,8 @@ async def test_charts_survive_other_edits(call: ToolCall, sample: Path) -> None:
     await add(call, "sunburst")
     before = chart_text(sample)
 
-    await call("write_range", path="sales.xlsx", sheet="Report", start_cell="A1", rows=[[1]])
-    await call("create_sheet", path="sales.xlsx", sheet="Other")
+    await call("write_range", path="sales.xlsx", sheet="Report", at="A1", rows=[[1]])
+    await call("create_sheet", path="sales.xlsx", new_name="Other")
 
     assert re.sub(r"uniqueId=\"[^\"]*\"", "", chart_text(sample)) == re.sub(
         r"uniqueId=\"[^\"]*\"", "", before
@@ -457,9 +463,9 @@ async def test_anchors_follow_inserted_rows_through_the_references_api(
         ),
         ("waterfall", {"series": [LABELLED, LABELLED]}, "plots one series, got 2"),
         ("waterfall", {"series_in": "rows"}, "read their data in columns"),
-        ("waterfall", {"series": [], "data_range": "Data!A1:A5"}, "holds no column of numbers"),
-        ("histogram", {"series": [], "data_range": "Data!C1:C1"}, "header row"),
-        ("waterfall", {"series": [], "data_range": None}, "either data_range"),
+        ("waterfall", {"series": [], "source": "Data!A1:A5"}, "holds no column of numbers"),
+        ("histogram", {"series": [], "source": "Data!C1:C1"}, "header row"),
+        ("waterfall", {"series": [], "source": None}, "either source"),
         ("waterfall", {"series": [{"values": "Data!B2:C5"}]}, "one row or one column"),
         ("waterfall", {"series": [{"values": "Nope!B2:B5"}]}, "not found"),
     ],
@@ -468,12 +474,12 @@ async def test_invalid_requests_are_errors_and_change_nothing(
     call_error: ToolCall, sample: Path, chart_type: str, arguments: dict[str, Any], message: str
 ) -> None:
     before = parts(sample)
-    defaults = {**CHARTS.get(chart_type, {"data_range": "Data!B1:C5"})}
-    if "data_range" in arguments or "series" in arguments:
+    defaults = {**CHARTS.get(chart_type, {"source": "Data!B1:C5"})}
+    if "source" in arguments or "series" in arguments:
         defaults.pop("series", None)
     result = await call_error(
         "create_chart", path="sales.xlsx", sheet="Report", chart_type=chart_type,
-        anchor_cell="B2", **{**defaults, **{k: v for k, v in arguments.items() if v is not None}},
+        at="B2", **{**defaults, **{k: v for k, v in arguments.items() if v is not None}},
     )  # fmt: skip
 
     assert message in result
@@ -485,17 +491,19 @@ async def test_modern_charts_need_a_cell_to_sit_at(call_error: ToolCall, sample:
         "create_chart", path="sales.xlsx", sheet="Fresh", chart_type="funnel", **CHARTS["funnel"]
     )
 
-    assert "give anchor_cell" in message
+    assert "give at" in message
 
 
-async def test_index_must_exist(call: ToolCall, call_error: ToolCall, sample: Path) -> None:
+async def test_replaced_chart_must_exist(
+    call: ToolCall, call_error: ToolCall, sample: Path
+) -> None:
     await add(call, "funnel")
 
     message = await call_error(
         "create_chart", path="sales.xlsx", sheet="Report", chart_type="treemap",
-        anchor_cell="B2", index=2, **CHARTS["treemap"],
+        at="B2", replace="Chart 2", **CHARTS["treemap"],
     )  # fmt: skip
-    assert "no chart 2" in message
+    assert "no chart named 'Chart 2'" in message
 
 
 async def test_stays_inside_the_allowed_folder(
@@ -506,7 +514,7 @@ async def test_stays_inside_the_allowed_folder(
 
     message = await call_error(
         "create_chart", path=str(outside), sheet="Report", chart_type="funnel",
-        anchor_cell="B2", **CHARTS["funnel"],
+        at="B2", **CHARTS["funnel"],
     )  # fmt: skip
 
     assert "outside" in message
@@ -556,7 +564,7 @@ async def test_pareto_percentage_axis_takes_the_secondary_axis_options(
 async def test_the_secondary_axis_fits_pareto_only(call_error: ToolCall, sample: Path) -> None:
     message = await call_error(
         "create_chart", path="sales.xlsx", sheet="Report", chart_type="waterfall",
-        anchor_cell="B2", options={"secondary_y_axis": {"title": "x"}}, **CHARTS["waterfall"],
+        at="B2", options={"secondary_y_axis": {"title": "x"}}, **CHARTS["waterfall"],
     )  # fmt: skip
 
     assert "secondary_y_axis.title does not apply" in message
@@ -585,7 +593,7 @@ async def test_labels_can_be_turned_off_and_replaced(call: ToolCall, sample: Pat
     await add(call, "treemap", options={"data_labels": {"show": []}})
     assert "<cx:dataLabels" not in chart_text(sample)
 
-    await add(call, "treemap", index=1, options={"data_labels": {"show": ["value"]}})
+    await add(call, "treemap", replace="Chart 1", options={"data_labels": {"show": ["value"]}})
     assert 'categoryName="0" value="1"' in chart_text(sample)
 
 
@@ -615,7 +623,7 @@ async def test_a_histogram_may_have_labels_and_a_box_a_single_column(
 
     await call(
         "create_chart", path="sales.xlsx", sheet="Report", chart_type="box_whisker",
-        anchor_cell="B30", data_range="Data!C1:C5",
+        at="B30", source="Data!C1:C5",
     )  # fmt: skip
     assert "<cx:strDim" not in chart_text(sample, 2)
     assert 'quartileMethod="exclusive"' in chart_text(sample, 2)
@@ -627,7 +635,7 @@ async def test_a_single_column_of_numbers_needs_no_labels(
 ) -> None:
     await call(
         "create_chart", path="sales.xlsx", sheet="Report", chart_type=chart_type,
-        anchor_cell="B2", data_range="Data!C1:C5",
+        at="B2", source="Data!C1:C5",
     )  # fmt: skip
 
     assert "<cx:strDim" not in chart_text(sample)
@@ -637,7 +645,7 @@ async def test_a_single_column_of_numbers_needs_no_labels(
 async def test_a_histogram_plots_one_series(call_error: ToolCall, sample: Path) -> None:
     message = await call_error(
         "create_chart", path="sales.xlsx", sheet="Report", chart_type="histogram",
-        anchor_cell="B2", data_range="Data!C1:D5",
+        at="B2", source="Data!C1:D5",
     )  # fmt: skip
 
     assert "plots one series, got 2" in message
@@ -648,7 +656,7 @@ async def test_bins_of_a_categorised_pareto_are_an_error(
 ) -> None:
     message = await call_error(
         "create_chart", path="sales.xlsx", sheet="Report", chart_type="pareto",
-        anchor_cell="B2", options={"bins": {"count": 3}}, **CHARTS["pareto"],
+        at="B2", options={"bins": {"count": 3}}, **CHARTS["pareto"],
     )  # fmt: skip
 
     assert "bins apply to a pareto chart of numbers" in message

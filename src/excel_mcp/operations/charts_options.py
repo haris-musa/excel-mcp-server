@@ -104,7 +104,7 @@ class SeriesSpec(InputModel):
         description="Hex, e.g. '#C00000': the fill of bars, areas and bubbles; the "
         "line of line and scatter series.",
     )
-    line_width: float | None = Field(
+    line_width_pt: float | None = Field(
         default=None, gt=0, le=20, description="Points. Line, scatter and radar series."
     )
     marker: MarkerStyle | None = Field(default=None, description="Line and scatter series.")

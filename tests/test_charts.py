@@ -16,15 +16,15 @@ ALL_TYPES = ["column", "bar", "line", "area", "pie", "scatter", "doughnut", "rad
 
 
 async def add_chart(
-    call: ToolCall, chart_type: str = "column", data_range: str = "Data!B1:D5", **options: Any
+    call: ToolCall, chart_type: str = "column", source: str = "Data!B1:D5", **options: Any
 ) -> None:
     await call(
         "create_chart",
         path="sales.xlsx",
         sheet="Report",
-        data_range=data_range,
+        source=source,
         chart_type=chart_type,
-        anchor_cell="B2",
+        at="B2",
         options=options,
     )
 
@@ -144,9 +144,7 @@ async def test_line_colors_color_the_line(call: ToolCall, sample: Path) -> None:
 
 @pytest.mark.parametrize("chart_type", ["pie", "doughnut"])
 async def test_round_charts_color_each_slice(call: ToolCall, sample: Path, chart_type: str) -> None:
-    await add_chart(
-        call, chart_type, data_range="Data!B1:C5", colors=["#111111", "#222222", "#333333"]
-    )
+    await add_chart(call, chart_type, source="Data!B1:C5", colors=["#111111", "#222222", "#333333"])
     points = elements(chart_xml(sample), "dPt")
     colors = [values(point, "srgbClr") for point in points]
     assert colors == [["111111"], ["222222"], ["333333"], []]
@@ -158,45 +156,45 @@ async def test_color_errors(call_error: ToolCall, sample: Path) -> None:
         "create_chart",
         path="sales.xlsx",
         sheet="Data",
-        data_range="Data!B1:C5",
+        source="Data!B1:C5",
         chart_type="column",
-        anchor_cell="G1",
+        at="G1",
         options={"colors": ["red"]},
     )
     assert "3 colors given for 1 series" in await call_error(
         "create_chart",
         path="sales.xlsx",
         sheet="Data",
-        data_range="Data!B1:C5",
+        source="Data!B1:C5",
         chart_type="column",
-        anchor_cell="G1",
+        at="G1",
         options={"colors": ["#111111", "#222222", "#333333"]},
     )
     assert "4 slices" in await call_error(
         "create_chart",
         path="sales.xlsx",
         sheet="Data",
-        data_range="Data!B1:C5",
+        source="Data!B1:C5",
         chart_type="pie",
-        anchor_cell="G1",
+        at="G1",
         options={"colors": ["#111111"] * 5},
     )
 
 
 async def test_line_markers_and_smooth(call: ToolCall, sample: Path) -> None:
-    await add_chart(call, "line", data_range="Data!C1:D5", markers=True, smooth=True)
+    await add_chart(call, "line", source="Data!C1:D5", markers=True, smooth=True)
     root = chart_xml(sample)
     assert set(values(root, "symbol")) == {"circle"}
     assert set(values(root, "smooth")) == {"1"}
 
 
 async def test_line_has_no_markers_by_default(call: ToolCall, sample: Path) -> None:
-    await add_chart(call, "line", data_range="Data!C1:D5")
+    await add_chart(call, "line", source="Data!C1:D5")
     assert set(values(chart_xml(sample), "symbol")) == {"none"}
 
 
 async def test_scatter_plots_points_without_lines(call: ToolCall, sample: Path) -> None:
-    await add_chart(call, "scatter", data_range="Data!C1:D5", colors=["#112233"])
+    await add_chart(call, "scatter", source="Data!C1:D5", colors=["#112233"])
     series = elements(chart_xml(sample), "ser")[0]
     assert values(series, "symbol") == ["circle"]
     assert len(elements(elements(series, "ln")[0], "noFill")) == 1
@@ -236,7 +234,7 @@ async def test_secondary_axis_line_combo(call: ToolCall, sample: Path) -> None:
 
 async def test_combo_survives_later_edits(call: ToolCall, sample: Path) -> None:
     await add_combo(call)
-    await call("write_range", path="sales.xlsx", sheet="Report", start_cell="A1", rows=[["x"]])
+    await call("write_range", path="sales.xlsx", sheet="Report", at="A1", rows=[["x"]])
     root = chart_xml(sample)
     assert len(elements(root, "barChart")) == len(elements(root, "lineChart")) == 1
     assert values(root, "delete") == ["0", "0", "1", "0"]
@@ -249,7 +247,7 @@ async def add_combo(call: ToolCall, **options: Any) -> None:
         path="sales.xlsx",
         sheet="Report",
         chart_type="column",
-        anchor_cell="B2",
+        at="B2",
         categories="Data!B2:B5",
         series=[
             {"values": "Data!C2:C5", "name": "Data!C1"},
@@ -286,9 +284,9 @@ async def test_options_that_do_not_fit_are_rejected(
         "create_chart",
         path="sales.xlsx",
         sheet="Data",
-        data_range="B1:C5",
+        source="B1:C5",
         chart_type=chart_type,
-        anchor_cell="G1",
+        at="G1",
         options=options,
     )
     assert fragment in message
@@ -309,8 +307,8 @@ async def test_new_chart_types(call: ToolCall, sample: Path, chart_type: str, ta
 async def test_axes_stay_visible_after_later_edits(
     call: ToolCall, sample: Path, chart_type: str
 ) -> None:
-    await add_chart(call, chart_type, data_range="Data!B1:C5")
-    await call("write_range", path="sales.xlsx", sheet="Report", start_cell="A1", rows=[["x"]])
+    await add_chart(call, chart_type, source="Data!B1:C5")
+    await call("write_range", path="sales.xlsx", sheet="Report", at="A1", rows=[["x"]])
     expected = ["0", "0"] if chart_type not in ("pie", "doughnut") else []
     assert values(chart_xml(sample), "delete") == expected
 
@@ -318,29 +316,27 @@ async def test_axes_stay_visible_after_later_edits(
 async def test_describe_sheet_lists_charts(call: ToolCall, sample: Path) -> None:
     await add_chart(call, "bar", title="Horizontal")
     await add_combo(call)
-    await add_chart(call, "pie", data_range="Data!B1:C5")
+    await add_chart(call, "pie", source="Data!B1:C5")
     details = await call("describe_sheet", path="sales.xlsx", sheet="Report")
     data = "'Data'!$"
     assert details["charts"] == [
         {
-            "index": 1,
+            "name": "Chart 1",
             "type": "bar",
             "title": "Horizontal",
-            "anchor": "B2",
+            "range": "B2:J16",
             "series": [f"{data}C$2:$C$5", f"{data}D$2:$D$5"],
         },
         {
-            "index": 2,
+            "name": "Chart 2",
             "type": "column",
-            "title": None,
-            "anchor": "B2",
+            "range": "B2:J16",
             "series": [f"{data}C$2:$C$5", f"{data}D$2:$D$5"],
         },
         {
-            "index": 3,
+            "name": "Chart 3",
             "type": "pie",
-            "title": None,
-            "anchor": "B2",
+            "range": "B2:J16",
             "series": [f"{data}C$2:$C$5"],
         },
     ]
@@ -350,27 +346,28 @@ async def test_describe_sheet_lists_charts(call: ToolCall, sample: Path) -> None
 async def test_delete_chart(call: ToolCall, sample: Path) -> None:
     await add_chart(call, "bar", title="First")
     await add_chart(call, "line", title="Second")
-    message = await call("delete_chart", path="sales.xlsx", sheet="Report", index=1)
-    assert "bar chart 1 'First'" in message
+    deleted = await call("delete_chart", path="sales.xlsx", sheet="Report", name="Chart 1")
+    assert deleted == {"sheet": "Report", "name": "Chart 1", "range": "B2:J16"}
     details = await call("describe_sheet", path="sales.xlsx", sheet="Report")
-    assert [(item["index"], item["type"], item["title"]) for item in details["charts"]] == [
-        (1, "line", "Second")
+    assert [(item["name"], item["type"], item["title"]) for item in details["charts"]] == [
+        ("Chart 2", "line", "Second")
     ]
     assert saved_chart_count(sample) == 1
 
 
-async def test_delete_chart_rejects_bad_indices(
+async def test_delete_chart_rejects_unknown_names(
     call: ToolCall, call_error: ToolCall, sample: Path
 ) -> None:
     arguments = {"path": "sales.xlsx", "sheet": "Report"}
-    assert "has no charts" in await call_error("delete_chart", **arguments, index=1)
+    assert "has no charts" in await call_error("delete_chart", **arguments, name="Chart 1")
     await add_chart(call)
     await add_chart(call, "line")
-    for index in (0, 3, -1):
-        message = await call_error("delete_chart", **arguments, index=index)
-        assert f"no chart {index}" in message and "1 to 2" in message
+    message = await call_error("delete_chart", **arguments, name="Chart 3")
+    assert "no chart named 'Chart 3'" in message and "'Chart 1', 'Chart 2'" in message
     assert saved_chart_count(sample) == 2
-    assert "not found" in await call_error("delete_chart", path="sales.xlsx", sheet="Nope", index=1)
+    assert "not found" in await call_error(
+        "delete_chart", path="sales.xlsx", sheet="Nope", name="x"
+    )
 
 
 async def test_delete_chart_stays_inside_the_allowed_folder(
@@ -379,5 +376,5 @@ async def test_delete_chart_stays_inside_the_allowed_folder(
     outside = tmp_path / "outside.xlsx"
     workbook = Workbook()
     workbook.save(outside)
-    message = await call_error("delete_chart", path=str(outside), sheet="Sheet", index=1)
+    message = await call_error("delete_chart", path=str(outside), sheet="Sheet", name="Chart 1")
     assert "outside" in message

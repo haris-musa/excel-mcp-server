@@ -3,32 +3,40 @@
 from io import BytesIO
 
 from openpyxl.drawing.image import Image
-from openpyxl.drawing.spreadsheet_drawing import OneCellAnchor, TwoCellAnchor
+from openpyxl.drawing.spreadsheet_drawing import OneCellAnchor
 from openpyxl.worksheet.worksheet import Worksheet
 from PIL import Image as PillowImage
 from PIL import UnidentifiedImageError
 from pydantic import BaseModel
 
 from excel_mcp.errors import InvalidArgumentError
+from excel_mcp.operations import drawings
+from excel_mcp.operations.chart_index import name_shapes, shape_names
+from excel_mcp.package.shape_names import name_of, set_name
 from excel_mcp.refs import cell_name, parse_cell
 
 PIXELS_PER_CM = 96 / 2.54
-EMU_PER_CM = 360_000
+EMU_PER_CM = drawings.EMU_PER_CM
 MAX_IMAGE_PIXELS = 50_000_000
 IMAGE_FORMATS = ("PNG", "JPEG")
 
 
 class ImageInfo(BaseModel):
-    index: int
-    anchor: str | None
-    width_cm: float | None
-    height_cm: float | None
+    name: str
+    range: str | None = None
+    width_cm: float | None = None
+    height_cm: float | None = None
 
 
 def insert_image(
-    sheet: Worksheet, data: bytes, cell: str, width_cm: float | None, height_cm: float | None
-) -> None:
-    row, column = parse_cell(cell)
+    sheet: Worksheet,
+    data: bytes,
+    at: str,
+    width_cm: float | None,
+    height_cm: float | None,
+    name: str | None,
+) -> ImageInfo:
+    row, column = parse_cell(at)
     pixel_width, pixel_height = _check_image(data)
     if width_cm is not None and height_cm is not None:
         width, height = width_cm * PIXELS_PER_CM, height_cm * PIXELS_PER_CM
@@ -40,26 +48,29 @@ def insert_image(
         width = height * pixel_width / pixel_height
     else:
         width, height = pixel_width, pixel_height
+    taken = shape_names(sheet)
     image = Image(BytesIO(data))
     image.width, image.height = round(width), round(height)
+    set_name(
+        image,
+        drawings.check_name(name, taken)
+        if name is not None
+        else drawings.free_name("Picture", taken),
+    )
     sheet.add_image(image, cell_name(row, column))
+    return _describe(sheet, image)
 
 
 def list_images(sheet: Worksheet) -> list[ImageInfo]:
-    return [_describe(index, image) for index, image in enumerate(_images(sheet), start=1)]
+    name_shapes(sheet)
+    return [_describe(sheet, image) for image in _images(sheet)]
 
 
-def delete_image(sheet: Worksheet, index: int) -> ImageInfo:
+def delete_image(sheet: Worksheet, name: str) -> ImageInfo:
     images = list_images(sheet)
-    if not images:
-        raise InvalidArgumentError(f"Sheet {sheet.title!r} has no images.")
-    if not 1 <= index <= len(images):
-        raise InvalidArgumentError(
-            f"Sheet {sheet.title!r} has no image {index}. Valid image indices: 1 to "
-            f"{len(images)}. describe_sheet lists them."
-        )
-    del _images(sheet)[index - 1]
-    return images[index - 1]
+    index = drawings.find([image.name for image in images], name, "image", sheet)
+    del _images(sheet)[index]
+    return images[index]
 
 
 def _images(sheet: Worksheet) -> list[Image]:
@@ -85,21 +96,25 @@ def _check_image(data: bytes) -> tuple[int, int]:
     return size
 
 
-def _describe(index: int, image: Image) -> ImageInfo:
+def _describe(sheet: Worksheet, image: Image) -> ImageInfo:
     anchor = image.anchor
+    name = name_of(image) or ""
+    if isinstance(anchor, str):
+        row, col = parse_cell(anchor)
+        width, height = image.width * drawings.EMU_PER_PIXEL, image.height * drawings.EMU_PER_PIXEL
+        area = drawings.extent(sheet, row, col, width, height)
+        return ImageInfo(
+            name=name,
+            range=area,
+            width_cm=round(width / EMU_PER_CM, 2),
+            height_cm=round(height / EMU_PER_CM, 2),
+        )
+    area = drawings.covered(sheet, anchor)
     if isinstance(anchor, OneCellAnchor):
-        ext = anchor.ext
         return ImageInfo(
-            index=index,
-            anchor=cell_name(anchor._from.row + 1, anchor._from.col + 1),
-            width_cm=round(ext.width / EMU_PER_CM, 2),
-            height_cm=round(ext.height / EMU_PER_CM, 2),
+            name=name,
+            range=area,
+            width_cm=round(anchor.ext.width / EMU_PER_CM, 2),
+            height_cm=round(anchor.ext.height / EMU_PER_CM, 2),
         )
-    if isinstance(anchor, TwoCellAnchor):
-        return ImageInfo(
-            index=index,
-            anchor=cell_name(anchor._from.row + 1, anchor._from.col + 1),
-            width_cm=None,
-            height_cm=None,
-        )
-    return ImageInfo(index=index, anchor=None, width_cm=None, height_cm=None)
+    return ImageInfo(name=name, range=area, width_cm=None, height_cm=None)

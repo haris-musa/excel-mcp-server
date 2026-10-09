@@ -168,12 +168,12 @@ def read_range(sheet: ReadOnlyWorksheet, ref: str | None, max_cells: int) -> Ran
 
 def write_range(
     sheet: Worksheet,
-    start_cell: str,
+    at: str,
     rows: list[list[CellValue]],
     links: list[Link],
     max_cells: int,
 ) -> WriteResult:
-    start_row, start_col = parse_cell(start_cell)
+    start_row, start_col = parse_cell(at)
     if not any(rows):
         raise InvalidArgumentError("rows must contain at least one value.")
     count = sum(len(row) for row in rows)

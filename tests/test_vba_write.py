@@ -207,7 +207,7 @@ async def test_paths_outside_the_allowed_directory_are_rejected(vba_error: ToolC
 async def test_later_edits_keep_the_macros(vba_call: ToolCall, call: ToolCall) -> None:
     await vba_call("create_workbook", path="m.xlsm")
     await vba_call("write_vba_module", path="m.xlsm", module="Module1", code=MACRO)
-    await vba_call("write_range", path="m.xlsm", sheet="Sheet1", start_cell="A1", rows=[[1, 2]])
+    await vba_call("write_range", path="m.xlsm", sheet="Sheet1", at="A1", rows=[[1, 2]])
     assert (await _modules(call, "m.xlsm"))["Module1"]["code"] == MACRO
     await vba_call("write_vba_module", path="m.xlsm", module="Module2", code="Public X As Long")
     assert (await call("read_range", path="m.xlsm", sheet="Sheet1", range="A1:B1"))["values"] == [

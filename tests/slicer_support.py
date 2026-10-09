@@ -29,17 +29,16 @@ async def build_book(call: ToolCall, files: Path) -> str:
     """Sales in a table on Data, summarized by product in a PivotTable on Pivot."""
     path = str(files / "book.xlsx")
     await call("create_workbook", path=path, sheets=["Data", "Pivot"])
-    await call("write_range", path=path, sheet="Data", start_cell="A1", rows=SALES)
+    await call("write_range", path=path, sheet="Data", at="A1", rows=SALES)
     await call("create_table", path=path, sheet="Data", range="A1:D9", name="Sales")
     await call(
         "create_pivot_table",
         path=path,
-        source_sheet="Data",
-        source_range="A1:D9",
-        rows=["Product"],
-        values=[{"field": "Amount"}],
-        target_sheet="Pivot",
-        target_cell="A3",
+        source="Data!A1:D9",
+        row_fields=["Product"],
+        value_fields=[{"field": "Amount"}],
+        sheet="Pivot",
+        at="A3",
         name="PivotSales",
     )
     return path
@@ -58,8 +57,8 @@ def named(parts: dict[str, bytes], folder: str) -> list[str]:
     return sorted(text(parts, n) for n in parts if n.startswith(folder) and n.endswith(".xml"))
 
 
-async def add(call: ToolCall, path: str, **arguments: Any) -> str:
+async def add(call: ToolCall, path: str, **arguments: Any) -> dict[str, str]:
     arguments.setdefault("sheet", "Pivot")
-    arguments.setdefault("source", PIVOT)
-    arguments.setdefault("cell", "E3")
+    arguments.setdefault("target", PIVOT)
+    arguments.setdefault("at", "E3")
     return await call("add_slicer", path=path, **arguments)

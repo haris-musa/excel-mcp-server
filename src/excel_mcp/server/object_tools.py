@@ -1,4 +1,4 @@
-"""Tools for tables and charts."""
+"""Tools for tables, charts and sparklines."""
 
 from typing import Annotated
 
@@ -10,8 +10,9 @@ from excel_mcp.operations.charts_options import ChartOptions, ChartType, SeriesS
 from excel_mcp.operations.sparkline_style import SparklineStyle
 from excel_mcp.operations.table_options import TableOptions
 from excel_mcp.refs import parse_range
-from excel_mcp.server.params import SheetName, WorkbookPath
+from excel_mcp.server.params import CellRef, RangeRef, SheetName, WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
+from excel_mcp.server.results import Changed
 from excel_mcp.workspace import Workspace, get_sheet
 
 
@@ -20,12 +21,12 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     def create_table(
         path: WorkbookPath,
         sheet: SheetName,
-        range: Annotated[str, Field(description="Including the header row, e.g. 'A1:D20'.")],
+        range: Annotated[RangeRef, Field(description="Including the header row, e.g. 'A1:D20'.")],
         options: Annotated[TableOptions, Field(default_factory=TableOptions)],
         name: Annotated[
             str | None, Field(description="Unique in the workbook. Default: TableN.")
         ] = None,
-    ) -> str:
+    ) -> Changed:
         """Turn a range with a header row of unique text labels into an Excel table.
 
         Options set the style, banding, header and totals rows, filter buttons, calculated
@@ -40,28 +41,28 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 options,
                 workspace.limits.max_cells,
             )
-        return f"Created table {table_name!r} at {sheet}!{area}."
+        return Changed(sheet=sheet, name=table_name, range=area)
 
     @tools.destroyer("Edit table")
     def edit_table(
         path: WorkbookPath,
         sheet: SheetName,
-        table: Annotated[str, Field(description="Table name (describe_sheet lists them).")],
+        name: Annotated[str, Field(description="Table name (describe_sheet lists them).")],
         options: Annotated[TableOptions, Field(default_factory=TableOptions)],
         range: Annotated[
-            str | None,
+            RangeRef | None,
             Field(
                 description="Resize: the new range, with the same top-left cell. The totals row "
                 "moves to the end. New columns take their header cell's text, or 'ColumnN'."
             ),
         ] = None,
-    ) -> str:
+    ) -> Changed:
         """Change a table's options, add calculated columns and totals, or resize it."""
         with workspace.edit(path) as workbook:
             area = tables.edit_table(
-                get_sheet(workbook, sheet), table, range, options, workspace.limits.max_cells
+                get_sheet(workbook, sheet), name, range, options, workspace.limits.max_cells
             )
-        return f"Table {table!r} is now at {sheet}!{area}."
+        return Changed(sheet=sheet, name=name, range=area)
 
     @tools.writer("Create chart")
     def create_chart(
@@ -71,20 +72,20 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             ChartType,
             Field(
                 description="Kind of chart. waterfall, histogram, pareto, box_whisker, treemap, "
-                "sunburst and funnel are Excel 2016 charts: they need anchor_cell and take no "
+                "sunburst and funnel are Excel 2016 charts: they need `at` and take no "
                 "combo, trendline, colors or secondary axis."
             ),
         ],
         options: Annotated[ChartOptions, Field(default_factory=ChartOptions)],
-        anchor_cell: Annotated[
-            str | None,
+        at: Annotated[
+            CellRef | None,
             Field(
                 description="Top-left cell, e.g. 'E2'. Omit to put the chart on a new chart "
                 "sheet named `sheet`."
             ),
         ] = None,
-        data_range: Annotated[
-            str | None,
+        source: Annotated[
+            RangeRef | None,
             Field(
                 description="A block with a header row, labels in the first column and one "
                 "series per further column, e.g. 'A1:C13' or 'Data!A1:C13'. Scatter: x values "
@@ -93,99 +94,98 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             ),
         ] = None,
         series_in: Annotated[
-            SeriesIn, Field(description="'rows': series are the rows of data_range.")
+            SeriesIn, Field(description="'rows': series are the rows of `source`.")
         ] = "columns",
         series: Annotated[
             list[SeriesSpec],
-            Field(
-                description="Explicit series instead of data_range, for any ranges on any sheet."
-            ),
+            Field(description="Explicit series instead of `source`, for any ranges on any sheet."),
         ] = [],  # noqa: B006
         categories: Annotated[
             str | None,
             Field(description="Category labels (x values) for series without their own."),
         ] = None,
-        index: Annotated[
-            int | None,
+        name: Annotated[
+            str | None, Field(description="Unique among the sheet's charts and images.")
+        ] = None,
+        replace: Annotated[
+            str | None,
             Field(
-                description="Replace chart N of `sheet` (from describe_sheet) with this one, "
-                "rebuilt from these arguments, instead of adding a chart."
+                description="Name of the chart to replace with this one (in the same position, "
+                "keeping its name unless `name` is given), instead of adding a chart."
             ),
         ] = None,
-    ) -> str:
-        """Add a chart to `sheet`, or replace one.
+    ) -> Changed:
+        """Add a chart to `sheet`, or replace one. Returns its name and the cells it covers.
 
-        Give data_range for a plain block, or series for ranges that are not adjacent, sit in
+        Give `source` for a plain block, or `series` for ranges that are not adjacent, sit in
         rows, have their own names or live on other sheets. Combo charts take a `type` and
-        `secondary_axis` per series. To change a chart, create it again with `index`.
-        Options that do not fit the chart type are rejected. describe_sheet lists the charts
-        (those of Excel 2016 after the others); delete_chart removes one.
+        `secondary_axis` per series. Options that do not fit the chart type are rejected.
+        To chart a PivotTable, leave out its Grand Total row and column.
+        describe_sheet lists charts; delete_chart removes one.
         """
         with workspace.edit(path) as workbook:
-            return charts.create_chart(
+            made, area = charts.create_chart(
                 workbook,
                 sheet,
-                anchor_cell,
+                at,
                 chart_type,
-                data_range,
+                source,
                 series_in,
                 series,
                 categories,
                 options,
-                index,
+                replace,
+                name,
             )
+        return Changed(sheet=sheet, name=made, range=area)
 
     @tools.destroyer("Delete chart")
     def delete_chart(
         path: WorkbookPath,
         sheet: SheetName,
-        index: Annotated[
-            int,
-            Field(description="Chart number from describe_sheet."),
-        ],
-    ) -> str:
-        """Remove a chart from a sheet. The data it plotted is left untouched.
-
-        Later charts move up one index; call describe_sheet again before deleting another.
-        """
+        name: Annotated[str, Field(description="Chart name from describe_sheet.")],
+    ) -> Changed:
+        """Remove a chart from a sheet. The data it plotted is left untouched."""
         with workspace.edit(path) as workbook:
-            removed = chart_index.delete_chart(get_sheet(workbook, sheet), index)
-        label = f" {removed.title!r}" if removed.title else ""
-        return f"Deleted {removed.type} chart {index}{label} from {sheet}."
+            removed = chart_index.delete_chart(get_sheet(workbook, sheet), name)
+        return Changed(sheet=sheet, name=removed.name, range=removed.range)
 
     @tools.writer("Add sparklines")
     def add_sparklines(
         path: WorkbookPath,
         sheet: SheetName,
-        location: Annotated[
-            str, Field(description="Cells that get a sparkline: one row or column, e.g. 'G2:G9'.")
+        range: Annotated[
+            RangeRef,
+            Field(description="Cells that get a sparkline: one row or column, e.g. 'G2:G9'."),
         ],
-        data: Annotated[
-            str,
+        source: Annotated[
+            RangeRef,
             Field(
                 description="Data, on any sheet: 'B2:F9' or 'Data!B2:F9'. One sparkline per row."
             ),
         ],
         style: Annotated[SparklineStyle, Field(default_factory=SparklineStyle)],
-    ) -> str:
+    ) -> Changed:
         """Add a group of sparklines (Insert > Sparklines): a line, column or win/loss chart in
-        each cell of `location`, one per row of `data` (or per column when the cell count
+        each cell of `range`, one per row of `source` (or per column when the cell count
         matches the columns). Sparklines already in those cells are replaced.
 
         describe_sheet lists sparklines; delete_sparklines removes them.
         """
         with workspace.edit(path) as workbook:
-            return sparklines.add_sparklines(
-                get_sheet(workbook, sheet), location, data, style, workspace.limits.max_cells
+            area, replaced = sparklines.add_sparklines(
+                get_sheet(workbook, sheet), range, source, style, workspace.limits.max_cells
             )
+        note = f"Replaced {replaced} existing sparklines." if replaced else None
+        return Changed(sheet=sheet, range=str(area), note=note)
 
     @tools.destroyer("Delete sparklines")
     def delete_sparklines(
         path: WorkbookPath,
         sheet: SheetName,
-        range: Annotated[str, Field(description="Cells whose sparklines to remove.")],
-    ) -> str:
+        range: Annotated[RangeRef, Field(description="Cells whose sparklines to remove.")],
+    ) -> Changed:
         """Remove the sparklines in a range (Clear Sparklines). The data is left untouched."""
         with workspace.edit(path) as workbook:
-            removed = sparklines.delete_sparklines(get_sheet(workbook, sheet), parse_range(range))
-        return f"Deleted {removed} sparklines from {sheet}!{range}."
+            sparklines.delete_sparklines(get_sheet(workbook, sheet), parse_range(range))
+        return Changed(sheet=sheet, range=range)

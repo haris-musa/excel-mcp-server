@@ -9,10 +9,11 @@ from excel_mcp.operations.calculated import formula_values
 from excel_mcp.operations.slicers import SlicerRequest, Source, Timeline
 from excel_mcp.server.params import CellRef, SheetName, WorkbookPath
 from excel_mcp.server.registry import ToolRegistry
+from excel_mcp.server.results import Changed
 from excel_mcp.workspace import Workspace, get_sheet
 
 _STALE = (
-    " The PivotTable was not made by create_pivot_table, so its figures are not recalculated "
+    "The PivotTable was not made by create_pivot_table, so its figures are not recalculated "
     "here: Excel recalculates them when the file is opened."
 )
 
@@ -22,9 +23,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     def add_slicer(
         path: WorkbookPath,
         sheet: Annotated[SheetName, Field(description="Sheet to put the slicer on.")],
-        source: Annotated[Source, Field(description="The table or PivotTable to filter.")],
+        target: Annotated[Source, Field(description="The table or PivotTable to filter.")],
         field: Annotated[str, Field(description="Header of the column or field to filter by.")],
-        cell: Annotated[CellRef, Field(description="Top-left cell of the slicer.")],
+        at: Annotated[CellRef, Field(description="Top-left cell of the slicer.")],
         width_cm: Annotated[
             float | None, Field(gt=0, le=100, description="Default: 5.1 (timeline: 9.3).")
         ] = None,
@@ -57,7 +58,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             list[Source],
             Field(
                 max_length=50,
-                description="More PivotTables that share the source's data cache, as copies of "
+                description="More PivotTables that share the target's data cache, as copies of "
                 "a sheet do; the slicer filters them all.",
             ),
         ] = [],  # noqa: B006
@@ -68,7 +69,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 "PivotTable: time scale and the period shown."
             ),
         ] = None,
-    ) -> str:
+    ) -> Changed:
         """Add a slicer (Insert > Slicer) or timeline to a sheet, to filter a PivotTable or table.
 
         `selected_items` limits the data as clicking the buttons does: PivotTable items are hidden
@@ -78,7 +79,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         removes one.
         """
         request = SlicerRequest(
-            source, connect, field, cell, width_cm, height_cm, caption, name, columns, style,
+            target, connect, field, at, width_cm, height_cm, caption, name, columns, style,
             selected_items, sort, hide_empty_items, timeline,
         )  # fmt: skip
         with workspace.edit(path) as workbook:
@@ -89,22 +90,22 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             made, stale = slicers.add_slicer(
                 workbook, get_sheet(workbook, sheet), request, results, workspace.limits.max_cells
             )
-        added = f"Added {'timeline' if timeline else 'slicer'} {made!r} to {sheet}!{cell}."
-        return added + (_STALE if stale else "")
+            area = slicer_manage.placed_range(workbook, get_sheet(workbook, sheet), made)
+        return Changed(sheet=sheet, name=made, range=area, note=_STALE if stale else None)
 
     @tools.destroyer("Delete slicer")
     def delete_slicer(
         path: WorkbookPath,
         sheet: SheetName,
         name: Annotated[str, Field(description="Slicer or timeline name, from describe_sheet.")],
-    ) -> str:
+    ) -> Changed:
         """Remove a slicer or timeline.
 
         As in Excel, a table and a PivotTable row, column or filter field stay filtered; a
         timeline's period and the hidden items of a field the PivotTable does not show are cleared.
         """
         with workspace.edit(path) as workbook:
-            field = slicer_manage.delete_slicer(
+            slicer_manage.delete_slicer(
                 workbook, get_sheet(workbook, sheet), name, workspace.limits.max_cells
             )
-        return f"Deleted {name!r} (field {field!r}) from {sheet}."
+        return Changed(sheet=sheet, name=name)

@@ -54,7 +54,7 @@ async def test_company_survives_other_edits_and_can_be_cleared(
     call: ToolCall, sample: Path
 ) -> None:
     await settings(call, doc_properties={"company": "Acme", "title": "T"})
-    await call("create_sheet", path="sales.xlsx", sheet="Extra")
+    await call("create_sheet", path="sales.xlsx", new_name="Extra")
     assert "Acme" in app_xml(sample)
     await settings(call, doc_properties={"company": ""})
     assert "Company" not in app_xml(sample)
@@ -164,7 +164,7 @@ def layout(**values: object) -> dict[str, object]:
 
 
 async def test_move_sheet_keeps_the_active_sheet(call: ToolCall, sample: Path) -> None:
-    await call("create_sheet", path="sales.xlsx", sheet="Third")
+    await call("create_sheet", path="sales.xlsx", new_name="Third")
     await call(
         "set_sheet_layout",
         path="sales.xlsx",

@@ -45,7 +45,7 @@ def _attributes(style: SparklineStyle) -> str:
     def kind(scale: AxisScale) -> str | None:
         return _SCALES.get(scale) if isinstance(scale, str) else "custom"
 
-    weight = number_text(style.line_weight) if style.line_weight != LINE_WEIGHT else None
+    weight = number_text(style.line_width_pt) if style.line_width_pt != LINE_WEIGHT else None
     return attributes(
         [
             ("manualMax", custom(style.axis_max)),
@@ -98,7 +98,7 @@ def _read_group(group: ElementTree.Element) -> SparklineInfo:
         dates=None if dates is None or not flag("dateAxis") else dates.text,
         empty_cells=empty.get(group.get("displayEmptyCellsAs", ""), "zero"),
         hidden=flag("displayHidden"),
-        line_weight=float(group.get("lineWeight", LINE_WEIGHT)),
+        line_width_pt=float(group.get("lineWeight", LINE_WEIGHT)),
         sparklines=sparklines,
     )
 

@@ -14,8 +14,8 @@ pytestmark = pytest.mark.anyio
 
 
 async def test_create_workbook(call: ToolCall, files: Path) -> None:
-    message = await call("create_workbook", path="new/book.xlsx", sheets=["Input", "Output"])
-    assert "new/book.xlsx" in message
+    created = await call("create_workbook", path="new/book.xlsx", sheets=["Input", "Output"])
+    assert created == {"path": "new/book.xlsx"}
     assert load_workbook(files / "new" / "book.xlsx").sheetnames == ["Input", "Output"]
 
 
@@ -113,6 +113,6 @@ async def test_describe_workbook_flags_hidden_sheets_and_names(
     info = await call("describe_workbook", path="sales.xlsx")
     assert info["sheets"] == [
         {"name": "Data", "used_range": "A1:D5", "active": True},
-        {"name": "Report", "used_range": "A1", "hidden": True},
+        {"name": "Report", "used_range": "A1", "visibility": "hidden"},
     ]
     assert info["defined_names"] == [{"name": "Totals", "refers_to": "Data!$C$2:$C$5"}]

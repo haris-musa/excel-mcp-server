@@ -17,7 +17,7 @@ pytestmark = pytest.mark.anyio
 
 async def insert(call: ToolCall, sheet: str, axis: str, at: int, count: int = 1) -> None:
     await call(
-        "insert_rows_or_columns", path="sales.xlsx", sheet=sheet, axis=axis, at=at, count=count
+        "insert_rows_or_columns", path="sales.xlsx", sheet=sheet, axis=axis, start=at, count=count
     )
 
 
@@ -87,7 +87,7 @@ async def test_two_tables_cannot_be_cut_at_once(
     await call("create_table", path="sales.xlsx", sheet="Data", range="A1:B5", name="Left")
     await call("create_table", path="sales.xlsx", sheet="Data", range="D1:D3", name="Right")
     message = await call_error(
-        "insert_rows_or_columns", path="sales.xlsx", sheet="Data", axis="rows", at=2
+        "insert_rows_or_columns", path="sales.xlsx", sheet="Data", axis="rows", start=2
     )
     assert "Left, Right" in message
     await insert(call, "Data", "rows", 4)
@@ -98,7 +98,7 @@ async def test_rename_sheet_rewrites_references(call: ToolCall, sample: Path) ->
         "write_range",
         path="sales.xlsx",
         sheet="Report",
-        start_cell="A1",
+        at="A1",
         rows=[["=Data!C2+Data!C3"], ["=SUM(Data!C2:C5)"], ["='Data'!$C$2"], ['="Data!C2"']],
     )
     await call("set_defined_name", path="sales.xlsx", name="Units", refers_to="Data!$C$2:$C$5")
@@ -113,9 +113,9 @@ async def test_rename_sheet_rewrites_references(call: ToolCall, sample: Path) ->
         "create_chart",
         path="sales.xlsx",
         sheet="Report",
-        data_range="Data!B1:C5",
+        source="Data!B1:C5",
         chart_type="column",
-        anchor_cell="D2",
+        at="D2",
     )
     await call("rename_sheet", path="sales.xlsx", sheet="Data", new_name="Q1 Sales")
     book = load_workbook(sample)
@@ -148,7 +148,7 @@ async def test_deleting_the_totals_row_removes_it_from_the_table(
     table = load_workbook(sample)["Data"].tables["Sales"]
     assert (table.ref, table.totalsRowCount) == ("A1:D6", 1)
     await call(
-        "delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="rows", at=5, count=2
+        "delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="rows", start=5, count=2
     )
     table = load_workbook(sample)["Data"].tables["Sales"]
     assert (table.ref, table.totalsRowCount) == ("A1:D4", None)
@@ -172,7 +172,7 @@ async def test_chart_series_and_chart_sheets_follow_edits_and_renames(
         path="sales.xlsx",
         sheet="Report",
         chart_type="scatter",
-        anchor_cell="E2",
+        at="E2",
         categories="Data!C2:C5",
         series=[{"values": "Data!D2:D5"}],
     )
@@ -205,10 +205,10 @@ async def test_filter_columns_and_sort_follow_column_edits(call: ToolCall, sampl
     await insert(call, "Data", "columns", 2)
     saved = load_workbook(sample)["Data"].auto_filter
     assert (saved.ref, saved.filterColumn[0].colId) == ("A1:E5", 3)
-    await call("delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="columns", at=1)
+    await call("delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="columns", start=1)
     saved = load_workbook(sample)["Data"].auto_filter
     assert (saved.ref, saved.filterColumn[0].colId) == ("A1:D5", 2)
-    await call("delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="columns", at=3)
+    await call("delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="columns", start=3)
     saved = load_workbook(sample)["Data"]
     assert saved.auto_filter.filterColumn == []
     assert not any(dimension.hidden for dimension in saved.row_dimensions.values())
@@ -233,7 +233,7 @@ async def test_deleting_one_of_several_filtered_columns_applies_the_rest_again(
         if dimension.hidden
     }
     assert hidden() == {3, 4, 5}
-    await call("delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="columns", at=3)
+    await call("delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="columns", start=3)
     assert hidden() == {3, 5}
     saved = load_workbook(sample)["Data"].auto_filter
     assert [column.colId for column in saved.filterColumn] == [0]
@@ -246,10 +246,10 @@ async def test_an_intersection_with_a_deleted_reference_is_kept_like_excel(
         "write_range",
         path="sales.xlsx",
         sheet="Report",
-        start_cell="A1",
+        at="A1",
         rows=[["=SUM(Data!C2:D2 Data!C3:D3)"]],
     )
-    await call("delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="rows", at=3)
+    await call("delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="rows", start=3)
     assert load_workbook(sample)["Report"]["A1"].value == "=SUM(Data!C2:D2 Data!#REF!)"
 
 

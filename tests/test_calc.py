@@ -149,7 +149,7 @@ async def test_written_formulas_get_storage_prefixes(call: ToolCall, sample: Pat
         "write_range",
         path="sales.xlsx",
         sheet="Report",
-        start_cell="A1",
+        at="A1",
         rows=[['=IFS(Data!C2>5,"a",TRUE,"b")', "=SORT(Data!C2:C5)"], ["=SUM(Data!C2:C5)"]],
     )
 

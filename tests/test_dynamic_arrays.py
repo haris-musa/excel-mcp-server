@@ -83,7 +83,7 @@ def numbers(files: Path) -> Path:
 async def test_arrays_are_stored_exactly_as_excel_stores_them(
     call: ToolCall, numbers: Path
 ) -> None:
-    await call("write_range", **BOOK, sheet="Out", start_cell="A1", rows=[FORMULAS])
+    await call("write_range", **BOOK, sheet="Out", at="A1", rows=[FORMULAS])
     ours = read_parts(numbers)
     excel = read_parts(FIXTURES / "excel_dynamic_arrays.xlsx")
 
@@ -99,7 +99,7 @@ async def test_arrays_are_stored_exactly_as_excel_stores_them(
 
 
 async def test_spilled_cells_hold_the_results_and_read_back(call: ToolCall, numbers: Path) -> None:
-    await call("write_range", **BOOK, sheet="Out", start_cell="A1", rows=[FORMULAS])
+    await call("write_range", **BOOK, sheet="Out", at="A1", rows=[FORMULAS])
     sheet = load_workbook(numbers)["Out"]
     cells = text(read_parts(numbers), sheet_part(read_parts(numbers), "Out"))
 
@@ -116,7 +116,7 @@ async def test_spilled_cells_hold_the_results_and_read_back(call: ToolCall, numb
 
 async def test_ordinary_formulas_stay_ordinary(call: ToolCall, numbers: Path) -> None:
     rows = [["=SUM(Data!B2:B6)", "=INDEX(Data!B2:B6,MATCH(9,Data!B2:B6,0))", "=Data!B2*2"]]
-    await call("write_range", **BOOK, sheet="Out", start_cell="A1", rows=rows)
+    await call("write_range", **BOOK, sheet="Out", at="A1", rows=rows)
     parts = read_parts(numbers)
 
     assert "xl/metadata.xml" not in parts
@@ -127,10 +127,8 @@ async def test_ordinary_formulas_stay_ordinary(call: ToolCall, numbers: Path) ->
 async def test_a_blocked_spill_is_reported_and_leaves_the_cells_alone(
     call: ToolCall, numbers: Path
 ) -> None:
-    await call("write_range", **BOOK, sheet="Out", start_cell="A3", rows=[["in the way"]])
-    result = await call(
-        "write_range", **BOOK, sheet="Out", start_cell="A1", rows=[["=SORT(Data!B2:B6)"]]
-    )
+    await call("write_range", **BOOK, sheet="Out", at="A3", rows=[["in the way"]])
+    result = await call("write_range", **BOOK, sheet="Out", at="A1", rows=[["=SORT(Data!B2:B6)"]])
 
     assert result["blocked"] == ["A1"]
     assert load_workbook(numbers)["Out"]["A3"].value == "in the way"
@@ -138,7 +136,7 @@ async def test_a_blocked_spill_is_reported_and_leaves_the_cells_alone(
     assert anchor.attributes["ref"] == "A1" and anchor.cm == "1" and anchor.value is None
     data = await call("read_range", **BOOK, sheet="Out")
     assert data["values"][0] == ["#SPILL!"]
-    await call("write_range", **BOOK, sheet="Out", start_cell="A3", rows=[[None]])
+    await call("write_range", **BOOK, sheet="Out", at="A3", rows=[[None]])
     data = await call("read_range", **BOOK, sheet="Out", range="A1:A5")
     assert [row[0] for row in data["values"]] == [1, 3, 5, 7, 9]
 
@@ -146,9 +144,7 @@ async def test_a_blocked_spill_is_reported_and_leaves_the_cells_alone(
 async def test_a_result_the_calculator_cannot_size_is_left_to_excel(
     call: ToolCall, numbers: Path
 ) -> None:
-    await call(
-        "write_range", **BOOK, sheet="Out", start_cell="A1", rows=[['=TEXTSPLIT("a,b",",")']]
-    )
+    await call("write_range", **BOOK, sheet="Out", at="A1", rows=[['=TEXTSPLIT("a,b",",")']])
     anchor = _anchors(read_parts(numbers), "Out")["A1"]
 
     assert anchor.cm == "1"  # still a dynamic array formula
@@ -157,8 +153,8 @@ async def test_a_result_the_calculator_cannot_size_is_left_to_excel(
 
 
 async def test_replacing_a_formula_replaces_what_it_spilled(call: ToolCall, numbers: Path) -> None:
-    await call("write_range", **BOOK, sheet="Out", start_cell="A1", rows=[["=SEQUENCE(5)"]])
-    await call("write_range", **BOOK, sheet="Out", start_cell="A1", rows=[["=SEQUENCE(2)"]])
+    await call("write_range", **BOOK, sheet="Out", at="A1", rows=[["=SEQUENCE(5)"]])
+    await call("write_range", **BOOK, sheet="Out", at="A1", rows=[["=SEQUENCE(2)"]])
     sheet = load_workbook(numbers)["Out"]
 
     assert [sheet.cell(row, 1).value for row in range(2, 6)] == [2, None, None, None]
@@ -166,8 +162,8 @@ async def test_replacing_a_formula_replaces_what_it_spilled(call: ToolCall, numb
 
 
 async def test_clearing_the_formula_clears_what_it_spilled(call: ToolCall, numbers: Path) -> None:
-    await call("write_range", **BOOK, sheet="Out", start_cell="A1", rows=[["=SEQUENCE(4)"]])
-    await call("write_range", **BOOK, sheet="Out", start_cell="A1", rows=[["plain"]])
+    await call("write_range", **BOOK, sheet="Out", at="A1", rows=[["=SEQUENCE(4)"]])
+    await call("write_range", **BOOK, sheet="Out", at="A1", rows=[["plain"]])
     sheet = load_workbook(numbers)["Out"]
 
     assert sheet["A1"].value == "plain"
@@ -180,8 +176,8 @@ async def test_clearing_the_formula_clears_what_it_spilled(call: ToolCall, numbe
 async def test_arrays_made_by_excel_survive_edits_and_moves(call: ToolCall, files: Path) -> None:
     copy_fixture(files, "excel_dynamic_arrays.xlsx")
     original = _anchors(read_parts(files / "book.xlsx"), "Out")
-    await call("write_range", **BOOK, sheet="Data", start_cell="D1", rows=[[1]])
-    await call("insert_rows_or_columns", **BOOK, sheet="Out", axis="rows", at=1, count=2)
+    await call("write_range", **BOOK, sheet="Data", at="D1", rows=[[1]])
+    await call("insert_rows_or_columns", **BOOK, sheet="Out", axis="rows", start=1, count=2)
     moved = _anchors(read_parts(files / "book.xlsx"), "Out")
 
     assert sorted(moved) == ["A3", "C3", "D3", "E3", "F3"]
@@ -201,7 +197,7 @@ async def test_arrays_made_by_excel_survive_edits_and_moves(call: ToolCall, file
 
 async def test_dynamic_array_metadata_joins_what_the_file_has(call: ToolCall, files: Path) -> None:
     value_metadata_workbook(files / "book.xlsx")
-    await call("write_range", **BOOK, sheet="Sheet", start_cell="D1", rows=[["=SEQUENCE(2)"]])
+    await call("write_range", **BOOK, sheet="Sheet", at="D1", rows=[["=SEQUENCE(2)"]])
     parts = read_parts(files / "book.xlsx")
     metadata = text(parts, "xl/metadata.xml")
 
@@ -221,7 +217,7 @@ async def test_a_spill_larger_than_one_call_may_write_is_refused(files: Path) ->
     async with Client(server) as client:
         result = await client.call_tool(
             "write_range",
-            {**BOOK, "sheet": "Out", "start_cell": "A1", "rows": [["=SEQUENCE(100)"]]},
+            {**BOOK, "sheet": "Out", "at": "A1", "rows": [["=SEQUENCE(100)"]]},
         )
 
     assert result.is_error
@@ -251,9 +247,9 @@ async def test_a_copied_sheet_copies_its_dynamic_arrays(call: ToolCall, files: P
 async def test_spill_references_stand_for_the_range_a_formula_filled(
     call: ToolCall, numbers: Path
 ) -> None:
-    await call("write_range", **BOOK, sheet="Out", start_cell="A1", rows=[FORMULAS])
+    await call("write_range", **BOOK, sheet="Out", at="A1", rows=[FORMULAS])
     uses = ["=SUM(C1#)", "=COUNTA(F1#)", "=INDEX(D1#,3)", "=ROWS(A1#)", "=SUM(E1#)", "=SUM(B9#)"]
-    await call("write_range", **BOOK, sheet="Out", start_cell="H1", rows=[uses])
+    await call("write_range", **BOOK, sheet="Out", at="H1", rows=[uses])
 
     data = await call("read_range", **BOOK, sheet="Out", range="H1:M1")
 

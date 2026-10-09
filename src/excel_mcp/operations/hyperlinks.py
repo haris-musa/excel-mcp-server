@@ -29,6 +29,7 @@ class Link(InputModel):
 
 
 class LinkInfo(BaseModel):
+    cell: str
     target: str
     tooltip: str | None = None
 
@@ -50,16 +51,17 @@ def set_link(cell: Cell, link: Link) -> None:
         cell.style = "Hyperlink"
 
 
-def list_links(sheet: Worksheet) -> dict[str, LinkInfo]:
-    return {
-        cell.coordinate: LinkInfo(
+def list_links(sheet: Worksheet) -> list[LinkInfo]:
+    return [
+        LinkInfo(
+            cell=cell.coordinate,
             target=(cell.hyperlink.target or "")
             + ("#" + cell.hyperlink.location if cell.hyperlink.location else ""),
             tooltip=cell.hyperlink.tooltip,
         )
         for _, cell in sorted(sheet._cells.items())
         if cell.hyperlink
-    }
+    ]
 
 
 def _check_address(target: str) -> None:

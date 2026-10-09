@@ -20,13 +20,15 @@ from openpyxl.chart.series import Series, XYSeries
 from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.errors import InvalidArgumentError
-from excel_mcp.operations import chartex
+from excel_mcp.operations import chartex, drawings
 from excel_mcp.operations import charts_axes as axes
 from excel_mcp.operations.chart_index import (
-    check_index,
+    chart_range,
     delete_chart,
+    find_chart,
     list_charts,
     replace_chart,
+    shape_names,
 )
 from excel_mcp.operations.charts_check import check_chart
 from excel_mcp.operations.charts_data import Plot, SeriesIn, resolve_series
@@ -43,6 +45,7 @@ from excel_mcp.operations.charts_series import color_slices, style_series
 from excel_mcp.operations.charts_style import style_chart
 from excel_mcp.operations.formatting import parse_color
 from excel_mcp.operations.sheets import validate_sheet_name
+from excel_mcp.package.shape_names import set_name
 from excel_mcp.refs import cell_name, parse_cell
 from excel_mcp.workspace import get_sheet
 
@@ -66,23 +69,24 @@ _XY = ("scatter", "bubble")
 def create_chart(
     workbook: Workbook,
     sheet: str,
-    anchor_cell: str | None,
+    at: str | None,
     chart_type: ChartType,
-    data_range: str | None,
+    source: str | None,
     series_in: SeriesIn,
     series: list[SeriesSpec],
     categories: str | None,
     options: ChartOptions,
-    index: int | None,
-) -> str:
-    """Add a chart (or replace chart `index`) and say where it went."""
-    host = None if anchor_cell is None else get_sheet(workbook, sheet)
-    anchor = None if anchor_cell is None else cell_name(*parse_cell(anchor_cell))
+    replace: str | None,
+    name: str | None,
+) -> tuple[str | None, str | None]:
+    """Add a chart (or replace the chart called `replace`); return its name and cells."""
+    host = None if at is None else get_sheet(workbook, sheet)
+    anchor = None if at is None else cell_name(*parse_cell(at))
     if host is None:
-        if index is not None:
+        if replace is not None or name is not None:
             raise InvalidArgumentError(
-                "index replaces a chart placed at anchor_cell; a chart sheet holds one chart, so "
-                "delete the sheet and create it again."
+                "replace and name apply to a chart placed at `at`; a chart sheet holds one "
+                "chart, so delete the sheet and create it again."
             )
         validate_sheet_name(sheet, workbook.sheetnames)
     check_only_for(options, chart_type)
@@ -92,13 +96,13 @@ def create_chart(
                 f"{chart_type} charts read their data in columns; list rows with `series`."
             )
         return _create_modern(
-            workbook, host, anchor, chart_type, data_range, series, categories, options, index
+            workbook, host, anchor, chart_type, source, series, categories, options, replace, name
         )
     plots = resolve_series(
         workbook,
         host.title if host else sheet,
         chart_type,
-        data_range,
+        source,
         series_in,
         series,
         categories,
@@ -107,13 +111,28 @@ def create_chart(
     chart = build_chart(plots, chart_type, options)
     if host is None:
         workbook.create_chartsheet(sheet).add_chart(chart)
-        return f"Added a {chart_type} chart on the new chart sheet {sheet!r}."
+        return None, None
+    index, name = _place(host, replace, name)
+    set_name(chart, name)
     if index is None:
         host.add_chart(chart, anchor)
-        return f"Added a {chart_type} chart to {host.title} at {anchor}."
-    moved = index > len(host._charts)
-    replace_chart(host, index, chart, anchor)
-    return _replaced(host, index, chart_type, anchor, len(host._charts) if moved else index)
+    else:
+        replace_chart(host, index, chart, anchor)
+    return name, chart_range(host, chart)
+
+
+def _place(host: Worksheet, replace: str | None, name: str | None) -> tuple[int | None, str]:
+    """Where a new chart goes (the position of the chart it replaces) and what it is called."""
+    names = [chart.name for chart in list_charts(host)]
+    index = None if replace is None else find_chart(host, replace)
+    taken = shape_names(host)
+    if index is not None:
+        taken.discard(names[index - 1].casefold())
+    if name is not None:
+        return index, drawings.check_name(name, taken)
+    if index is not None:
+        return index, names[index - 1]
+    return None, drawings.free_name("Chart", taken)
 
 
 def _create_modern(
@@ -121,35 +140,26 @@ def _create_modern(
     host: Worksheet | None,
     anchor: str | None,
     chart_type: ChartType,
-    data_range: str | None,
+    source: str | None,
     series: list[SeriesSpec],
     categories: str | None,
     options: ChartOptions,
-    index: int | None,
-) -> str:
+    replace: str | None,
+    name: str | None,
+) -> tuple[str, str]:
     if host is None or anchor is None:
-        raise InvalidArgumentError(
-            f"A {chart_type} chart sits on the sheet: give anchor_cell, e.g. 'E2'."
-        )
-    plots = resolve_modern(workbook, host.title, chart_type, data_range, series, categories)
+        raise InvalidArgumentError(f"A {chart_type} chart sits on the sheet: give at, e.g. 'E2'.")
+    plots = resolve_modern(workbook, host.title, chart_type, source, series, categories)
     check_modern(plots, chart_type, options)
+    index, name = _place(host, replace, name)
     if index is None:
-        chartex.add(workbook, host, anchor, chart_type, plots, options, None)
-        return f"Added a {chart_type} chart to {host.title} at {anchor}."
-    check_index(host, index)
+        return name, chartex.add(workbook, host, anchor, chart_type, plots, options, None, name)
     classic = len(host._charts)
     if index > classic:
         old = chartex.modern_charts(host)[index - classic - 1]
-        chartex.add(workbook, host, anchor, chart_type, plots, options, old)
-        return _replaced(host, index, chart_type, anchor, index)
-    delete_chart(host, index)
-    chartex.add(workbook, host, anchor, chart_type, plots, options, None)
-    return _replaced(host, index, chart_type, anchor, len(list_charts(host)))
-
-
-def _replaced(host: Worksheet, index: int, chart_type: str, anchor: str | None, now: int) -> str:
-    moved = f" It is now chart {now}." if now != index else ""
-    return f"Replaced chart {index} of {host.title} with a {chart_type} chart at {anchor}.{moved}"
+        return name, chartex.add(workbook, host, anchor, chart_type, plots, options, old, name)
+    delete_chart(host, list_charts(host)[index - 1].name)
+    return name, chartex.add(workbook, host, anchor, chart_type, plots, options, None, name)
 
 
 def build_chart(plots: list[Plot], chart_type: ChartType, options: ChartOptions) -> ChartBase:

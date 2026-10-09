@@ -12,10 +12,9 @@ pytestmark = pytest.mark.anyio
 
 PIVOT = {
     "path": "sales.xlsx",
-    "source_sheet": "Data",
-    "source_range": "A1:D5",
-    "target_sheet": "Report",
-    "target_cell": "A3",
+    "source": "Data!A1:D5",
+    "sheet": "Report",
+    "at": "A3",
 }
 
 
@@ -25,7 +24,9 @@ def _grid(path: Path, ref: str) -> list[list[object]]:
 
 
 async def test_rows_and_values(call: ToolCall, sample: Path) -> None:
-    await call("create_pivot_table", **PIVOT, rows=["region"], values=[{"field": "Units"}])
+    await call(
+        "create_pivot_table", **PIVOT, row_fields=["region"], value_fields=[{"field": "Units"}]
+    )
     assert _grid(sample, "A3:B6") == [
         ["Region", "Sum of Units"],
         ["North", 17],
@@ -43,8 +44,8 @@ async def test_subtotals_and_several_values(call: ToolCall, sample: Path) -> Non
     await call(
         "create_pivot_table",
         **PIVOT,
-        rows=["Region", "Product"],
-        values=[{"field": "Units"}, {"field": "Price", "function": "average"}],
+        row_fields=["Region", "Product"],
+        value_fields=[{"field": "Units"}, {"field": "Price", "function": "average"}],
     )
     assert _grid(sample, "A3:D11") == [
         [None, None, "Values", None],
@@ -63,9 +64,9 @@ async def test_column_field_with_totals(call: ToolCall, sample: Path) -> None:
     await call(
         "create_pivot_table",
         **PIVOT,
-        rows=["Region"],
-        columns=["Product"],
-        values=[{"field": "Units", "function": "max"}],
+        row_fields=["Region"],
+        column_fields=["Product"],
+        value_fields=[{"field": "Units", "function": "max"}],
     )
     assert _grid(sample, "A3:E7") == [
         ["Max of Units", "Product", None, None, None],
@@ -79,10 +80,10 @@ async def test_column_field_with_totals(call: ToolCall, sample: Path) -> None:
 async def test_filters_sit_above_the_table(call: ToolCall, sample: Path) -> None:
     await call(
         "create_pivot_table",
-        **{**PIVOT, "target_cell": "A1"},
-        rows=["Region"],
-        filters=["Product"],
-        values=[{"field": "Units"}],
+        **{**PIVOT, "at": "A1"},
+        row_fields=["Region"],
+        filter_fields=["Product"],
+        value_fields=[{"field": "Units"}],
     )
     assert _grid(sample, "A1:B2") == [["Product", "(All)"], [None, None]]
     assert sheet_pivots(load_workbook(sample)["Report"])[0].location.ref == "A3:B6"
@@ -104,13 +105,12 @@ async def test_blanks_dates_and_text_case(call: ToolCall, files: Path) -> None:
     await call(
         "create_pivot_table",
         path="d.xlsx",
-        source_sheet="Data",
-        source_range="A1:C4",
-        rows=["Who"],
-        columns=["Day"],
-        values=[{"field": "N", "function": "count"}],
-        target_sheet="Out",
-        target_cell="A1",
+        source="Data!A1:C4",
+        row_fields=["Who"],
+        column_fields=["Day"],
+        value_fields=[{"field": "N", "function": "count"}],
+        sheet="Out",
+        at="A1",
     )
     out = load_workbook(files / "d.xlsx")["Out"]
     assert [cell.value for cell in out[2]] == [
@@ -124,9 +124,11 @@ async def test_blanks_dates_and_text_case(call: ToolCall, files: Path) -> None:
 
 
 async def test_pivot_survives_other_edits(call: ToolCall, sample: Path) -> None:
-    await call("create_pivot_table", **PIVOT, rows=["Region"], values=[{"field": "Units"}])
-    await call("write_range", path="sales.xlsx", sheet="Report", start_cell="F1", rows=[[1]])
-    await call("create_sheet", path="sales.xlsx", sheet="Other")
+    await call(
+        "create_pivot_table", **PIVOT, row_fields=["Region"], value_fields=[{"field": "Units"}]
+    )
+    await call("write_range", path="sales.xlsx", sheet="Report", at="F1", rows=[[1]])
+    await call("create_sheet", path="sales.xlsx", new_name="Other")
     sheet = await call("describe_sheet", path="sales.xlsx", sheet="Report")
     assert sheet["pivot_tables"] == [
         {"name": "PivotTable1", "range": "A3:B6", "source": "Data!A1:D5"}
@@ -137,12 +139,14 @@ async def test_pivot_survives_other_edits(call: ToolCall, sample: Path) -> None:
 
 
 async def test_two_pivots_get_separate_caches(call: ToolCall, sample: Path) -> None:
-    await call("create_pivot_table", **PIVOT, rows=["Region"], values=[{"field": "Units"}])
+    await call(
+        "create_pivot_table", **PIVOT, row_fields=["Region"], value_fields=[{"field": "Units"}]
+    )
     await call(
         "create_pivot_table",
-        **{**PIVOT, "target_cell": "A12"},
-        rows=["Product"],
-        values=[{"field": "Units"}],
+        **{**PIVOT, "at": "A12"},
+        row_fields=["Product"],
+        value_fields=[{"field": "Units"}],
         name="Second",
     )
     pivots = sheet_pivots(load_workbook(sample)["Report"])
@@ -151,7 +155,9 @@ async def test_two_pivots_get_separate_caches(call: ToolCall, sample: Path) -> N
 
 
 async def test_delete_pivot_table(call: ToolCall, sample: Path) -> None:
-    await call("create_pivot_table", **PIVOT, rows=["Region"], values=[{"field": "Units"}])
+    await call(
+        "create_pivot_table", **PIVOT, row_fields=["Region"], value_fields=[{"field": "Units"}]
+    )
     await call("delete_pivot_table", path="sales.xlsx", sheet="Report", name="pivottable1")
     assert sheet_pivots(load_workbook(sample)["Report"]) == []
     assert _grid(sample, "A3:B4") == [[None, None], [None, None]]
@@ -160,23 +166,27 @@ async def test_delete_pivot_table(call: ToolCall, sample: Path) -> None:
 
 
 async def test_rejects_bad_arguments(call_error: ToolCall, sample: Path) -> None:
-    base = {**PIVOT, "values": [{"field": "Units"}]}
-    message = await call_error("create_pivot_table", **base, rows=["Country"])
+    base = {**PIVOT, "value_fields": [{"field": "Units"}]}
+    message = await call_error("create_pivot_table", **base, row_fields=["Country"])
     assert "Available fields" in message
-    message = await call_error("create_pivot_table", **base, rows=["Region"], columns=["Region"])
+    message = await call_error(
+        "create_pivot_table", **base, row_fields=["Region"], column_fields=["Region"]
+    )
     assert "once" in message
     message = await call_error(
-        "create_pivot_table", **{**PIVOT, "values": [{"field": "Region"}]}, rows=["Product"]
+        "create_pivot_table",
+        **{**PIVOT, "value_fields": [{"field": "Region"}]},
+        row_fields=["Product"],
     )
     assert "count" in message
     message = await call_error(
-        "create_pivot_table", **{**base, "source_range": "A2:D5"}, rows=["Region"]
+        "create_pivot_table", **{**base, "source": "Data!A2:D5"}, row_fields=["Region"]
     )
     assert "Header cell" in message
     message = await call_error(
         "create_pivot_table",
-        **{**base, "target_sheet": "Data", "target_cell": "B3"},
-        rows=["Region"],
+        **{**base, "sheet": "Data", "at": "B3"},
+        row_fields=["Region"],
     )
     assert "own source" in message or "already holds" in message
 
@@ -184,12 +194,14 @@ async def test_rejects_bad_arguments(call_error: ToolCall, sample: Path) -> None
 async def test_rejects_overlap_and_unknown_pivot(
     call_error: ToolCall, call: ToolCall, sample: Path
 ) -> None:
-    await call("create_pivot_table", **PIVOT, rows=["Region"], values=[{"field": "Units"}])
+    await call(
+        "create_pivot_table", **PIVOT, row_fields=["Region"], value_fields=[{"field": "Units"}]
+    )
     message = await call_error(
         "create_pivot_table",
-        **{**PIVOT, "target_cell": "B4"},
-        rows=["Product"],
-        values=[{"field": "Units"}],
+        **{**PIVOT, "at": "B4"},
+        row_fields=["Product"],
+        value_fields=[{"field": "Units"}],
     )
     assert "overlaps the PivotTable" in message
     message = await call_error("delete_pivot_table", path="sales.xlsx", sheet="Report", name="Nope")
@@ -201,13 +213,13 @@ async def test_rejects_formulas_and_mixed_columns(call_error: ToolCall, sample: 
     workbook["Data"]["C2"] = "=1+1"
     workbook.save(sample)
     message = await call_error(
-        "create_pivot_table", **PIVOT, rows=["Region"], values=[{"field": "Units"}]
+        "create_pivot_table", **PIVOT, row_fields=["Region"], value_fields=[{"field": "Units"}]
     )
     assert "formula" in message
     workbook["Data"]["C2"] = "ten"
     workbook.save(sample)
     message = await call_error(
-        "create_pivot_table", **PIVOT, rows=["Region"], values=[{"field": "Units"}]
+        "create_pivot_table", **PIVOT, row_fields=["Region"], value_fields=[{"field": "Units"}]
     )
     assert "mixes" in message
 
@@ -216,7 +228,7 @@ async def test_pivot_paths_are_confined(call_error: ToolCall, sample: Path) -> N
     message = await call_error(
         "create_pivot_table",
         **{**PIVOT, "path": "../sales.xlsx"},
-        rows=["Region"],
-        values=[{"field": "Units"}],
+        row_fields=["Region"],
+        value_fields=[{"field": "Units"}],
     )
     assert "outside" in message.lower() or "not allowed" in message.lower()

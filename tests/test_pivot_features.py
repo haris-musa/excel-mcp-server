@@ -21,10 +21,9 @@ pytestmark = pytest.mark.anyio
 FIXTURES = Path(__file__).parent / "fixtures"
 PIVOT = {
     "path": "sales.xlsx",
-    "source_sheet": "Data",
-    "source_range": "A1:D5",
-    "target_sheet": "Report",
-    "target_cell": "A1",
+    "source": "Data!A1:D5",
+    "sheet": "Report",
+    "at": "A1",
 }
 UNITS = [{"field": "Units"}]
 
@@ -50,8 +49,8 @@ async def test_number_format_is_stored_and_shown(call: ToolCall, sample: Path) -
     await call(
         "create_pivot_table",
         **PIVOT,
-        rows=["Region"],
-        values=[{"field": "Price", "function": "average", "number_format": '0.0 "kg"'}],
+        row_fields=["Region"],
+        value_fields=[{"field": "Price", "function": "average", "number_format": '0.0 "kg"'}],
     )
     sheet = load_workbook(sample)["Report"]
     assert sheet["B2"].number_format == '0.0 "kg"'
@@ -63,8 +62,8 @@ async def test_percent_of_total(call: ToolCall, sample: Path) -> None:
     await call(
         "create_pivot_table",
         **PIVOT,
-        rows=["Region"],
-        values=[{"field": "Units", "show_as": "percent_of_total"}],
+        row_fields=["Region"],
+        value_fields=[{"field": "Units", "show_as": "percent_of_total"}],
     )
     assert grid(sample, "A1:B4") == [
         ["Region", "Sum of Units"],
@@ -81,8 +80,8 @@ async def test_same_field_twice_gets_numbered_captions(call: ToolCall, sample: P
     await call(
         "create_pivot_table",
         **PIVOT,
-        rows=["Region"],
-        values=[{"field": "Units"}, {"field": "Units", "show_as": "percent_of_total"}],
+        row_fields=["Region"],
+        value_fields=[{"field": "Units"}, {"field": "Units", "show_as": "percent_of_total"}],
     )
     names = [field.name for field in sheet_pivots(load_workbook(sample)["Report"])[0].dataFields]
     assert names == ["Sum of Units", "Sum of Units2"]
@@ -92,9 +91,9 @@ async def test_difference_and_running_total_along_a_field(call: ToolCall, sample
     await call(
         "create_pivot_table",
         **PIVOT,
-        rows=["Region"],
-        columns=["Product"],
-        values=[{"field": "Units", "show_as": "difference_from", "base_field": "Product"}],
+        row_fields=["Region"],
+        column_fields=["Product"],
+        value_fields=[{"field": "Units", "show_as": "difference_from", "base_field": "Product"}],
     )
     assert grid(sample, "A3:D4") == [["North", None, -3, None], ["South", None, -2, None]]
     field = sheet_pivots(load_workbook(sample)["Report"])[0].dataFields[0]
@@ -107,12 +106,12 @@ async def test_rank_is_written_as_an_extension_and_survives_edits(
     await call(
         "create_pivot_table",
         **PIVOT,
-        rows=["Region"],
-        values=[{"field": "Units", "show_as": "rank_descending", "base_field": "Region"}],
+        row_fields=["Region"],
+        value_fields=[{"field": "Units", "show_as": "rank_descending", "base_field": "Region"}],
     )
     assert grid(sample, "A2:B3") == [["North", 1], ["South", 2]]
     assert 'pivotShowAs="rankDescending"' in pivot_xml(sample)
-    await call("write_range", path="sales.xlsx", sheet="Report", start_cell="F1", rows=[[1]])
+    await call("write_range", path="sales.xlsx", sheet="Report", at="F1", rows=[[1]])
     assert 'pivotShowAs="rankDescending"' in pivot_xml(sample)
 
 
@@ -120,7 +119,7 @@ async def test_excel_authored_extensions_survive_edits(call: ToolCall, files: Pa
     shutil.copy(FIXTURES / "excel_pivot_ext.xlsx", files / "ext.xlsx")
     before = pivot_xml(files / "ext.xlsx")
     assert "hideValuesRow" in before and 'pivotShowAs="rankAscending"' in before
-    await call("write_range", path="ext.xlsx", sheet="Report", start_cell="F1", rows=[["x"]])
+    await call("write_range", path="ext.xlsx", sheet="Report", at="F1", rows=[["x"]])
     after = pivot_xml(files / "ext.xlsx")
     assert "hideValuesRow" in after and 'pivotShowAs="rankAscending"' in after
 
@@ -146,7 +145,10 @@ async def test_invalid_show_as(
     call_error: ToolCall, sample: Path, value: dict[str, str], message: str
 ) -> None:
     result = await call_error(
-        "create_pivot_table", **PIVOT, rows=["Region"], values=[{"field": "Units", **value}]
+        "create_pivot_table",
+        **PIVOT,
+        row_fields=["Region"],
+        value_fields=[{"field": "Units", **value}],
     )
     assert message in result
 
@@ -155,9 +157,9 @@ async def test_rank_is_not_offered_with_values_in_rows(call_error: ToolCall, sam
     message = await call_error(
         "create_pivot_table",
         **PIVOT,
-        rows=["Region"],
+        row_fields=["Region"],
         values_in="rows",
-        values=[
+        value_fields=[
             {"field": "Units", "show_as": "rank_ascending", "base_field": "Region"},
             {"field": "Price"},
         ],
@@ -172,9 +174,9 @@ async def test_sort_by_label_descending(call: ToolCall, sample: Path) -> None:
     await call(
         "create_pivot_table",
         **PIVOT,
-        rows=["Region"],
-        values=UNITS,
-        fields=[{"field": "Region", "sort": "descending"}],
+        row_fields=["Region"],
+        value_fields=UNITS,
+        field_settings=[{"field": "Region", "sort": "descending"}],
     )
     assert [row[0] for row in grid(sample, "A2:A4")] == ["South", "North", "Grand Total"]
     assert 'sortType="descending"' in pivot_xml(sample)
@@ -184,9 +186,9 @@ async def test_sort_by_value(call: ToolCall, sample: Path) -> None:
     await call(
         "create_pivot_table",
         **PIVOT,
-        rows=["Product"],
-        values=[{"field": "Units"}, {"field": "Price", "function": "max"}],
-        fields=[{"field": "Product", "sort": "descending", "sort_by": "Sum of Units"}],
+        row_fields=["Product"],
+        value_fields=[{"field": "Units"}, {"field": "Price", "function": "max"}],
+        field_settings=[{"field": "Product", "sort": "descending", "sort_by": "Sum of Units"}],
     )
     assert [row[0] for row in grid(sample, "A3:A4")] == ["Apples", "Pears"]
     xml = pivot_xml(sample)
@@ -197,9 +199,9 @@ async def test_sort_by_needs_a_values_field(call_error: ToolCall, sample: Path) 
     message = await call_error(
         "create_pivot_table",
         **PIVOT,
-        rows=["Region"],
-        values=UNITS,
-        fields=[{"field": "Region", "sort_by": "Total"}],
+        row_fields=["Region"],
+        value_fields=UNITS,
+        field_settings=[{"field": "Region", "sort_by": "Total"}],
     )
     assert "Sum of Units" in message
 
@@ -228,10 +230,9 @@ def dated(files: Path) -> Path:
 
 DATED = {
     "path": "dated.xlsx",
-    "source_sheet": "Data",
-    "source_range": "A1:C5",
-    "target_sheet": "Out",
-    "target_cell": "A1",
+    "source": "Data!A1:C5",
+    "sheet": "Out",
+    "at": "A1",
 }
 
 
@@ -239,9 +240,9 @@ async def test_date_groups_become_row_levels(call: ToolCall, dated: Path) -> Non
     await call(
         "create_pivot_table",
         **DATED,
-        rows=["Day"],
-        values=[{"field": "Qty"}],
-        fields=[{"field": "Day", "group_dates": ["months", "years"]}],
+        row_fields=["Day"],
+        value_fields=[{"field": "Qty"}],
+        field_settings=[{"field": "Day", "group_dates": ["months", "years"]}],
     )
     assert grid(dated, "A1:C9", "Out") == [
         ["Years (Day)", "Months (Day)", "Sum of Qty"],
@@ -263,9 +264,9 @@ async def test_number_groups(call: ToolCall, dated: Path) -> None:
     await call(
         "create_pivot_table",
         **DATED,
-        rows=["Qty"],
-        values=[{"field": "Amount"}],
-        fields=[{"field": "Qty", "group_numbers": {"by": 5, "start": 0, "end": 15}}],
+        row_fields=["Qty"],
+        value_fields=[{"field": "Amount"}],
+        field_settings=[{"field": "Qty", "group_numbers": {"by": 5, "start": 0, "end": 15}}],
     )
     assert grid(dated, "A1:B5", "Out") == [
         ["Qty", "Sum of Amount"],
@@ -292,9 +293,9 @@ async def test_invalid_groups(
     result = await call_error(
         "create_pivot_table",
         **DATED,
-        rows=["Day", "Qty"][: 1 if fields[0]["field"] == "Day" else 2],
-        values=[{"field": "Amount"}],
-        fields=fields,
+        row_fields=["Day", "Qty"][: 1 if fields[0]["field"] == "Day" else 2],
+        value_fields=[{"field": "Amount"}],
+        field_settings=fields,
     )
     assert message in result
 
@@ -306,8 +307,8 @@ async def test_calculated_field(call: ToolCall, sample: Path) -> None:
     await call(
         "create_pivot_table",
         **PIVOT,
-        rows=["Region"],
-        values=[{"field": "Revenue"}],
+        row_fields=["Region"],
+        value_fields=[{"field": "Revenue"}],
         calculated_fields=[{"name": "Revenue", "formula": "=Units*Price"}],
     )
     assert grid(sample, "A1:B4") == [
@@ -325,8 +326,8 @@ async def test_calculated_fields_can_use_earlier_ones_and_quoted_names(
     await call(
         "create_pivot_table",
         **PIVOT,
-        rows=["Region"],
-        values=[{"field": "Both"}],
+        row_fields=["Region"],
+        value_fields=[{"field": "Both"}],
         calculated_fields=[
             {"name": "Double", "formula": "'Units' * 2"},
             {"name": "Both", "formula": "Double + Price"},
@@ -351,8 +352,8 @@ async def test_calculated_field_formulas_are_checked(
     result = await call_error(
         "create_pivot_table",
         **PIVOT,
-        rows=["Region"],
-        values=[{"field": "X"}],
+        row_fields=["Region"],
+        value_fields=[{"field": "X"}],
         calculated_fields=[{"name": "X", "formula": formula}],
     )
     assert message in result
@@ -362,8 +363,8 @@ async def test_calculated_fields_are_summed_only(call_error: ToolCall, sample: P
     result = await call_error(
         "create_pivot_table",
         **PIVOT,
-        rows=["Region"],
-        values=[{"field": "X", "function": "average"}],
+        row_fields=["Region"],
+        value_fields=[{"field": "X", "function": "average"}],
         calculated_fields=[{"name": "X", "formula": "Units"}],
     )
     assert "only be summed" in result
@@ -376,8 +377,8 @@ async def test_compact_layout(call: ToolCall, sample: Path) -> None:
     await call(
         "create_pivot_table",
         **PIVOT,
-        rows=["Region", "Product"],
-        values=UNITS,
+        row_fields=["Region", "Product"],
+        value_fields=UNITS,
         layout="compact",
     )
     assert grid(sample, "A1:B8") == [
@@ -402,9 +403,9 @@ async def test_outline_and_tabular_without_subtotals(call: ToolCall, sample: Pat
     workbook.save(sample)
     await call(
         "create_pivot_table",
-        **{**PIVOT, "target_sheet": "Outline"},
-        rows=["Region", "Product"],
-        values=UNITS,
+        **{**PIVOT, "sheet": "Outline"},
+        row_fields=["Region", "Product"],
+        value_fields=UNITS,
         layout="outline",
     )
     assert grid(sample, "A1:C7", "Outline") == [
@@ -418,9 +419,9 @@ async def test_outline_and_tabular_without_subtotals(call: ToolCall, sample: Pat
     ]
     await call(
         "create_pivot_table",
-        **{**PIVOT, "target_sheet": "Tab"},
-        rows=["Region", "Product"],
-        values=UNITS,
+        **{**PIVOT, "sheet": "Tab"},
+        row_fields=["Region", "Product"],
+        value_fields=UNITS,
         subtotals=False,
     )
     assert grid(sample, "A1:C6", "Tab") == [
@@ -438,8 +439,8 @@ async def test_values_in_rows(call: ToolCall, sample: Path) -> None:
     await call(
         "create_pivot_table",
         **PIVOT,
-        rows=["Region"],
-        values=[{"field": "Units"}, {"field": "Price", "function": "average"}],
+        row_fields=["Region"],
+        value_fields=[{"field": "Units"}, {"field": "Price", "function": "average"}],
         values_in="rows",
     )
     assert grid(sample, "A1:C8") == [
@@ -462,10 +463,10 @@ async def test_filter_with_one_item(call: ToolCall, sample: Path) -> None:
     await call(
         "create_pivot_table",
         **PIVOT,
-        rows=["Region"],
-        filters=["Product"],
-        values=UNITS,
-        fields=[{"field": "Product", "show_items": ["pears"]}],
+        row_fields=["Region"],
+        filter_fields=["Product"],
+        value_fields=UNITS,
+        field_settings=[{"field": "Product", "show_items": ["pears"]}],
     )
     assert grid(sample, "A1:B6") == [
         ["Product", "Pears"],
@@ -483,9 +484,9 @@ async def test_hidden_row_items_leave_out_their_data(call: ToolCall, sample: Pat
     await call(
         "create_pivot_table",
         **PIVOT,
-        rows=["Region", "Product"],
-        values=UNITS,
-        fields=[{"field": "Region", "show_items": ["South"]}],
+        row_fields=["Region", "Product"],
+        value_fields=UNITS,
+        field_settings=[{"field": "Region", "show_items": ["South"]}],
     )
     assert grid(sample, "A2:C5") == [
         ["South", "Apples", 5],
@@ -507,14 +508,13 @@ async def test_filter_with_several_of_three_items(call: ToolCall, files: Path) -
     await call(
         "create_pivot_table",
         path="kinds.xlsx",
-        source_sheet="Data",
-        source_range="A1:C4",
-        target_sheet="Out",
-        target_cell="A1",
-        rows=["Group"],
-        filters=["Kind"],
-        values=[{"field": "N"}],
-        fields=[{"field": "Kind", "show_items": ["a", "b"]}],
+        source="Data!A1:C4",
+        sheet="Out",
+        at="A1",
+        row_fields=["Group"],
+        filter_fields=["Kind"],
+        value_fields=[{"field": "N"}],
+        field_settings=[{"field": "Kind", "show_items": ["a", "b"]}],
     )
     assert grid(files / "kinds.xlsx", "A1:B5", "Out") == [
         ["Kind", "(Multiple Items)"],
@@ -528,19 +528,19 @@ async def test_filter_with_several_of_three_items(call: ToolCall, files: Path) -
 
 
 async def test_invalid_field_settings(call_error: ToolCall, sample: Path) -> None:
-    base = {**PIVOT, "rows": ["Region"], "values": UNITS}
+    base = {**PIVOT, "row_fields": ["Region"], "value_fields": UNITS}
     message = await call_error(
-        "create_pivot_table", **base, fields=[{"field": "Region", "show_items": ["Mars"]}]
+        "create_pivot_table", **base, field_settings=[{"field": "Region", "show_items": ["Mars"]}]
     )
     assert "no item 'Mars'" in message and "North" in message
     message = await call_error(
-        "create_pivot_table", **base, fields=[{"field": "Product", "sort": "descending"}]
+        "create_pivot_table", **base, field_settings=[{"field": "Product", "sort": "descending"}]
     )
     assert "not used" in message
     message = await call_error(
         "create_pivot_table",
         **base,
-        fields=[
+        field_settings=[
             {"field": "Region", "show_items": ["North"]},
             {"field": "region", "sort": "ascending"},
         ],

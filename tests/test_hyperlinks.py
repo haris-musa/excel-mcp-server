@@ -24,7 +24,7 @@ async def write_link(call: ToolCall, target: str, **link: object) -> None:
         "write_range",
         path="sales.xlsx",
         sheet="Data",
-        start_cell="F1",
+        at="F1",
         rows=[["Docs"]],
         links=[{"cell": "F1", "target": target, **link}],
     )
@@ -38,9 +38,9 @@ async def test_external_link_with_display_text_and_tooltip(call: ToolCall, sampl
     assert cell.hyperlink.tooltip == "Open the docs"
     assert cell.style == "Hyperlink"
     details = await call("describe_sheet", path="sales.xlsx", sheet="Data")
-    assert details["hyperlinks"] == {
-        "F1": {"target": "https://example.com/a?b=1", "tooltip": "Open the docs"}
-    }
+    assert details["hyperlinks"] == [
+        {"cell": "F1", "target": "https://example.com/a?b=1", "tooltip": "Open the docs"}
+    ]
 
 
 async def test_mailto_link(call: ToolCall, sample: Path) -> None:
@@ -57,13 +57,13 @@ async def test_internal_links_to_cells_and_names(call: ToolCall, sample: Path) -
         "write_range",
         path="sales.xlsx",
         sheet="Data",
-        start_cell="F1",
+        at="F1",
         rows=[["Go", "Totals"]],
         links=[{"cell": "F1", "target": "#'Sheet 2'!b2"}, {"cell": "G1", "target": "#Totals"}],
     )
     assert stored_links(sample) == {"F1": (None, "'Sheet 2'!B2"), "G1": (None, "Totals")}
     details = await call("describe_sheet", path="sales.xlsx", sheet="Data")
-    assert details["hyperlinks"]["F1"] == {"target": "#'Sheet 2'!B2"}
+    assert details["hyperlinks"][0] == {"cell": "F1", "target": "#'Sheet 2'!B2"}
 
 
 @pytest.mark.parametrize(
@@ -90,7 +90,7 @@ async def test_unsafe_or_invalid_targets_are_rejected(
         "write_range",
         path="sales.xlsx",
         sheet="Data",
-        start_cell="F1",
+        at="F1",
         rows=[["x"]],
         links=[{"cell": "F1", "target": target}],
     )
@@ -104,7 +104,7 @@ async def test_link_outside_the_written_block_is_rejected(
         "write_range",
         path="sales.xlsx",
         sheet="Data",
-        start_cell="F1",
+        at="F1",
         rows=[["x"]],
         links=[{"cell": "F2", "target": "https://example.com"}],
     )
@@ -113,11 +113,11 @@ async def test_link_outside_the_written_block_is_rejected(
 
 async def test_existing_links_survive_edits_that_move_cells(call: ToolCall, sample: Path) -> None:
     await write_link(call, "https://example.com/")
-    await call("insert_rows_or_columns", path="sales.xlsx", sheet="Data", axis="rows", at=1)
+    await call("insert_rows_or_columns", path="sales.xlsx", sheet="Data", axis="rows", start=1)
     assert list(stored_links(sample)) == ["F2"]
-    await call("insert_rows_or_columns", path="sales.xlsx", sheet="Data", axis="columns", at=1)
+    await call("insert_rows_or_columns", path="sales.xlsx", sheet="Data", axis="columns", start=1)
     assert list(stored_links(sample)) == ["G2"]
-    await call("delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="rows", at=1)
+    await call("delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="rows", start=1)
     assert list(stored_links(sample)) == ["G1"]
     await call("copy_sheet", path="sales.xlsx", sheet="Data", new_name="Copy")
     assert list(stored_links(sample, "Copy")) == ["G1"]
@@ -128,14 +128,14 @@ async def test_links_are_kept_when_copied_and_sorted(call: ToolCall, sample: Pat
         "write_range",
         path="sales.xlsx",
         sheet="Data",
-        start_cell="F1",
+        at="F1",
         rows=[["b"], ["a"]],
         links=[
             {"cell": "F1", "target": "https://b.example/"},
             {"cell": "F2", "target": "https://a.example/"},
         ],
     )
-    await call("copy_range", path="sales.xlsx", sheet="Data", range="F1:F2", target_cell="H1")
+    await call("copy_range", path="sales.xlsx", sheet="Data", range="F1:F2", at="H1")
     await call(
         "sort_range",
         path="sales.xlsx",
@@ -164,7 +164,7 @@ async def test_links_stay_inside_the_sandbox(call_error: ToolCall, sample: Path)
         "write_range",
         path="../sales.xlsx",
         sheet="Data",
-        start_cell="F1",
+        at="F1",
         rows=[["x"]],
         links=[{"cell": "F1", "target": "https://example.com"}],
     )

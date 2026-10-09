@@ -59,7 +59,7 @@ async def test_deleting_keeps_the_filter_of_a_row_field_and_of_a_table(
     call: ToolCall, book: str
 ) -> None:
     await add(call, book, field="Product", selected_items=["Apples"])
-    await add(call, book, sheet="Data", source=TABLE, field="Region", selected_items=["North"])
+    await add(call, book, sheet="Data", target=TABLE, field="Region", selected_items=["North"])
     await call("delete_slicer", path=book, sheet="Pivot", name="Product")
     await call("delete_slicer", path=book, sheet="Data", name="Region")
     assert pivot_cells(book)[:3] == [
@@ -75,7 +75,7 @@ async def test_deleting_keeps_the_filter_of_a_row_field_and_of_a_table(
 async def test_deleting_clears_what_only_the_slicer_kept(call: ToolCall, book: str) -> None:
     await add(call, book, field="Region", selected_items=["North"])
     await add(
-        call, book, field="Date", cell="H3", timeline={"start": "2025-01-01", "end": "2025-02-28"}
+        call, book, field="Date", at="H3", timeline={"start": "2025-01-01", "end": "2025-02-28"}
     )
     assert grand_total(book) == 10
     await call("delete_slicer", path=book, sheet="Pivot", name="Date")
@@ -108,19 +108,19 @@ async def test_copying_a_sheet_copies_its_slicers_with_their_own_caches(
     call: ToolCall, book: str
 ) -> None:
     await add(call, book, field="Product", selected_items=["Apples", "Pears"])
-    await add(call, book, field="Date", cell="H3", timeline={"level": "years"})
-    await add(call, book, sheet="Data", source=TABLE, field="Region", selected_items=["East"])
+    await add(call, book, field="Date", at="H3", timeline={"level": "years"})
+    await add(call, book, sheet="Data", target=TABLE, field="Region", selected_items=["East"])
     await call("copy_sheet", path=book, sheet="Pivot", new_name="Pivot 2")
     await call("copy_sheet", path=book, sheet="Data", new_name="Data 2")
     copied = await slicers_of(call, book, "Pivot 2")
-    assert [(s["name"], s["kind"], s["source"]) for s in copied] == [
+    assert [(s["name"], s["kind"], s["target"]) for s in copied] == [
         ("Product 1", "pivot", "Pivot 2!PivotSales"),
         ("Date 1", "timeline", "Pivot 2!PivotSales"),
     ]
     assert copied[0]["selected_items"] == ["Apples", "Pears"]
     assert pivot_cells(book, "Pivot 2")[:4] == pivot_cells(book)[:4]
     table = (await slicers_of(call, book, "Data 2"))[0]
-    assert (table["name"], table["source"], table["selected_items"]) == (
+    assert (table["name"], table["target"], table["selected_items"]) == (
         "Region 1",
         "Data 2!Sales2",
         ["East"],
@@ -149,21 +149,21 @@ async def test_a_copied_slicer_filters_only_the_copy(call: ToolCall, book: str) 
 async def test_copying_the_sheet_of_the_pivot_tables_joins_the_slicers_elsewhere(
     call: ToolCall, book: str
 ) -> None:
-    await call("create_sheet", path=book, sheet="Dashboard")
+    await call("create_sheet", path=book, new_name="Dashboard")
     await add(call, book, sheet="Dashboard", field="Region", selected_items=["East"])
     await call("copy_sheet", path=book, sheet="Pivot", new_name="Pivot 2")
     info = await slicers_of(call, book, "Dashboard")
-    assert info[0]["source"] == "Pivot!PivotSales, Pivot 2!PivotSales"
+    assert info[0]["target"] == "Pivot!PivotSales, Pivot 2!PivotSales"
     assert cache_names(book) == ["Slicer_Region"]
     assert grand_total(book, "Pivot 2") == 120
 
 
 async def test_copying_the_sheet_of_the_slicers_shares_the_cache(call: ToolCall, book: str) -> None:
-    await call("create_sheet", path=book, sheet="Dashboard")
+    await call("create_sheet", path=book, new_name="Dashboard")
     await add(call, book, sheet="Dashboard", field="Region", selected_items=["East"])
     await call("copy_sheet", path=book, sheet="Dashboard", new_name="Dashboard 2")
     copied = await slicers_of(call, book, "Dashboard 2")
-    assert [(s["name"], s["source"]) for s in copied] == [("Region 1", "Pivot!PivotSales")]
+    assert [(s["name"], s["target"]) for s in copied] == [("Region 1", "Pivot!PivotSales")]
     assert cache_names(book) == ["Slicer_Region"]
 
 
@@ -193,37 +193,36 @@ async def test_connecting_needs_a_shared_cache(
     await call(
         "create_pivot_table",
         path=book,
-        source_sheet="Data",
-        source_range="A1:D9",
-        rows=["Region"],
-        values=[{"field": "Amount"}],
-        target_sheet="Pivot",
-        target_cell="H3",
+        source="Data!A1:D9",
+        row_fields=["Region"],
+        value_fields=[{"field": "Amount"}],
+        sheet="Pivot",
+        at="H3",
         name="Other",
     )
     error = await call_error(
         "add_slicer",
         path=book,
         sheet="Pivot",
-        source=PIVOT,
+        target=PIVOT,
         field="Region",
-        cell="E3",
+        at="E3",
         connect=[{"sheet": "Pivot", "name": "Other"}],
     )
     assert "shares 'PivotSales''s data cache" in error
 
 
 async def test_a_slicer_moves_with_the_cells_it_sits_on(call: ToolCall, book: str) -> None:
-    await add(call, book, field="Product", cell="E5")
-    await call("insert_rows_or_columns", path=book, sheet="Pivot", axis="rows", at=1, count=2)
-    await call("insert_rows_or_columns", path=book, sheet="Pivot", axis="columns", at=1, count=1)
-    assert (await slicers_of(call, book, "Pivot"))[0]["cell"] == "F7"
+    await add(call, book, field="Product", at="E5")
+    await call("insert_rows_or_columns", path=book, sheet="Pivot", axis="rows", start=1, count=2)
+    await call("insert_rows_or_columns", path=book, sheet="Pivot", axis="columns", start=1, count=1)
+    assert (await slicers_of(call, book, "Pivot"))[0]["range"].startswith("F7:")
 
 
 async def test_deleting_a_sliced_column_removes_the_table_slicer(call: ToolCall, book: str) -> None:
-    await add(call, book, sheet="Data", source=TABLE, field="Region", selected_items=["East"])
-    await add(call, book, sheet="Data", source=TABLE, field="Product", cell="G20")
-    await call("delete_rows_or_columns", path=book, sheet="Data", axis="columns", at=1, count=1)
+    await add(call, book, sheet="Data", target=TABLE, field="Region", selected_items=["East"])
+    await add(call, book, sheet="Data", target=TABLE, field="Product", at="G20")
+    await call("delete_rows_or_columns", path=book, sheet="Data", axis="columns", start=1, count=1)
     info = await slicers_of(call, book, "Data")
     assert [s["name"] for s in info] == ["Product"]
     assert cache_names(book) == ["Slicer_Product"]
@@ -232,23 +231,21 @@ async def test_deleting_a_sliced_column_removes_the_table_slicer(call: ToolCall,
 
 
 async def test_deleting_the_rows_of_a_table_removes_its_slicers(call: ToolCall, book: str) -> None:
-    await call("create_sheet", path=book, sheet="Lists")
-    await call(
-        "write_range", path=book, sheet="Lists", start_cell="A1", rows=[["Tag"], ["a"], ["b"]]
-    )
+    await call("create_sheet", path=book, new_name="Lists")
+    await call("write_range", path=book, sheet="Lists", at="A1", rows=[["Tag"], ["a"], ["b"]])
     await call("create_table", path=book, sheet="Lists", range="A1:A3", name="Tags")
     await add(
-        call, book, sheet="Lists", source={"sheet": "Lists", "name": "Tags"}, field="Tag", cell="D1"
+        call, book, sheet="Lists", target={"sheet": "Lists", "name": "Tags"}, field="Tag", at="D1"
     )
-    await call("delete_rows_or_columns", path=book, sheet="Lists", axis="rows", at=1, count=3)
+    await call("delete_rows_or_columns", path=book, sheet="Lists", axis="rows", start=1, count=3)
     assert cache_names(book) == []
     assert not [n for n in parts_of(book) if "slicer" in n.lower()]
 
 
 async def test_deleting_a_sheet_removes_the_slicers_on_it(call: ToolCall, book: str) -> None:
-    await call("create_sheet", path=book, sheet="Dashboard")
+    await call("create_sheet", path=book, new_name="Dashboard")
     await add(call, book, sheet="Dashboard", field="Product")
-    await add(call, book, sheet="Data", source=TABLE, field="Region")
+    await add(call, book, sheet="Data", target=TABLE, field="Region")
     await call("delete_slicer", path=book, sheet="Dashboard", name="Product")
     await call("delete_sheet", path=book, sheet="Dashboard")
     assert cache_names(book) == ["Slicer_Region"]
@@ -257,8 +254,8 @@ async def test_deleting_a_sheet_removes_the_slicers_on_it(call: ToolCall, book: 
 async def test_a_table_with_slicers_on_other_sheets_cannot_lose_its_sheet(
     call: ToolCall, call_error: CallError, book: str
 ) -> None:
-    await call("create_sheet", path=book, sheet="Dashboard")
-    await add(call, book, sheet="Dashboard", source=TABLE, field="Region")
+    await call("create_sheet", path=book, new_name="Dashboard")
+    await add(call, book, sheet="Dashboard", target=TABLE, field="Region")
     error = await call_error("delete_sheet", path=book, sheet="Data")
     assert "Slicer_Region" in error
 
@@ -278,7 +275,7 @@ async def test_a_pivot_table_excel_made_is_filtered_for_excel_to_recalculate(
 ) -> None:
     _without_refresh_mark(book)
     message = await add(call, book, field="Region", selected_items=["East"])
-    assert "Excel recalculates them when the file is opened" in message
+    assert "Excel recalculates them when the file is opened" in message["note"]
     assert grand_total(book) == 360  # the cells keep their figures
     parts = parts_of(book)
     assert 'h="1"' in text(parts, "xl/pivotTables/pivotTable1.xml")
@@ -286,7 +283,7 @@ async def test_a_pivot_table_excel_made_is_filtered_for_excel_to_recalculate(
     info = await slicers_of(call, book, "Pivot")
     assert info[0]["selected_items"] == ["East"]
     await add(
-        call, book, field="Date", cell="H3", timeline={"start": "2025-01-01", "end": "2025-02-28"}
+        call, book, field="Date", at="H3", timeline={"start": "2025-01-01", "end": "2025-02-28"}
     )
     assert 'type="dateBetween"' in text(parts_of(book), "xl/pivotTables/pivotTable1.xml")
     await call("delete_slicer", path=book, sheet="Pivot", name="Date")

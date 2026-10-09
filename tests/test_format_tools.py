@@ -54,8 +54,8 @@ async def test_set_sheet_layout(call: ToolCall, sample: Path) -> None:
         path="sales.xlsx",
         sheet="Data",
         layout={
-            "column_widths": {"a": 18},
-            "row_heights": {"1": 24},
+            "column_widths_chars": {"a": 18},
+            "row_heights_pt": {"1": 24},
             "autofit_columns": ["B"],
             "freeze_panes": "A2",
             "auto_filter": {"range": "A1:D5"},
@@ -78,7 +78,7 @@ async def test_row_height_outside_the_sheet_is_rejected(call_error: ToolCall, sa
         "set_sheet_layout",
         path="sales.xlsx",
         sheet="Data",
-        layout={"row_heights": {"0": 24}},
+        layout={"row_heights_pt": {"0": 24}},
     )
     assert "Row 0" in message
 

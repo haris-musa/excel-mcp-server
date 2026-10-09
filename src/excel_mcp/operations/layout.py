@@ -39,10 +39,10 @@ class LineAction(InputModel):
 class SheetLayout(InputModel):
     """Every field is optional; fields left out are not changed."""
 
-    column_widths: dict[str, Width] | None = Field(
+    column_widths_chars: dict[str, Width] | None = Field(
         default=None, description="Column letter to width in characters, e.g. {'A': 20}."
     )
-    row_heights: dict[int, Height] | None = Field(
+    row_heights_pt: dict[int, Height] | None = Field(
         default=None, description="Row number to height in points, e.g. {'1': 30}."
     )
     autofit_columns: list[str] | None = Field(
@@ -74,11 +74,11 @@ def apply_layout(
 ) -> None:
     if layout.position is not None:
         move_sheet(sheet, layout.position)
-    if layout.column_widths or layout.autofit_columns or layout.columns:
+    if layout.column_widths_chars or layout.autofit_columns or layout.columns:
         split_column_dimensions(sheet)
-    for column, width in (layout.column_widths or {}).items():
+    for column, width in (layout.column_widths_chars or {}).items():
         sheet.column_dimensions[column_letter(column)].width = width
-    for row, height in (layout.row_heights or {}).items():
+    for row, height in (layout.row_heights_pt or {}).items():
         if not 1 <= row <= MAX_ROW:
             raise InvalidArgumentError(f"Row {row} is outside 1 to {MAX_ROW}.")
         sheet.row_dimensions[row].height = height
