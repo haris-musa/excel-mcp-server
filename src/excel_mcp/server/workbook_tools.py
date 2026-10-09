@@ -26,11 +26,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         path: WorkbookPath,
         sheets: Annotated[
             list[str] | None,
-            Field(min_length=1, description="Worksheet names, in order. Default: ['Sheet1']."),
+            Field(min_length=1, description="Default: ['Sheet1']."),
         ] = None,
-        overwrite: Annotated[
-            bool, Field(description="Replace the file if it already exists.")
-        ] = False,
+        overwrite: bool = False,
     ) -> Changed:
         """Create a new, empty Excel workbook."""
         sheets = sheets or ["Sheet1"]
@@ -41,13 +39,8 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
 
     @tools.reader("Describe workbook")
     def describe_workbook(path: WorkbookPath) -> WorkbookInfo:
-        """List a workbook's sheets (visibility, used range, how many tables, charts,
-        PivotTables, slicers and images each holds), defined names, properties and calculation
-        settings.
-
-        Start here. Reads each sheet once in full. Default and empty values are omitted;
-        `has_vba` is only present when true, see read_vba.
-        """
+        """Start here: a workbook's sheets (used range, object counts), defined names,
+        properties and calculation settings. `has_vba` appears only when true (read_vba)."""
         with workspace.stream(path) as workbook:
             resolved = workspace.resolve(path)
             return inspect.describe_workbook(
@@ -56,13 +49,10 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
 
     @tools.writer("Set workbook settings")
     def set_workbook_settings(path: WorkbookPath, settings: WorkbookSettings) -> Changed:
-        """Set document properties (title, subject, author, keywords, company), calculation
-        options (manual or automatic, iterative calculation, recalculation on load) and
-        workbook structure protection.
+        """Set document properties, calculation options and workbook structure protection.
 
-        Structure protection discourages adding, deleting, renaming, moving and hiding sheets
-        in Excel but is not security: it does not stop this server, and the password is weakly
-        hashed.
+        Protection discourages sheet changes in Excel but is not security (it does not stop
+        this server; the password is weakly hashed).
         """
         with workspace.edit(path) as workbook:
             workbook_settings.apply_settings(workbook, settings)
@@ -72,11 +62,11 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     def list_workbooks(
         directory: Annotated[
             str,
-            Field(description="Default: the server's workbook directory; else an absolute path."),
+            Field(description="Default: the workbook directory."),
         ] = "",
-        recursive: Annotated[bool, Field(description="Also search subdirectories.")] = False,
+        recursive: bool = False,
     ) -> dict[str, int]:
-        """List Excel files in a directory as path to size in bytes."""
+        """List Excel files in a directory: path to size in bytes."""
         folder = workspace.resolve_directory(directory)
         return {
             workspace.display(found): found.stat().st_size
@@ -86,7 +76,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
 
     @tools.reader("Export workbook")
     def export_workbook(path: WorkbookPath) -> CallToolResult:
-        """Return the workbook file as an embedded base64 resource, for remote servers."""
+        """Return the workbook file as an embedded base64 resource (remote servers)."""
         resolved = workspace.resolve_existing(path)
         name = workspace.display(resolved)
         return CallToolResult(
@@ -106,12 +96,10 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     @tools.destroyer("Import workbook")
     def import_workbook(
         path: WorkbookPath,
-        content_base64: Annotated[str, Field(description="The workbook file, base64 encoded.")],
-        overwrite: Annotated[
-            bool, Field(description="Replace the file if it already exists.")
-        ] = False,
+        content_base64: str,
+        overwrite: bool = False,
     ) -> Changed:
-        """Save an uploaded workbook file on the server, e.g. to edit it remotely."""
+        """Save an uploaded workbook file on the server (remote editing)."""
         content = files.decode_workbook(content_base64, workspace.limits.max_file_bytes)
         stored = workspace.store(path, content, overwrite=overwrite)
         return Changed(path=workspace.display(stored))

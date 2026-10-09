@@ -23,9 +23,8 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     def format_range(
         path: WorkbookPath, sheet: SheetName, range: RangeRef, style: CellFormat
     ) -> Changed:
-        """Change the font, fill, borders, alignment, number format or protection flags of a range.
-
-        `locked` and `formula_hidden` take effect once the sheet is protected (set_sheet_layout)."""
+        """Change the font, fill, borders, alignment, number format or protection flags of a
+        range. `locked` and `formula_hidden` apply once the sheet is protected."""
         with workspace.edit(path) as workbook:
             formatted = formatting.format_range(
                 get_sheet(workbook, sheet), range, style, workspace.limits.max_cells
@@ -38,13 +37,10 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         sheet: SheetName,
         range: RangeRef,
         action: Annotated[
-            Literal["merge", "unmerge"], Field(description="Merge the range or split it again.")
+            Literal["merge", "unmerge"], Field(description="Unmerge splits it again.")
         ] = "merge",
     ) -> Changed:
-        """Merge a range into one cell, or split a merged range again.
-
-        Merging keeps only the top-left value.
-        """
+        """Merge a range into one cell (keeping the top-left value), or unmerge it."""
         with workspace.edit(path) as workbook:
             target = get_sheet(workbook, sheet)
             limit = workspace.limits.max_cells
@@ -56,13 +52,11 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
 
     @tools.writer("Set sheet layout")
     def set_sheet_layout(path: WorkbookPath, sheet: SheetName, layout: SheetLayout) -> Changed:
-        """Set column widths, row heights, hidden or grouped rows and columns, frozen panes,
-        auto filter (on a range or a table, with criteria), tab color, sheet visibility and
-        position, view options (zoom, gridlines, headings, show formulas, right to left, active
-        sheet, selected cell), print setup and sheet protection.
+        """Set column widths, row heights, hidden or grouped lines, frozen panes, auto
+        filter, tab color, visibility, position, view options, print setup and protection.
 
-        Protection discourages edits in Excel but is not security: it does not stop this
-        server, and the password is weakly hashed.
+        Protection discourages edits in Excel but is not security (it does not stop this
+        server; the password is weakly hashed).
         """
         with workspace.edit(path) as workbook:
             target = get_sheet(workbook, sheet)
@@ -77,12 +71,8 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     def add_conditional_format(
         path: WorkbookPath, sheet: SheetName, range: RangeRef, rule: ConditionalFormat
     ) -> Changed:
-        """Add a conditional format rule to a range: scales, data bars, icon sets, cell value or
-        formula rules, top/bottom, average, duplicates, text, dates, blanks and errors.
-
-        Rules are evaluated in priority order (default: added last); formats that conflict
-        go to the first rule met.
-        """
+        """Add a conditional format rule to a range. Rules apply in priority order (default:
+        last); of conflicting formats the first rule met wins."""
         with workspace.edit(path) as workbook:
             target = conditional.add_conditional_format(get_sheet(workbook, sheet), range, rule)
         return Changed(sheet=sheet, range=target)
@@ -91,10 +81,8 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     def add_data_validation(
         path: WorkbookPath, sheet: SheetName, range: RangeRef, rule: DataValidationRule
     ) -> Changed:
-        """Restrict what can be entered in a range: a dropdown list (typed in, or from cells or a
-        name), whole numbers, decimals, dates, times, text length or a custom formula, with an
-        optional input message and error alert.
-        """
+        """Restrict what can be entered in a range (list dropdown, numbers, dates, times,
+        text length or custom formula), with optional input message and error alert."""
         with workspace.edit(path) as workbook:
             target = rules.add_data_validation(get_sheet(workbook, sheet), range, rule)
         return Changed(sheet=sheet, range=target)

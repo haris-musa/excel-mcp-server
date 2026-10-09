@@ -15,7 +15,7 @@ DefinedName = Annotated[
 ]
 NameScope = Annotated[
     str | None,
-    Field(description="Sheet the name is scoped to. Default: the workbook."),
+    Field(description="Scope sheet. Default: the workbook."),
 ]
 
 
@@ -26,15 +26,12 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         name: DefinedName,
         refers_to: Annotated[
             str,
-            Field(description="Range with sheet, e.g. 'Data!$B$2:$B$100', or a constant: '0.075'."),
+            Field(description="Range with sheet, 'Data!$B$2:$B$100', or a constant, '0.075'."),
         ],
         sheet: NameScope = None,
     ) -> Changed:
-        """Create a defined name for a range or constant, replacing a name of the same scope.
-
-        Formulas can then use it, e.g. '=SUM(Sales)'. The reference follows the formula
-        safety rules. describe_workbook lists names.
-        """
+        """Create a defined name for a range or constant (usable in formulas, '=SUM(Sales)'),
+        replacing one of the same scope. The reference follows the formula safety rules."""
         with workspace.edit(path) as workbook:
             replaced = names.set_defined_name(
                 workbook, name, refers_to, get_sheet(workbook, sheet) if sheet else None
@@ -46,7 +43,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     def delete_defined_name(
         path: WorkbookPath, name: DefinedName, sheet: NameScope = None
     ) -> Changed:
-        """Delete a defined name. Formulas that use it are not changed and will show #NAME?."""
+        """Delete a defined name; formulas using it will show #NAME?."""
         with workspace.edit(path) as workbook:
             names.delete_defined_name(workbook, name, get_sheet(workbook, sheet) if sheet else None)
         return Changed(sheet=sheet, name=name)
@@ -56,13 +53,10 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         path: WorkbookPath,
         sheet: SheetName,
         cell: CellRef,
-        text: Annotated[str, Field(min_length=1, description="Note text.")],
-        author: Annotated[str, Field(description="Shown as the note's author.")] = "Claude",
+        text: Annotated[str, Field(min_length=1)],
+        author: str = "Claude",
     ) -> str:
-        """Add a note to a cell, replacing the cell's existing note.
-
-        describe_sheet lists notes; Excel shows them on hover.
-        """
+        """Add a note to a cell, replacing its existing note."""
         with workspace.edit(path) as workbook:
             notes.set_note(get_sheet(workbook, sheet), cell, text, author)
         return f"Set the note on {sheet}!{cell}."

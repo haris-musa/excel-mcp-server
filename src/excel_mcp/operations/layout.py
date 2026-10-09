@@ -32,30 +32,28 @@ Height = Annotated[float, Field(gt=0, le=409)]
 class LineAction(InputModel):
     span: str = Field(description="Rows '3' or '3:5'; columns 'B' or 'B:D'.")
     action: Literal["hide", "show", "group", "ungroup"] = Field(
-        description="Group adds one outline level (max 7), ungroup removes one."
+        description="Group adds an outline level (max 7), ungroup removes one."
     )
 
 
 class SheetLayout(InputModel):
-    """Every field is optional; fields left out are not changed."""
-
     column_widths_chars: dict[str, Width] | None = Field(
-        default=None, description="Column letter to width in characters, e.g. {'A': 20}."
+        default=None, description="Column letter to width in characters, {'A': 20}."
     )
     row_heights_pt: dict[int, Height] | None = Field(
-        default=None, description="Row number to height in points, e.g. {'1': 30}."
+        default=None, description="Row number to height in points, {'1': 30}."
     )
     autofit_columns: list[str] | None = Field(
-        default=None, description="Column letters sized to their text, e.g. ['A', 'C']."
+        default=None, description="Column letters sized to their text."
     )
     freeze_panes: str | None = Field(
-        default=None, description="First unfrozen cell: 'A2' freezes row 1, 'A1' unfreezes."
+        default=None, description="First unfrozen cell: 'A2' freezes row 1; 'A1' unfreezes."
     )
     auto_filter: AutoFilter | None = Field(
         default=None,
-        description="Filter dropdowns and criteria; rows that fail them are hidden, as in Excel.",
+        description="Rows that fail the criteria are hidden.",
     )
-    tab_color: str | None = Field(default=None, description="Hex color.")
+    tab_color: str | None = Field(default=None, description="Hex.")
     rows: list[LineAction] | None = None
     columns: list[LineAction] | None = None
     visibility: Literal["visible", "hidden"] | None = Field(
@@ -63,9 +61,7 @@ class SheetLayout(InputModel):
     )
     print_setup: PrintSetup | None = None
     protection: Protection | None = None
-    position: int | None = Field(
-        default=None, ge=1, description="Move the sheet to this 1-based tab position."
-    )
+    position: int | None = Field(default=None, ge=1, description="1-based tab position.")
     view: ViewOptions | None = None
 
 

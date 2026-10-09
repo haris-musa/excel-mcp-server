@@ -39,47 +39,37 @@ class ColumnOptions(InputModel):
     name: str = Field(description="The column's header text.")
     formula: str | None = Field(
         default=None,
-        description="Makes it a calculated column: the formula, written for the first data row, "
-        "fills every row, and rows added later. Use structured references, e.g. "
-        "'=[@Price]*[@Qty]' (the same row) or '=Sales[Price]', or relative cells like '=B2*C2'.",
+        description="Calculated column: formula for the first data row, filled down and into "
+        "new rows, e.g. '=[@Price]*[@Qty]' or '=B2*C2'.",
     )
     total: TotalFunction | Annotated[str, StringConstraints(pattern=r"^=")] | None = Field(
         default=None,
-        description="Totals row cell: a function (shown as SUBTOTAL, so it ignores filtered-out "
-        "rows), 'none', or a formula like '=SUM([Price])/2'.",
+        description="Totals row cell: a function (as SUBTOTAL), 'none' or a formula "
+        "like '=SUM([Price])/2'.",
     )
-    total_label: str | None = Field(
-        default=None, description="Totals row text instead of a total, e.g. 'Total'."
-    )
+    total_label: str | None = Field(default=None, description="Totals row text instead of a total.")
 
 
 class TableOptions(InputModel):
-    """Fields left out keep the table's setting; a new table gets Excel's defaults."""
-
     style: str | None = Field(
         default=None,
-        description="Built-in style, e.g. 'TableStyleMedium2' (Light1-21, Medium1-28, Dark1-11).",
+        description="e.g. 'TableStyleMedium2' (Light1-21, Medium1-28, Dark1-11).",
     )
     header_row: bool | None = Field(
         default=None,
-        description="Turning it off deletes the header cells and the table shrinks to its data; "
-        "turning it on needs empty cells above the table.",
+        description="Off deletes the header cells; on needs empty cells above.",
     )
     totals_row: bool | None = Field(
         default=None,
-        description="A row below the table, which must be empty. As in Excel, its first cell says "
-        "'Total' and the last column sums numbers or counts other values.",
+        description="Needs an empty row below the table; as in Excel, it says 'Total' and "
+        "sums or counts the last column.",
     )
     striped_rows: bool | None = None
     striped_columns: bool | None = None
-    first_column: bool | None = Field(default=None, description="Emphasize the first column.")
-    last_column: bool | None = Field(default=None, description="Emphasize the last column.")
-    filter_button: bool | None = Field(
-        default=None, description="Filter buttons in the header row."
-    )
-    columns: list[ColumnOptions] = Field(
-        default=[], description="Calculated columns and totals, by header text."
-    )
+    first_column: bool | None = None
+    last_column: bool | None = None
+    filter_button: bool | None = None
+    columns: list[ColumnOptions] = Field(default=[], description="By header text.")
 
 
 def _data_rows(table: Table) -> tuple[int, int]:

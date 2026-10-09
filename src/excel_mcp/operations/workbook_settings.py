@@ -33,23 +33,16 @@ class Properties(InputModel):
 
 
 class Calculation(InputModel):
-    """Fields left out are not changed."""
-
     mode: CalcMode | None = Field(
         default=None,
-        description="'manual' recalculates only on request (F9); 'auto_except_tables' "
-        "skips data tables.",
+        description="'manual': only on request (F9); 'auto_except_tables': skips data tables.",
     )
-    iterative: bool | None = Field(
-        default=None, description="Allow circular references, repeating the calculation."
-    )
+    iterative: bool | None = Field(default=None, description="Allow circular references.")
     max_iterations: int | None = Field(default=None, ge=1, le=32_767)
     max_change: float | None = Field(
-        default=None, gt=0, description="Stop iterating when results change less than this."
+        default=None, gt=0, description="Stop when results change less than this."
     )
-    full_calc_on_load: bool | None = Field(
-        default=None, description="Recalculate every formula when the file opens."
-    )
+    full_calc_on_load: bool | None = Field(default=None, description="Recalculate on open.")
 
 
 class StructureProtection(InputModel):
@@ -60,13 +53,9 @@ class StructureProtection(InputModel):
 
 
 class WorkbookSettings(InputModel):
-    """Every field is optional; fields left out are not changed."""
-
     doc_properties: Properties | None = None
     calculation: Calculation | None = None
-    structure_protection: StructureProtection | None = Field(
-        default=None, description="Stops sheets being added, deleted, renamed, moved or hidden."
-    )
+    structure_protection: StructureProtection | None = Field(default=None)
 
 
 class PropertiesInfo(BaseModel):

@@ -16,8 +16,8 @@ PAPER_SIZES = {"letter": 1, "legal": 5, "tabloid": 3, "a3": 8, "a4": 9, "a5": 11
 
 
 class FitToPages(InputModel):
-    wide: int = Field(default=1, ge=0, le=100, description="Pages across; 0 = any number.")
-    tall: int = Field(default=1, ge=0, le=100, description="Pages down; 0 = any number.")
+    wide: int = Field(default=1, ge=0, le=100, description="0 = any number.")
+    tall: int = Field(default=1, ge=0, le=100, description="0 = any number.")
 
 
 class Margins(InputModel):
@@ -25,8 +25,8 @@ class Margins(InputModel):
     right: float | None = Field(default=None, ge=0, le=50)
     top: float | None = Field(default=None, ge=0, le=50)
     bottom: float | None = Field(default=None, ge=0, le=50)
-    header: float | None = Field(default=None, ge=0, le=50, description="Distance from the edge.")
-    footer: float | None = Field(default=None, ge=0, le=50, description="Distance from the edge.")
+    header: float | None = Field(default=None, ge=0, le=50)
+    footer: float | None = Field(default=None, ge=0, le=50)
 
 
 class HeaderFooterText(InputModel):
@@ -46,13 +46,13 @@ class PrintSetup(InputModel):
     fit_to_pages: FitToPages | None = None
     margins_cm: Margins | None = None
     print_area: str | None = Field(
-        default=None, description="Range, e.g. 'A1:H40'; '' prints the whole sheet."
+        default=None, description="e.g. 'A1:H40'; '' prints the whole sheet."
     )
     title_rows: str | None = Field(
-        default=None, description="Rows repeated on every page, e.g. '1:2'; '' clears."
+        default=None, description="Rows to repeat, e.g. '1:2'; '' clears."
     )
     title_columns: str | None = Field(
-        default=None, description="Columns repeated on every page, e.g. 'A:B'; '' clears."
+        default=None, description="Columns to repeat, e.g. 'A:B'; '' clears."
     )
     center_horizontally: bool | None = None
     center_vertically: bool | None = None

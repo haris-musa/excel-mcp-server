@@ -32,35 +32,29 @@ _AREA = re.compile(r"\$?[A-Za-z]{1,3}\$?\d+:\$?[A-Za-z]{1,3}\$?\d+")
 
 
 class DataValidationRule(InputModel):
-    """Which fields apply depends on ``type``."""
-
     type: Literal["list", "whole", "decimal", "date", "time", "text_length", "custom"]
-    options: list[str] | None = Field(default=None, description="list: allowed values, typed in.")
+    options: list[str] | None = Field(default=None, description="list: allowed values.")
     source: str | None = Field(
         default=None,
-        description="list: cells or a name holding the allowed values, instead of options, "
-        "e.g. '=$A$2:$A$20', '=Sheet2!$A:$A' or '=Regions'.",
+        description="list, instead of options: one row or column or a name, e.g. "
+        "'=$A$2:$A$20' or '=Regions'.",
     )
-    operator: Operator | None = Field(
-        default=None, description="whole, decimal, date, time, text_length."
-    )
+    operator: Operator | None = Field(default=None, description="Not for list and custom.")
     minimum: str | None = Field(
         default=None,
-        description="Number or formula; dates as '2026-01-31', times as '09:30'.",
+        description="Number or formula; dates '2026-01-31', times '09:30'.",
     )
-    maximum: str | None = Field(default=None, description="For between/notBetween.")
+    maximum: str | None = Field(default=None, description="For between.")
     formula: str | None = Field(
-        default=None, description="custom: for the range's top-left cell, e.g. '=A2>B2'."
+        default=None, description="custom: for the top-left cell, e.g. '=A2>B2'."
     )
     allow_blank: bool = True
     prompt_title: str | None = Field(
         default=None, max_length=32, description="Input message title."
     )
-    prompt: str | None = Field(
-        default=None, max_length=255, description="Input message, shown when a cell is selected."
-    )
+    prompt: str | None = Field(default=None, max_length=255, description="Input message.")
     error_style: Literal["stop", "warning", "information"] = Field(
-        default="stop", description="stop rejects bad input; the others let the user keep it."
+        default="stop", description="stop rejects bad input; others let it stay."
     )
     error_title: str | None = Field(default=None, max_length=32)
     error_message: str | None = Field(default=None, max_length=255)

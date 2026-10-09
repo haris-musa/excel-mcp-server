@@ -30,28 +30,27 @@ ValuesIn = Literal["columns", "rows"]
 
 
 class PivotValue(InputModel):
-    field: str = Field(description="Header of the column to summarize, or a calculated field.")
+    field: str = Field(description="Column header or calculated field.")
     function: Function = Field(
-        default="sum", description="'count' counts non-empty cells; the others need numbers."
+        default="sum", description="'count' counts non-empty cells; others need numbers."
     )
     number_format: str | None = Field(
         default=None,
         max_length=255,
-        description="Excel code such as '#,##0.00'. Default: the source's format.",
+        description="Excel code. Default: the source's.",
     )
     show_as: ShowAs | None = Field(
         default=None,
-        description="Show each value relative to others, as 'Show Values As' does. "
-        "Needs base_field for percent_of_parent, difference_from, percent_difference_from, "
-        "percent_of, running_total, percent_running_total and the rank types.",
+        description="'Show Values As'. Needs base_field, except for percent_of_total, "
+        "percent_of_row, percent_of_column, percent_of_parent_row and _column.",
     )
     base_field: str | None = Field(
-        default=None, description="A rows or columns field that show_as compares along."
+        default=None, description="Row or column field that show_as runs along."
     )
     base_item: str | None = Field(
         default=None,
-        description="With difference_from, percent_difference_from or percent_of: the item to "
-        "compare with. Default: the previous item.",
+        description="difference_from, percent_difference_from, percent_of: item to compare "
+        "with. Default: the previous.",
     )
 
 
@@ -63,31 +62,26 @@ class NumberGroup(InputModel):
 
 class PivotField(InputModel):
     field: str = Field(description="A header used in rows, columns or filters.")
-    show_items: list[str] = Field(
-        default=[], description="Show only these items (as the table labels them). Default: all."
-    )
-    sort: Literal["ascending", "descending"] = Field(
-        default="ascending", description="Order of the items."
-    )
+    show_items: list[str] = Field(default=[], description="Show only these items. Default: all.")
+    sort: Literal["ascending", "descending"] = Field(default="ascending")
     sort_by: str | None = Field(
-        default=None, description="Sort by this values field's total (e.g. 'Sum of Units')."
+        default=None, description="Sort by this value field's total, e.g. 'Sum of Units'."
     )
     group_dates: list[DateUnit] = Field(
         default=[],
-        description="Group a date field, e.g. ['years', 'months']; each unit becomes a "
-        "level, largest first.",
+        description="Group a date field, e.g. ['years', 'months'] (largest first).",
     )
     group_numbers: NumberGroup | None = Field(
-        default=None, description="Group a number field into ranges."
+        default=None, description="Group numbers into ranges."
     )
 
 
 class CalculatedField(InputModel):
-    name: str = Field(description="Name to use in values, e.g. 'Revenue'.")
+    name: str = Field(description="e.g. 'Revenue'.")
     formula: str = Field(
         max_length=8_192,
-        description="Over source field names (quote names with spaces: 'Unit Price'), "
-        "e.g. 'Units*Price'. Applied to the sums, as in Excel.",
+        description="Over source field names ('Unit Price' quoted), e.g. 'Units*Price'; "
+        "applied to the sums, as in Excel.",
     )
 
 

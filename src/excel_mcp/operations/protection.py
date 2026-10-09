@@ -37,7 +37,7 @@ class Protection(InputModel):
     )
     allow: list[AllowedAction] = Field(
         default=["select_locked_cells", "select_unlocked_cells"],
-        description="What users may still do.",
+        description="Still allowed.",
     )
 
 

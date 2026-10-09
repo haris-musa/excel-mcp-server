@@ -66,18 +66,16 @@ _USED = {
 
 class FilterCondition(InputModel):
     operator: Operator
-    value: str | float = Field(description="Text, a number, or a date such as '2026-01-31'.")
+    value: str | float = Field(description="Text, number or date '2026-01-31'.")
 
 
 class FilterColumn(InputModel):
-    """Only the fields named for the ``type`` apply."""
-
     column: str = Field(description="Header text or column letter.")
     type: Literal["values", "compare", "top", "bottom", "above_average", "below_average", "color"]
     values: list[str] | None = Field(
         default=None,
-        description="values: values to show; '' is blank, dates are '2026-01-31'. Numbers with "
-        "a number format need compare.",
+        description="values: to show; '' is blank, dates '2026-01-31'. Formatted numbers "
+        "need compare.",
     )
     conditions: list[FilterCondition] | None = Field(
         default=None, min_length=1, max_length=2, description="compare."
@@ -87,7 +85,7 @@ class FilterColumn(InputModel):
         default=None, ge=1, le=1000, description="top, bottom: items, or percent (1-100)."
     )
     percent: bool = Field(default=False, description="top, bottom.")
-    color: str | None = Field(default=None, description="color: fill color of the cells to show.")
+    color: str | None = Field(default=None, description="color: fill color to show.")
 
 
 def column_filter(

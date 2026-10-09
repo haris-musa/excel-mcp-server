@@ -31,7 +31,7 @@ SortValue = tuple[int, Any]
 
 
 class SortKey(InputModel):
-    column: str = Field(description="Header text (if has_header) or column letter, e.g. 'C'.")
+    column: str = Field(description="Header text (if has_header) or column letter.")
     order: Order = "ascending"
 
 
