@@ -271,3 +271,31 @@ async def test_text_starting_with_equals_is_not_a_formula_error(
     data = await call("read_range", path="calc.xlsx", sheet="Data", mode="formulas")
 
     assert data["values"] == [["=== header ==="]]
+
+
+async def test_hyperlink_is_its_friendly_name_or_its_link(call: ToolCall, files: Path) -> None:
+    """Results as Excel gives them; the formulas are stored as a file from Excel has them."""
+    formulas = {
+        "B1": '=HYPERLINK("http://a.test","Go")',
+        "B2": '=HYPERLINK("http://a.test")',
+        "B3": '=HYPERLINK("http://a.test",5)',
+        "B4": '=HYPERLINK("http://a.test",A5)',
+        "B5": "=HYPERLINK(A5)",
+        "B6": "=HYPERLINK(5)",
+        "B7": '=HYPERLINK("a",A1)',
+        "B8": '=HYPERLINK("a",1/0)',
+    }
+    make_workbook(files / "calc.xlsx", {"A1": "text", **formulas})
+
+    data = await read_values(call, "B1:B8")
+
+    assert data["values"] == [
+        ["Go"],
+        ["http://a.test"],
+        [5],
+        [0],
+        [""],
+        ["5"],
+        ["text"],
+        ["#DIV/0!"],
+    ]

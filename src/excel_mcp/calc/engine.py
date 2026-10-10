@@ -55,6 +55,7 @@ from excel_mcp.calc.values import (
     Value,
     date_to_serial,
 )
+from excel_mcp.lazy_workbook import LazyCells, extent
 from excel_mcp.refs import parse_range
 from excel_mcp.workspace import worksheets
 from excel_mcp.xlfn import FUTURE_FUNCTIONS
@@ -181,8 +182,8 @@ class Engine:
                         target,
                         node.top or 1,
                         node.left or 1,
-                        node.bottom or target.max_row,
-                        node.right or target.max_column,
+                        node.bottom or extent(target)[0],
+                        node.right or extent(target)[1],
                     )
             case Name() if depth < MAX_NAME_DEPTH:
                 scope = self.sheets.get((node.sheet or "").casefold(), home)
@@ -370,8 +371,9 @@ class Engine:
         for sheet in sheets:
             top = ref.top or 1
             left = ref.left or 1
-            bottom = ref.bottom or max(sheet.max_row, top)
-            right = ref.right or max(sheet.max_column, left)
+            last_row, last_column = extent(sheet)
+            bottom = ref.bottom or max(last_row, top)
+            right = ref.right or max(last_column, left)
             self.charge((bottom - top + 1) * (right - left + 1))
             for row in range(top, bottom + 1):
                 rows.append([self.cell_value(sheet, row, col) for col in range(left, right + 1)])
@@ -533,7 +535,9 @@ def _stored_in(
     sheet: Worksheet, top: int, left: int, bottom: int, right: int
 ) -> Iterator[tuple[tuple[int, int], Any]]:
     """The stored cells inside a rectangle, whichever is fewer to walk: it or the sheet."""
-    if (bottom - top + 1) * (right - left + 1) <= len(sheet._cells):
+    if isinstance(sheet._cells, LazyCells):
+        yield from sheet._cells.stored_in(top, left, bottom, right)
+    elif (bottom - top + 1) * (right - left + 1) <= len(sheet._cells):
         for row in range(top, bottom + 1):
             for col in range(left, right + 1):
                 if (cell := sheet._cells.get((row, col))) is not None:

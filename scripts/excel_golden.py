@@ -13,6 +13,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
+from typing import Any
 
 import win32com.client  # pyright: ignore[reportMissingImports]
 from golden_cases import CASES, HIDDEN_ROWS, INPUTS, NAMES, TABLES
@@ -34,8 +35,26 @@ ERROR_CODES = {
 }
 
 
-def excel_values(excel: object, formulas: list[str], directory: Path) -> list[object] | None:
-    """Excel's result for each formula, or None if Excel cannot open the workbook."""
+def start_excel() -> Any:
+    excel = win32com.client.DispatchEx("Excel.Application")
+    excel.Visible = False
+    excel.DisplayAlerts = False
+    return excel
+
+
+def excel_values(formulas: list[str], directory: Path) -> list[object] | None:
+    """Excel's result for each formula, or None if Excel cannot open the workbook.
+
+    Each call starts Excel afresh: after a workbook it cannot open, it often fails to calculate.
+    """
+    excel = start_excel()
+    try:
+        return _calculate(excel, formulas, directory)
+    finally:
+        excel.Quit()
+
+
+def _calculate(excel: Any, formulas: list[str], directory: Path) -> list[object] | None:
     path = directory / "golden.xlsx"
     build_workbook(path, INPUTS, NAMES, formulas, HIDDEN_ROWS, TABLES)
     temp = Path(os.environ["TEMP"])
@@ -65,16 +84,16 @@ def excel_values(excel: object, formulas: list[str], directory: Path) -> list[ob
         workbook.Close(False)
 
 
-def rejected_by_excel(excel: object, formulas: list[str], directory: Path) -> list[str]:
+def rejected_by_excel(formulas: list[str], directory: Path) -> list[str]:
     """The formulas that stop Excel from opening the workbook, found by halving."""
-    if excel_values(excel, formulas, directory) is not None:
+    if excel_values(formulas, directory) is not None:
         return []
     if len(formulas) == 1:
         return formulas
     middle = len(formulas) // 2
     return [
-        *rejected_by_excel(excel, formulas[:middle], directory),
-        *rejected_by_excel(excel, formulas[middle:], directory),
+        *rejected_by_excel(formulas[:middle], directory),
+        *rejected_by_excel(formulas[middle:], directory),
     ]
 
 
@@ -91,19 +110,17 @@ def main() -> None:
     formulas = [case if isinstance(case, str) else case[0] for case in CASES]
     formulas = [f for f in formulas if _allowed(f)]
     tolerances = {c[0]: c[1] for c in CASES if not isinstance(c, str)}
-    excel = win32com.client.DispatchEx("Excel.Application")
-    excel.Visible = False
-    excel.DisplayAlerts = False
+    with tempfile.TemporaryDirectory() as temp:
+        unique = list(dict.fromkeys(formulas))
+        rejected = rejected_by_excel(unique, Path(temp))
+        for formula in rejected:
+            print("rejected by Excel:", formula)
+        accepted = [f for f in unique if f not in rejected]
+        values = excel_values(accepted, Path(temp))
+    assert values is not None
+    results = dict(zip(accepted, values, strict=True))
+    excel = start_excel()
     try:
-        with tempfile.TemporaryDirectory() as temp:
-            unique = list(dict.fromkeys(formulas))
-            rejected = rejected_by_excel(excel, unique, Path(temp))
-            for formula in rejected:
-                print("rejected by Excel:", formula)
-            accepted = [f for f in unique if f not in rejected]
-            values = excel_values(excel, accepted, Path(temp))
-        assert values is not None
-        results = dict(zip(accepted, values, strict=True))
         version = excel.Version
     finally:
         excel.Quit()

@@ -15,6 +15,7 @@ from excel_mcp.calc.values import (
     is_number,
     to_int,
 )
+from excel_mcp.lazy_workbook import extent
 
 if TYPE_CHECKING:
     from excel_mcp.calc.engine import Engine
@@ -42,9 +43,10 @@ def _cells(
     found: list[Scalar] = []
     for sheet in engine.sheets_of(node):
         top = node.top or 1
-        bottom = node.bottom or max(sheet.max_row, top)
+        last_row, last_column = extent(sheet)
+        bottom = node.bottom or max(last_row, top)
         left = node.left or 1
-        right = node.right or max(sheet.max_column, left)
+        right = node.right or max(last_column, left)
         engine.charge((bottom - top + 1) * (right - left + 1))
         for row in range(top, bottom + 1):
             is_hidden = sheet.row_dimensions[row].hidden

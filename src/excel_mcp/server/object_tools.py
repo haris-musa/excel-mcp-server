@@ -49,7 +49,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             )
         return Changed(sheet=sheet, name=table_name, range=area)
 
-    @tools.writer("Create chart")
+    @tools.destroyer("Create chart")
     def create_chart(
         path: WorkbookPath,
         sheet: SheetName,

@@ -28,7 +28,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             list[str] | None,
             Field(min_length=1, description="Default: ['Sheet1']."),
         ] = None,
-        overwrite: bool = False,
+        overwrite: Annotated[
+            bool, Field(description="Replace an existing file (else an error).")
+        ] = False,
     ) -> Changed:
         """Create a new, empty Excel workbook."""
         sheets = sheets or ["Sheet1"]
@@ -62,7 +64,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
     def list_workbooks(
         directory: Annotated[
             str,
-            Field(description="Default: the workbook directory."),
+            Field(description="Default: the first workbook directory (base of relative paths)."),
         ] = "",
         recursive: bool = False,
     ) -> dict[str, int]:
