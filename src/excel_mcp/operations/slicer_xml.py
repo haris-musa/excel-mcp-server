@@ -69,11 +69,14 @@ def pivot_cache(
     pivots: list[tuple[int, str]],
     cache_id: int,
     items: list[tuple[int, bool]],
+    empty: set[int],
     options: CacheOptions,
 ) -> str:
-    """A slicer cache over a PivotTable field; ``items`` are (shared item, selected) in order."""
+    """A slicer cache over a PivotTable field; ``items`` are (item, selected) in order and
+    ``empty`` the items no record falls in."""
     listed = "".join(
-        f'<i x="{x}"{" s=" + chr(34) + "1" + chr(34) if on else ""}/>' for x, on in items
+        f"<i{_attrs(x=x, s='1' if on else None, nd='1' if x in empty else None)}/>"
+        for x, on in items
     )
     sort = _attrs(sortOrder="descending" if options.sort == "descending" else None)
     extension = f"<extLst>{_hide_empty(options)}</extLst>" if options.hide_empty else ""

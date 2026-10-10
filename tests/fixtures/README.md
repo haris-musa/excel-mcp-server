@@ -9,6 +9,7 @@ Workbooks that tests cannot build in code.
 | `excel_sparklines.xlsx` | Created in Microsoft Excel (COM) for this project | Same as the project |
 | `excel_chartex.xlsx` | Created in Microsoft Excel (COM) for this project | Same as the project |
 | `excel_slicers.xlsx` | Created in Microsoft Excel (COM) for this project | Same as the project |
+| `excel_pivot_groups.xlsx` | Created in Microsoft Excel (COM) for this project | Same as the project |
 | `excel_shapes.xlsx` | Created in Microsoft Excel (COM) for this project | Same as the project |
 | `excel_shapes.xlsx` | Created in Microsoft Excel (COM) for this project | Same as the project |
 | `excel_objects.xlsx` | Created in Microsoft Excel (COM) for this project | Same as the project |

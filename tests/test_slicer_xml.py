@@ -37,6 +37,7 @@ def test_a_pivot_slicer_cache_is_what_excel_wrote() -> None:
         [(2, "PivotSales")],
         122376683,
         [(1, True), (2, True), (0, True)],
+        set(),
         xml.CacheOptions(),
     )
     assert _plain(ours) == _excel("xl/slicerCaches/slicerCache1.xml")

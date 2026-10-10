@@ -58,7 +58,7 @@ The size of what is kept is limited by the server's file size limit.
 
 from openpyxl import Workbook
 
-from excel_mcp.package import arrays, consistency
+from excel_mcp.package import arrays, consistency, pivot_records
 from excel_mcp.package.capture import capture
 from excel_mcp.package.model import (
     CellMark,
@@ -76,6 +76,7 @@ def prepare(workbook: Workbook) -> None:
     """Make the workbook consistent with its preserved content; call before saving it."""
     arrays.prepare(workbook)
     consistency.drop_orphaned_caches(workbook)
+    pivot_records.prepare(workbook)
 
 
 __all__ = [

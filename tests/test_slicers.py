@@ -294,7 +294,7 @@ async def test_the_path_must_be_inside_the_workbook_folder(
 
 
 async def test_a_slicer_works_on_a_pivot_table_with_grouped_dates(
-    call: ToolCall, call_error: Callable[..., Coroutine[Any, Any, str]], book: str
+    call: ToolCall, book: str
 ) -> None:
     grouped = {"sheet": "Pivot", "name": "ByMonth"}
     await call(
@@ -318,7 +318,5 @@ async def test_a_slicer_works_on_a_pivot_table_with_grouped_dates(
         ["Grand Total", 40],
         [None, None],
     ]
-    error = await call_error(
-        "add_slicer", path=book, sheet="Pivot", target=grouped, field="Date", at="A40"
-    )
-    assert "Field 'Date' is grouped" in error and "timeline" in error
+    await add(call, book, target=grouped, field="Date", at="A40")
+    await add(call, book, target=grouped, field="Date", at="A60", timeline={})

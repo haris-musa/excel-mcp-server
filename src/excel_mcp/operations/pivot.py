@@ -20,7 +20,7 @@ from excel_mcp.operations.pivot_definition import (
     data_field_extensions,
     date_filter,
 )
-from excel_mcp.operations.pivot_fields import AxisField, plan_fields
+from excel_mcp.operations.pivot_fields import AxisField, limit_groups, plan_fields
 from excel_mcp.operations.pivot_index import pivot_area, sheet_pivots, workbook_pivots
 from excel_mcp.operations.pivot_options import (
     CalculatedField,
@@ -60,6 +60,9 @@ class PivotRequest:
     """Fields outside rows, columns and filters whose items are limited, as slicers do."""
     periods: list[DatePeriod] = field(default_factory=list)
     """Date ranges that records must fall in, as timelines do."""
+    shown: dict[str, list[str]] = field(default_factory=dict)
+    """The items shown of date groups and of the dates they group, by field name such as
+    'Months (Date)'; as slicers choose them."""
 
 
 def create_pivot(
@@ -84,6 +87,7 @@ def create_pivot(
     options |= dict(zip(limited, request.filtered, strict=True))
     setup = plan_fields(source, [*row_fields, *column_fields, *filter_fields, *limited], options)
     hidden = [axis for index in limited for axis in setup.axis[index]]
+    hidden += limit_groups(setup, request.shown)
     specs = data_specs(source, setup, calculated, request.values)
     on_rows = [axis for index in row_fields for axis in setup.axis[index]]
     on_columns = [axis for index in column_fields for axis in setup.axis[index]]

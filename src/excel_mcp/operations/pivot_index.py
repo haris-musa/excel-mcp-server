@@ -19,6 +19,8 @@ class PivotInfo(BaseModel):
     name: str
     range: str
     source: str | None = None
+    date_groups: list[str] = []
+    """Fields made by grouping dates, such as 'Months (Date)'; slicers can use them."""
 
 
 def sheet_pivots(sheet: Worksheet) -> list[TableDefinition]:
@@ -40,8 +42,21 @@ def pivot_area(pivot: TableDefinition) -> CellRange:
 
 def list_pivots(sheet: Worksheet) -> list[PivotInfo]:
     return [
-        PivotInfo(name=pivot.name, range=pivot.location.ref, source=_source(pivot))
+        PivotInfo(
+            name=pivot.name,
+            range=pivot.location.ref,
+            source=_source(pivot),
+            date_groups=_date_groups(pivot),
+        )
         for pivot in sheet_pivots(sheet)
+    ]
+
+
+def _date_groups(pivot: TableDefinition) -> list[str]:
+    return [
+        field.name
+        for field in pivot.cache.cacheFields
+        if field.databaseField is False and field.fieldGroup and field.fieldGroup.rangePr
     ]
 
 
