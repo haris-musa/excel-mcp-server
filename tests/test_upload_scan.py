@@ -1,5 +1,6 @@
 import base64
 import io
+import re
 import sys
 import tracemalloc
 import warnings
@@ -525,6 +526,22 @@ def test_the_note_names_a_few_links_and_counts_the_rest() -> None:
     assert note.endswith("and 2 more.")
 
 
+def test_removed_links_are_reported_by_sheet_then_row_then_column() -> None:
+    def link(where: str, part: str) -> upload_links.RemovedLink:
+        return upload_links.RemovedLink(where, "x", part)
+
+    removed = [
+        link("B3", "xl/worksheets/sheet10.xml"),
+        link("B7", "xl/worksheets/sheet2.xml"),
+        link("A3", "xl/worksheets/sheet2.xml"),
+        link("a shape or picture", "xl/worksheets/sheet2.xml"),
+        link("B2", "xl/worksheets/sheet2.xml"),
+        link("C2", "xl/worksheets/sheet2.xml"),
+    ]
+    ordered = sorted(removed, key=upload_links._report_order)
+    assert [item.where for item in ordered] == ["B2", "C2", "A3", "B7", "a shape or picture", "B3"]
+
+
 async def test_import_reports_the_links_it_removed(call: ToolCall, files: Path) -> None:
     workbook = Workbook()
     sheet = workbook.worksheets[0]
@@ -557,3 +574,24 @@ async def test_import_reports_the_links_it_removed(call: ToolCall, files: Path) 
 def test_external_relationships_that_cannot_be_neutralised_are_still_rejected(kind: str) -> None:
     content = _package([("xl/worksheets/_rels/sheet1.xml.rels", _rels(kind, r"\\host\share\x"))])
     assert "reach outside the file" in _rejected(content)
+
+
+async def test_import_lists_removed_links_in_sheet_row_column_order(call: ToolCall) -> None:
+    workbook = Workbook()
+    first = workbook.worksheets[0]
+    second = workbook.create_sheet()
+    for sheet, address in [(second, "A1"), (first, "B7"), (first, "B2"), (first, "B3")]:
+        sheet[address] = "doc"
+        sheet[address].hyperlink = rf"\server\{sheet.title}{address}"
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+
+    result = await call(
+        "import_workbook",
+        path="up.xlsx",
+        content_base64=base64.b64encode(buffer.getvalue()).decode(),
+    )
+
+    shown = re.findall(r"([A-Z]\d) \(", result["note"])
+    assert shown == ["B2", "B3", "B7"]
+    assert result["note"].endswith("and 1 more.")

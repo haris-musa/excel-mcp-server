@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Security
+
+- The zip bomb limits (`max_unpack_factor`, now 10, and `max_compression_ratio`) apply to every
+  workbook the server opens, not only uploads: a small file that unpacks to gigabytes is
+  refused up front instead of exhausting time and memory.
+
 ### Added
 
 - `set_table` takes `options` like Excel's Table Design tab: a totals

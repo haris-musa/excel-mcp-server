@@ -15,6 +15,7 @@ from xml.sax.saxutils import unescape
 
 from excel_mcp.errors import UnsafeFormulaError
 from excel_mcp.links import is_allowed_address
+from excel_mcp.refs import parse_cell
 
 _RELATIONSHIP = re.compile(r"<Relationship\b[^>]*?(?:/>|>\s*</Relationship>)", re.DOTALL)
 _ATTRIBUTE = re.compile(r"""([\w:.-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')""")
@@ -27,6 +28,8 @@ _MAX_SHOWN_TARGET = 80
 class RemovedLink(NamedTuple):
     where: str
     target: str
+    # The package part the link was in; it orders the report by sheet.
+    part: str = ""
 
 
 def neutralise_links(content: bytes) -> tuple[bytes, list[RemovedLink]]:
@@ -48,7 +51,15 @@ def neutralise_links(content: bytes) -> tuple[bytes, list[RemovedLink]]:
     with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as target:
         for info in infos:
             target.writestr(info.filename, parts[info.filename])
-    return output.getvalue(), removed
+    return output.getvalue(), sorted(removed, key=_report_order)
+
+
+def _report_order(link: RemovedLink) -> tuple[list[str | int], int, int, int]:
+    """Sheet (by part name, numbers compared as numbers), then row, then column."""
+    part = [int(piece) if piece.isdigit() else piece for piece in re.split(r"(\d+)", link.part)]
+    cell = re.match(r"[A-Z]+\d+", link.where)
+    row, column = parse_cell(cell[0]) if cell else (0, 0)
+    return part, 0 if cell else 1, row, column
 
 
 def describe(removed: list[RemovedLink]) -> str:
@@ -98,7 +109,7 @@ def _remove_from_part(parts: dict[str, bytes], rels_name: str) -> list[RemovedLi
     for relationship, (rel_id, target) in doomed.items():
         text = text.replace(relationship, "", 1)
         xml, where = _remove_references(xml, rel_id)
-        removed.append(RemovedLink(where, target))
+        removed.append(RemovedLink(where, target, owner))
     parts[rels_name] = text.encode("utf-8")
     if owner in parts:
         parts[owner] = xml.encode("utf-8")
@@ -143,7 +154,7 @@ def _remove_from_vml(parts: dict[str, bytes], name: str) -> list[RemovedLink]:
         target = unescape(match[2] if match[2] is not None else match[3])
         if target.startswith("#") or is_allowed_address(target):
             return match[0]
-        removed.append(RemovedLink("a legacy drawing shape", target))
+        removed.append(RemovedLink("a legacy drawing shape", target, name))
         return ""
 
     cleaned = _HREF.sub(drop, text)
