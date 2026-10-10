@@ -250,6 +250,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Updated to the MCP Python SDK 2.3 and the latest compatible dependencies. Tool schemas no
+  longer use `"type": [...]` lists, which some clients (Gemini, strict validators) reject; unions are
+  written as `anyOf` of single types.
 - **Breaking:** `create_table` no longer takes `style` and `striped_rows`; they are fields of
   `options`.
 - New tables use Excel's default style, `TableStyleMedium2`, instead of `TableStyleMedium9`.

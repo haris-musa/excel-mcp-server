@@ -285,7 +285,7 @@ returning several values spill as in Excel; `blocked` lists those with data in t
 | `path` | string | yes |  |
 | `sheet` | string | yes |  |
 | `at` | string | yes | Top-left cell. |
-| `rows` | array of array of ['string', 'number', 'boolean', 'null'] | yes | Rows of values, written from `at`. |
+| `rows` | array of array of string \| number \| boolean | yes | Rows of values, written from `at`. |
 | `links` | array of object | no | Cells of the block to make hyperlinks. |
 
 ## clear_range
@@ -365,7 +365,7 @@ series, like Excel's Data and Fill commands.
 | `direction` | `down` \| `right` | no | fill. |
 | `series` | `copy` \| `linear` \| `growth` \| `date` | no | fill: copy repeats the first line; the others continue it. Default: `copy`. |
 | `step` | number | no | fill series: added (linear, date) or multiplied by (growth). Default: `1`. |
-| `stop` | ['string', 'number'] | no | fill series: last value, dates '2026-12-31'. |
+| `stop` | string \| number | no | fill series: last value, dates '2026-12-31'. |
 | `unit` | `day` \| `weekday` \| `month` \| `year` | no | fill date series. Default: `day`. |
 
 ## find_cells
@@ -606,9 +606,9 @@ last); of conflicting formats the first rule met wins.
 | `axis_color` | string | no | data_bar. |
 | `bar_direction` | `context` \| `left_to_right` \| `right_to_left` | no | data_bar. Default: `context`. |
 | `min_type` | `automatic` \| `lowest` \| `highest` \| `number` \| `percent` \| `percentile` \| `formula` | no | data_bar: the shortest bar. Default: `lowest`. |
-| `min_value` | ['number', 'string'] | no | data_bar: for min_type number, percent, percentile or formula. |
+| `min_value` | number \| string | no | data_bar: for min_type number, percent, percentile or formula. |
 | `max_type` | `automatic` \| `lowest` \| `highest` \| `number` \| `percent` \| `percentile` \| `formula` | no | data_bar: the longest bar. Default: `highest`. |
-| `max_value` | ['number', 'string'] | no | data_bar. |
+| `max_value` | number \| string | no | data_bar. |
 | `fill_color` | string | no | Not for scales and icons. |
 | `font_color` | string | no | Like fill_color. |
 | `stop_if_true` | boolean | no | Skip later rules if met. |
