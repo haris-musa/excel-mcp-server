@@ -3,8 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Excel MCP Server</title>
+    <title>Excel MCP Server: Create Excel Charts, PivotTables and Formulas with AI</title>
+    <meta name="description" content="Open-source Excel MCP server for Claude, Cursor, VS Code and other MCP clients. Create and edit .xlsx files with AI: charts, PivotTables, slicers, formulas, tables and large files. No Microsoft Excel required.">
+    <meta name="keywords" content="Excel MCP server, MCP server for Excel, Claude Excel, Cursor Excel, create Excel charts with AI, pivot tables, openpyxl, xlsx, spreadsheet, Model Context Protocol">
+    <link rel="canonical" href="https://excelmcpserver.com/">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <meta name="theme-color" content="#121212">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Excel MCP Server">
+    <meta property="og:title" content="Excel MCP Server: Create Excel Charts, PivotTables and Formulas with AI">
+    <meta property="og:description" content="Let Claude, Cursor, VS Code and other AI clients create and edit Excel files: charts, PivotTables, slicers, formulas and large sheets. Free, open source, no Excel required.">
+    <meta property="og:url" content="https://excelmcpserver.com/">
+    <meta property="og:image" content="https://excelmcpserver.com/og.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Excel MCP Server: Create Excel Charts, PivotTables and Formulas with AI">
+    <meta name="twitter:description" content="Open-source MCP server that lets AI create and edit Excel files. Charts, PivotTables, slicers, formulas. No Excel required.">
+    <meta name="twitter:image" content="https://excelmcpserver.com/og.png">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Excel MCP Server",
+      "description": "Open-source Model Context Protocol server that lets AI assistants create, read and edit Excel workbooks: charts, PivotTables, slicers, formulas, tables and large files, without Microsoft Excel installed.",
+      "url": "https://excelmcpserver.com/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Windows, macOS, Linux",
+      "softwareVersion": "2.0.0",
+      "license": "https://opensource.org/licenses/MIT",
+      "codeRepository": "https://github.com/haris-musa/excel-mcp-server",
+      "downloadUrl": "https://github.com/haris-musa/excel-mcp-server/releases/latest/download/excel-mcp-server.mcpb",
+      "author": {"@type": "Person", "name": "Haris Musa", "url": "https://github.com/haris-musa"},
+      "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}
+    }
+    </script>
     <style>
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 4.5rem;
+        }
         body {
             background-color: #121212;
             color: #e0e0e0;
@@ -16,65 +54,121 @@
         a {
             color: #7cb8ff;
         }
+        code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.9em;
+        }
+        p code, li code, td code, summary code {
+            background-color: #262626;
+            padding: 0.1em 0.35em;
+            border-radius: 4px;
+        }
         pre {
             background-color: #1e1e1e;
             border: 1px solid #333;
             border-radius: 6px;
             padding: 1rem;
             overflow-x: auto;
+            margin: 0.5rem 0 1rem;
+        }
+        pre code {
+            font-size: 0.85rem;
         }
         .container {
-            max-width: 800px;
+            max-width: 860px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 0 2rem 2rem;
         }
         header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #121212;
+            border-bottom: 1px solid #333;
+        }
+        .bar {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 0.75rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 2rem;
-            border-bottom: 1px solid #333;
+            gap: 1rem;
         }
-        header h1 {
-            margin: 0;
-            font-size: 2rem;
+        .brand img {
+            display: block;
+            height: 34px;
+            width: auto;
+        }
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem 1.1rem;
+            font-size: 0.95rem;
+        }
+        nav a {
+            color: #c8c8c8;
+            text-decoration: none;
+        }
+        nav a:hover, nav a:focus-visible {
+            color: #7cb8ff;
         }
         .github-link {
             display: flex;
             align-items: center;
             text-decoration: none;
             color: #e0e0e0;
-            font-size: 1.2rem;
+            white-space: nowrap;
         }
         .github-link svg {
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             margin-right: 8px;
             fill: currentColor;
         }
-        .stars {
-            background-color: #333;
-            padding: 5px 10px;
-            border-radius: 5px;
-            margin-left: 10px;
-        }
         .hero {
             text-align: center;
-            padding: 4rem 0;
+            padding: 3.5rem 0 2.5rem;
         }
         .hero h1 {
-            font-size: 3rem;
-            margin-bottom: 1rem;
+            font-size: 2.6rem;
+            margin: 0 0 1rem;
             line-height: 1.2;
         }
-        .hero img {
-            width: 200px;
-            margin-bottom: 1rem;
-        }
         .hero p {
-            font-size: 1.2rem;
-            max-width: 600px;
-            margin: 0 auto;
+            font-size: 1.15rem;
+            max-width: 640px;
+            margin: 0 auto 1.5rem;
+        }
+        .cta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+        .btn {
+            display: inline-block;
+            padding: 0.55rem 1.1rem;
+            border-radius: 6px;
+            border: 1px solid #444;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            text-decoration: none;
+            font-size: 1rem;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn:hover, .btn:focus-visible {
+            border-color: #7cb8ff;
+        }
+        .btn.primary {
+            background-color: #1f7a45;
+            border-color: #1f7a45;
+            color: #fff;
+        }
+        .btn.primary:hover, .btn.primary:focus-visible {
+            background-color: #249152;
+            border-color: #4ade80;
         }
         .section {
             padding: 2rem 0;
@@ -85,7 +179,11 @@
         }
         h2 {
             font-size: 1.8rem;
-            margin-bottom: 1rem;
+            margin: 0 0 1rem;
+        }
+        h3 {
+            font-size: 1.1rem;
+            margin: 0 0 0.4rem;
         }
         ul {
             list-style: none;
@@ -97,95 +195,498 @@
             border-radius: 5px;
             margin-bottom: 0.5rem;
         }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 0.75rem;
+        }
+        .card {
+            background-color: #1e1e1e;
+            border-radius: 5px;
+            padding: 1rem;
+        }
+        .card p {
+            margin: 0;
+            font-size: 0.95rem;
+        }
+        .steps {
+            counter-reset: step;
+            padding: 0;
+        }
+        .steps li {
+            counter-increment: step;
+            padding-left: 3rem;
+            position: relative;
+        }
+        .steps li::before {
+            content: counter(step);
+            position: absolute;
+            left: 1rem;
+            top: 1rem;
+            width: 1.4rem;
+            height: 1.4rem;
+            line-height: 1.4rem;
+            text-align: center;
+            border-radius: 50%;
+            background-color: #1f7a45;
+            color: #fff;
+            font-size: 0.85rem;
+        }
+        .prompts li {
+            font-style: italic;
+        }
+        [role="tablist"] {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin: 1rem 0 0.75rem;
+        }
+        [role="tab"] {
+            font: inherit;
+            font-size: 0.95rem;
+            color: #c8c8c8;
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 0.4rem 0.8rem;
+            cursor: pointer;
+        }
+        [role="tab"][aria-selected="true"] {
+            color: #fff;
+            border-color: #4ade80;
+            background-color: #1b2e22;
+        }
+        :focus-visible {
+            outline: 2px solid #7cb8ff;
+            outline-offset: 2px;
+        }
+        .js [role="tabpanel"][hidden] {
+            display: none;
+        }
+        .panel-title {
+            font-weight: 600;
+            margin: 1rem 0 0.25rem;
+        }
+        .copy {
+            position: relative;
+        }
+        .copy button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            font: inherit;
+            font-size: 0.8rem;
+            color: #c8c8c8;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 0.15rem 0.6rem;
+            cursor: pointer;
+        }
+        .copy button:hover {
+            border-color: #7cb8ff;
+        }
+        .copy pre {
+            padding-right: 5rem;
+        }
+        .note {
+            font-size: 0.92rem;
+            color: #b0b0b0;
+        }
+        .tools dt {
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+        .tools dd {
+            margin: 0.2rem 0 0;
+            color: #c8c8c8;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.93rem;
+            display: block;
+            overflow-x: auto;
+        }
+        th, td {
+            text-align: left;
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid #333;
+            vertical-align: top;
+        }
+        details {
+            background-color: #1e1e1e;
+            border-radius: 5px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+        }
+        summary {
+            cursor: pointer;
+            font-weight: 600;
+        }
+        details p {
+            margin: 0.6rem 0 0;
+        }
         footer {
             text-align: center;
-            padding: 2rem 0;
+            padding: 2rem 1rem;
             font-size: 0.9rem;
             color: #888;
         }
-        @media (max-width: 600px) {
-            header {
-                flex-direction: column;
-                align-items: flex-start;
+        footer a {
+            color: #9a9a9a;
+        }
+        @media (max-width: 700px) {
+            .bar {
+                flex-wrap: wrap;
+                padding: 0.6rem 1rem;
             }
-            .github-link {
-                margin-top: 1rem;
+            nav {
+                order: 3;
+                width: 100%;
+                font-size: 0.9rem;
             }
-            header h1 {
-                font-size: 1.5rem;
+            .container {
+                padding: 0 1rem 2rem;
+            }
+            .hero {
+                padding: 2.5rem 0 2rem;
+            }
+            .hero h1 {
+                font-size: 1.8rem;
             }
             .hero p {
                 font-size: 1rem;
+            }
+            h2 {
+                font-size: 1.5rem;
+            }
+            html {
+                scroll-padding-top: 7.5rem;
+            }
+            .github-link span {
+                display: none;
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>excel-mcp-server</h1>
-            <a href="https://github.com/haris-musa/excel-mcp-server" target="_blank" class="github-link">
+    <header>
+        <div class="bar">
+            <a class="brand" href="#top" aria-label="Excel MCP Server"><img src="logo-dark.svg" alt="Excel MCP Server" width="125" height="34"></a>
+            <nav aria-label="Sections">
+                <a href="#install">Install</a>
+                <a href="#quick-start">Quick start</a>
+                <a href="#features">Features</a>
+                <a href="#tools">Tools</a>
+                <a href="#configuration">Options</a>
+                <a href="#faq">FAQ</a>
+            </nav>
+            <a href="https://github.com/haris-musa/excel-mcp-server" class="github-link" aria-label="Excel MCP Server on GitHub">
                 <svg viewBox="0 0 16 16" version="1.1" aria-hidden="true"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
-                <span>View on GitHub</span>
-                <span class="stars">Loading...</span>
+                <span>GitHub</span>
             </a>
-        </header>
+        </div>
+    </header>
 
+    <div class="container" id="top">
         <main>
             <section class="hero">
                 <h1>Excel MCP Server</h1>
-                <p>A Model Context Protocol (MCP) server that lets AI assistants create, read and edit Excel workbooks, without Microsoft Excel installed.</p>
+                <p>Let Claude, Cursor, VS Code and other AI clients create and edit Excel files: charts, PivotTables, slicers, formulas and large sheets. Free, open source, and no Microsoft Excel required.</p>
+                <div class="cta">
+                    <a class="btn primary" href="#install">Install in two minutes</a>
+                    <a class="btn" href="https://github.com/haris-musa/excel-mcp-server">View on GitHub</a>
+                </div>
             </section>
 
-            <section class="section">
-                <h2>Features</h2>
-                <ul>
-                    <li>📝 Read and write cells, formulas and dates, with paging and search</li>
-                    <li>🎨 Fonts, fills, borders, number formats, column widths and frozen panes</li>
-                    <li>📈 Tables, charts and PivotTables</li>
-                    <li>✅ Conditional formatting and data validation</li>
-                    <li>🔒 Folder confinement, formula safety checks and a read-only mode</li>
-                    <li>🔌 stdio for local clients and Streamable HTTP for remote use</li>
-                </ul>
-            </section>
+            <section class="section" id="install">
+                <h2>Install the Excel MCP server</h2>
+                <p>Every client runs the same command, <code>uvx excel-mcp-server stdio</code>, which needs <a href="https://docs.astral.sh/uv/getting-started/installation/">uv</a> (the Claude Desktop bundle does not). Add <code>--allow-dir</code> to choose the one folder the server may read and write; replace <code>/path/to/workbooks</code> below with yours.</p>
 
-            <section class="section">
-                <h2>Get started</h2>
-                <p>Download the <a href="https://github.com/haris-musa/excel-mcp-server/releases/latest">Claude Desktop bundle</a>, or add this to your MCP client (requires <a href="https://docs.astral.sh/uv/">uv</a>):</p>
-                <pre><code>{
+                <div class="tabs">
+                    <div role="tablist" aria-label="Choose your client">
+                        <button role="tab" id="tab-claude-desktop" aria-controls="panel-claude-desktop" aria-selected="true">Claude Desktop</button>
+                        <button role="tab" id="tab-claude-code" aria-controls="panel-claude-code" aria-selected="false" tabindex="-1">Claude Code</button>
+                        <button role="tab" id="tab-cursor" aria-controls="panel-cursor" aria-selected="false" tabindex="-1">Cursor</button>
+                        <button role="tab" id="tab-vscode" aria-controls="panel-vscode" aria-selected="false" tabindex="-1">VS Code</button>
+                        <button role="tab" id="tab-other" aria-controls="panel-other" aria-selected="false" tabindex="-1">Windsurf and others</button>
+                        <button role="tab" id="tab-remote" aria-controls="panel-remote" aria-selected="false" tabindex="-1">Docker and HTTP</button>
+                    </div>
+
+                    <div role="tabpanel" id="panel-claude-desktop" aria-labelledby="tab-claude-desktop" tabindex="0">
+                        <p><a class="btn primary" href="https://github.com/haris-musa/excel-mcp-server/releases/latest/download/excel-mcp-server.mcpb">Download excel-mcp-server.mcpb</a></p>
+                        <p>Open the downloaded file with Claude Desktop and click Install. Claude asks which folder the server may use. Nothing else to set up.</p>
+                        <p class="panel-title">Or edit the config by hand</p>
+                        <p class="note">Settings, Developer, Edit Config opens <code>claude_desktop_config.json</code>. Add this, then restart Claude. If Claude cannot find <code>uvx</code>, use its full path (<code>which uvx</code> or <code>where uvx</code>).</p>
+                        <div class="copy"><pre><code>{
   "mcpServers": {
     "excel": {
       "command": "uvx",
       "args": ["excel-mcp-server", "stdio", "--allow-dir", "/path/to/workbooks"]
     }
   }
-}</code></pre>
-                <p>See the <a href="https://github.com/haris-musa/excel-mcp-server#readme">README</a> for other clients and remote setups, and <a href="https://github.com/haris-musa/excel-mcp-server/blob/main/TOOLS.md">TOOLS.md</a> for every tool.</p>
+}</code></pre></div>
+                    </div>
+
+                    <div role="tabpanel" id="panel-claude-code" aria-labelledby="tab-claude-code" tabindex="0" hidden>
+                        <p>Run this once in a terminal. It works for the Claude Code CLI and the Code tab in Claude Desktop.</p>
+                        <div class="copy"><pre><code>claude mcp add excel --scope user -- uvx excel-mcp-server stdio --allow-dir /path/to/workbooks</code></pre></div>
+                        <p class="note"><code>--scope user</code> makes it available in every project; leave it out to add it to the current project only.</p>
+                    </div>
+
+                    <div role="tabpanel" id="panel-cursor" aria-labelledby="tab-cursor" tabindex="0" hidden>
+                        <p><a class="btn primary" href="cursor://anysphere.cursor-deeplink/mcp/install?name=excel&amp;config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJleGNlbC1tY3Atc2VydmVyIiwic3RkaW8iLCItLWFsbG93LWRpciIsIn4vRG9jdW1lbnRzIl19">Add to Cursor</a></p>
+                        <p class="note">The button limits the server to your <code>~/Documents</code> folder; change the path in Cursor's MCP settings if your workbooks live elsewhere.</p>
+                        <p class="panel-title">Or add it to <code>~/.cursor/mcp.json</code> (or <code>.cursor/mcp.json</code> in a project)</p>
+                        <div class="copy"><pre><code>{
+  "mcpServers": {
+    "excel": {
+      "command": "uvx",
+      "args": ["excel-mcp-server", "stdio", "--allow-dir", "/path/to/workbooks"]
+    }
+  }
+}</code></pre></div>
+                    </div>
+
+                    <div role="tabpanel" id="panel-vscode" aria-labelledby="tab-vscode" tabindex="0" hidden>
+                        <p><a class="btn primary" href="vscode:mcp/install?%7B%22name%22%3A%22excel%22%2C%22type%22%3A%22stdio%22%2C%22command%22%3A%22uvx%22%2C%22args%22%3A%5B%22excel-mcp-server%22%2C%22stdio%22%2C%22--allow-dir%22%2C%22~%2FDocuments%22%5D%7D">Install in VS Code</a></p>
+                        <p class="note">The button limits the server to your <code>~/Documents</code> folder; edit the entry if your workbooks live elsewhere. For VS Code Insiders, use the config below.</p>
+                        <p class="panel-title">Or add it to <code>.vscode/mcp.json</code> (VS Code uses the key <code>servers</code>)</p>
+                        <div class="copy"><pre><code>{
+  "servers": {
+    "excel": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["excel-mcp-server", "stdio", "--allow-dir", "${workspaceFolder}"]
+    }
+  }
+}</code></pre></div>
+                        <p class="note">Then use the tools in Copilot Chat in agent mode.</p>
+                    </div>
+
+                    <div role="tabpanel" id="panel-other" aria-labelledby="tab-other" tabindex="0" hidden>
+                        <p>Windsurf (now Devin Desktop), Cline, Zed and most other clients take an <code>mcpServers</code> block in their MCP settings file:</p>
+                        <div class="copy"><pre><code>{
+  "mcpServers": {
+    "excel": {
+      "command": "uvx",
+      "args": ["excel-mcp-server", "stdio", "--allow-dir", "/path/to/workbooks"]
+    }
+  }
+}</code></pre></div>
+                        <p class="panel-title">Command line clients</p>
+                        <div class="copy"><pre><code>codex mcp add excel -- uvx excel-mcp-server stdio --allow-dir /path/to/workbooks
+gemini mcp add -s user excel uvx excel-mcp-server stdio --allow-dir /path/to/workbooks
+devin mcp add -s user excel -- uvx excel-mcp-server stdio --allow-dir /path/to/workbooks</code></pre></div>
+                    </div>
+
+                    <div role="tabpanel" id="panel-remote" aria-labelledby="tab-remote" tabindex="0" hidden>
+                        <p>For a shared or remote setup, run the Streamable HTTP transport. Workbooks live in the <code>--allow-dir</code> folder (default <code>./excel_files</code>), and <code>export_workbook</code> and <code>import_workbook</code> move files to and from the client.</p>
+                        <div class="copy"><pre><code>uvx excel-mcp-server streamable-http --allow-dir /srv/workbooks</code></pre></div>
+                        <p>Clients connect to <code>http://127.0.0.1:8017/mcp</code>. It listens on localhost only. To accept other machines, set a token and a host, and put a TLS reverse proxy in front:</p>
+                        <div class="copy"><pre><code>EXCEL_MCP_AUTH_TOKEN=change-me uvx excel-mcp-server streamable-http --host 0.0.0.0</code></pre></div>
+                        <p class="panel-title">Docker</p>
+                        <div class="copy"><pre><code>git clone https://github.com/haris-musa/excel-mcp-server
+cd excel-mcp-server
+docker build -t excel-mcp-server .
+docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change-me excel-mcp-server</code></pre></div>
+                        <p class="note">Clients then send <code>Authorization: Bearer change-me</code>.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section" id="quick-start">
+                <h2>Quick start: from install to your first Excel file</h2>
+                <ul class="steps">
+                    <li><strong>Install</strong> the server in your client, as above, and restart the client if it asks.</li>
+                    <li><strong>Check it is connected.</strong> Ask: <em>"List the Excel files in my workbook folder."</em> The assistant should call <code>list_workbooks</code>.</li>
+                    <li><strong>Describe what you want</strong> in plain language. Some prompts to try:</li>
+                </ul>
+                <ul class="prompts">
+                    <li>"Create sales.xlsx from this CSV text, make the header a table, and add a column chart of revenue by month."</li>
+                    <li>"Build a PivotTable from the Orders sheet: regions down the side, months across, sum of revenue, and add a slicer for product category."</li>
+                    <li>"Add a total row with formulas, then read the results back so I can check them."</li>
+                    <li>"Open report.xlsx, a sheet with 200,000 rows. How many rows have status Failed, and what is the date range?"</li>
+                    <li>"Clean up the Contacts sheet: remove duplicate emails, trim names, sort by last name and add a dropdown for the Country column."</li>
+                    <li>"Highlight overdue tasks in red, add sparklines for the weekly trend, and freeze the header row."</li>
+                </ul>
+            </section>
+
+            <section class="section" id="features">
+                <h2>Features: what AI can do with your Excel files</h2>
+                <div class="grid">
+                    <div class="card">
+                        <h3>Charts</h3>
+                        <p>Create Excel charts with AI: column, bar, line, area, pie, doughnut, radar, scatter and bubble, with combos, secondary axes, trendlines and error bars, plus waterfall, histogram, Pareto, box and whisker, treemap, sunburst and funnel.</p>
+                    </div>
+                    <div class="card">
+                        <h3>PivotTables, slicers and timelines</h3>
+                        <p>Real PivotTables that Excel refreshes, with grouping, calculated fields, "show values as" and layouts, and slicers and timelines that filter them and tables.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Formulas without Excel</h3>
+                        <p>Formulas are calculated by a built-in engine (about 260 functions, checked against results recorded from Excel), so values can be read back without opening Excel. Dynamic arrays (<code>FILTER</code>, <code>SORT</code>, <code>UNIQUE</code>, <code>SEQUENCE</code>, <code>LET</code>) are supported.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Large files</h3>
+                        <p>Reads stream the workbook and return pages, so memory stays flat on sheets with hundreds of thousands of rows.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Tables, rules and data tools</h3>
+                        <p>Tables, conditional formatting, data validation, sparklines, sort, filters, find and replace, remove duplicates, text to columns and fill series.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Layout and formatting</h3>
+                        <p>Fonts, fills, borders, number formats, merged cells, frozen panes, grouping, print setup, sheet protection, images, hyperlinks, notes and defined names. Inserting or deleting rows and columns updates every reference, as in Excel.</p>
+                    </div>
+                    <div class="card">
+                        <h3>VBA, opt-in</h3>
+                        <p>Read the macro code in <code>.xlsm</code> files. Writing VBA is off unless you start the server with <code>--allow-vba-write</code>. Macros are never run by the server.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Works anywhere</h3>
+                        <p>Built on openpyxl. No Microsoft Excel needed, so it runs on Windows, macOS and Linux, locally over stdio or remotely over Streamable HTTP.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Safe by design</h3>
+                        <p>Folder confinement, a formula safety check, a read-only mode, localhost-only HTTP by default, and atomic saves that never leave a half-written file.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section" id="tools">
+                <h2>Tool reference</h2>
+                <p>The server offers these tools. Every parameter is documented in <a href="https://github.com/haris-musa/excel-mcp-server/blob/main/TOOLS.md">TOOLS.md</a>.</p>
+                <dl class="tools">
+                    <dt>Workbooks</dt>
+                    <dd><code>create_workbook</code>, <code>describe_workbook</code>, <code>set_workbook_settings</code>, <code>list_workbooks</code>, <code>export_workbook</code>, <code>import_workbook</code>: create files, list sheets and settings, move files to and from remote servers.</dd>
+                    <dt>Sheets</dt>
+                    <dd><code>describe_sheet</code>, <code>create_sheet</code>, <code>rename_sheet</code>, <code>copy_sheet</code>, <code>delete_sheet</code>, <code>insert_rows_or_columns</code>, <code>delete_rows_or_columns</code>: inspect a sheet and change its structure, with references updated.</dd>
+                    <dt>Cells</dt>
+                    <dd><code>read_range</code>, <code>write_range</code>, <code>clear_range</code>, <code>copy_range</code>, <code>sort_range</code>, <code>transform_range</code>, <code>find_cells</code>, <code>replace_cells</code>: read in pages, write values and formulas, copy, sort, deduplicate, fill, search and replace.</dd>
+                    <dt>Formatting</dt>
+                    <dd><code>format_range</code>, <code>merge_cells</code>, <code>set_sheet_layout</code>, <code>add_conditional_format</code>, <code>add_data_validation</code>: styles, widths, panes, filters, printing, protection, rules and dropdowns.</dd>
+                    <dt>Objects</dt>
+                    <dd><code>set_table</code>, <code>create_chart</code>, <code>delete_chart</code>, <code>create_pivot_table</code>, <code>delete_pivot_table</code>, <code>add_slicer</code>, <code>delete_slicer</code>, <code>insert_image</code>, <code>delete_image</code>, <code>add_sparklines</code>, <code>delete_sparklines</code>: tables, charts, PivotTables, slicers, pictures and sparklines.</dd>
+                    <dt>Names and notes</dt>
+                    <dd><code>set_defined_name</code>, <code>delete_defined_name</code>, <code>set_note</code>, <code>delete_note</code>.</dd>
+                    <dt>Macros</dt>
+                    <dd><code>read_vba</code>; with <code>--allow-vba-write</code> also <code>write_vba_module</code> and <code>delete_vba_module</code>.</dd>
+                </dl>
+            </section>
+
+            <section class="section" id="configuration">
+                <h2>Configuration options</h2>
+                <table>
+                    <thead><tr><th>Flag</th><th>Environment variable</th><th>Meaning</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>--allow-dir DIR</code></td><td><code>EXCEL_FILES_PATH</code></td><td>Folders workbooks must be in (repeat the flag; separate several in the variable with <code>:</code>, or <code>;</code> on Windows). HTTP defaults to <code>./excel_files</code>.</td></tr>
+                        <tr><td><code>--read-only</code></td><td><code>EXCEL_MCP_READ_ONLY=1</code></td><td>Only offer tools that do not change files.</td></tr>
+                        <tr><td><code>--allow-vba-write</code></td><td><code>EXCEL_MCP_ALLOW_VBA_WRITE=1</code></td><td>Add the tools that write VBA macros. Off by default and ignored with <code>--read-only</code>.</td></tr>
+                        <tr><td><code>--max-file-mb N</code></td><td></td><td>Largest workbook to open, 100 by default.</td></tr>
+                        <tr><td><code>--log-level LEVEL</code></td><td></td><td>Logging on stderr, <code>WARNING</code> by default.</td></tr>
+                        <tr><td><code>--host</code>, <code>--port</code></td><td><code>EXCEL_MCP_HOST</code>, <code>EXCEL_MCP_PORT</code></td><td>HTTP listen address, <code>127.0.0.1:8017</code> by default.</td></tr>
+                        <tr><td></td><td><code>EXCEL_MCP_AUTH_TOKEN</code></td><td>Bearer token required on HTTP requests.</td></tr>
+                        <tr><td><code>--allow-unauthenticated</code></td><td></td><td>Allow a non-local <code>--host</code> without a token.</td></tr>
+                    </tbody>
+                </table>
+
+                <h3 style="margin-top: 1.5rem;">Security</h3>
+                <p>The server only opens Excel files, and with <code>--allow-dir</code> only inside the folders you choose. Formulas are checked before they are written, and functions that reach the network or other programs are rejected. Macros are never run, and writing them is opt-in. Cell contents are treated as data, but an assistant can still be misled by text in a workbook, so use <code>--read-only</code> or a narrow folder with files you do not trust. Read the <a href="https://github.com/haris-musa/excel-mcp-server/blob/main/SECURITY.md">security policy</a> for details and how to report a vulnerability.</p>
+            </section>
+
+            <section class="section" id="faq">
+                <h2>Frequently asked questions</h2>
+                <details>
+                    <summary>Does it need Microsoft Excel installed?</summary>
+                    <p>No. The server reads and writes the files itself with openpyxl, so it works on Windows, macOS and Linux without Excel. Excel (or any compatible app) is only needed when you want to open the results.</p>
+                </details>
+                <details>
+                    <summary>Which file types work?</summary>
+                    <p><code>.xlsx</code>, <code>.xlsm</code> (macros are preserved), <code>.xltx</code> and <code>.xltm</code>. Legacy <code>.xls</code> and <code>.csv</code> files are not supported.</p>
+                </details>
+                <details>
+                    <summary>Where are my files saved?</summary>
+                    <p>Where you tell the assistant to put them. With <code>--allow-dir DIR</code>, relative paths such as <code>reports/q1.xlsx</code> start in that folder, and nothing outside it can be touched. Without it, any absolute path to an Excel file works. The server never silently overwrites an existing workbook.</p>
+                </details>
+                <details>
+                    <summary>How do I enable VBA writing?</summary>
+                    <p>Start the server with <code>--allow-vba-write</code> (or set <code>EXCEL_MCP_ALLOW_VBA_WRITE=1</code>), for example <code>uvx excel-mcp-server stdio --allow-dir /path/to/workbooks --allow-vba-write</code>. The VBA tools then appear and write to <code>.xlsm</code> and <code>.xltm</code> files. Macro code runs with your rights once you enable macros in Excel, so read it first and enable this only for workflows you trust.</p>
+                </details>
+                <details>
+                    <summary>Does it calculate formulas?</summary>
+                    <p>Yes, for reading. Excel calculates formulas when it opens a file, so the server uses a built-in calculator (about 260 functions) to return values for formulas that have no saved result. A formula it cannot reproduce exactly is returned empty and listed, never guessed.</p>
+                </details>
+                <details>
+                    <summary>How do I upgrade from 1.x?</summary>
+                    <p>Run with <code>uvx excel-mcp-server@latest</code> or update your install. Version 2.0 changes some tool and parameter names, so saved prompts that name old parameters may need updating. The <a href="https://github.com/haris-musa/excel-mcp-server/blob/main/CHANGELOG.md#upgrading-from-1x">upgrade table in the changelog</a> maps every old name to its new one.</p>
+                </details>
             </section>
         </main>
 
         <footer>
+            <p>
+                <a href="https://github.com/haris-musa/excel-mcp-server">GitHub</a> &middot;
+                <a href="https://pypi.org/project/excel-mcp-server/">PyPI</a> &middot;
+                <a href="https://registry.modelcontextprotocol.io/v0/servers?search=io.github.haris-musa/excel-mcp-server">MCP Registry</a> &middot;
+                <a href="https://github.com/haris-musa/excel-mcp-server/blob/main/CHANGELOG.md">Changelog</a> &middot;
+                <a href="https://github.com/haris-musa/excel-mcp-server/blob/main/SECURITY.md">Security policy</a>
+            </p>
+            <p>MIT license. Excel is a trademark of Microsoft; this project is independent of it.</p>
             <p>&copy; 2025-2026 excelmcpserver.com - An open source project by haris-musa.</p>
         </footer>
     </div>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            fetch('https://api.github.com/repos/haris-musa/excel-mcp-server')
-                .then(response => response.json())
-                .then(data => {
-                    const starsSpan = document.querySelector('.stars');
-                    if (starsSpan && data.stargazers_count !== undefined) {
-                        starsSpan.textContent = '★ ' + data.stargazers_count;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching star count:', error);
-                    const starsSpan = document.querySelector('.stars');
-                    if (starsSpan) {
-                        starsSpan.textContent = '★ N/A'; // Fallback if API fails
-                    }
+        document.documentElement.classList.add('js');
+        document.querySelectorAll('[role="tablist"]').forEach(function (list) {
+            var tabs = Array.prototype.slice.call(list.querySelectorAll('[role="tab"]'));
+            function select(tab) {
+                tabs.forEach(function (t) {
+                    var on = t === tab;
+                    t.setAttribute('aria-selected', on ? 'true' : 'false');
+                    t.tabIndex = on ? 0 : -1;
+                    document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
                 });
+            }
+            tabs.forEach(function (tab, i) {
+                tab.addEventListener('click', function () { select(tab); });
+                tab.addEventListener('keydown', function (e) {
+                    var next = {ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1}[e.key];
+                    if (next === undefined) { return; }
+                    e.preventDefault();
+                    var target = tabs[(next + tabs.length) % tabs.length];
+                    select(target);
+                    target.focus();
+                });
+            });
+            var wanted = document.getElementById('tab-' + location.hash.slice(1));
+            if (wanted) { select(wanted); }
+        });
+        document.querySelectorAll('.copy').forEach(function (box) {
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = 'Copy';
+            button.addEventListener('click', function () {
+                var text = box.querySelector('code').textContent;
+                var done = function (label) {
+                    button.textContent = label;
+                    setTimeout(function () { button.textContent = 'Copy'; }, 1500);
+                };
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(text).then(function () { done('Copied'); }, function () { done('Press Ctrl+C'); });
+                } else {
+                    window.getSelection().selectAllChildren(box.querySelector('code'));
+                    done('Press Ctrl+C');
+                }
+            });
+            box.appendChild(button);
         });
     </script>
 </body>
-</html> 
+</html>
