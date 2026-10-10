@@ -41,9 +41,15 @@ def read_calculated(
     area = parse_range(data.range)
     with workspace.stream(path) as formulas:
         formula_cells = _formula_cells(get_streamed_sheet(formulas, sheet), area)
-    pending = [(row, col) for row, col in formula_cells if _stored(data, area, row, col) is None]
-    if pending:
-        _fill(workspace, path, sheet, data, pending)
+    missing = [(row, col) for row, col in formula_cells if _stored(data, area, row, col) is None]
+    if missing:
+        with workspace.stream(path, data_only=True) as stored:
+            blanks = _stored_empty_text(get_streamed_sheet(stored, sheet), area, missing)
+        for row, col in blanks:
+            _put(data, area, row, col, "")
+        pending = [position for position in missing if position not in blanks]
+        if pending:
+            _fill(workspace, path, sheet, data, pending)
     return data
 
 
@@ -92,6 +98,27 @@ def _formula_cells(sheet: ReadOnlyWorksheet, area: CellRange) -> list[tuple[int,
         min_row=area.min_row, max_row=area.max_row, min_col=area.min_col, max_col=area.max_col
     ):
         found.extend((cell.row, cell.column) for cell in row if cell.data_type == "f")
+    return found
+
+
+def _stored_empty_text(
+    sheet: ReadOnlyWorksheet, area: CellRange, positions: list[tuple[int, int]]
+) -> set[tuple[int, int]]:
+    """The cells whose stored result is empty text, which openpyxl reads as no value at all.
+
+    Excel stores a formula that returns "" as a text result without content; a formula that was
+    never calculated has no result element, and only that one needs calculating.
+    """
+    wanted = set(positions)
+    found = set()
+    for row in sheet.iter_rows(
+        min_row=area.min_row, max_row=area.max_row, min_col=area.min_col, max_col=area.max_col
+    ):
+        found.update(
+            (cell.row, cell.column)
+            for cell in row
+            if cell.data_type == "str" and (cell.row, cell.column) in wanted
+        )
     return found
 
 

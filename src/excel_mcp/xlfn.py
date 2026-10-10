@@ -10,7 +10,9 @@ import re
 from dataclasses import dataclass, field
 
 from openpyxl.formula import Tokenizer
-from openpyxl.formula.tokenizer import Token
+from openpyxl.formula.tokenizer import Token, TokenizerError
+
+from excel_mcp.spill import show_spills
 
 _XLFN = [
     "ACOT",
@@ -236,3 +238,16 @@ def _declared_names(tokens: list[Token], call: _Call) -> set[str]:
         ):
             declared.add(tokens[parts[0]].value.casefold())
     return declared
+
+
+def display_formula(formula: str) -> str:
+    """Return the formula as a user types it: no storage prefixes, spill references as ``A1#``."""
+    try:
+        return show_spills(remove_prefixes(formula))
+    except TokenizerError:  # text that merely starts with "=", or a formula Excel would reject
+        return formula
+
+
+def display_operand(operand: str) -> str:
+    """`display_formula` for names and rule operands, which are stored without the "="."""
+    return display_formula(f"={operand}")[1:]

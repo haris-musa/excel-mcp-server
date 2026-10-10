@@ -235,3 +235,39 @@ async def test_amortization_schedule_read_from_its_last_row(call: ToolCall, file
     data = await read_values(call, "F364")
 
     assert abs(data["values"][0][0]) < 1e-6
+
+
+async def test_formulas_are_shown_as_typed(call: ToolCall, files: Path) -> None:
+    make_workbook(files / "calc.xlsx", {"A1": 3, "A2": 1, "A3": 2})
+    typed = {
+        "C1": "=SORT(A1:A3)",
+        "D1": "=LET(x,A1,x*2)",
+        "E1": "=SUM(C1#)",
+        "F1": "=IFS(A1>1,1)",
+    }
+    for cell, formula in typed.items():
+        await call("write_range", path="calc.xlsx", sheet="Data", at=cell, rows=[[formula]])
+    await call("set_defined_name", path="calc.xlsx", name="Total", refers_to="=SUM(C1#)")
+
+    shown = await call("read_range", path="calc.xlsx", sheet="Data", range="C1:F1", mode="formulas")
+    found = await call("find_cells", path="calc.xlsx", query="SORT", mode="formulas")
+    names = (await call("describe_workbook", path="calc.xlsx"))["defined_names"]
+
+    assert shown["values"] == [list(typed.values())]
+    assert found["matches"] == {"Data": {"C1": "=SORT(A1:A3)"}}
+    assert names[0]["refers_to"] == "SUM(C1#)"
+    with ZipFile(files / "calc.xlsx") as archive:
+        stored = archive.read("xl/worksheets/sheet1.xml").decode()
+    assert "_xlfn._xlws.SORT(A1:A3)" in stored
+    assert "_xlfn.LET(_xlpm.x,A1,_xlpm.x*2)" in stored
+    assert "_xlfn.ANCHORARRAY(C1)" in stored
+
+
+async def test_text_starting_with_equals_is_not_a_formula_error(
+    call: ToolCall, files: Path
+) -> None:
+    make_workbook(files / "calc.xlsx", {"A1": "=== header ==="})
+
+    data = await call("read_range", path="calc.xlsx", sheet="Data", mode="formulas")
+
+    assert data["values"] == [["=== header ==="]]

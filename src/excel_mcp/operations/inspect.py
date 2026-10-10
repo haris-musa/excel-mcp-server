@@ -31,6 +31,7 @@ from excel_mcp.operations.workbook_settings import (
 )
 from excel_mcp.paths import EXCEL_SUFFIXES
 from excel_mcp.workspace import streamed_worksheets
+from excel_mcp.xlfn import display_operand
 
 _VISIBILITY: dict[str, Literal["visible", "hidden", "very_hidden"]] = {
     "visible": "visible",
@@ -152,8 +153,8 @@ def describe_sheet(sheet: Worksheet) -> SheetDetails:
                 range=str(rule.sqref),
                 type=rule.type,
                 operator=rule.operator,
-                formula1=rule.formula1,
-                formula2=rule.formula2,
+                formula1=display_operand(rule.formula1) if rule.formula1 else None,
+                formula2=display_operand(rule.formula2) if rule.formula2 else None,
             )
             for rule in sheet.data_validations.dataValidation
         ],

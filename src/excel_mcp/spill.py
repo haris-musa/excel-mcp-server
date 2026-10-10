@@ -3,7 +3,7 @@
 import re
 
 _OPERAND = r"(?:'(?:[^']|'')+'!|[\w.$]+!)?[\w.$\\?]+"
-_STORED = re.compile(rf"_xlfn\.ANCHORARRAY\(({_OPERAND})\)", re.IGNORECASE)
+_STORED = re.compile(rf"(?:_xlfn\.)?ANCHORARRAY\(({_OPERAND})\)", re.IGNORECASE)
 _OPERAND_END = re.compile(rf"{_OPERAND}$")
 
 

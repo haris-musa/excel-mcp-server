@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from excel_mcp.operations.cells import store_typed, stored_cells
 from excel_mcp.workspace import sheet_names
-from excel_mcp.xlfn import remove_prefixes
+from excel_mcp.xlfn import display_formula
 
 
 class ReplaceResult(BaseModel):
@@ -53,7 +53,7 @@ def replace_cells(
 
 def _searchable_text(value: object, data_type: str, in_formulas: bool) -> str | None:
     if data_type == "f":
-        return remove_prefixes(value) if in_formulas and isinstance(value, str) else None
+        return display_formula(value) if in_formulas and isinstance(value, str) else None
     if data_type == "s":
         return str(value)
     if data_type == "n":
