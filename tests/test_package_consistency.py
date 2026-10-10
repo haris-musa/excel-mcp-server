@@ -118,7 +118,8 @@ async def test_preserved_content_beyond_the_size_limit_is_refused(files: Path) -
         for name, data in parts.items():
             archive.writestr(name, data)
     assert path.stat().st_size < 100_000
-    server = create_server(Settings(allowed_dirs=[files], limits=Limits(max_file_bytes=1_000_000)))
+    limits = Limits(max_file_bytes=1_000_000, max_compression_ratio=10**6)
+    server = create_server(Settings(allowed_dirs=[files], limits=limits))
 
     async with Client(server) as client:
         result = await client.call_tool(

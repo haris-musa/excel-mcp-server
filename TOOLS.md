@@ -150,8 +150,7 @@ Return the workbook file as an embedded base64 resource (remote servers).
 
 Save an uploaded workbook file on the server (remote editing).
 
-Removes unsafe hyperlinks (listed in `note`); refuses external links, connections and
-linked objects.
+Removes unsafe hyperlinks (see `note`); refuses external links, connections, linked objects.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
