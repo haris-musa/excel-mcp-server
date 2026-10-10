@@ -175,12 +175,16 @@ def _slim_schema(schema: dict[str, Any]) -> None:
 
 
 def _merge_plain_types(schema: dict[str, Any]) -> None:
-    """Write a union of plain types as one ``type`` list; ``number`` already includes integers."""
+    """Drop ``integer`` from a union that has ``number``, and unwrap a one-type union.
+
+    A ``type`` list would be shorter but some clients (Gemini) reject it, so unions stay ``anyOf``.
+    """
     options = schema.get("anyOf", [])
     if not options or any(option.keys() != {"type"} for option in options):
         return
     types = [option["type"] for option in options]
-    if "number" in types and "integer" in types:
-        types.remove("integer")
-    del schema["anyOf"]
-    schema["type"] = types[0] if len(types) == 1 else types
+    if "number" in types:
+        options[:] = [option for option in options if option["type"] != "integer"]
+    if len(options) == 1:
+        del schema["anyOf"]
+        schema["type"] = options[0]["type"]
