@@ -415,8 +415,17 @@ All notable changes to this project are documented here. The format follows
   original they read or set on the copy. Shape ids that collide with ones openpyxl wrote are
   renumbered with the connectors that name them.
 - `add_slicer` on a PivotTable with grouped dates failed with an opaque "Error executing tool".
-  Slicers on the other fields work (checked in Excel); a slicer on the grouped field itself is
-  refused with a message that suggests a timeline.
+  Slicers and timelines now work on grouped dates as in Excel, on the date field and on the
+  groups made from it (`Years (Date)`, `Quarters (Date)`, `Months (Date)`, `Days (Date)`), and
+  on fields grouped into number ranges: items outside a group's range are listed last and
+  marked as having no data, number ranges and days are sorted as text, and the figures of
+  PivotTables made here follow the selection (checked in Excel against its own files and
+  refresh). `describe_sheet` lists a PivotTable's `date_groups`; a timeline on a field that
+  holds no dates names the date fields.
+- A workbook with several PivotTable caches saved every cache after the first linked to the
+  first cache's records (an openpyxl quirk), so a slicer added after an earlier edit read the
+  wrong records and wrote a field's shared items as indexes (`<x v="0"/>`) that Excel could
+  not open. Each cache keeps its own records.
 - A tool that fails unexpectedly now reports "Unexpected error in <tool>; see server log" and
   logs the exception, instead of the SDK's "Error executing tool <tool>".
 - A parameter's own description was replaced by the one of its type in the schema (for

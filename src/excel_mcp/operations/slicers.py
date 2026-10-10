@@ -140,6 +140,7 @@ def _pivot_slicer(
         _tabs(workbook, group),
         _pivot_cache_id(workbook, first),
         _items(first, position, request.sort),
+        pivots.empty_items(first.cache, position),
         options,
     )
     entry = xml.slicer_entry(
@@ -241,7 +242,7 @@ def _names(workbook: Workbook, request: SlicerRequest, stem: str) -> tuple[str, 
         while name.casefold() in taken:
             number += 1
             name = f"{request.field} {number}"
-    stem += re.sub(r"\W", "_", request.field)
+    stem += re.sub(r"\W", "_", request.field).rstrip("_")
     used = {n.casefold() for n in workbook.defined_names} | {c.casefold() for c in caches(workbook)}
     cache, number = stem, 0
     while cache.casefold() in used:
@@ -293,8 +294,8 @@ def _pivot_cache_id(workbook: Workbook, pivot: TableDefinition) -> int:
 
 def _items(pivot: TableDefinition, position: int, sort: str) -> list[tuple[int, bool]]:
     shown = pivots.shown_items(pivot, position) or []
-    listed = [(x, x in shown) for x in pivots.item_order(pivot.cache, position)]
-    return listed[::-1] if sort == "descending" else listed
+    order = pivots.slicer_order(pivot.cache, position, sort == "descending")
+    return [(x, x in shown) for x in order]
 
 
 def _add(

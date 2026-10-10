@@ -135,6 +135,7 @@ def request_of(
         name=pivot.name,
         filtered=filtered,
         periods=[_period(names, f) for f in pivot.filters],
+        shown=_shown_groups(cache, pivot),
     )
     return request, (source.sheet, source.ref)
 
@@ -186,13 +187,34 @@ def _field_option(
     shown = [position] if group is None or not derived else _derived_positions(cache, position)
     return PivotField(
         field=names.name(position),
-        show_items=[item_text(labels[item.x]) for item in items if not item.h] if hidden else [],
+        show_items=[item_text(labels[item.x]) for item in items if not item.h]
+        if hidden and not derived
+        else [],
         sort="descending"
         if any(_descending(pivot.pivotFields[p], grouped) for p in shown)
         else "ascending",
         sort_by=_sort_by(pivot, scope) if scope else None,
         group_dates=list(reversed(derived)),
         group_numbers=_number_group(ranges) if ranges and ranges.groupBy == "range" else None,
+    )
+
+
+def _shown_groups(cache: CacheDefinition, pivot: TableDefinition) -> dict[str, list[str]]:
+    """The items still shown of date groups, and of the dates they group, where some are hidden."""
+    bases = {f.fieldGroup.base for f in cache.cacheFields if _is_date_group(f)}
+    shown = {}
+    for position, field in enumerate(pivot.pivotFields):
+        group = cache.cacheFields[position]
+        items = [item for item in field.items if item.t != "default"]
+        if any(item.h for item in items) and (_is_date_group(group) or position in bases):
+            labels = field_labels(group)
+            shown[group.name] = [item_text(labels[item.x]) for item in items if not item.h]
+    return shown
+
+
+def _is_date_group(field: CacheField) -> bool:
+    return (
+        _is_group(field) and field.fieldGroup is not None and field.fieldGroup.rangePr is not None
     )
 
 

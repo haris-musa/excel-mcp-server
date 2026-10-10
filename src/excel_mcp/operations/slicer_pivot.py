@@ -8,7 +8,7 @@ the cells follow, so a PivotTable that hides items is made again, see `pivot_reb
 import datetime as dt
 from dataclasses import dataclass
 
-from openpyxl.pivot.cache import CacheDefinition
+from openpyxl.pivot.cache import CacheDefinition, CacheField
 from openpyxl.pivot.fields import Index
 from openpyxl.pivot.table import FieldItem, TableDefinition
 from openpyxl.workbook import Workbook
@@ -34,19 +34,11 @@ class Connected:
 
 
 def source_field(cache: CacheDefinition, name: str) -> int:
-    """The position of a source column among the cache's fields."""
-    columns = [
-        (position, field.name)
-        for position, field in enumerate(cache.cacheFields)
-        if field.formula is None and not (field.databaseField is False and field.fieldGroup)
-    ]
+    """The position among the cache's fields of a field a slicer can be for: a source column,
+    or a group made from one such as 'Months (Date)'."""
+    columns = [(p, f.name) for p, f in enumerate(cache.cacheFields) if f.formula is None]
     for position, column in columns:
         if column.strip().casefold() == name.strip().casefold():
-            if cache.cacheFields[position].fieldGroup is not None:
-                raise InvalidArgumentError(
-                    f"Field {column!r} is grouped; slicers need an ungrouped field. "
-                    "To filter dates, add a timeline (add_slicer with timeline)."
-                )
             return position
     raise InvalidArgumentError(
         f"Field {name!r} not found. Fields: {quoted(column for _, column in columns)}."
@@ -76,9 +68,57 @@ def ensure_items(cache: CacheDefinition, position: int) -> None:
 
 
 def item_order(cache: CacheDefinition, position: int) -> list[int]:
-    """The field's items from the first to show to the last, as positions among its items."""
+    """The field's items from the first to show to the last, as positions among its items.
+
+    The items of a group keep their order."""
     values = values_of(cache, position)
+    if _has_group_items(cache.cacheFields[position]):
+        return list(range(len(values)))
     return distinct(values).order if values else []
+
+
+def slicer_order(cache: CacheDefinition, position: int, descending: bool) -> list[int]:
+    """The items in the order a slicer lists them: those outside a group's range come last, and
+    number ranges and days are sorted as text."""
+    order = item_order(cache, position)
+    field = cache.cacheFields[position]
+    if not _has_ends(field):
+        return order[::-1] if descending else order
+    inner, ends = order[1:-1], [order[0], order[-1]]
+    if field.fieldGroup.rangePr.groupBy in ("range", "days"):  # pyright: ignore[reportOptionalMemberAccess]
+        labels = values_of(cache, position)
+        inner.sort(key=lambda item: str(labels[item]))
+    return [*inner[::-1], *ends[::-1]] if descending else [*inner, *ends]
+
+
+def empty_items(cache: CacheDefinition, position: int) -> set[int]:
+    """The items outside a group's range that no record falls in, as Excel marks them."""
+    field = cache.cacheFields[position]
+    if not _has_ends(field):
+        return set()
+    group = field.fieldGroup
+    assert group is not None and group.rangePr is not None
+    data = cache.cacheFields[group.base if group.base is not None else position].sharedItems
+    ranges = group.rangePr
+    if ranges.groupBy == "range":
+        lowest, highest, start, end = data.minValue, data.maxValue, ranges.startNum, ranges.endNum
+    else:
+        lowest, highest, start, end = data.minDate, data.maxDate, ranges.startDate, ranges.endDate
+    empty = set()
+    if lowest is not None and start is not None and start <= lowest:  # pyright: ignore[reportOperatorIssue]
+        empty.add(0)
+    if highest is not None and end is not None and end >= highest:  # pyright: ignore[reportOperatorIssue]
+        empty.add(len(values_of(cache, position)) - 1)
+    return empty
+
+
+def _has_group_items(field: CacheField) -> bool:
+    return field.fieldGroup is not None and field.fieldGroup.groupItems is not None
+
+
+def _has_ends(field: CacheField) -> bool:
+    """Whether the field groups by range, so its first and last items hold what lies outside."""
+    return _has_group_items(field) and field.fieldGroup.rangePr is not None  # pyright: ignore[reportOptionalMemberAccess]
 
 
 def ensure_pivot_items(pivot: TableDefinition, position: int) -> None:
@@ -197,8 +237,14 @@ def _rebuild_all(workbook, group, change, max_cells) -> None:
 
 def data_dates(cache: CacheDefinition, position: int) -> tuple[dt.datetime, dt.datetime]:
     shared = cache.cacheFields[position].sharedItems
-    if shared.minDate is None or shared.maxDate is None:
-        raise InvalidArgumentError(f"Field {cache.cacheFields[position].name!r} holds no dates.")
+    if shared is None or shared.minDate is None or shared.maxDate is None:
+        dates = [
+            f.name for f in cache.cacheFields if f.sharedItems is not None and f.sharedItems.minDate
+        ]
+        raise InvalidArgumentError(
+            f"Field {cache.cacheFields[position].name!r} is not a date field, so it cannot "
+            f"have a timeline. Date fields: {quoted(dates) if dates else 'none'}."
+        )
     return shared.minDate, shared.maxDate
 
 

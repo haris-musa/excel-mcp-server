@@ -24,7 +24,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         path: WorkbookPath,
         sheet: Annotated[SheetName, Field(description="Sheet for the slicer.")],
         target: Annotated[Source, Field(description="Table or PivotTable to filter.")],
-        field: Annotated[str, Field(description="Column header or field.")],
+        field: Annotated[
+            str, Field(description="Column header or field, e.g. 'Months (Date)' for a date group.")
+        ],
         at: CellRef,
         width_cm: Annotated[
             float | None, Field(gt=0, le=100, description="Default: 5.1 (timeline: 9.3).")

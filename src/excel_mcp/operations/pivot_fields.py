@@ -106,9 +106,14 @@ def plan_fields(source: Source, used: list[int], options: dict[int, PivotField])
 
 
 def _plain_field(setup: FieldSetup, index: int, column: Column, option: PivotField) -> None:
-    shared = distinct(column.values)
-    setup.shared[index] = shared
-    axis = AxisField(
+    setup.shared[index] = distinct(column.values)
+    setup.axis[index] = [_with_options(_shared_axis(setup, index), option)]
+
+
+def _shared_axis(setup: FieldSetup, index: int) -> AxisField:
+    """The field with one item for each distinct value of its column."""
+    column, shared = setup.source.columns[index], setup.shared[index]
+    return AxisField(
         index,
         column.name,
         [shared.values[item] for item in shared.order],
@@ -116,7 +121,29 @@ def _plain_field(setup: FieldSetup, index: int, column: Column, option: PivotFie
         shared.order,
         None if column.number_format == "General" else column.number_format,
     )
-    setup.axis[index] = [_with_options(axis, option)]
+
+
+def limit_groups(setup: FieldSetup, shown: dict[str, list[str]]) -> list[AxisField]:
+    """Show only the given items of date group fields, and of the dates they group, as slicers
+    do; ``shown`` is by field name, e.g. 'Months (Date)'.
+
+    Returns the limited date fields themselves, which are on no axis."""
+    limited = []
+    for name, items in shown.items():
+        found = False
+        for index in setup.date_groups:
+            levels = setup.axis[index]
+            for place, level in enumerate(levels):
+                if level.name == name:
+                    levels[place] = replace(level, visible=_visible(level, items))
+                    found = True
+            if setup.source.columns[index].name == name:
+                axis = _shared_axis(setup, index)
+                limited.append(replace(axis, visible=_visible(axis, items)))
+                found = True
+        if not found:
+            raise InvalidArgumentError(f"Field {name!r} is not a date group or a grouped date.")
+    return limited
 
 
 def _number_field(setup: FieldSetup, index: int, column: Column, option: PivotField) -> None:
@@ -176,22 +203,23 @@ def _date_fields(setup: FieldSetup, index: int, column: Column, option: PivotFie
 
 
 def _with_options(axis: AxisField, option: PivotField) -> AxisField:
-    visible = None
-    if option.show_items:
-        texts = {
-            item_text(label).casefold(): position for position, label in enumerate(axis.labels)
-        }
-        missing = [item for item in option.show_items if item.strip().casefold() not in texts]
-        if missing:
-            shown = [item_text(label) for label in axis.labels][:20]
-            raise InvalidArgumentError(
-                f"Field {axis.name!r} has no item {missing[0]!r}. Items: {shown}."
-            )
-        visible = frozenset(texts[item.strip().casefold()] for item in option.show_items)
+    visible = _visible(axis, option.show_items) if option.show_items else None
     field = replace(
         axis, descending=option.sort == "descending", sort_by=option.sort_by, visible=visible
     )
     return _reversed(field) if field.descending and field.sort_by is None else field
+
+
+def _visible(axis: AxisField, items: list[str]) -> frozenset[int]:
+    """The positions of the items named in ``items``."""
+    texts = {item_text(label).casefold(): position for position, label in enumerate(axis.labels)}
+    missing = [item for item in items if item.strip().casefold() not in texts]
+    if missing:
+        shown = [item_text(label) for label in axis.labels][:20]
+        raise InvalidArgumentError(
+            f"Field {axis.name!r} has no item {missing[0]!r}. Items: {shown}."
+        )
+    return frozenset(texts[item.strip().casefold()] for item in items)
 
 
 def _reversed(axis: AxisField) -> AxisField:

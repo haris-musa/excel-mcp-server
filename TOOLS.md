@@ -918,7 +918,7 @@ create_pivot_table keeps its old figures until Excel recalculates on open.
 | `path` | string | yes |  |
 | `sheet` | string | yes | Sheet for the slicer. |
 | `target` | object | yes | Table or PivotTable to filter. |
-| `field` | string | yes | Column header or field. |
+| `field` | string | yes | Column header or field, e.g. 'Months (Date)' for a date group. |
 | `at` | string | yes |  |
 | `width_cm` | number | no | Default: 5.1 (timeline: 9.3). |
 | `height_cm` | number | no | Default: 7.4 (timeline: 3.8). |
