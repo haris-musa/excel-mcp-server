@@ -7,16 +7,36 @@ license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Haris Musa", email = "haris.musa@outlook.com" }]
 requires-python = ">=3.11"
-keywords = ["mcp", "model-context-protocol", "excel", "xlsx", "spreadsheet", "openpyxl"]
+keywords = [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "excel",
+    "xlsx",
+    "xlsm",
+    "spreadsheet",
+    "openpyxl",
+    "charts",
+    "pivot-table",
+    "formulas",
+    "vba",
+    "llm",
+    "ai",
+    "claude",
+    "cursor",
+]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
     "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Topic :: Office/Business",
     "Topic :: Office/Business :: Financial :: Spreadsheet",
     "Typing :: Typed",
 ]
