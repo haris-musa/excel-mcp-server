@@ -1,44 +1,87 @@
 <!-- mcp-name: io.github.haris-musa/excel-mcp-server -->
 <p align="center">
-  <img src="https://raw.githubusercontent.com/haris-musa/excel-mcp-server/main/assets/logo.png" alt="Excel MCP Server" width="300"/>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/haris-musa/excel-mcp-server/main/assets/logo-dark.png">
+    <img src="https://raw.githubusercontent.com/haris-musa/excel-mcp-server/main/assets/logo.png" alt="Excel MCP Server" width="420">
+  </picture>
 </p>
 
-[![PyPI version](https://img.shields.io/pypi/v/excel-mcp-server.svg)](https://pypi.org/project/excel-mcp-server/)
-[![Downloads](https://static.pepy.tech/badge/excel-mcp-server)](https://pepy.tech/project/excel-mcp-server)
-[![CI](https://github.com/haris-musa/excel-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/haris-musa/excel-mcp-server/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+<p align="center">
+  <a href="https://pypi.org/project/excel-mcp-server/"><img src="https://img.shields.io/pypi/v/excel-mcp-server.svg" alt="PyPI version"></a>
+  <a href="https://pypi.org/project/excel-mcp-server/"><img src="https://img.shields.io/pypi/pyversions/excel-mcp-server.svg" alt="Python versions"></a>
+  <a href="https://pepy.tech/project/excel-mcp-server"><img src="https://static.pepy.tech/badge/excel-mcp-server" alt="Downloads"></a>
+  <a href="https://github.com/haris-musa/excel-mcp-server/actions/workflows/ci.yml"><img src="https://github.com/haris-musa/excel-mcp-server/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+</p>
 
-A [Model Context Protocol](https://modelcontextprotocol.io) server that lets AI assistants
-create, read and edit Excel workbooks. It needs no Microsoft Excel installation.
+<p align="center">
+  <a href="https://trendshift.io/repositories/13975" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/13975" alt="haris-musa%2Fexcel-mcp-server | Trendshift" width="250" height="55"/></a>
+</p>
 
-- **Read and write** cells, formulas (with results calculated for you) and dates, with paging and streaming reads for large sheets, and search
-- **Format** fonts, fills, borders, number formats, column widths and frozen panes; hide or
-  group rows, columns and sheets; set up printing; protect sheets
-- **Structure** sheets (order, view, workbook settings and protection), rows and columns (inserting or deleting updates every reference, as in Excel), merged cells, tables (totals row, calculated columns, banding, filter buttons, resizing), charts (column, bar, line, area, pie, doughnut, radar, scatter and
-  bubble, with combos, secondary axes, trendlines and error bars; and the Excel 2016 waterfall,
-  histogram, Pareto, box and whisker, treemap, sunburst and funnel), images, hyperlinks, PivotTables, and slicers and timelines that filter them and tables
-- **Data tools**: paste special, fill series, remove duplicates, text to columns, find and
-  replace, sheet and table filters with criteria
-- **Rules**: conditional formatting (scales, data bars with borders, negative bars and axis, icon
-  sets with custom icons, top/bottom, duplicates, text, dates and more), sparklines (line, column,
-  win/loss) and data validation (dropdowns from cells, limits, input messages, alert styles),
-  cleared with `clear_range`
-- **Macros**: read the VBA code in `.xlsm` files, module by module (never run). Writing VBA
-  is off unless you start the server with `--allow-vba-write` (see below)
-- **Safe by design**: optional folder confinement, a formula safety check, read-only mode,
-  localhost-only HTTP by default, and atomic saves that never leave a half-written file
+# Excel MCP Server
 
-Works with `.xlsx`, `.xlsm` (macros are preserved), `.xltx` and `.xltm` files.
+An open-source [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server that lets
+Claude, Cursor, VS Code Copilot, Codex and other AI clients create, read and edit Excel files:
+charts, PivotTables, formulas, tables and more. It is built on `openpyxl`, needs **no Microsoft
+Excel**, and runs on Windows, macOS and Linux.
+
+**Install and try it at [excelmcpserver.com](https://excelmcpserver.com)**, or see
+[Quick start](#quick-start) below.
+
+## Features
+
+**Charts and PivotTables**
+- Create Excel charts with AI: column, bar, line, area, pie, doughnut, radar, scatter and
+  bubble, with combos, secondary axes, trendlines and error bars
+- The Excel 2016 chart types: waterfall, histogram, Pareto, box and whisker, treemap, sunburst
+  and funnel
+- Real PivotTables that Excel refreshes (grouping, calculated fields, "show values as",
+  layouts, filters), plus slicers and timelines for PivotTables and tables
+- Sparklines (line, column, win/loss)
+
+**Formulas and dynamic arrays**
+- Formulas are calculated without Excel by a built-in engine (about 260 functions, checked
+  against more than 2,500 formulas recorded from real Excel), so `read_range` returns values
+  for files that were never opened in Excel
+- Dynamic arrays (`FILTER`, `SORT`, `UNIQUE`, `SEQUENCE`, `LET`) are stored as Excel stores
+  them and spill into the cells next to them
+
+**Data, tables and rules**
+- Read and write cells, dates and hyperlinks; tables with totals rows and calculated columns
+- Conditional formatting (scales, data bars, icon sets, top/bottom, duplicates, text, dates),
+  data validation (dropdowns, limits, input messages)
+- Sort, filter (with criteria), find and replace, remove duplicates, text to columns, fill
+  series, paste special
+- Fonts, fills, borders, number formats, merged cells, frozen panes, grouping, print setup,
+  sheet protection, images, notes and defined names. Inserting or deleting rows and columns
+  updates every reference, as in Excel
+
+**Large files**
+- Reads stream the workbook and return pages, so memory stays flat on sheets with hundreds of
+  thousands of rows; every call is bounded by size and cell limits
+
+**Macros (opt-in)**
+- Read the VBA code in `.xlsm` files. Writing VBA is off unless you start the server with
+  `--allow-vba-write`; the server never runs macros
+
+**Safe by design**
+- Optional folder confinement, a formula safety check, read-only mode, localhost-only HTTP by
+  default, and atomic saves that never leave a half-written file
+
+Works with `.xlsx`, `.xlsm` (macros are preserved), `.xltx` and `.xltm` files. Existing
+threaded comments, shapes, form controls and other content the tools cannot edit are kept as
+they are.
 
 ## Quick start
 
 You need [uv](https://docs.astral.sh/uv/getting-started/installation/). Every client runs the
 server with `uvx excel-mcp-server stdio`; replace `/path/to/workbooks` with the folder the
-server may use.
+server may use. [excelmcpserver.com](https://excelmcpserver.com) has the same steps with copy
+buttons and one-click install links for Cursor and VS Code.
 
-**Claude Desktop (Chat)**: download `excel-mcp-server-<version>.mcpb` from the
-[latest release](https://github.com/haris-musa/excel-mcp-server/releases/latest) and open it.
-Claude asks which folder the server may use.
+**Claude Desktop (Chat)**: download
+[`excel-mcp-server.mcpb`](https://github.com/haris-musa/excel-mcp-server/releases/latest/download/excel-mcp-server.mcpb)
+from the latest release and open it. Claude asks which folder the server may use.
 
 **Claude Code** (the CLI, and the Code tab in Claude Desktop):
 
@@ -264,20 +307,16 @@ Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
   reports it. Where the calculator cannot tell how large a result is, only the formula's
   cell is stored and Excel fills in the rest when it opens the file.
 
-## Upgrading from 0.x
+## Upgrading from 1.x
 
-Version 1.0 renames and redesigns the tools, removes the SSE transport and requires
-Python 3.11 or newer. The [changelog](CHANGELOG.md#100---2026-09-28) maps every old tool to
-its replacement. Version 2.0 makes parameter names consistent across tools; the
-[changelog](CHANGELOG.md#unreleased) lists every rename.
+Version 2.0 makes tool and parameter names consistent across tools, which breaks 1.x clients
+and saved prompts. The changelog has a table that maps every 1.x name to its 2.0 replacement:
+[Upgrading from 1.x](CHANGELOG.md#upgrading-from-1x). Coming from 0.x? See the
+[1.0.0 notes](CHANGELOG.md#100---2026-09-28) first.
 
 ## Contributing
 
 Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Star history
-
-[![Star History Chart](https://api.star-history.com/svg?repos=haris-musa/excel-mcp-server&type=Date)](https://www.star-history.com/#haris-musa/excel-mcp-server&Date)
 
 ## License
 
