@@ -84,3 +84,29 @@ async def test_shared_formulas_are_read_whole(call: ToolCall, files: Path) -> No
 
     assert data["values"][5] == [6, 12]
     assert split_sheet(parts["xl/worksheets/sheet1.xml"]) is None
+
+
+async def test_parts_that_mention_worksheets_are_not_taken_for_sheets(
+    call: ToolCall, files: Path
+) -> None:
+    workbook = Workbook()
+    sheet = workbook.worksheets[0]
+    sheet.title = "Data"
+    sheet.append(["Region", "Units", "Double"])
+    for row, (region, units) in enumerate([("North", 5), ("South", 3)], start=2):
+        sheet.append([region, units, f"=B{row}*2"])
+    workbook.create_sheet("Report")
+    workbook.save(files / "pivot.xlsx")
+    await call(
+        "create_pivot_table",
+        path="pivot.xlsx",
+        source="Data!A1:B3",
+        sheet="Report",
+        at="A3",
+        row_fields=["Region"],
+        value_fields=[{"field": "Units"}],
+    )
+
+    data = await call("read_range", path="pivot.xlsx", sheet="Data", range="C2:C3")
+
+    assert data["values"] == [[10], [6]]

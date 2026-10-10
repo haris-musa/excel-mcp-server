@@ -22,6 +22,7 @@ from openpyxl.reader.excel import ExcelReader
 from openpyxl.utils import column_index_from_string
 from openpyxl.worksheet._reader import WorkSheetParser
 from openpyxl.worksheet.worksheet import Worksheet
+from openpyxl.xml.constants import WORKSHEET_TYPE
 
 BLOCK_ROWS = 128
 _SHEET_DATA = b"<sheetData"
@@ -177,9 +178,10 @@ Parts = dict[str, tuple[bytes, SheetSource | None]]
 class _SheetArchive(ZipFile):
     """An archive that serves each worksheet without its rows, which are kept in ``parts``."""
 
-    def __init__(self, path: Path, parts: Parts) -> None:
+    def __init__(self, path: Path, parts: Parts, sheet_parts: set[str]) -> None:
         super().__init__(path)
         self.parts = parts
+        self.sheet_parts = sheet_parts
         self.worksheets: list[str] = []
 
     def open(self, name: Any, mode: Any = "r", pwd: Any = None, **options: Any) -> IO[bytes]:
@@ -187,7 +189,7 @@ class _SheetArchive(ZipFile):
         if name not in self.parts:
             with super().open(name, mode, pwd, **options) as part:
                 data = part.read()
-            if b"<worksheet" not in data[:1024]:
+            if name not in self.sheet_parts:
                 return BytesIO(data)
             split = split_sheet(data)
             self.parts[name] = split if split else (data, None)
@@ -202,8 +204,10 @@ def load_lazy(path: Path, parts: Parts, *, data_only: bool) -> Workbook:
     one file, so that each sheet is read from the file once.
     """
     reader = ExcelReader(path, data_only=data_only, keep_links=False)
+    reader.read_manifest()
+    sheet_parts = {part.PartName.lstrip("/") for part in reader.package.findall(WORKSHEET_TYPE)}
     reader.archive.close()
-    archive = reader.archive = _SheetArchive(path, parts)
+    archive = reader.archive = _SheetArchive(path, parts, sheet_parts)
     reader.read()
     sheets = [sheet for sheet in reader.wb.worksheets if isinstance(sheet, Worksheet)]
     for sheet, name in zip(sheets, archive.worksheets, strict=True):
