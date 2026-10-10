@@ -13,7 +13,12 @@ otherwise.
 
 ## Supported versions
 
-Security fixes are made for the latest release.
+| Version | Supported |
+| --- | --- |
+| 2.x | Yes |
+| 1.x and earlier | No, please upgrade (see the [changelog](CHANGELOG.md#upgrading-from-1x)) |
+
+Security fixes are made for the latest 2.x release.
 
 ## Security model
 

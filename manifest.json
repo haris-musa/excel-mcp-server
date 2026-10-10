@@ -23,7 +23,11 @@
     "excel",
     "xlsx",
     "spreadsheet",
-    "openpyxl"
+    "openpyxl",
+    "charts",
+    "pivot-table",
+    "formulas",
+    "vba"
   ],
   "server": {
     "type": "uv",

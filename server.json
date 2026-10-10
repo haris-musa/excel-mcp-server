@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.haris-musa/excel-mcp-server",
   "title": "Excel MCP Server",
-  "description": "Create, read and edit Excel workbooks without Microsoft Excel.",
+  "description": "Create and edit Excel files with AI: charts, PivotTables, formulas. No Excel needed.",
   "repository": {
     "url": "https://github.com/haris-musa/excel-mcp-server",
     "source": "github"
