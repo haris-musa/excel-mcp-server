@@ -380,6 +380,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- `read_range` no longer loads the whole workbook (twice, about 1.5 GB and four times slower
+  on 200,000 rows) when a formula returns empty text: Excel stores `""` as a result without
+  content, which was mistaken for a formula never calculated. Only formulas with no stored
+  result are calculated.
+- Formulas are shown as typed, not as stored: `read_range` and `find_cells` in `formulas`
+  mode, `replace_cells`, defined names and validation rules no longer show `_xlfn.`,
+  `_xlws.` or `_xlpm.` prefixes, and spill references read `A1#`. Writing a shown formula
+  back stores exactly what was stored.
 - Results of dynamic array formulas (`FILTER`, `SORT`, `SEQUENCE`, ...) were stale after the
   data they use changed. Every save recalculates them, resizing the spill range as Excel does
   (`#SPILL!` where cells are in the way) and dropping a result the calculator cannot

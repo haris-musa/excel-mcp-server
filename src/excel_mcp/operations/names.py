@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.formulas import storable_operand
 from excel_mcp.operations.tables import is_valid_name, table_names
+from excel_mcp.xlfn import display_operand
 
 
 class DefinedNameInfo(BaseModel):
@@ -21,7 +22,7 @@ def list_defined_names(workbook: Workbook) -> list[DefinedNameInfo]:
     scopes: list[tuple[str | None, DefinedNameDict]] = [(None, workbook.defined_names)]
     scopes += [(sheet.title, sheet.defined_names) for sheet in workbook.worksheets]
     return [
-        DefinedNameInfo(name=name, refers_to=defined.attr_text or "", sheet=scope)
+        DefinedNameInfo(name=name, refers_to=display_operand(defined.attr_text or ""), sheet=scope)
         for scope, names in scopes
         for name, defined in sorted(names.items())
     ]

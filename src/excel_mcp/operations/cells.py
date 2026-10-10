@@ -20,9 +20,9 @@ from excel_mcp.refs import (
     parse_clamped_range,
     parse_range,
 )
-from excel_mcp.spill import show_spills
 from excel_mcp.values import CellValue, date_number_format, to_cell, to_json, typed_value
 from excel_mcp.workspace import sheet_names
+from excel_mcp.xlfn import display_formula
 
 
 class RangeData(BaseModel):
@@ -116,7 +116,7 @@ def read_window(sheet: ReadOnlyWorksheet, ref: str | None) -> CellRange:
 
 
 def _displayed(value: CellValue) -> CellValue:
-    return show_spills(value) if isinstance(value, str) and value.startswith("=") else value
+    return display_formula(value) if isinstance(value, str) and value.startswith("=") else value
 
 
 def store_typed(cell: Cell, text: str, names: list[str]) -> None:
@@ -248,11 +248,12 @@ def find_cells(
     count = 0
     for sheet in sheets:
         for row, col, value in streamed_cells(sheet):
-            text = normalize(str(value))
+            shown = _displayed(to_json(value))
+            text = normalize(str(shown))
             if not (text == needle if exact else needle in text):
                 continue
             if count == max_results:
                 return FindResult(matches=matches, truncated=True)
-            matches.setdefault(sheet.title, {})[cell_name(row, col)] = to_json(value)
+            matches.setdefault(sheet.title, {})[cell_name(row, col)] = shown
             count += 1
     return FindResult(matches=matches)

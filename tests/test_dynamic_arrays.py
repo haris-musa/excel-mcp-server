@@ -111,7 +111,7 @@ async def test_spilled_cells_hold_the_results_and_read_back(call: ToolCall, numb
     assert data["values"][0] == ["a", 5, 1, 1, 50, "a"]
     assert data["values"][2] == ["e", 7, 5, 3, None, "c"]
     formulas = await call("read_range", **BOOK, sheet="Out", range="A1:A1", mode="formulas")
-    assert formulas["values"] == [["=_xlfn._xlws.FILTER(Data!A2:B6,Data!B2:B6>4)"]]
+    assert formulas["values"] == [["=FILTER(Data!A2:B6,Data!B2:B6>4)"]]
 
 
 async def test_ordinary_formulas_stay_ordinary(call: ToolCall, numbers: Path) -> None:
