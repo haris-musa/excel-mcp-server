@@ -10,7 +10,7 @@ import uuid
 from dataclasses import dataclass
 
 from excel_mcp import cfb, ovba
-from excel_mcp.errors import InvalidArgumentError
+from excel_mcp.errors import InvalidArgumentError, WorkbookError
 from excel_mcp.ovba import ModuleKind, Record
 from excel_mcp.ovba_compress import compress
 
@@ -187,6 +187,16 @@ class Project:
         self.text = _join_lines(lines)
 
     def to_bytes(self) -> bytes:
+        try:
+            return self._serialize()
+        except UnicodeEncodeError:
+            # Text that was damaged in the file decodes to characters its code page cannot store.
+            raise WorkbookError(
+                "The VBA project is damaged (its text is not valid in its code page), so it "
+                "cannot be rewritten. Repair it in Excel or remove the macros."
+            ) from None
+
+    def _serialize(self) -> bytes:
         encoding = self._encoding
         entries = [
             *self.preserved,

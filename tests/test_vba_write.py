@@ -10,6 +10,7 @@ from openpyxl import Workbook
 
 from excel_mcp import cfb, ovba
 from excel_mcp.config import Settings
+from excel_mcp.errors import WorkbookError
 from excel_mcp.ovba_compress import compress
 from excel_mcp.ovba_write import Project
 from excel_mcp.server import create_server
@@ -335,3 +336,26 @@ async def test_signed_projects_are_refused_and_left_untouched(
     message = await vba_error(tool, path="macros.xlsm", module="Module1", **arguments)
     assert "digitally signed" in message
     assert macro_workbook.read_bytes() == before
+
+
+def _damage_project(workbook: Path) -> bytes:
+    """Flip bytes in the project's directory so its text decodes to unstorable characters."""
+    with zipfile.ZipFile(workbook) as source:
+        parts = {name: source.read(name) for name in source.namelist()}
+    good = parts["xl/vbaProject.bin"]
+    parts["xl/vbaProject.bin"] = bytes(b ^ 0xFF if 600 < i < 700 else b for i, b in enumerate(good))
+    with zipfile.ZipFile(workbook, "w", zipfile.ZIP_DEFLATED) as target:
+        for name, data in parts.items():
+            target.writestr(name, data)
+    return parts["xl/vbaProject.bin"]
+
+
+async def test_write_vba_module_reports_a_damaged_project(
+    vba_call: ToolCall, vba_error: ToolCall, files: Path
+) -> None:
+    await vba_call("create_workbook", path="m.xlsm")
+    damaged = _damage_project(files / "m.xlsm")
+    with pytest.raises(WorkbookError, match="damaged"):
+        Project.from_bytes(damaged).to_bytes()
+    message = await vba_error("write_vba_module", path="m.xlsm", module="Module1", code=MACRO)
+    assert "damaged" in message
