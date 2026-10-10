@@ -29,6 +29,7 @@ jobs:
         run: uv run --isolated --no-project --with dist/*.whl excel-mcp-server --version
       - name: Build the MCP bundle
         run: bunx @anthropic-ai/mcpb@2.1.2 pack . "dist/excel-mcp-server-$(uv version --short).mcpb"
+      - run: cp "dist/excel-mcp-server-$(uv version --short).mcpb" dist/excel-mcp-server.mcpb
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist
