@@ -9,6 +9,7 @@ from openpyxl.workbook.defined_name import DefinedName
 
 from excel_mcp.calc.engine import Engine
 from excel_mcp.calc.values import ExcelError, UncalculableError
+from excel_mcp.lazy_workbook import Parts, load_lazy
 from excel_mcp.operations.cells import write_range
 from excel_mcp.operations.table_options import TableOptions
 from excel_mcp.operations.tables import create_table
@@ -55,10 +56,18 @@ def build_workbook(
     save_atomically(workbook, path)
 
 
-def calculate_cases(path: Path, count: int) -> list[object]:
-    """The calculator's value for each of the first ``count`` cases, or None if uncalculated."""
-    formulas = load_workbook(path)
-    cached = load_workbook(path, data_only=True)
+def calculate_cases(path: Path, count: int, *, lazy: bool = False) -> list[object]:
+    """The calculator's value for each of the first ``count`` cases, or None if uncalculated.
+
+    ``lazy`` loads the workbook's cells row by row as the calculation asks for them.
+    """
+    if lazy:
+        parts: Parts = {}
+        formulas = load_lazy(path, parts, data_only=False)
+        cached = load_lazy(path, parts, data_only=True)
+    else:
+        formulas = load_workbook(path)
+        cached = load_workbook(path, data_only=True)
     engine = Engine(cached, formulas)
     sheet = formulas["Cases"]
     results: list[object] = []

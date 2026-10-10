@@ -18,13 +18,15 @@ class DefinedNameInfo(BaseModel):
 
 
 def list_defined_names(workbook: Workbook) -> list[DefinedNameInfo]:
-    """Workbook-scoped names first, then each sheet's own names."""
+    """Workbook-scoped names first, then each sheet's own names. Hidden names are left out, as
+    Excel's Name Manager leaves them out (charts and other features keep their data in them)."""
     scopes: list[tuple[str | None, DefinedNameDict]] = [(None, workbook.defined_names)]
     scopes += [(sheet.title, sheet.defined_names) for sheet in workbook.worksheets]
     return [
         DefinedNameInfo(name=name, refers_to=display_operand(defined.attr_text or ""), sheet=scope)
         for scope, names in scopes
         for name, defined in sorted(names.items())
+        if not defined.hidden
     ]
 
 

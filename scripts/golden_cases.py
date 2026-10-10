@@ -858,3 +858,50 @@ CASES += [
     "=SUM(Orders[Missing])",
     "=SUM(Orders[[#This Row],[Qty]])",
 ]
+
+# Sorting and unique values over blanks, logicals and errors, one element per case.
+_MIX_ROWS = [
+    [3, 2, 3],
+    ["b", 1, "b"],
+    [True, 2, True],
+    [None, None, None],
+    ["=NA()", 1, "=NA()"],
+    ["a", None, "a"],
+    [False, 2, False],
+    [1, 1, 1],
+    ["=1/0", 3, "=1/0"],
+    ["B", None, "B"],
+    [None, 1, None],
+    [0, 2, 0],
+    ['=""', 3, '=""'],
+    [2.5, 1, 2.5],
+    ['=VALUE("x")', 2, 1],
+    ["=SQRT(-1)", 3, "A"],
+    [-1, None, -1],
+    ["Zeta", 1, "a"],
+]
+INPUTS["Mix"] = _MIX_ROWS
+INPUTS["MixRow"] = [[row[0] for row in _MIX_ROWS], [row[2] for row in _MIX_ROWS]]
+_MIX = f"Mix!A1:A{len(_MIX_ROWS)}"
+_KEY = f"Mix!B1:B{len(_MIX_ROWS)}"
+_UNIQ = f"Mix!C1:C{len(_MIX_ROWS)}"
+for _order in (1, -1):
+    CASES += [f"=INDEX(SORT({_MIX},1,{_order}),{k})" for k in range(1, len(_MIX_ROWS) + 1)]
+    CASES += [f"=INDEX(SORTBY({_MIX},{_MIX},{_order}),{k})" for k in range(1, len(_MIX_ROWS) + 1)]
+    CASES += [f"=INDEX(SORTBY({_MIX},{_KEY},{_order}),{k})" for k in range(1, len(_MIX_ROWS) + 1)]
+    CASES += [
+        f"=INDEX(SORTBY({_MIX},{_KEY},{_order},{_MIX},-{_order}),{k})"
+        for k in range(1, len(_MIX_ROWS) + 1)
+    ]
+    CASES += [
+        f"=INDEX(SORT(MixRow!A1:R1,1,{_order},TRUE),1,{k})" for k in range(1, len(_MIX_ROWS) + 1)
+    ]
+CASES += [f"=INDEX(UNIQUE({_UNIQ}),{k})" for k in range(1, 14)]
+CASES += [
+    f"=ROWS(UNIQUE({_UNIQ}))",
+    f"=ROWS(UNIQUE({_UNIQ},,TRUE))",
+    f"=INDEX(UNIQUE({_UNIQ},,TRUE),4)",
+]
+CASES += [f"=INDEX(UNIQUE(MixRow!A2:R2,TRUE),1,{k})" for k in range(1, 14)]
+CASES += [f"=INDEX(UNIQUE(Mix!A1:B{len(_MIX_ROWS)}),{k},2)" for k in range(1, 12)]
+CASES += [f"=ROWS(UNIQUE(Mix!A1:B{len(_MIX_ROWS)}))", f"=ROWS(UNIQUE(Mix!B1:B{len(_MIX_ROWS)}))"]

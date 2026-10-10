@@ -26,6 +26,7 @@ from excel_mcp.errors import (
     WorkbookExistsError,
     WorkbookNotFoundError,
 )
+from excel_mcp.lazy_workbook import Parts, load_lazy
 from excel_mcp.paths import MACRO_SUFFIXES, TEMPLATE_SUFFIXES, PathPolicy
 
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
@@ -94,6 +95,27 @@ class Workspace:
             yield workbook
         finally:
             close_workbook(workbook)
+
+    @contextmanager
+    def read_lazy(self, raw_path: str) -> Iterator[tuple[Workbook, Workbook]]:
+        """Open a workbook as its stored results and its formulas, parsing cells when needed.
+
+        For calculating some of a large sheet's formulas: only the rows that are asked for are
+        read, so the cells they use are the only ones that cost anything. Changes are never saved.
+        """
+        path = self.resolve_existing(raw_path)
+        self._check_zip(path)
+        parts: Parts = {}
+        try:
+            stored = load_lazy(path, parts, data_only=True)
+            formulas = load_lazy(path, parts, data_only=False)
+        except Exception as error:
+            raise self._unreadable(path, error) from None
+        try:
+            yield stored, formulas
+        finally:
+            close_workbook(stored)
+            close_workbook(formulas)
 
     @contextmanager
     def stream(self, raw_path: str, *, data_only: bool = False) -> Iterator[Workbook]:
@@ -170,11 +192,7 @@ class Workspace:
             )
 
     def _load(self, path: Path, *, data_only: bool, stream: bool = False) -> Workbook:
-        if not zipfile.is_zipfile(path):
-            raise WorkbookError(
-                f"{self.display(path)} is not an Excel workbook. Only .xlsx/.xlsm files are "
-                "supported; legacy .xls and CSV files must be converted first."
-            )
+        self._check_zip(path)
         try:
             return load_workbook(
                 path,
@@ -183,10 +201,20 @@ class Workspace:
                 keep_vba=not stream and path.suffix.lower() in MACRO_SUFFIXES,
             )
         except Exception as error:
-            # openpyxl raises many different exception types for damaged files.
+            raise self._unreadable(path, error) from None
+
+    def _check_zip(self, path: Path) -> None:
+        if not zipfile.is_zipfile(path):
             raise WorkbookError(
-                f"{self.display(path)} could not be opened as an Excel workbook ({error})."
-            ) from None
+                f"{self.display(path)} is not an Excel workbook. Only .xlsx/.xlsm files are "
+                "supported; legacy .xls and CSV files must be converted first."
+            )
+
+    def _unreadable(self, path: Path, error: Exception) -> WorkbookError:
+        # openpyxl raises many different exception types for damaged files.
+        return WorkbookError(
+            f"{self.display(path)} could not be opened as an Excel workbook ({error})."
+        )
 
 
 def save_atomically(workbook: Workbook, path: Path) -> None:

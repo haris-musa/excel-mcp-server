@@ -226,6 +226,11 @@ All notable changes to this project are documented here. The format follows
   company), the calculation options (automatic, manual or automatic except data tables;
   iterative calculation with a maximum of iterations and change; recalculation on load) and
   workbook structure protection. `describe_workbook` returns them.
+- The formula calculator reads `HYPERLINK` (its friendly name, or the link when there is none;
+  checked against Excel) and sorts `SORT` and `SORTBY` over blank cells, logicals and errors in
+  Excel's order: numbers, text, `FALSE`, `TRUE`, then errors by number, with blanks last
+  whichever way it sorts. More than 200 cases recorded from Excel, including `UNIQUE` over
+  blanks, logicals and errors, were added to its test fixture.
 
 ### Changed
 
@@ -377,6 +382,12 @@ All notable changes to this project are documented here. The format follows
   `null` option for optional parameters, plain type unions as one `type` list, and no
   `minimum` of 0 or 1. `path`, `sheet`, cell and range parameters have no description of their own; the
   server instructions explain paths and A1 notation. A test keeps the total under a budget.
+- `create_chart` is marked destructive (it can replace a chart with `replace`), like the other
+  tools that overwrite.
+- `describe_workbook` leaves out hidden defined names (the `_xlchart` names of the newer
+  chart types and other internal ones), as Excel's Name Manager does. Slicer names are listed.
+- `create_workbook` describes `overwrite`, `list_workbooks` says that it lists the first
+  workbook directory by default, and `read_range` says what `uncalculated` holds.
 
 ### Fixed
 
@@ -464,6 +475,12 @@ All notable changes to this project are documented here. The format follows
 - Formulas that use `IFS`, `XLOOKUP`, `TEXTJOIN`, `STDEV.S`, `SORT` and other newer
   functions showed `#NAME?` when the file was opened in Excel (and `SORT` made it
   unopenable) because the storage prefix was missing.
+- `read_range` of a workbook whose formulas have no stored results (any file last saved by
+  this server) calculates only the formulas in the range and the cells they use, reading
+  rows of the sheet as they are needed, instead of loading the whole workbook twice. On
+  200,000 rows with a formula in each, a page took 36.8 s and 1.1 GB, now 1.6 s and 230 MB;
+  the used range 47.6 s, now 15 s (finding the used range is most of it); the last rows
+  69.6 s, now 24 s (the sheet is read once to reach them).
 
 ## [1.1.2] - 2026-10-08
 

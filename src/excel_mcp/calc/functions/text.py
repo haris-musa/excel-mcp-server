@@ -28,6 +28,11 @@ def _count(value: Scalar) -> int:
     return count
 
 
+@function("HYPERLINK", kind="scalar")
+def hyperlink(link: Scalar, friendly_name: Scalar = ...) -> Scalar:  # pyright: ignore[reportArgumentType]
+    return to_text(link) if friendly_name is ... else friendly_name
+
+
 @function("LEN", kind="scalar")
 def len_(text: Scalar) -> float:
     return float(len(to_text(text)))

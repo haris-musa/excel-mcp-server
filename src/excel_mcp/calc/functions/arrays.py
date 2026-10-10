@@ -8,6 +8,7 @@ from excel_mcp.calc.parser import Node, Ref
 from excel_mcp.calc.registry import function
 from excel_mcp.calc.values import (
     CALC,
+    ERROR_NUMBERS,
     VALUE,
     ExcelError,
     FormulaError,
@@ -15,7 +16,6 @@ from excel_mcp.calc.values import (
     Scalar,
     UncalculableError,
     Value,
-    is_number,
     scalar,
     to_bool,
     to_int,
@@ -48,17 +48,26 @@ def sequence(rows: Scalar, columns: Scalar = 1, start: Scalar = 1, step: Scalar 
 
 
 def _sort_key(value: Scalar) -> tuple[int, float | str]:
-    if is_number(value):
-        return (0, float(value))  # pyright: ignore[reportArgumentType]
+    """Excel's order: numbers, text, FALSE, TRUE, then errors by their number."""
+    if isinstance(value, ExcelError):
+        if value.code not in ERROR_NUMBERS:
+            raise UncalculableError(f"sorting {value.code}")
+        return (3, ERROR_NUMBERS[value.code])
+    if isinstance(value, bool):
+        return (2, value)
     if isinstance(value, str):
         return (1, value.casefold())
-    raise UncalculableError("sorting blanks, logicals or errors")
+    return (0, float(value))  # pyright: ignore[reportArgumentType]
 
 
 def _sorted_lines(lines: list[list[Value]], keys: list[tuple[list[Scalar], bool]]) -> list[int]:
+    """The line order for sorting by each key, the last key first so that ties keep the order
+    the earlier keys gave them. Blank cells come last whichever way the key sorts."""
     order = list(range(len(lines)))
     for column, descending in reversed(keys):
-        order.sort(key=lambda i, c=column: _sort_key(c[i]), reverse=descending)
+        filled = [i for i in order if column[i] is not None]
+        filled.sort(key=lambda i, c=column: _sort_key(c[i]), reverse=descending)
+        order = filled + [i for i in order if column[i] is None]
     return order
 
 

@@ -9,6 +9,7 @@ from openpyxl.chart import BarChart
 from openpyxl.workbook.defined_name import DefinedName
 
 from tests.conftest import ToolCall
+from tests.package_support import copy_fixture
 
 pytestmark = pytest.mark.anyio
 
@@ -116,3 +117,21 @@ async def test_describe_workbook_flags_hidden_sheets_and_names(
         {"name": "Report", "used_range": "A1", "visibility": "hidden"},
     ]
     assert info["defined_names"] == [{"name": "Totals", "refers_to": "Data!$C$2:$C$5"}]
+
+
+async def test_describe_workbook_leaves_out_hidden_names_but_lists_slicer_names(
+    call: ToolCall, files: Path
+) -> None:
+    copy_fixture(files, "excel_chartex.xlsx", "charts.xlsx")
+    copy_fixture(files, "excel_slicers.xlsx", "slicers.xlsx")
+
+    charts = await call("describe_workbook", path="charts.xlsx")
+    slicers = await call("describe_workbook", path="slicers.xlsx")
+
+    assert "defined_names" not in charts
+    assert [name["name"] for name in slicers["defined_names"]] == [
+        "NativeTimeline_Date",
+        "Slicer_Product",
+        "Slicer_Region",
+        "Slicer_Region1",
+    ]

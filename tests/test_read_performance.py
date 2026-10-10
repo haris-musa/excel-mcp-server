@@ -65,7 +65,7 @@ async def test_reads_with_stored_results_never_load_the_whole_workbook(
     assert full_loads == []
 
 
-async def test_an_uncalculated_formula_loads_the_workbook_to_calculate_it(
+async def test_an_uncalculated_formula_is_calculated_without_loading_the_workbook(
     call: ToolCall, files: Path, full_loads: list[str]
 ) -> None:
     workbook = Workbook()
@@ -77,4 +77,4 @@ async def test_an_uncalculated_formula_loads_the_workbook_to_calculate_it(
     data = await call("read_range", path="fresh.xlsx", sheet="Data")
 
     assert data["values"] == [[1, 2]]
-    assert full_loads != []
+    assert full_loads == []

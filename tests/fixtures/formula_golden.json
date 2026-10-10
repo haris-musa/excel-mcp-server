@@ -11265,6 +11265,140 @@
     null,
     "=SEQUENCE(2,3)"
    ]
+  ],
+  "Mix": [
+   [
+    3,
+    2,
+    3
+   ],
+   [
+    "b",
+    1,
+    "b"
+   ],
+   [
+    true,
+    2,
+    true
+   ],
+   [
+    null,
+    null,
+    null
+   ],
+   [
+    "=NA()",
+    1,
+    "=NA()"
+   ],
+   [
+    "a",
+    null,
+    "a"
+   ],
+   [
+    false,
+    2,
+    false
+   ],
+   [
+    1,
+    1,
+    1
+   ],
+   [
+    "=1/0",
+    3,
+    "=1/0"
+   ],
+   [
+    "B",
+    null,
+    "B"
+   ],
+   [
+    null,
+    1,
+    null
+   ],
+   [
+    0,
+    2,
+    0
+   ],
+   [
+    "=\"\"",
+    3,
+    "=\"\""
+   ],
+   [
+    2.5,
+    1,
+    2.5
+   ],
+   [
+    "=VALUE(\"x\")",
+    2,
+    1
+   ],
+   [
+    "=SQRT(-1)",
+    3,
+    "A"
+   ],
+   [
+    -1,
+    null,
+    -1
+   ],
+   [
+    "Zeta",
+    1,
+    "a"
+   ]
+  ],
+  "MixRow": [
+   [
+    3,
+    "b",
+    true,
+    null,
+    "=NA()",
+    "a",
+    false,
+    1,
+    "=1/0",
+    "B",
+    null,
+    0,
+    "=\"\"",
+    2.5,
+    "=VALUE(\"x\")",
+    "=SQRT(-1)",
+    -1,
+    "Zeta"
+   ],
+   [
+    3,
+    "b",
+    true,
+    null,
+    "=NA()",
+    "a",
+    false,
+    1,
+    "=1/0",
+    "B",
+    null,
+    0,
+    "=\"\"",
+    2.5,
+    1,
+    "A",
+    -1,
+    "a"
+   ]
   ]
  },
  "names": {
@@ -21964,6 +22098,894 @@
   {
    "formula": "=SUM(Orders[[#This Row],[Qty]])",
    "expected": "#VALUE!"
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,1),1)",
+   "expected": -1.0
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,1),2)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,1),3)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,1),4)",
+   "expected": 2.5
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,1),5)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,1),6)",
+   "expected": ""
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,1),7)",
+   "expected": "a"
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,1),8)",
+   "expected": "b"
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,1),9)",
+   "expected": "B"
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,1),10)",
+   "expected": "Zeta"
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,1),11)",
+   "expected": false
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,1),12)",
+   "expected": true
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,1),13)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,1),14)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,1),15)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,1),16)",
+   "expected": "#N/A"
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,1),17)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,1),18)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,1),1)",
+   "expected": -1.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,1),2)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,1),3)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,1),4)",
+   "expected": 2.5
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,1),5)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,1),6)",
+   "expected": ""
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,1),7)",
+   "expected": "a"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,1),8)",
+   "expected": "b"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,1),9)",
+   "expected": "B"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,1),10)",
+   "expected": "Zeta"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,1),11)",
+   "expected": false
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,1),12)",
+   "expected": true
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,1),13)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,1),14)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,1),15)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,1),16)",
+   "expected": "#N/A"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,1),17)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,1),18)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1),1)",
+   "expected": "b"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1),2)",
+   "expected": "#N/A"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1),3)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1),4)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1),5)",
+   "expected": 2.5
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1),6)",
+   "expected": "Zeta"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1),7)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1),8)",
+   "expected": true
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1),9)",
+   "expected": false
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1),10)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1),11)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1),12)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1),13)",
+   "expected": ""
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1),14)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1),15)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1),16)",
+   "expected": "a"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1),17)",
+   "expected": "B"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1),18)",
+   "expected": -1.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1,Mix!A1:A18,-1),1)",
+   "expected": "#N/A"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1,Mix!A1:A18,-1),2)",
+   "expected": "Zeta"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1,Mix!A1:A18,-1),3)",
+   "expected": "b"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1,Mix!A1:A18,-1),4)",
+   "expected": 2.5
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1,Mix!A1:A18,-1),5)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1,Mix!A1:A18,-1),6)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1,Mix!A1:A18,-1),7)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1,Mix!A1:A18,-1),8)",
+   "expected": true
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1,Mix!A1:A18,-1),9)",
+   "expected": false
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1,Mix!A1:A18,-1),10)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1,Mix!A1:A18,-1),11)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1,Mix!A1:A18,-1),12)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1,Mix!A1:A18,-1),13)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1,Mix!A1:A18,-1),14)",
+   "expected": ""
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1,Mix!A1:A18,-1),15)",
+   "expected": "B"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1,Mix!A1:A18,-1),16)",
+   "expected": "a"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1,Mix!A1:A18,-1),17)",
+   "expected": -1.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,1,Mix!A1:A18,-1),18)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,1,TRUE),1,1)",
+   "expected": -1.0
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,1,TRUE),1,2)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,1,TRUE),1,3)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,1,TRUE),1,4)",
+   "expected": 2.5
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,1,TRUE),1,5)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,1,TRUE),1,6)",
+   "expected": ""
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,1,TRUE),1,7)",
+   "expected": "a"
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,1,TRUE),1,8)",
+   "expected": "b"
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,1,TRUE),1,9)",
+   "expected": "B"
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,1,TRUE),1,10)",
+   "expected": "Zeta"
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,1,TRUE),1,11)",
+   "expected": false
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,1,TRUE),1,12)",
+   "expected": true
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,1,TRUE),1,13)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,1,TRUE),1,14)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,1,TRUE),1,15)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,1,TRUE),1,16)",
+   "expected": "#N/A"
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,1,TRUE),1,17)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,1,TRUE),1,18)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,-1),1)",
+   "expected": "#N/A"
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,-1),2)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,-1),3)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,-1),4)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,-1),5)",
+   "expected": true
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,-1),6)",
+   "expected": false
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,-1),7)",
+   "expected": "Zeta"
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,-1),8)",
+   "expected": "b"
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,-1),9)",
+   "expected": "B"
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,-1),10)",
+   "expected": "a"
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,-1),11)",
+   "expected": ""
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,-1),12)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,-1),13)",
+   "expected": 2.5
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,-1),14)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,-1),15)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,-1),16)",
+   "expected": -1.0
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,-1),17)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORT(Mix!A1:A18,1,-1),18)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,-1),1)",
+   "expected": "#N/A"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,-1),2)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,-1),3)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,-1),4)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,-1),5)",
+   "expected": true
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,-1),6)",
+   "expected": false
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,-1),7)",
+   "expected": "Zeta"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,-1),8)",
+   "expected": "b"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,-1),9)",
+   "expected": "B"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,-1),10)",
+   "expected": "a"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,-1),11)",
+   "expected": ""
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,-1),12)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,-1),13)",
+   "expected": 2.5
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,-1),14)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,-1),15)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,-1),16)",
+   "expected": -1.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,-1),17)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!A1:A18,-1),18)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1),1)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1),2)",
+   "expected": ""
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1),3)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1),4)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1),5)",
+   "expected": true
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1),6)",
+   "expected": false
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1),7)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1),8)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1),9)",
+   "expected": "b"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1),10)",
+   "expected": "#N/A"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1),11)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1),12)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1),13)",
+   "expected": 2.5
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1),14)",
+   "expected": "Zeta"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1),15)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1),16)",
+   "expected": "a"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1),17)",
+   "expected": "B"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1),18)",
+   "expected": -1.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1,Mix!A1:A18,--1),1)",
+   "expected": ""
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1,Mix!A1:A18,--1),2)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1,Mix!A1:A18,--1),3)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1,Mix!A1:A18,--1),4)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1,Mix!A1:A18,--1),5)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1,Mix!A1:A18,--1),6)",
+   "expected": false
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1,Mix!A1:A18,--1),7)",
+   "expected": true
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1,Mix!A1:A18,--1),8)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1,Mix!A1:A18,--1),9)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1,Mix!A1:A18,--1),10)",
+   "expected": 2.5
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1,Mix!A1:A18,--1),11)",
+   "expected": "b"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1,Mix!A1:A18,--1),12)",
+   "expected": "Zeta"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1,Mix!A1:A18,--1),13)",
+   "expected": "#N/A"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1,Mix!A1:A18,--1),14)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1,Mix!A1:A18,--1),15)",
+   "expected": -1.0
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1,Mix!A1:A18,--1),16)",
+   "expected": "a"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1,Mix!A1:A18,--1),17)",
+   "expected": "B"
+  },
+  {
+   "formula": "=INDEX(SORTBY(Mix!A1:A18,Mix!B1:B18,-1,Mix!A1:A18,--1),18)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,-1,TRUE),1,1)",
+   "expected": "#N/A"
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,-1,TRUE),1,2)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,-1,TRUE),1,3)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,-1,TRUE),1,4)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,-1,TRUE),1,5)",
+   "expected": true
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,-1,TRUE),1,6)",
+   "expected": false
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,-1,TRUE),1,7)",
+   "expected": "Zeta"
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,-1,TRUE),1,8)",
+   "expected": "b"
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,-1,TRUE),1,9)",
+   "expected": "B"
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,-1,TRUE),1,10)",
+   "expected": "a"
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,-1,TRUE),1,11)",
+   "expected": ""
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,-1,TRUE),1,12)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,-1,TRUE),1,13)",
+   "expected": 2.5
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,-1,TRUE),1,14)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,-1,TRUE),1,15)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,-1,TRUE),1,16)",
+   "expected": -1.0
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,-1,TRUE),1,17)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(SORT(MixRow!A1:R1,1,-1,TRUE),1,18)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!C1:C18),1)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!C1:C18),2)",
+   "expected": "b"
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!C1:C18),3)",
+   "expected": true
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!C1:C18),4)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!C1:C18),5)",
+   "expected": "#N/A"
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!C1:C18),6)",
+   "expected": "a"
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!C1:C18),7)",
+   "expected": false
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!C1:C18),8)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!C1:C18),9)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!C1:C18),10)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!C1:C18),11)",
+   "expected": ""
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!C1:C18),12)",
+   "expected": 2.5
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!C1:C18),13)",
+   "expected": -1.0
+  },
+  {
+   "formula": "=ROWS(UNIQUE(Mix!C1:C18))",
+   "expected": 13.0
+  },
+  {
+   "formula": "=ROWS(UNIQUE(Mix!C1:C18,,TRUE))",
+   "expected": 9.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!C1:C18,,TRUE),4)",
+   "expected": false
+  },
+  {
+   "formula": "=INDEX(UNIQUE(MixRow!A2:R2,TRUE),1,1)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(MixRow!A2:R2,TRUE),1,2)",
+   "expected": "b"
+  },
+  {
+   "formula": "=INDEX(UNIQUE(MixRow!A2:R2,TRUE),1,3)",
+   "expected": true
+  },
+  {
+   "formula": "=INDEX(UNIQUE(MixRow!A2:R2,TRUE),1,4)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(MixRow!A2:R2,TRUE),1,5)",
+   "expected": "#N/A"
+  },
+  {
+   "formula": "=INDEX(UNIQUE(MixRow!A2:R2,TRUE),1,6)",
+   "expected": "a"
+  },
+  {
+   "formula": "=INDEX(UNIQUE(MixRow!A2:R2,TRUE),1,7)",
+   "expected": false
+  },
+  {
+   "formula": "=INDEX(UNIQUE(MixRow!A2:R2,TRUE),1,8)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(MixRow!A2:R2,TRUE),1,9)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=INDEX(UNIQUE(MixRow!A2:R2,TRUE),1,10)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(MixRow!A2:R2,TRUE),1,11)",
+   "expected": ""
+  },
+  {
+   "formula": "=INDEX(UNIQUE(MixRow!A2:R2,TRUE),1,12)",
+   "expected": 2.5
+  },
+  {
+   "formula": "=INDEX(UNIQUE(MixRow!A2:R2,TRUE),1,13)",
+   "expected": -1.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!A1:B18),1,2)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!A1:B18),2,2)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!A1:B18),3,2)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!A1:B18),4,2)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!A1:B18),5,2)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!A1:B18),6,2)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!A1:B18),7,2)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!A1:B18),8,2)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!A1:B18),9,2)",
+   "expected": 3.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!A1:B18),10,2)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=INDEX(UNIQUE(Mix!A1:B18),11,2)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=ROWS(UNIQUE(Mix!A1:B18))",
+   "expected": 18.0
+  },
+  {
+   "formula": "=ROWS(UNIQUE(Mix!B1:B18))",
+   "expected": 4.0
   }
  ],
  "uncalculated": [

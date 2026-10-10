@@ -43,13 +43,7 @@ def read_calculated(
         formula_cells = _formula_cells(get_streamed_sheet(formulas, sheet), area)
     missing = [(row, col) for row, col in formula_cells if _stored(data, area, row, col) is None]
     if missing:
-        with workspace.stream(path, data_only=True) as stored:
-            blanks = _stored_empty_text(get_streamed_sheet(stored, sheet), area, missing)
-        for row, col in blanks:
-            _put(data, area, row, col, "")
-        pending = [position for position in missing if position not in blanks]
-        if pending:
-            _fill(workspace, path, sheet, data, pending)
+        _fill(workspace, path, sheet, data, missing)
     return data
 
 
@@ -101,27 +95,6 @@ def _formula_cells(sheet: ReadOnlyWorksheet, area: CellRange) -> list[tuple[int,
     return found
 
 
-def _stored_empty_text(
-    sheet: ReadOnlyWorksheet, area: CellRange, positions: list[tuple[int, int]]
-) -> set[tuple[int, int]]:
-    """The cells whose stored result is empty text, which openpyxl reads as no value at all.
-
-    Excel stores a formula that returns "" as a text result without content; a formula that was
-    never calculated has no result element, and only that one needs calculating.
-    """
-    wanted = set(positions)
-    found = set()
-    for row in sheet.iter_rows(
-        min_row=area.min_row, max_row=area.max_row, min_col=area.min_col, max_col=area.max_col
-    ):
-        found.update(
-            (cell.row, cell.column)
-            for cell in row
-            if cell.data_type == "str" and (cell.row, cell.column) in wanted
-        )
-    return found
-
-
 def _stored(data: RangeData, area: CellRange, row: int, col: int) -> CellValue:
     values = data.values
     line = values[row - area.min_row] if row - area.min_row < len(values) else []
@@ -129,14 +102,17 @@ def _stored(data: RangeData, area: CellRange, row: int, col: int) -> CellValue:
 
 
 def _fill(
-    workspace: Workspace, path: str, sheet: str, data: RangeData, pending: list[tuple[int, int]]
+    workspace: Workspace, path: str, sheet: str, data: RangeData, missing: list[tuple[int, int]]
 ) -> None:
     area = parse_range(data.range)
     unresolved: dict[str, str] = {}
-    with workspace.read(path, data_only=True) as stored, workspace.read(path) as formulas:
+    with workspace.read_lazy(path) as (stored, formulas):
         target = get_sheet(formulas, sheet)
         engine = Engine(stored, formulas)
-        for row, col in pending:
+        for row, col in missing:
+            if _is_empty_text(get_sheet(stored, sheet), row, col):
+                _put(data, area, row, col, "")
+                continue
             cell = target._cells[(row, col)]
             try:
                 if isinstance(cell.value, ArrayFormula):
@@ -151,6 +127,16 @@ def _fill(
         if len(unresolved) > MAX_LISTED:
             listed["..."] = f"{len(unresolved) - MAX_LISTED} more"
         data.uncalculated = listed
+
+
+def _is_empty_text(stored: Worksheet, row: int, col: int) -> bool:
+    """Whether Excel stored the result "", which openpyxl reads as no value at all.
+
+    Excel stores a formula that returns "" as a text result without content; a formula that was
+    never calculated has no result element, and only that one needs calculating.
+    """
+    cell = stored._cells.get((row, col))
+    return cell is not None and cell.data_type == "str"
 
 
 def _fill_spill(engine: Engine, anchor: Cell, data: RangeData, area: CellRange) -> None:

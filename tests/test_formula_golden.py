@@ -37,3 +37,19 @@ def test_calculator_matches_excel(tmp_path: Path) -> None:
     left_out = [i for i, value in enumerate(actual) if value is None]
     assert left_out == golden["uncalculated"]
     assert len(cases) >= 1_000
+
+
+def test_cells_loaded_on_demand_calculate_the_same(tmp_path: Path) -> None:
+    golden = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    cases = golden["cases"]
+    path = tmp_path / "golden.xlsx"
+    build_workbook(
+        path,
+        golden["inputs"],
+        golden["names"],
+        [c["formula"] for c in cases],
+        golden["hidden_rows"],
+        golden["tables"],
+    )
+
+    assert calculate_cases(path, len(cases), lazy=True) == calculate_cases(path, len(cases))
