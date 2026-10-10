@@ -2,7 +2,6 @@
 
 import math
 import statistics
-from typing import TYPE_CHECKING
 
 from excel_mcp.calc.functions.helpers import array_numbers, numbers
 from excel_mcp.calc.functions.math import naive_sum
@@ -24,9 +23,6 @@ from excel_mcp.calc.values import (
     to_int,
     to_number,
 )
-
-if TYPE_CHECKING:
-    pass
 
 
 @function("AVERAGE")
