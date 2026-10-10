@@ -102,9 +102,9 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         content_base64: str,
         overwrite: bool = False,
     ) -> Changed:
-        """Save an uploaded workbook file on the server (remote editing).
+        """Upload a workbook to the server (remote editing).
 
-        Removes unsafe hyperlinks (see `note`); refuses external links, connections, linked objects.
+        Drops unsafe hyperlinks (see `note`); refuses external links, connections, linked objects.
         """
         upload = files.decode_workbook(content_base64, workspace.limits)
         stored = workspace.store(path, upload.content, overwrite=overwrite)

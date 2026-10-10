@@ -13,7 +13,7 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`set_workbook_settings`](#set_workbook_settings) | Set document properties, calculation options and workbook structure protection. |
 | [`list_workbooks`](#list_workbooks) | List Excel files in a directory: path to size in bytes. |
 | [`export_workbook`](#export_workbook) | Return the workbook file as an embedded base64 resource (remote servers). |
-| [`import_workbook`](#import_workbook) | Save an uploaded workbook file on the server (remote editing). |
+| [`import_workbook`](#import_workbook) | Upload a workbook to the server (remote editing). |
 | [`describe_sheet`](#describe_sheet) | Describe a sheet: used range, panes, merges and everything on it (tables, charts, PivotTables, slicers, images, notes, hyperlinks, validation, conditional formats, sparklines...) with names and cells. Slow on very large files. |
 | [`create_sheet`](#create_sheet) | Add an empty worksheet. |
 | [`rename_sheet`](#rename_sheet) | Rename a worksheet; references to it are updated as in Excel. |
@@ -148,9 +148,9 @@ Return the workbook file as an embedded base64 resource (remote servers).
 
 **Import workbook** (modifies files, may overwrite data)
 
-Save an uploaded workbook file on the server (remote editing).
+Upload a workbook to the server (remote editing).
 
-Removes unsafe hyperlinks (see `note`); refuses external links, connections, linked objects.
+Drops unsafe hyperlinks (see `note`); refuses external links, connections, linked objects.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
