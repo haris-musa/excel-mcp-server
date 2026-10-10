@@ -11,6 +11,10 @@ All notable changes to this project are documented here. The format follows
 - The zip bomb limits (`max_unpack_factor`, now 10, and `max_compression_ratio`) apply to every
   workbook the server opens, not only uploads: a small file that unpacks to gigabytes is
   refused up front instead of exhausting time and memory.
+- `write_vba_module` and `delete_vba_module` report a damaged VBA project as an error that says
+  it cannot be rewritten, instead of failing with "Unexpected error".
+- `import_workbook` lists the links it removed in sheet, row and column order, and its
+  description says what it removes and refuses.
 
 ### Added
 
