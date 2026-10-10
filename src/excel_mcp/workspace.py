@@ -28,6 +28,7 @@ from excel_mcp.errors import (
 )
 from excel_mcp.lazy_workbook import Parts, load_lazy
 from excel_mcp.paths import MACRO_SUFFIXES, TEMPLATE_SUFFIXES, PathPolicy
+from excel_mcp.zip_limits import check_expansion
 
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
 Sheet = TypeVar("Sheet")
@@ -59,7 +60,17 @@ class Workspace:
             raise LimitExceededError(
                 f"Workbook is {size:,} bytes; the limit is {self.limits.max_file_bytes:,}."
             )
+        self._check_expansion(path)
         return path
+
+    def _check_expansion(self, path: Path) -> None:
+        if not zipfile.is_zipfile(path):
+            return
+        try:
+            with zipfile.ZipFile(path) as archive:
+                check_expansion(archive.infolist(), self.limits)
+        except zipfile.BadZipFile:
+            raise WorkbookError(f"{self.display(path)} is a damaged zip file.") from None
 
     def read_image(self, raw_path: str) -> bytes:
         """Read an image file confined like workbooks; its content is checked by the caller."""

@@ -13,12 +13,14 @@ class Limits:
     max_read_cells: int = 10_000
     max_cells: int = 100_000
     max_copy_cells: int = 1_000_000
-    max_unpack_factor: int = 5
+    # Zip bomb guards, applied to every workbook the server opens or receives. Real workbooks
+    # compress 10 to 30 times and sparse sheets far more, so these leave room for them.
+    max_unpack_factor: int = 10
     max_compression_ratio: int = 500
 
     @property
     def max_unpacked_bytes(self) -> int:
-        """The most an uploaded workbook may expand to, summed over all its parts."""
+        """The most any workbook may expand to, summed over all its parts."""
         return self.max_file_bytes * self.max_unpack_factor
 
 

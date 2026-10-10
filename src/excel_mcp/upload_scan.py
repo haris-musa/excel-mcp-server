@@ -20,6 +20,7 @@ from xml.sax.saxutils import unescape
 from excel_mcp.config import Limits
 from excel_mcp.errors import InvalidArgumentError, LimitExceededError, UnsafeFormulaError
 from excel_mcp.links import is_allowed_address
+from excel_mcp.zip_limits import check_expansion, check_ratio, too_large
 
 # These elements hold formulas: cell formulas and chart or sparkline references
 # ("f"), rule formulas, table column formulas and defined names.
@@ -52,8 +53,6 @@ _MAX_LINK = 4096
 _MAX_ENTRIES = 10_000
 _MAX_XML_DEPTH = 100
 _CHUNK = 64 * 1024
-# Small entries are exempt from the ratio limit: tiny parts compress extremely well.
-_RATIO_FLOOR = 1024 * 1024
 _REMOTE_DATA = ("connections", "querytable", "externallink")
 _REMOTE_DATA_ROOTS = frozenset({"connections", "queryTable", "externalLink"})
 
@@ -73,6 +72,7 @@ def scan_package(content: bytes, limits: Limits, *, check_links: bool = True) ->
         with zipfile.ZipFile(io.BytesIO(content)) as archive:
             infos = archive.infolist()
             _check_entries(infos, limits)
+            check_expansion(infos, limits)
             remaining = limits.max_unpacked_bytes
             types = _Types(check_links)
             # The content types come first: they say which parts Excel reads as its own.
@@ -112,16 +112,6 @@ def _check_entries(infos: list[zipfile.ZipInfo], limits: Limits) -> None:
         if name.casefold() in names:
             raise InvalidArgumentError(f"The workbook has more than one part named {name!r}.")
         names.add(name.casefold())
-        _check_ratio(info.file_size, info.compress_size, limits)
-    if sum(info.file_size for info in infos) > limits.max_unpacked_bytes:
-        raise LimitExceededError(
-            f"The workbook expands to more than {limits.max_unpacked_bytes:,} bytes."
-        )
-
-
-def _check_ratio(size: int, compressed: int, limits: Limits) -> None:
-    if size > max(_RATIO_FLOOR, compressed * limits.max_compression_ratio):
-        raise LimitExceededError("The workbook is compressed too densely to be a real workbook.")
 
 
 class _Entry:
@@ -153,10 +143,8 @@ class _Entry:
         self._read += len(data)
         self.remaining -= len(data)
         if self.remaining < 0:
-            raise LimitExceededError(
-                f"The workbook expands to more than {self._limits.max_unpacked_bytes:,} bytes."
-            )
-        _check_ratio(self._read, self._compressed, self._limits)
+            raise too_large(self._limits)
+        check_ratio(self._read, self._compressed, self._limits)
         return data
 
 

@@ -49,7 +49,8 @@ or anyone who can reach the HTTP endpoint. Its defences are:
   data connections, query tables, external workbook links, linked OLE objects and any other
   external relationship that is not a hyperlink, and packages that expand beyond
   `max_unpack_factor` times the file size limit or compress more densely than
-  `max_compression_ratio`, both checked while reading. Hyperlinks are not refused but
+  `max_compression_ratio`, both checked while reading. The same limits apply to every
+  workbook the server opens, so a zip bomb already on disk is refused before it is read. Hyperlinks are not refused but
   neutralised: external links to anything other than `http`, `https` and `mailto` addresses
   without credentials (file paths, network shares, `smb:`, `ms-excel:`, `javascript:` and so
   on) are removed from cells, shapes, pictures and legacy drawings, the cell text and format

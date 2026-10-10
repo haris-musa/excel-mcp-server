@@ -145,7 +145,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
 | `--allow-dir DIR` | `EXCEL_FILES_PATH` | none (stdio), `./excel_files` (HTTP) | Folders workbooks must be in |
 | `--read-only` | `EXCEL_MCP_READ_ONLY=1` | off | Only offer tools that do not change files |
 | `--allow-vba-write` | `EXCEL_MCP_ALLOW_VBA_WRITE=1` | off | Add tools that write VBA macros (see warning below); ignored with `--read-only` |
-| `--max-file-mb N` | | `100` | Largest workbook the server opens |
+| `--max-file-mb N` | | `100` | Largest workbook the server opens. Also sets the unpacked-size limit (10 times this) that every opened or uploaded workbook must stay under; parts compressed over 500:1 are refused |
 | `--log-level LEVEL` | | `WARNING` | Logging on stderr |
 | `--host HOST` | `EXCEL_MCP_HOST` | `127.0.0.1` | HTTP listen address |
 | `--port PORT` | `EXCEL_MCP_PORT` | `8017` | HTTP port |
