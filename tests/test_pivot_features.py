@@ -341,7 +341,6 @@ async def test_calculated_fields_can_use_earlier_ones_and_quoted_names(
     [
         ("WEBSERVICE(Units)", "not allowed"),
         ("Units+Mars", "not a field"),
-        ("Region", "not numbers"),
         ("Data!A1", "not a field"),
         ("Units +", "not valid"),
     ],

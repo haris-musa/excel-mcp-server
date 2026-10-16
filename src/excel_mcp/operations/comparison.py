@@ -7,7 +7,7 @@ from openpyxl.utils.datetime import to_excel
 
 from excel_mcp.values import CellValue
 
-FormulaResults = dict[str, CellValue | dt.datetime]
+FormulaResults = dict[str, CellValue | dt.datetime | dt.time]
 
 
 def cell_value(cell: Cell | MergedCell, results: FormulaResults) -> object:

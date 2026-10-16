@@ -1,5 +1,6 @@
 """Creating PivotTables that Excel can refresh and rearrange."""
 
+import datetime as dt
 from dataclasses import dataclass, field
 
 from openpyxl.styles import Alignment
@@ -33,7 +34,7 @@ from excel_mcp.operations.pivot_options import (
 )
 from excel_mcp.operations.pivot_render import Shown, item_label, number_format, render
 from excel_mcp.operations.pivot_showas import Figures
-from excel_mcp.operations.pivot_source import Source, read_source
+from excel_mcp.operations.pivot_source import Results, Source, read_source, serial
 from excel_mcp.operations.pivot_specs import (
     check_values_in_rows,
     data_specs,
@@ -74,10 +75,11 @@ def create_pivot(
     target_cell: str,
     request: PivotRequest,
     limits: Limits,
+    results: Results,
     *,
     copy_of_name: bool = False,
 ) -> tuple[str, CellRange]:
-    source = read_source(source_sheet, source_range, limits.max_pivot_source_cells)
+    source = read_source(source_sheet, source_range, limits.max_pivot_source_cells, results)
     row_fields = [source.field_index(field) for field in request.rows]
     column_fields = [source.field_index(field) for field in request.columns]
     filter_fields = [source.field_index(field) for field in request.filters]
@@ -318,6 +320,8 @@ def _write(sheet: Worksheet, row: int, column: int, shown: Shown) -> None:
     if isinstance(value, ExcelError):
         cell.value = value.code
         cell.data_type = "e"
+    elif isinstance(value, dt.datetime):
+        cell.value = serial(value)
     else:
         cell.value = value
         if isinstance(value, str):

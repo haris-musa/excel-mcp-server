@@ -3,10 +3,11 @@
 import datetime as dt
 from dataclasses import dataclass, field, replace
 
+from excel_mcp.calc.values import ERROR_NUMBERS, ExcelError
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.operations.pivot_groups import Grouping, group_dates, group_numbers
 from excel_mcp.operations.pivot_options import PivotField
-from excel_mcp.operations.pivot_source import Column, Source, Value
+from excel_mcp.operations.pivot_source import EPOCH, Column, Source, Value
 
 
 @dataclass(frozen=True)
@@ -71,7 +72,7 @@ def distinct(column_values: list[Value]) -> Shared:
     values: list[Value] = []
     index: list[int] = []
     for value in column_values:
-        key = value.casefold() if isinstance(value, str) else value
+        key = sort_key(value)
         if key not in seen:
             seen[key] = len(values)
             values.append(value)
@@ -83,10 +84,22 @@ def distinct(column_values: list[Value]) -> Shared:
     return Shared(values, index, order, rank)
 
 
-def sort_key(value: Value) -> tuple[bool, object]:
-    if value is None:
-        return True, 0
-    return False, value.casefold() if isinstance(value, str) else value
+def sort_key(value: Value) -> tuple[int, object]:
+    """Excel's order of items: numbers, text, TRUE and FALSE, errors (from #N/A down to
+    #NULL!), dates and times, and last the blank. Text is equal regardless of case."""
+    match value:
+        case None:
+            return 5, 0
+        case bool():
+            return 2, value
+        case ExcelError():
+            return 3, (-ERROR_NUMBERS.get(value.code, 0), value.code)
+        case dt.datetime():
+            return 4, value
+        case str():
+            return 1, value.casefold()
+        case _:
+            return 0, value
 
 
 def plan_fields(source: Source, used: list[int], options: dict[int, PivotField]) -> FieldSetup:
@@ -147,10 +160,10 @@ def limit_groups(setup: FieldSetup, shown: dict[str, list[str]]) -> list[AxisFie
 
 
 def _number_field(setup: FieldSetup, index: int, column: Column, option: PivotField) -> None:
-    if column.kind != "number" or None in column.values:
+    if column.kinds != {"number"} or None in column.values:
         raise InvalidArgumentError(
-            f"Field {column.name!r} cannot be grouped into ranges: it must hold only numbers, "
-            "with no blanks."
+            f"Field {column.name!r} cannot be grouped into ranges, as in Excel: it must hold "
+            "only numbers, with no blanks."
         )
     assert option.group_numbers is not None
     grouping = group_numbers([float(value) for value in column.values], option.group_numbers)  # pyright: ignore[reportArgumentType]
@@ -169,11 +182,19 @@ def _number_field(setup: FieldSetup, index: int, column: Column, option: PivotFi
     setup.axis[index] = [_with_options(axis, option)]
 
 
+GROUPABLE_FROM = dt.datetime(1900, 3, 1)
+"""Earlier moments are times and durations, which Excel groups as dates of 1900."""
+
+
 def _date_fields(setup: FieldSetup, index: int, column: Column, option: PivotField) -> None:
-    if column.kind != "date" or None in column.values:
+    if column.kinds != {"date"} or None in column.values:
         raise InvalidArgumentError(
-            f"Field {column.name!r} cannot be grouped by date: it must hold only dates, "
-            "with no blanks."
+            f"Field {column.name!r} cannot be grouped by date, as in Excel: it must hold only "
+            "dates, with no blanks."
+        )
+    if any(isinstance(value, dt.datetime) and value < GROUPABLE_FROM for value in column.values):
+        raise InvalidArgumentError(
+            f"Field {column.name!r} holds times or durations, which cannot be grouped by date."
         )
     if option.show_items:
         raise InvalidArgumentError(
@@ -244,6 +265,10 @@ def item_text(label: Value) -> str:
     match label:
         case None:
             return "(blank)"
+        case bool():
+            return "TRUE" if label else "FALSE"
+        case dt.datetime() if label.date() == EPOCH.date():
+            return label.time().isoformat()
         case dt.datetime() if label.time() == dt.time():
             return label.date().isoformat()
         case dt.datetime():

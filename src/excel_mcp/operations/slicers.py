@@ -2,7 +2,6 @@
 
 import datetime as dt
 import re
-from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Literal
 
@@ -18,8 +17,8 @@ from excel_mcp.inputs import InputModel
 from excel_mcp.operations import slicer_pivot as pivots
 from excel_mcp.operations import slicer_table
 from excel_mcp.operations import slicer_xml as xml
-from excel_mcp.operations.comparison import FormulaResults
 from excel_mcp.operations.filters import table_area
+from excel_mcp.operations.pivot_source import Results
 from excel_mcp.operations.slicer_index import (
     caches,
     entries,
@@ -29,12 +28,11 @@ from excel_mcp.operations.slicer_index import (
 )
 from excel_mcp.operations.slicer_place import add_cache, add_entry, anchor, next_shape_id
 from excel_mcp.package import state_of
-from excel_mcp.refs import CellRange, parse_cell
+from excel_mcp.refs import parse_cell
 
 EMU_PER_CM = 360_000
 _SLICER_SIZE = (1_828_800, 2_667_000)
 _TIMELINE_SIZE = (3_333_750, 1_371_600)
-Results = Callable[[Worksheet, CellRange], FormulaResults]
 
 
 class Source(InputModel):
@@ -83,8 +81,8 @@ def add_slicer(
     pivots.share_caches(workbook)
     group = _connected(workbook, owner, target, request)
     if request.timeline:
-        return _timeline(workbook, sheet, group, request, limits)
-    return _pivot_slicer(workbook, sheet, group, request, limits)
+        return _timeline(workbook, sheet, group, request, limits, results)
+    return _pivot_slicer(workbook, sheet, group, request, limits, results)
 
 
 def _table_slicer(
@@ -119,6 +117,7 @@ def _pivot_slicer(
     group: list[pivots.Connected],
     request: SlicerRequest,
     limits: Limits,
+    results: Results,
 ) -> tuple[str, bool]:
     _check_style(request.style, "slicer")
     cache = group[0].pivot.cache
@@ -129,7 +128,7 @@ def _pivot_slicer(
     if request.selected:
         pivots.ensure_items(cache, position)
         chosen = pivots.choose_items(cache, position, request.selected)
-        recalculated = pivots.show_only(workbook, group, position, chosen, limits)
+        recalculated = pivots.show_only(workbook, group, position, chosen, limits, results)
     else:
         pivots.prepare(group, position)
     name, cache_name = _names(workbook, request, "Slicer_")
@@ -157,6 +156,7 @@ def _timeline(
     group: list[pivots.Connected],
     request: SlicerRequest,
     limits: Limits,
+    results: Results,
 ) -> tuple[str, bool]:
     timeline = request.timeline
     assert timeline is not None
@@ -187,7 +187,7 @@ def _timeline(
             raise InvalidArgumentError("timeline.start is after timeline.end.")
         selection = (timeline.start, timeline.end)
         period = tuple(dt.datetime.combine(day, dt.time()) for day in selection)
-        recalculated = pivots.limit_dates(workbook, group, position, period, limits)  # pyright: ignore[reportArgumentType]
+        recalculated = pivots.limit_dates(workbook, group, position, period, limits, results)  # pyright: ignore[reportArgumentType]
     name, cache_name = _names(workbook, request, "NativeTimeline_")
     text = xml.timeline_cache(
         cache_name,

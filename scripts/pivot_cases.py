@@ -9,6 +9,9 @@ import datetime as dt
 import itertools
 from typing import Any
 
+from pivot_mixed_cases import SOURCES as OTHER_SOURCES
+from pivot_mixed_cases import mixed_cases
+
 SOURCE: list[list[Any]] = [
     ["Region", "Product", "Channel", "Date", "Units", "Price", "Noise", "Qty"],
     ["North", "Apples", "Web", dt.datetime(2024, 1, 15), 10, 1.5, 11.5, 3],
@@ -27,6 +30,7 @@ SOURCE: list[list[Any]] = [
     ["West", "Kiwis", "Web", dt.datetime(2024, 2, 29), 14, 3.5, 6.375, 13],
 ]
 SOURCE_RANGE = "A1:H15"
+SOURCES: dict[str, list[list[Any]]] = {"Data": SOURCE, **OTHER_SOURCES}
 UNITS = [{"field": "Units"}]
 TWO = [{"field": "Units"}, {"field": "Price", "function": "average"}]
 SHAPES: list[tuple[list[str], list[str]]] = [
@@ -57,6 +61,7 @@ PLAIN = [
 
 def cases() -> list[dict[str, Any]]:
     found = [*_layouts(), *_figures(), *_sorting(), *_items(), *_groups(), *_calculated()]
+    found += mixed_cases()
     for number, case in enumerate(found, 1):
         case["name"] = f"c{number}"
     return found

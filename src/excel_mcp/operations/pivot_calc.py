@@ -61,11 +61,6 @@ def _field(source: Source, earlier: list[CalcField], text: str, formula: str) ->
     name = unquote(text).strip().casefold()
     for index, column in enumerate(source.columns):
         if column.name.strip().casefold() == name:
-            if column.kind != "number":
-                raise InvalidArgumentError(
-                    f"Field {column.name!r} holds {column.kind}, not numbers, so a calculated "
-                    "field cannot use it."
-                )
             return "column", index
     for index, calc in enumerate(earlier):
         if calc.name.casefold() == name:

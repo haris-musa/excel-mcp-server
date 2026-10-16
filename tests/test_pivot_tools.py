@@ -194,12 +194,6 @@ async def test_rejects_bad_arguments(call_error: ToolCall, sample: Path) -> None
     )
     assert "once" in message
     message = await call_error(
-        "create_pivot_table",
-        **{**PIVOT, "value_fields": [{"field": "Region"}]},
-        row_fields=["Product"],
-    )
-    assert "count" in message
-    message = await call_error(
         "create_pivot_table", **{**base, "source": "Data!A2:D5"}, row_fields=["Region"]
     )
     assert "Header cell" in message
@@ -226,22 +220,6 @@ async def test_rejects_overlap_and_unknown_pivot(
     assert "overlaps the PivotTable" in message
     message = await call_error("delete_pivot_table", path="sales.xlsx", sheet="Report", name="Nope")
     assert "PivotTable1" in message
-
-
-async def test_rejects_formulas_and_mixed_columns(call_error: ToolCall, sample: Path) -> None:
-    workbook = load_workbook(sample)
-    workbook["Data"]["C2"] = "=1+1"
-    workbook.save(sample)
-    message = await call_error(
-        "create_pivot_table", **PIVOT, row_fields=["Region"], value_fields=[{"field": "Units"}]
-    )
-    assert "formula" in message
-    workbook["Data"]["C2"] = "ten"
-    workbook.save(sample)
-    message = await call_error(
-        "create_pivot_table", **PIVOT, row_fields=["Region"], value_fields=[{"field": "Units"}]
-    )
-    assert "mixes" in message
 
 
 async def test_pivot_paths_are_confined(call_error: ToolCall, sample: Path) -> None:
