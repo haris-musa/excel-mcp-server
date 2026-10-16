@@ -12,6 +12,7 @@ from openpyxl.worksheet.table import Table
 from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import Field
 
+from excel_mcp.config import Limits
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.inputs import InputModel
 from excel_mcp.operations import slicer_pivot as pivots
@@ -68,7 +69,7 @@ class SlicerRequest:
 
 
 def add_slicer(
-    workbook: Workbook, sheet: Worksheet, request: SlicerRequest, results: Results, max_cells: int
+    workbook: Workbook, sheet: Worksheet, request: SlicerRequest, results: Results, limits: Limits
 ) -> tuple[str, bool]:
     """Add the slicer or timeline to ``sheet``; returns its name, and whether the figures of
     PivotTables it limits were left for Excel to recalculate when it opens the file."""
@@ -82,8 +83,8 @@ def add_slicer(
     pivots.share_caches(workbook)
     group = _connected(workbook, owner, target, request)
     if request.timeline:
-        return _timeline(workbook, sheet, group, request, max_cells)
-    return _pivot_slicer(workbook, sheet, group, request, max_cells)
+        return _timeline(workbook, sheet, group, request, limits)
+    return _pivot_slicer(workbook, sheet, group, request, limits)
 
 
 def _table_slicer(
@@ -117,7 +118,7 @@ def _pivot_slicer(
     sheet: Worksheet,
     group: list[pivots.Connected],
     request: SlicerRequest,
-    max_cells: int,
+    limits: Limits,
 ) -> tuple[str, bool]:
     _check_style(request.style, "slicer")
     cache = group[0].pivot.cache
@@ -128,7 +129,7 @@ def _pivot_slicer(
     if request.selected:
         pivots.ensure_items(cache, position)
         chosen = pivots.choose_items(cache, position, request.selected)
-        recalculated = pivots.show_only(workbook, group, position, chosen, max_cells)
+        recalculated = pivots.show_only(workbook, group, position, chosen, limits)
     else:
         pivots.prepare(group, position)
     name, cache_name = _names(workbook, request, "Slicer_")
@@ -155,7 +156,7 @@ def _timeline(
     sheet: Worksheet,
     group: list[pivots.Connected],
     request: SlicerRequest,
-    max_cells: int,
+    limits: Limits,
 ) -> tuple[str, bool]:
     timeline = request.timeline
     assert timeline is not None
@@ -186,7 +187,7 @@ def _timeline(
             raise InvalidArgumentError("timeline.start is after timeline.end.")
         selection = (timeline.start, timeline.end)
         period = tuple(dt.datetime.combine(day, dt.time()) for day in selection)
-        recalculated = pivots.limit_dates(workbook, group, position, period, max_cells)  # pyright: ignore[reportArgumentType]
+        recalculated = pivots.limit_dates(workbook, group, position, period, limits)  # pyright: ignore[reportArgumentType]
     name, cache_name = _names(workbook, request, "NativeTimeline_")
     text = xml.timeline_cache(
         cache_name,

@@ -9,6 +9,7 @@ from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
 
+from excel_mcp.config import Limits
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.operations import drawings, slicer_table
 from excel_mcp.operations import slicer_pivot as pivots
@@ -116,7 +117,7 @@ def _anchor_of(anchors: list[str], name: str) -> str | None:
     )
 
 
-def delete_slicer(workbook: Workbook, sheet: Worksheet, name: str, max_cells: int) -> str:
+def delete_slicer(workbook: Workbook, sheet: Worksheet, name: str, limits: Limits) -> str:
     """Remove a slicer or timeline. Returns what it was connected to."""
     found = [e for e in entries(workbook, sheet) if e.name.casefold() == name.strip().casefold()]
     if not found:
@@ -128,7 +129,7 @@ def delete_slicer(workbook: Workbook, sheet: Worksheet, name: str, max_cells: in
     pivots.share_caches(workbook)
     entry = found[0]
     info = caches(workbook)[entry.values["cache"]][1]
-    _release(workbook, entry, info, max_cells)
+    _release(workbook, entry, info, limits)
     remove_entry(workbook, entry)
     return info.field
 
@@ -164,7 +165,7 @@ def drop_table_slicers(
             remove_entry(workbook, entry)
 
 
-def _release(workbook: Workbook, entry: Entry, info: xml.CacheInfo, max_cells: int) -> None:
+def _release(workbook: Workbook, entry: Entry, info: xml.CacheInfo, limits: Limits) -> None:
     """Take away the filtering only the slicer kept: a timeline's dates, a field's hidden items
     that no axis shows. Excel keeps the rest, as a filter of the table or PivotTable."""
     if info.kind == "table":
@@ -174,10 +175,10 @@ def _release(workbook: Workbook, entry: Entry, info: xml.CacheInfo, max_cells: i
     position = [f.name for f in cache.cacheFields].index(info.field)
     if info.kind == "timeline":
         if info.selection:
-            pivots.limit_dates(workbook, group, position, None, max_cells)
+            pivots.limit_dates(workbook, group, position, None, limits)
     elif not _on_axis(group, position):
         every = set(range(len(pivots.values_of(cache, position))))
-        pivots.show_only(workbook, group, position, every, max_cells)
+        pivots.show_only(workbook, group, position, every, limits)
 
 
 def _on_axis(group: list[pivots.Connected], position: int) -> bool:

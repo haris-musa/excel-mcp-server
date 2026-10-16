@@ -71,7 +71,7 @@ class CellRange:
         if self.size > max_cells:
             raise LimitExceededError(
                 f"Range {self} has {self.size:,} cells; at most {max_cells:,} can be "
-                "processed per call. Use a smaller range."
+                "processed per call. Use a smaller range, or raise --max-cells."
             )
         return self
 

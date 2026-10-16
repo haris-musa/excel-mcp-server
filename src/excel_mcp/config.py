@@ -12,6 +12,7 @@ class Limits:
     max_file_bytes: int = 100 * 1024 * 1024
     max_read_cells: int = 10_000
     max_cells: int = 100_000
+    max_pivot_source_cells: int = 3_000_000
     max_copy_cells: int = 1_000_000
     # Zip bomb guards, applied to every workbook the server opens or receives. Real workbooks
     # compress 10 to 30 times and sparse sheets far more, so these leave room for them.

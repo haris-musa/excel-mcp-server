@@ -102,7 +102,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 get_sheet(workbook, sheet),
                 at,
                 request,
-                workspace.limits.max_cells,
+                workspace.limits,
             )
         return Changed(sheet=sheet, name=pivot_name, range=str(area))
 

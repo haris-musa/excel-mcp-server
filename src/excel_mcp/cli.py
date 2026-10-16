@@ -16,6 +16,8 @@ from excel_mcp.server.http import is_loopback, serve
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8017
 DEFAULT_HTTP_DIRECTORY = "./excel_files"
+DEFAULT_LIMITS = Limits()
+MB = 1024 * 1024
 
 logger = logging.getLogger(__name__)
 
@@ -70,9 +72,17 @@ def _settings(args: argparse.Namespace) -> Settings:
         allowed_dirs=[Path(directory).expanduser() for directory in directories],
         read_only=args.read_only or os.environ.get("EXCEL_MCP_READ_ONLY") == "1",
         allow_vba_write=args.allow_vba_write or os.environ.get("EXCEL_MCP_ALLOW_VBA_WRITE") == "1",
-        limits=Limits(max_file_bytes=args.max_file_mb * 1024 * 1024),
+        limits=Limits(
+            max_file_bytes=args.max_file_mb * MB,
+            max_cells=args.max_cells,
+            max_pivot_source_cells=args.max_pivot_cells,
+        ),
         log_level=args.log_level,
     )
+
+
+def _env_int(name: str, default: int) -> int:
+    return int(os.environ.get(name, default))
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -102,7 +112,24 @@ def _parser() -> argparse.ArgumentParser:
         "Off by default and ignored with --read-only. Also EXCEL_MCP_ALLOW_VBA_WRITE=1.",
     )
     common.add_argument(
-        "--max-file-mb", type=int, default=100, help="Largest workbook to open (default 100)."
+        "--max-file-mb",
+        type=int,
+        default=_env_int("EXCEL_MCP_MAX_FILE_MB", DEFAULT_LIMITS.max_file_bytes // MB),
+        help="Largest workbook to open, in MB (default %(default)s). Also EXCEL_MCP_MAX_FILE_MB.",
+    )
+    common.add_argument(
+        "--max-cells",
+        type=int,
+        default=_env_int("EXCEL_MCP_MAX_CELLS", DEFAULT_LIMITS.max_cells),
+        help="Most cells one tool call may read, write or format (default %(default)s). "
+        "Also EXCEL_MCP_MAX_CELLS.",
+    )
+    common.add_argument(
+        "--max-pivot-cells",
+        type=int,
+        default=_env_int("EXCEL_MCP_MAX_PIVOT_CELLS", DEFAULT_LIMITS.max_pivot_source_cells),
+        help="Largest PivotTable source, in cells (default %(default)s). "
+        "Also EXCEL_MCP_MAX_PIVOT_CELLS.",
     )
     common.add_argument(
         "--log-level",

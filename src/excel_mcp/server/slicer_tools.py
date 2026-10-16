@@ -78,7 +78,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 return formula_values(workspace, path, owner, area)
 
             made, stale = slicers.add_slicer(
-                workbook, get_sheet(workbook, sheet), request, results, workspace.limits.max_cells
+                workbook, get_sheet(workbook, sheet), request, results, workspace.limits
             )
             area = slicer_manage.placed_range(workbook, get_sheet(workbook, sheet), made)
         return Changed(sheet=sheet, name=made, range=area, note=_STALE if stale else None)
@@ -93,6 +93,6 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         a timeline's period is cleared."""
         with workspace.edit(path) as workbook:
             slicer_manage.delete_slicer(
-                workbook, get_sheet(workbook, sheet), name, workspace.limits.max_cells
+                workbook, get_sheet(workbook, sheet), name, workspace.limits
             )
         return Changed(sheet=sheet, name=name)

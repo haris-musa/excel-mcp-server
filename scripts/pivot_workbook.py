@@ -7,12 +7,13 @@ from openpyxl import Workbook
 from openpyxl.utils.datetime import to_excel
 from pivot_cases import SOURCE, SOURCE_RANGE
 
+from excel_mcp.config import Limits
 from excel_mcp.operations import pivot
 from excel_mcp.operations.pivot import PivotRequest
 from excel_mcp.operations.pivot_index import pivot_area, sheet_pivots
 from excel_mcp.operations.pivot_options import CalculatedField, PivotField, PivotValue
 
-MAX_CELLS = 1_000_000
+LIMITS = Limits()
 
 
 def build_workbook(cases: list[dict[str, Any]]) -> Workbook:
@@ -36,7 +37,7 @@ def build_workbook(cases: list[dict[str, Any]]) -> Workbook:
             name=case["name"],
         )
         target = workbook.create_sheet(case["name"])
-        pivot.create_pivot(workbook, source, SOURCE_RANGE, target, "A1", request, MAX_CELLS)
+        pivot.create_pivot(workbook, source, SOURCE_RANGE, target, "A1", request, LIMITS)
     return workbook
 
 

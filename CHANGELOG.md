@@ -6,6 +6,20 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `--max-pivot-cells` (`EXCEL_MCP_MAX_PIVOT_CELLS`) sets the largest PivotTable source, and
+  `--max-cells` (`EXCEL_MCP_MAX_CELLS`) the most cells one call may read, write or format.
+  `--max-file-mb` now has `EXCEL_MCP_MAX_FILE_MB`. The error for an oversized source names the
+  option that raises it.
+
+### Changed
+
+- PivotTable sources may have up to 3,000,000 cells (was 100,000, the general range limit), so
+  a sheet of 134,000 rows by 13 columns can be summarized. Creating a PivotTable from such a
+  source is faster (92 s to 54 s) and uses half the memory (2.1 GB to 1.0 GB), because the
+  pivot cache records are written as XML text instead of one object per value.
+
 ### Fixed
 
 - TOOLS.md now documents every nested parameter (arrays of objects, optional objects and
