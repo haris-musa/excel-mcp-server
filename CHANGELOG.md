@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-10-16
+
 ### Fixed
 
 - `create_pivot_table` (and the slicers and timelines that make PivotTables again) accept the
@@ -421,7 +423,8 @@ Ideas and fixes from these pull requests were reimplemented in this release: #78
 
 See the [GitHub releases](https://github.com/haris-musa/excel-mcp-server/releases).
 
-[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.1.1...HEAD
+[2.1.1]: https://github.com/haris-musa/excel-mcp-server/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/haris-musa/excel-mcp-server/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/haris-musa/excel-mcp-server/compare/v1.1.2...v2.0.0
 [1.1.2]: https://github.com/haris-musa/excel-mcp-server/compare/v1.1.1...v1.1.2
