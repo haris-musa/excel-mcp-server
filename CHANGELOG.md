@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Editing a workbook that holds a large PivotTable no longer parses its cache records: any tool
+  on a 134,000 by 13 source now takes as long as on the same workbook without the PivotTable
+  (`add_slicer` 93 s to 40 s, `write_range` 90 s to 36 s, `describe_sheet` 60 s to 19 s) and
+  peaks at 1 GB instead of 2.9 GB. The records are kept as they are in the file; a slicer on a
+  field without shared items reads that one column from them.
+
 ## [2.1.0] - 2026-10-16
 
 ### Added
