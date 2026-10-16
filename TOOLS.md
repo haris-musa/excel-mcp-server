@@ -941,7 +941,7 @@ fields.
 | `path` | string | yes | Workbook file path, relative to the allowed folder or absolute inside it. |
 | `sheet` | string | yes | Sheet for the PivotTable. |
 | `at` | string | yes | Top-left cell; the area must be empty. |
-| `source` | string | yes | Header row of unique text labels, then records, e.g. 'Data!A1:E200' (no sheet: `sheet`). Each column holds only text, numbers or dates (blanks fine), not formulas. |
+| `source` | string | yes | Header row of unique text labels, then records, e.g. 'Data!A1:E200' (no sheet: `sheet`). Columns may mix types; formulas count by their results. |
 | `row_fields` | array of string | yes | Headers to group by down the side, outermost first. |
 | `value_fields` | array of [PivotValue](#pivotvalue) | yes | Headers to summarize. |
 | `column_fields` | array of string | no | Headers across the top, outermost first. |

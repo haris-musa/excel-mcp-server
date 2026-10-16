@@ -41,13 +41,6 @@ def data_specs(
         key, field, name = _value_field(source, calculated, value, first_calculated)
         if key[0] == "calculated" and value.function != "sum":
             raise InvalidArgumentError(f"{name!r} is a calculated field, which can only be summed.")
-        if key[0] == "column":
-            column = source.columns[key[1]]
-            if value.function != "count" and column.kind != "number":
-                raise InvalidArgumentError(
-                    f"Field {column.name!r} holds {column.kind}, not numbers, so it cannot be "
-                    f"{value.function!r}-ed. Use function 'count'."
-                )
         caption = _unique_caption(f"{_CAPTIONS[value.function]} of {name}", specs, taken)
         specs.append(DataSpec(key, field, value.function, caption, value.number_format))
     return specs

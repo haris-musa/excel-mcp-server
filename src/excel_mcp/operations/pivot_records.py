@@ -5,13 +5,14 @@ gigabytes, so the records are written as text instead.
 """
 
 import datetime as dt
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from typing import IO
 
 from openpyxl.compat import safe_string
 from openpyxl.pivot.record import RecordList
 from openpyxl.xml.constants import SHEET_MAIN_NS
 
+from excel_mcp.calc.values import ExcelError
 from excel_mcp.operations.pivot_source import Value
 
 ESCAPES = str.maketrans(
@@ -37,10 +38,10 @@ Row = tuple[Item, ...]
 
 
 class PivotRecords(RecordList):
-    """Records that hold their rows as plain values: text, numbers and dates are stored
-    inline, a SharedIndex points at a shared item."""
+    """Records that hold their rows as plain values, stored inline; a SharedIndex points at
+    a shared item."""
 
-    def __init__(self, rows: list[Row]) -> None:
+    def __init__(self, rows: Sequence[Row]) -> None:
         super().__init__()
         self.rows = rows
 
@@ -54,7 +55,7 @@ class PivotRecords(RecordList):
         manifest.append(self)
 
 
-def _write_xml(stream: IO[bytes], rows: list[Row]) -> None:
+def _write_xml(stream: IO[bytes], rows: Sequence[Row]) -> None:
     stream.write(f'<pivotCacheRecords xmlns="{SHEET_MAIN_NS}" count="{len(rows)}">'.encode())
     for start in range(0, len(rows), BATCH):
         batch = rows[start : start + BATCH]
@@ -71,6 +72,10 @@ def _items(row: Row) -> Iterator[str]:
                 yield f'<x v="{int(item)}" />'
             case str():
                 yield f'<s v="{item.translate(ESCAPES)}" />'
+            case bool():
+                yield f'<b v="{int(item)}" />'
+            case ExcelError():
+                yield f'<e v="{item.code}" />'
             case dt.datetime():
                 yield f'<d v="{item.isoformat()}" />'
             case _:

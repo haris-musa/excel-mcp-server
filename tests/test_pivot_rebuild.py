@@ -8,8 +8,8 @@ from xml.etree.ElementTree import tostring
 
 from openpyxl import Workbook
 from openpyxl.pivot.table import TableDefinition
-from pivot_cases import SOURCE_RANGE
-from pivot_workbook import LIMITS, build_workbook, stored_grids
+from pivot_cases import SOURCES
+from pivot_workbook import LIMITS, add_sources, build_workbook, calculated, stored_grids
 
 from excel_mcp.operations import pivot
 from excel_mcp.operations.pivot_index import sheet_pivots
@@ -31,27 +31,25 @@ def test_a_pivot_made_again_from_its_definition_is_the_same() -> None:
         [{key: value for key, value in case.items() if key != "expected"} for case in cases]
     )
     again = Workbook()
-    again.worksheets[0].title = "Data"
-    for row in original["Data"].iter_rows(values_only=True):
-        again["Data"].append(row)
-    for sheet in original.worksheets[1:]:
-        request, (_, reference) = request_of(original, sheet, sheet_pivots(sheet)[0])
+    add_sources(again)
+    for sheet in original.worksheets[len(SOURCES) :]:
+        request, (source, reference) = request_of(original, sheet, sheet_pivots(sheet)[0])
         pivot.create_pivot(
             again,
-            again["Data"],
+            again[source],
             reference,
             again.create_sheet(sheet.title),
             "A1",
             request,
             LIMITS,
+            lambda owner, area: calculated(again, owner, area),
         )
     differing: list[Any] = []
     first, second = stored_grids(original), stored_grids(again)
-    for sheet in original.worksheets[1:]:
+    for sheet in original.worksheets[len(SOURCES) :]:
         copy = again[sheet.title]
         if first[sheet.title] != second[sheet.title] or _xml(sheet_pivots(sheet)[0]) != _xml(
             sheet_pivots(copy)[0]
         ):
             differing.append(sheet.title)
-    assert SOURCE_RANGE
     assert not differing, f"{len(differing)} of {len(cases)} differ: {differing[:10]}"

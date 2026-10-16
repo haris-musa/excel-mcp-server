@@ -6,6 +6,19 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- `create_pivot_table` (and the slicers and timelines that make PivotTables again) accept the
+  sources Excel pivots without complaint, and show what Excel shows: columns that mix text,
+  numbers, dates, booleans and blanks; cells with errors or formulas (their stored results, or
+  the calculator's); times and durations. Row, column and filter fields list every kind of
+  item in Excel's order; sum, average, min and max use the numbers (and dates, as serial
+  numbers) and skip the rest, count counts what is not blank, and an error among the values
+  is the result, including in the counts of totals. The cache holds the flags and items Excel
+  writes (`containsMixedTypes`, `b`, `e`, `d` ...), a field's number format is the one all its
+  cells share, and a timeline needs a field of dates only. Grouping a mixed field is refused
+  as in Excel ("Cannot group that selection"). Fixes #215.
+
 ### Changed
 
 - Editing a workbook that holds a large PivotTable no longer parses its cache records: any tool

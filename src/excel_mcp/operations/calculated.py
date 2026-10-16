@@ -81,9 +81,19 @@ def formula_values(
     for cell, row, col in formula_cells:
         value = _stored(data, parse_range(data.range), row, col)
         if isinstance(value, str) and is_date_format(cell.number_format):
-            value = dt.datetime.fromisoformat(value)
+            value = _moment(value)
         results[cell.coordinate] = value
     return results
+
+
+def _moment(text: str) -> str | dt.datetime | dt.time:
+    """The date or time ``read_calculated`` returned as ISO text; text that is neither stays."""
+    for parse in (dt.datetime.fromisoformat, dt.time.fromisoformat):
+        try:
+            return parse(text)
+        except ValueError:
+            continue
+    return text
 
 
 def _formula_cells(sheet: ReadOnlyWorksheet, area: CellRange) -> list[tuple[int, int]]:

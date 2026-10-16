@@ -5,6 +5,7 @@ from typing import Annotated
 from pydantic import Field
 
 from excel_mcp.operations import pivot, pivot_index
+from excel_mcp.operations.calculated import formula_values
 from excel_mcp.operations.charts_data import split_sheet
 from excel_mcp.operations.pivot import PivotRequest
 from excel_mcp.operations.pivot_options import (
@@ -30,8 +31,8 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
             RangeRef,
             Field(
                 description="Header row of unique text labels, then records, e.g. "
-                "'Data!A1:E200' (no sheet: `sheet`). Each column holds only text, numbers or "
-                "dates (blanks fine), not formulas."
+                "'Data!A1:E200' (no sheet: `sheet`). Columns may mix types; formulas count "
+                "by their results."
             ),
         ],
         row_fields: Annotated[
@@ -103,6 +104,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 at,
                 request,
                 workspace.limits,
+                lambda owner, area: formula_values(workspace, path, owner, area),
             )
         return Changed(sheet=sheet, name=pivot_name, range=str(area))
 

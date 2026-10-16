@@ -3,11 +3,13 @@
 import datetime as dt
 from dataclasses import dataclass
 
-from excel_mcp.calc.values import ExcelError
+from excel_mcp.calc.textformat import format_number
+from excel_mcp.calc.values import ExcelError, UncalculableError
 from excel_mcp.operations.pivot_axis import Axis, Line, axis_items
-from excel_mcp.operations.pivot_fields import AxisField
+from excel_mcp.operations.pivot_fields import AxisField, item_text
 from excel_mcp.operations.pivot_options import Layout
 from excel_mcp.operations.pivot_showas import PERCENT_FORMAT, PERCENTAGES, Figures
+from excel_mcp.operations.pivot_source import EPOCH, is_number, serial
 from excel_mcp.operations.pivot_values import DataSpec
 
 CellValue = str | int | float | dt.datetime | ExcelError | None
@@ -104,8 +106,10 @@ def _column_labels(
                 cells[(1, position)] = Shown(text)
             case "subtotal":
                 level = len(line.path)
-                label = item_label(columns.fields[level - 1], line.path[level - 1])
-                cells[(level, position)] = Shown(f"{_text(label.value)} {suffix}")
+                field = columns.fields[level - 1]
+                cells[(level, position)] = Shown(
+                    f"{_caption(field, line.path[level - 1])} {suffix}"
+                )
             case _:
                 for level in range(item.r, len(columns.fields)):
                     cells[(1 + level, position)] = item_label(
@@ -133,9 +137,9 @@ def _row_labels(
             cells[(top, 0)] = Shown(text)
         case "subtotal":
             level = len(line.path) - 1
-            label = item_label(fields[level], line.path[level])
             suffix = caption if rows.value_levels else "Total"
-            cells[(top, 0 if compact else level)] = Shown(f"{_text(label.value)} {suffix}")
+            text = f"{_caption(fields[level], line.path[level])} {suffix}"
+            cells[(top, 0 if compact else level)] = Shown(text)
         case "group":
             level = len(line.path) - 1
             cells[(top, 0 if compact else level)] = _indented(
@@ -164,21 +168,35 @@ def _indented(label: Shown, level: int, compact: bool) -> Shown:
 
 def item_label(field: AxisField, position: int) -> Shown:
     value = field.labels[position]
-    if value is None:
-        return Shown("(blank)")
-    return Shown(value, field.number_format)
-
-
-def _text(value: CellValue) -> str:
     match value:
-        case dt.datetime() if value.time() == dt.time():
-            return value.date().isoformat()
+        case None:
+            return Shown("(blank)")
+        case bool():
+            return Shown(item_text(value))
         case dt.datetime():
-            return value.isoformat(sep=" ")
-        case float() if value.is_integer():
-            return str(int(value))
+            return Shown(value, field.number_format or _date_format(value))
         case _:
-            return str(value)
+            return Shown(value, field.number_format)
+
+
+def _caption(field: AxisField, position: int) -> str:
+    """An item as the caption of its subtotal writes it: in the field's number format."""
+    value = field.labels[position]
+    if field.number_format and (is_number(value) or isinstance(value, dt.datetime)):
+        figure = serial(value) if isinstance(value, dt.datetime) else value
+        try:
+            return format_number(figure, field.number_format)
+        except UncalculableError:  # a format the calculator cannot write; Excel rewrites it
+            pass
+    return item_text(value)
+
+
+def _date_format(moment: dt.datetime) -> str:
+    """How Excel shows a date or time in a field whose cells have different formats: with the
+    host's short date and time formats, which these built-in formats follow."""
+    if moment.date() == EPOCH.date():
+        return "h:mm:ss AM/PM"
+    return "m/d/yy h:mm" if moment.time() != dt.time() else "mm-dd-yy"
 
 
 def number_format(spec: DataSpec, source_format: str) -> str | None:

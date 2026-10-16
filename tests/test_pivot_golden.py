@@ -7,7 +7,7 @@ needs neither.
 import json
 from pathlib import Path
 
-from pivot_cases import SOURCE
+from pivot_cases import SOURCES
 from pivot_workbook import build_workbook, same, stored_grids
 
 FIXTURE = Path(__file__).parent / "fixtures" / "pivot_golden.json"
@@ -15,7 +15,9 @@ FIXTURE = Path(__file__).parent / "fixtures" / "pivot_golden.json"
 
 def test_pivot_cells_match_excel() -> None:
     golden = json.loads(FIXTURE.read_text(encoding="utf-8"))
-    assert golden["source"] == json.loads(json.dumps(SOURCE, default=str)), "regenerate the fixture"
+    assert golden["sources"] == json.loads(json.dumps(SOURCES, default=str)), (
+        "regenerate the fixture"
+    )
     cases = golden["cases"]
     grids = stored_grids(
         build_workbook(
@@ -36,4 +38,4 @@ def test_pivot_cells_match_excel() -> None:
                 f"{case['name']}: { ({k: v for k, v in case.items() if k != 'expected'}) }"
             )
     assert not wrong, "\n".join(wrong)
-    assert len(cases) >= 200
+    assert len(cases) >= 290

@@ -63,11 +63,11 @@ class Figures:
             case "percent_of_parent_row":
                 if not self.rows.fields:
                     return None
-                return _share(value, self._value(rows[:-1], columns, data))
+                return _of_parent(value, self._value(rows[:-1], columns, data))
             case "percent_of_parent_column":
                 if not self.columns.fields:
                     return None
-                return _share(value, self._value(rows, columns[:-1], data))
+                return _of_parent(value, self._value(rows, columns[:-1], data))
             case _:
                 return self._along_field(spec, rows, columns, data, value)
 
@@ -79,7 +79,9 @@ class Figures:
         path = rows if on_rows else columns
         level = next(i for i, field in enumerate(axis.fields) if field.index == spec.base_field)
         if len(path) <= level:
-            return None
+            # A total line: Excel shows only the error of a share of the running total.
+            error = isinstance(value, ExcelError) and spec.show_as == "percent_running_total"
+            return value if error else None
 
         def at(item: int) -> Number | _Absent:
             moved = (*path[:level], item, *path[level + 1 :])
@@ -94,7 +96,7 @@ class Figures:
                 if on_rows
                 else self._value(rows, ancestor, data)
             )
-            return _share(value, whole)
+            return _of_parent(value, whole)
         existing = [
             (item, figure)
             for item in axis.children[path[:level]]
@@ -142,7 +144,7 @@ def _whole(spec: DataSpec, innermost: bool, parent: Number, series: list[Number]
 
 def _first(spec: DataSpec, value: Number) -> Number:
     """The first item has nothing before it to compare with, except itself."""
-    if spec.show_as != "percent_of" or value is None:
+    if spec.show_as != "percent_of" or value is None or isinstance(value, ExcelError):
         return None
     return _ratio(value, value)
 
@@ -167,20 +169,28 @@ def _share(value: Number, whole: Number | None) -> Number:
     return _num(value) / whole if whole else None
 
 
+def _of_parent(value: Number, whole: Number | None) -> Number:
+    """A share of the parent's figure; an error in either leaves the cell blank."""
+    if isinstance(value, ExcelError) or isinstance(whole, ExcelError):
+        return None
+    return _share(value, whole)
+
+
 def _total(values: list[Number]) -> Number:
-    """The total of the figures, or None when there are none."""
+    """The total of the figures, or None when there are none. An error is carried on until a
+    later figure is an error too, which replaces it."""
     figures = [value for value in values if value is not None]
-    for value in figures:
-        if isinstance(value, ExcelError):
-            return value
+    errors = [value for value in figures if isinstance(value, ExcelError)]
+    if errors:
+        return errors[-1]
     return sum(_num(value) for value in figures) if figures else None
 
 
 def _rank(series: list[Number], position: int, ascending: bool) -> Number:
-    """1 for the first, counting ties as one place, as Excel does."""
+    """1 for the first, counting ties as one place, as Excel does; none for an error."""
     current = series[position]
     if current is None or isinstance(current, ExcelError):
-        return current
+        return None
     others = {v for v in series if isinstance(v, int | float)}
     return 1 + sum(1 for value in others if (value < current if ascending else value > current))
 
@@ -191,9 +201,11 @@ def _relative(show_as: ShowAs | None, value: Number, base: Number) -> Number:
             if isinstance(operand, ExcelError):
                 return operand
         return _num(value) - _num(base)
+    if isinstance(value, ExcelError):
+        return value
     if value is None:
         return NULL
-    if base is None:
+    if base is None or isinstance(base, ExcelError):
         return None
     ratio = _ratio(value, base)
     if show_as == "percent_of" or isinstance(ratio, ExcelError) or ratio is None:

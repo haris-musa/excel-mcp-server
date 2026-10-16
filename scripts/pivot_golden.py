@@ -17,8 +17,10 @@ from pathlib import Path
 from typing import Any
 
 import win32com.client  # pyright: ignore[reportMissingImports]
-from pivot_cases import SOURCE, cases
-from pivot_workbook import build_workbook, same, stored_grids
+from pivot_cases import SOURCES, cases
+from pivot_workbook import LIMITS, build_workbook, same, stored_grids
+
+from excel_mcp.workspace import save_atomically
 
 FIXTURE = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "pivot_golden.json"
 ERROR_CODES = {
@@ -64,7 +66,7 @@ def main() -> None:
         path = Path(directory) / "pivots.xlsx"
         workbook = build_workbook(chosen)
         ours = stored_grids(workbook)
-        workbook.save(path)
+        save_atomically(workbook, path, LIMITS.max_file_bytes)
         excel = win32com.client.DispatchEx("Excel.Application")
         excel.Visible = False
         excel.DisplayAlerts = False
@@ -83,7 +85,7 @@ def main() -> None:
     for case in differing:
         print("DIFFERS", {key: value for key, value in case.items() if key != "expected"})
     FIXTURE.write_text(
-        json.dumps({"source": SOURCE, "cases": kept}, default=str, separators=(",", ":")) + "\n",
+        json.dumps({"sources": SOURCES, "cases": kept}, default=str, separators=(",", ":")) + "\n",
         encoding="utf-8",
         newline="\n",
     )
