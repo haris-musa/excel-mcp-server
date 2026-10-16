@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- TOOLS.md now documents every nested parameter (arrays of objects, optional objects and
+  objects within objects, such as `create_pivot_table`'s `value_fields`) with each field's
+  type, requirement, default, allowed values and description, and describes `path`, `sheet`,
+  `range`, `at` and `cell`. Models used by several tools are listed once under Shared types.
+
 ## [2.0.0] - 2026-10-11
 
 2.0 grows the server from 26 to 42 tools: charts of every Excel type, PivotTables, slicers,
