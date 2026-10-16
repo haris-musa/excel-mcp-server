@@ -54,6 +54,16 @@ def test_limits_come_from_flags_and_environment(monkeypatch: pytest.MonkeyPatch)
     )
 
 
+@pytest.mark.parametrize("value", ["abc", "0", "-5"])
+def test_bad_limit_values_are_usage_errors(
+    value: str, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("EXCEL_MCP_MAX_CELLS", value)
+    with pytest.raises(SystemExit):
+        cli._parser().parse_args(["stdio"])
+    assert "argument --max-cells: expected a whole number above 0" in capsys.readouterr().err
+
+
 def test_refuses_public_host_without_token(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("EXCEL_MCP_AUTH_TOKEN", raising=False)
     with pytest.raises(SystemExit, match="without authentication"):

@@ -81,8 +81,17 @@ def _settings(args: argparse.Namespace) -> Settings:
     )
 
 
-def _env_int(name: str, default: int) -> int:
-    return int(os.environ.get(name, default))
+def _env_default(name: str, default: int) -> str:
+    # argparse converts a string default with the option's type, so a bad value is reported
+    # as a usage error for that option instead of a traceback.
+    return os.environ.get(name, str(default))
+
+
+def _positive_int(text: str) -> int:
+    value = int(text) if text.strip().isdigit() else 0
+    if value < 1:
+        raise argparse.ArgumentTypeError(f"expected a whole number above 0, got {text!r}")
+    return value
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -113,21 +122,21 @@ def _parser() -> argparse.ArgumentParser:
     )
     common.add_argument(
         "--max-file-mb",
-        type=int,
-        default=_env_int("EXCEL_MCP_MAX_FILE_MB", DEFAULT_LIMITS.max_file_bytes // MB),
+        type=_positive_int,
+        default=_env_default("EXCEL_MCP_MAX_FILE_MB", DEFAULT_LIMITS.max_file_bytes // MB),
         help="Largest workbook to open, in MB (default %(default)s). Also EXCEL_MCP_MAX_FILE_MB.",
     )
     common.add_argument(
         "--max-cells",
-        type=int,
-        default=_env_int("EXCEL_MCP_MAX_CELLS", DEFAULT_LIMITS.max_cells),
+        type=_positive_int,
+        default=_env_default("EXCEL_MCP_MAX_CELLS", DEFAULT_LIMITS.max_cells),
         help="Most cells one tool call may read, write or format (default %(default)s). "
         "Also EXCEL_MCP_MAX_CELLS.",
     )
     common.add_argument(
         "--max-pivot-cells",
-        type=int,
-        default=_env_int("EXCEL_MCP_MAX_PIVOT_CELLS", DEFAULT_LIMITS.max_pivot_source_cells),
+        type=_positive_int,
+        default=_env_default("EXCEL_MCP_MAX_PIVOT_CELLS", DEFAULT_LIMITS.max_pivot_source_cells),
         help="Largest PivotTable source, in cells (default %(default)s). "
         "Also EXCEL_MCP_MAX_PIVOT_CELLS.",
     )
