@@ -6,12 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-16
+
 ### Added
 
 - `--max-pivot-cells` (`EXCEL_MCP_MAX_PIVOT_CELLS`) sets the largest PivotTable source, and
   `--max-cells` (`EXCEL_MCP_MAX_CELLS`) the most cells one call may read, write or format.
   `--max-file-mb` now has `EXCEL_MCP_MAX_FILE_MB`. The error for an oversized source names the
-  option that raises it.
+  option that raises it (#210).
 
 ### Changed
 
@@ -25,7 +27,7 @@ All notable changes to this project are documented here. The format follows
 - TOOLS.md now documents every nested parameter (arrays of objects, optional objects and
   objects within objects, such as `create_pivot_table`'s `value_fields`) with each field's
   type, requirement, default, allowed values and description, and describes `path`, `sheet`,
-  `range`, `at` and `cell`. Models used by several tools are listed once under Shared types.
+  `range`, `at` and `cell` (#209).
 
 ## [2.0.0] - 2026-10-11
 
@@ -398,7 +400,8 @@ Ideas and fixes from these pull requests were reimplemented in this release: #78
 
 See the [GitHub releases](https://github.com/haris-musa/excel-mcp-server/releases).
 
-[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/haris-musa/excel-mcp-server/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/haris-musa/excel-mcp-server/compare/v1.1.2...v2.0.0
 [1.1.2]: https://github.com/haris-musa/excel-mcp-server/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/haris-musa/excel-mcp-server/compare/v1.1.0...v1.1.1
