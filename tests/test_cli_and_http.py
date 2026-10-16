@@ -5,6 +5,7 @@ from typing import Any
 import pytest
 
 from excel_mcp import cli
+from excel_mcp.config import Limits
 from excel_mcp.server.http import BearerTokenMiddleware, is_loopback
 
 
@@ -25,6 +26,32 @@ def test_stdio_is_unconfined_unless_directories_are_given(
     settings = cli._settings(args)
     assert settings.allowed_dirs == [Path("other"), tmp_path]
     assert settings.read_only
+
+
+def test_limits_come_from_flags_and_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    for name in ["EXCEL_MCP_MAX_FILE_MB", "EXCEL_MCP_MAX_CELLS", "EXCEL_MCP_MAX_PIVOT_CELLS"]:
+        monkeypatch.delenv(name, raising=False)
+    defaults = cli._settings(cli._parser().parse_args(["stdio"])).limits
+    assert defaults == Limits()
+    assert defaults.max_pivot_source_cells >= 2_000_000
+
+    flags = ["stdio", "--max-file-mb", "7", "--max-cells", "11", "--max-pivot-cells", "13"]
+    limits = cli._settings(cli._parser().parse_args(flags)).limits
+    assert (limits.max_file_bytes, limits.max_cells, limits.max_pivot_source_cells) == (
+        7 * 1024 * 1024,
+        11,
+        13,
+    )
+
+    monkeypatch.setenv("EXCEL_MCP_MAX_FILE_MB", "5")
+    monkeypatch.setenv("EXCEL_MCP_MAX_CELLS", "17")
+    monkeypatch.setenv("EXCEL_MCP_MAX_PIVOT_CELLS", "19")
+    limits = cli._settings(cli._parser().parse_args(["stdio"])).limits
+    assert (limits.max_file_bytes, limits.max_cells, limits.max_pivot_source_cells) == (
+        5 * 1024 * 1024,
+        17,
+        19,
+    )
 
 
 def test_refuses_public_host_without_token(monkeypatch: pytest.MonkeyPatch) -> None:

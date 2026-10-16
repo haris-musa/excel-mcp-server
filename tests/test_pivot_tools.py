@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 from openpyxl import Workbook, load_workbook
 
+from excel_mcp.config import Limits
 from excel_mcp.operations.pivot_index import sheet_pivots
 from tests.conftest import ToolCall
 
@@ -232,3 +233,36 @@ async def test_pivot_paths_are_confined(call_error: ToolCall, sample: Path) -> N
         value_fields=[{"field": "Units"}],
     )
     assert "outside" in message.lower() or "not allowed" in message.lower()
+
+
+async def test_a_source_beyond_the_range_limit_still_makes_a_pivot(
+    call: ToolCall, files: Path
+) -> None:
+    rows, columns = 10_001, 11
+    workbook = Workbook()
+    data = workbook.worksheets[0]
+    data.title = "Data"
+    data.append([f"Column {number}" for number in range(columns)])
+    for number in range(1, rows):
+        data.append([f"Group {number % 3}", *range(columns - 1)])
+    workbook.create_sheet("Report")
+    workbook.save(files / "big.xlsx")
+    assert rows * columns > Limits().max_cells
+
+    await call(
+        "create_pivot_table",
+        path="big.xlsx",
+        sheet="Report",
+        at="A1",
+        source=f"Data!A1:K{rows}",
+        row_fields=["Column 0"],
+        value_fields=[{"field": "Column 10", "function": "sum"}],
+    )
+    sheet = load_workbook(files / "big.xlsx")["Report"]
+    assert [[cell.value for cell in row] for row in sheet["A1:B5"]] == [
+        ["Column 0", "Sum of Column 10"],
+        ["Group 0", 3333 * 9],
+        ["Group 1", 3334 * 9],
+        ["Group 2", 3333 * 9],
+        ["Grand Total", 10_000 * 9],
+    ]

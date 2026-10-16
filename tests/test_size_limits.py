@@ -86,3 +86,22 @@ async def test_an_oversized_unpacked_workbook_names_the_flag_that_raises_the_lim
     limits = Limits(max_file_bytes=1 << 20, max_unpack_factor=1, max_compression_ratio=10**6)
     message = await _error(files, limits, "describe_workbook", path="big.xlsx")
     assert "--max-file-mb" in message
+
+
+async def test_a_pivot_source_over_the_limit_names_the_option_that_raises_it(
+    sample: Path, files: Path
+) -> None:
+    message = await _error(
+        files,
+        Limits(max_pivot_source_cells=10),
+        "create_pivot_table",
+        path="sales.xlsx",
+        sheet="Report",
+        at="A3",
+        source="Data!A1:D5",
+        row_fields=["Region"],
+        value_fields=[{"field": "Units"}],
+    )
+    assert "20 cells; PivotTables can read at most 10" in message
+    assert "--max-pivot-cells" in message
+    assert not load_workbook(sample)["Report"]._pivots  # pyright: ignore[reportAttributeAccessIssue]

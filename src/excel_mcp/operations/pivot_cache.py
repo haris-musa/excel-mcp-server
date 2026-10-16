@@ -12,13 +12,13 @@ from openpyxl.pivot.cache import (
     SharedItems,
     WorksheetSource,
 )
-from openpyxl.pivot.fields import DateTimeField, Index, Missing, Number, Text
-from openpyxl.pivot.record import Record, RecordList
+from openpyxl.pivot.fields import DateTimeField, Missing, Number, Text
 from openpyxl.utils.datetime import to_excel
 
 from excel_mcp.operations.pivot_calc import CalcField
 from excel_mcp.operations.pivot_fields import FieldSetup, Shared
 from excel_mcp.operations.pivot_groups import Grouping
+from excel_mcp.operations.pivot_records import PivotRecords, SharedIndex
 from excel_mcp.operations.pivot_source import Column, Value
 
 REFRESHED_BY = "excel-mcp-server"
@@ -58,7 +58,7 @@ def build_cache(setup: FieldSetup, calculated: list[CalcField]) -> CacheDefiniti
         minRefreshableVersion=3,
         recordCount=source.record_count,
     )
-    cache.records = RecordList(r=_records(setup))
+    cache.records = _records(setup)
     return cache
 
 
@@ -142,16 +142,11 @@ def _item(value: Value) -> CacheItem:
             return Number(v=value)
 
 
-def _records(setup: FieldSetup) -> list[Record]:
-    source = setup.source
-    return [
-        Record(
-            _fields=[
-                Index(v=setup.shared[position].index[row])
-                if position in setup.shared
-                else _item(column.values[row])
-                for position, column in enumerate(source.columns)
-            ]
-        )
-        for row in range(source.record_count)
+def _records(setup: FieldSetup) -> PivotRecords:
+    columns = [
+        [SharedIndex(index) for index in setup.shared[position].index]
+        if position in setup.shared
+        else column.values
+        for position, column in enumerate(setup.source.columns)
     ]
+    return PivotRecords(list(zip(*columns, strict=True)))

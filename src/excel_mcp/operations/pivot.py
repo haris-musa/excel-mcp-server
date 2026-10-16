@@ -8,6 +8,7 @@ from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.calc.values import ExcelError
+from excel_mcp.config import Limits
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.operations.cells import stored_cells, writable_cell
 from excel_mcp.operations.pivot_axis import Axis, Path, Ranker, build_axis
@@ -72,11 +73,11 @@ def create_pivot(
     target_sheet: Worksheet,
     target_cell: str,
     request: PivotRequest,
-    max_cells: int,
+    limits: Limits,
     *,
     copy_of_name: bool = False,
 ) -> tuple[str, CellRange]:
-    source = read_source(source_sheet, source_range, max_cells)
+    source = read_source(source_sheet, source_range, limits.max_pivot_source_cells)
     row_fields = [source.field_index(field) for field in request.rows]
     column_fields = [source.field_index(field) for field in request.columns]
     filter_fields = [source.field_index(field) for field in request.filters]
@@ -111,7 +112,7 @@ def create_pivot(
         start_row + filter_height + table.header_rows + table.rows - 1,
         start_col + table.label_columns + table.columns - 1,
     )
-    area = CellRange(start_row, start_col, body.max_row, body.max_col).within(max_cells)
+    area = CellRange(start_row, start_col, body.max_row, body.max_col).within(limits.max_cells)
     _check_free(target_sheet, area, source_sheet, source.ref)
 
     pivot_name = _pivot_name(workbook, request.name, copy_of_name)

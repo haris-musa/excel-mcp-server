@@ -7,7 +7,7 @@ from typing import Literal
 from openpyxl.cell.cell import Cell, MergedCell
 from openpyxl.worksheet.worksheet import Worksheet
 
-from excel_mcp.errors import InvalidArgumentError
+from excel_mcp.errors import InvalidArgumentError, LimitExceededError
 from excel_mcp.refs import parse_range
 from excel_mcp.text import quoted
 
@@ -45,7 +45,13 @@ class Source:
 
 
 def read_source(sheet: Worksheet, source_range: str, max_cells: int) -> Source:
-    area = parse_range(source_range).within(max_cells)
+    area = parse_range(source_range)
+    if area.size > max_cells:
+        raise LimitExceededError(
+            f"Source {area} has {area.size:,} cells; PivotTables can read at most "
+            f"{max_cells:,}. Use a smaller source, or raise --max-pivot-cells "
+            "(environment variable EXCEL_MCP_MAX_PIVOT_CELLS)."
+        )
     if area.rows < 2:
         raise InvalidArgumentError(f"source {area} needs a header row and at least one data row.")
     rows = [

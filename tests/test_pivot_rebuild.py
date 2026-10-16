@@ -9,7 +9,7 @@ from xml.etree.ElementTree import tostring
 from openpyxl import Workbook
 from openpyxl.pivot.table import TableDefinition
 from pivot_cases import SOURCE_RANGE
-from pivot_workbook import MAX_CELLS, build_workbook, stored_grids
+from pivot_workbook import LIMITS, build_workbook, stored_grids
 
 from excel_mcp.operations import pivot
 from excel_mcp.operations.pivot_index import sheet_pivots
@@ -43,7 +43,7 @@ def test_a_pivot_made_again_from_its_definition_is_the_same() -> None:
             again.create_sheet(sheet.title),
             "A1",
             request,
-            MAX_CELLS,
+            LIMITS,
         )
     differing: list[Any] = []
     first, second = stored_grids(original), stored_grids(again)

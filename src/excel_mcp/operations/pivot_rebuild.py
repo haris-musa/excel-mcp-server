@@ -15,6 +15,7 @@ from openpyxl.utils.datetime import from_excel
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
+from excel_mcp.config import Limits
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.operations.cells import clear_range
 from excel_mcp.operations.pivot import PivotRequest, create_pivot
@@ -61,7 +62,7 @@ def rebuild(
     sheet: Worksheet,
     pivot: TableDefinition,
     change: Callable[[PivotRequest], PivotRequest],
-    max_cells: int,
+    limits: Limits,
 ) -> TableDefinition:
     """Make the PivotTable again with ``change`` applied to the request that made it."""
     if not can_rebuild(pivot):
@@ -74,7 +75,7 @@ def rebuild(
     pivots = sheet_pivots(sheet)
     position = pivots.index(pivot)
     pivots.remove(pivot)
-    clear_range(sheet, str(area), contents=True, formats=False, max_cells=max_cells)
+    clear_range(sheet, str(area), contents=True, formats=False, max_cells=limits.max_cells)
     source_sheet, reference = source
     create_pivot(
         workbook,
@@ -83,7 +84,7 @@ def rebuild(
         sheet,
         cell_name(area.min_row, area.min_col),
         change(request),
-        max_cells,
+        limits,
         copy_of_name=True,
     )
     made = pivots.pop()
