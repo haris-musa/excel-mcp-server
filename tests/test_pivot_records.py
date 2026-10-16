@@ -5,8 +5,10 @@ from xml.etree import ElementTree
 
 from openpyxl.pivot.fields import DateTimeField, Index, Missing, Number, Text
 from openpyxl.pivot.record import Record, RecordList
+from openpyxl.xml.constants import SHEET_MAIN_NS
 
 from excel_mcp.operations.pivot_records import PivotRecords, SharedIndex
+from excel_mcp.package.lazy_records import LazyRecords
 
 
 def _written(records: RecordList) -> str:
@@ -41,3 +43,29 @@ def test_records_are_written_as_openpyxl_writes_them() -> None:
     )
     assert PivotRecords(rows).count == expected.count == 2
     assert _written(PivotRecords(rows)) == _written(expected)
+
+
+RECORDS = (
+    f'<pivotCacheRecords xmlns="{SHEET_MAIN_NS}" count="3">'
+    '<r><s v="a&amp;b" /><x v="0" /><n v="1.5" /></r>'
+    '<r><m /><x v="1" /><d v="2024-01-02T00:00:00" /></r>'
+    '<r><s v="A&#10;B" /><x v="1" /><b v="1" /></r>'
+    "</pivotCacheRecords>"
+)
+
+
+def test_lazy_records_hand_out_one_column() -> None:
+    records = LazyRecords(RECORDS.encode())
+    assert records.count == 3
+    first, second, third = records.column(0)
+    assert (first.v, third.v) == ("a&b", "A\nB")
+    assert isinstance(second, Missing)
+    assert [item.v for item in records.column(2)] == [1.5, dt.datetime(2024, 1, 2), True]
+
+
+def test_lazy_records_replace_one_column_and_keep_the_rest() -> None:
+    records = LazyRecords(RECORDS.encode())
+    records.share(0, [2, 0, 1])
+    expected = RECORDS.replace('<s v="a&amp;b" />', '<x v="2" />')
+    expected = expected.replace("<m />", '<x v="0" />').replace('<s v="A&#10;B" />', '<x v="1" />')
+    assert _written(records) == ElementTree.canonicalize(expected)

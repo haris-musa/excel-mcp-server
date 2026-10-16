@@ -139,6 +139,25 @@ async def test_pivot_survives_other_edits(call: ToolCall, sample: Path) -> None:
         assert "xl/pivotCache/pivotCacheRecords1.xml" in archive.namelist()
 
 
+async def test_cache_records_are_kept_as_they_are_through_other_edits(
+    call: ToolCall, sample: Path
+) -> None:
+    await call(
+        "create_pivot_table", **PIVOT, row_fields=["Region"], value_fields=[{"field": "Units"}]
+    )
+    name = "xl/pivotCache/pivotCacheRecords1.xml"
+    with zipfile.ZipFile(sample) as archive:
+        parts = {item.filename: archive.read(item) for item in archive.infolist()}
+    parts[name] = parts[name].replace(b" />", b"/>")
+    with zipfile.ZipFile(sample, "w") as archive:
+        for part, data in parts.items():
+            archive.writestr(part, data)
+    await call("write_range", path="sales.xlsx", sheet="Report", at="F1", rows=[[1]])
+    await call("copy_sheet", path="sales.xlsx", sheet="Report", new_name="Copy")
+    with zipfile.ZipFile(sample) as archive:
+        assert archive.read(name) == parts[name]
+
+
 async def test_two_pivots_get_separate_caches(call: ToolCall, sample: Path) -> None:
     await call(
         "create_pivot_table", **PIVOT, row_fields=["Region"], value_fields=[{"field": "Units"}]

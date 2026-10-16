@@ -9,7 +9,6 @@ import datetime as dt
 from dataclasses import dataclass
 
 from openpyxl.pivot.cache import CacheDefinition, CacheField
-from openpyxl.pivot.fields import Index
 from openpyxl.pivot.table import FieldItem, TableDefinition
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
@@ -22,6 +21,7 @@ from excel_mcp.operations.pivot_index import sheet_pivots
 from excel_mcp.operations.pivot_options import DatePeriod
 from excel_mcp.operations.pivot_rebuild import can_rebuild, field_labels, rebuild
 from excel_mcp.operations.pivot_source import Value
+from excel_mcp.package.lazy_records import LazyRecords
 from excel_mcp.text import quoted
 from excel_mcp.workspace import worksheets
 
@@ -57,15 +57,15 @@ def ensure_items(cache: CacheDefinition, position: int) -> None:
         return
     if field.sharedItems._fields or cache.records is None:  # pyright: ignore[reportAttributeAccessIssue]
         return
-    records = cache.records.r
-    inline = [record._fields[position] for record in records]
+    records = cache.records
+    assert isinstance(records, LazyRecords)
+    inline = records.column(position)
     shared = distinct([getattr(item, "v", None) for item in inline])
     first_seen = {}
     for item, index in zip(inline, shared.index, strict=True):
         first_seen.setdefault(index, item)
     field.sharedItems._fields = [first_seen[i] for i in range(len(first_seen))]  # pyright: ignore[reportAttributeAccessIssue]
-    for record, index in zip(records, shared.index, strict=True):
-        record._fields[position] = Index(v=index)
+    records.share(position, shared.index)
 
 
 def item_order(cache: CacheDefinition, position: int) -> list[int]:

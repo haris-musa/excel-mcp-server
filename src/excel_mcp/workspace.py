@@ -27,6 +27,7 @@ from excel_mcp.errors import (
     WorkbookNotFoundError,
 )
 from excel_mcp.lazy_workbook import Parts, load_lazy
+from excel_mcp.package import lazy_records
 from excel_mcp.paths import MACRO_SUFFIXES, TEMPLATE_SUFFIXES, PathPolicy
 from excel_mcp.zip_limits import check_expansion
 
@@ -43,6 +44,7 @@ class Workspace:
 
     def __init__(self, paths: PathPolicy, limits: Limits, allow_macro_workbooks: bool) -> None:
         chart_roundtrip.install()
+        lazy_records.install()
         self.paths = paths
         self.limits = limits
         self.allow_macro_workbooks = allow_macro_workbooks
