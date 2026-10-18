@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.2.1] - 2026-10-18
+
 ### Changed
 
 - Edits that look at every cell of a large sheet no longer load it whole. On a 200,000-row
@@ -516,7 +518,8 @@ Ideas and fixes from these pull requests were reimplemented in this release: #78
 
 See the [GitHub releases](https://github.com/haris-musa/excel-mcp-server/releases).
 
-[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.1...HEAD
+[2.2.1]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/haris-musa/excel-mcp-server/compare/v2.1.1...v2.2.0
 [2.1.1]: https://github.com/haris-musa/excel-mcp-server/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/haris-musa/excel-mcp-server/compare/v2.0.0...v2.1.0
