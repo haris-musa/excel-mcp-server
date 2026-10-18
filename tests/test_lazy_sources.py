@@ -145,3 +145,37 @@ def test_a_copy_shares_the_rows_of_the_original_that_were_not_parsed(
         assert copied.loaded == before
         assert copied.source.data != original.source.data  # its formulas are its own
         assert copied.count() == original.count()
+
+
+async def test_a_pivot_table_beside_its_source_checks_only_the_rows_it_covers(
+    call: ToolCall, call_error: ToolCall, files: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    make_sales(files / "lazy.xlsx", stored=True)
+    shutil.copy(files / "lazy.xlsx", files / "full.xlsx")
+    beside = {**PIVOT, "sheet": "Data", "at": "J1"}
+
+    with lazily(monkeypatch):
+        await call("create_pivot_table", path="lazy.xlsx", **beside)
+    await call("create_pivot_table", path="full.xlsx", **beside)
+    assert snapshot(files / "lazy.xlsx") == snapshot(files / "full.xlsx")
+
+    for name in ("lazy", "full"):
+        await call("write_range", path=f"{name}.xlsx", sheet="Data", at="N40", rows=[["x"]])
+    taken = {**PIVOT, "sheet": "Data", "at": "N38"}
+    with lazily(monkeypatch):
+        refused = await call_error("create_pivot_table", path="lazy.xlsx", **taken)
+    assert "N40 already holds a value" in refused
+    assert refused == await call_error("create_pivot_table", path="full.xlsx", **taken)
+
+
+async def test_renaming_a_sheet_rewrites_the_references_of_a_large_sheet_to_it(
+    call: ToolCall, files: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    make_linked_book(files / "lazy.xlsx")
+    shutil.copy(files / "lazy.xlsx", files / "full.xlsx")
+
+    with lazily(monkeypatch):
+        await call("rename_sheet", path="lazy.xlsx", sheet="Data", new_name="Facts and Figures")
+    await call("rename_sheet", path="full.xlsx", sheet="Data", new_name="Facts and Figures")
+
+    assert snapshot(files / "lazy.xlsx") == snapshot(files / "full.xlsx")

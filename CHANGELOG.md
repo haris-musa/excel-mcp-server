@@ -32,7 +32,9 @@ All notable changes to this project are documented here. The format follows
   instead of once per cell, which was most of the 130 s that inserting two columns into a
   200,000-row sheet took.
 - `copy_sheet` of a sheet over the cell limit is refused without loading the sheet (it took
-  31 s to count its cells).
+  31 s to count its cells). `rename_sheet` of a sheet that a large sheet refers to, and
+  `create_pivot_table` on the sheet of its source, no longer parse every row of the large
+  sheet.
 
 ## [2.2.0] - 2026-10-18
 

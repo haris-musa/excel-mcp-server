@@ -8,7 +8,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
 
 from excel_mcp.errors import InvalidArgumentError, LimitExceededError
-from excel_mcp.lazy_workbook import held_cells
+from excel_mcp.lazy_workbook import LazyCells, held_cells
 from excel_mcp.operations.date_width import FITTED_WIDTHS, widen_for_dates
 from excel_mcp.operations.hyperlinks import Link, set_link
 from excel_mcp.operations.spill import spill_formulas
@@ -55,6 +55,23 @@ def stored_cells(sheet: Worksheet) -> Iterator[Cell]:
     for _, cell in sorted(sheet._cells.items()):
         if cell.value is not None:
             yield cell
+
+
+def stored_cells_in(sheet: Worksheet, area: CellRange) -> Iterator[Cell]:
+    """The cells that hold a value inside ``area``; a large sheet parses only those rows."""
+    cells = sheet._cells
+    if not isinstance(cells, LazyCells):
+        yield from (
+            cell
+            for cell in stored_cells(sheet)
+            if area.min_row <= cell.row <= area.max_row
+            and area.min_col <= cell.column <= area.max_col
+        )
+        return
+    for row in range(area.min_row, area.max_row + 1):
+        for (_, column), cell in cells.in_row(row):
+            if area.min_col <= column <= area.max_col and cell.value is not None:
+                yield cell
 
 
 def parsed_cells(sheet: Worksheet) -> Iterator[Cell]:

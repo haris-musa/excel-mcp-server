@@ -40,6 +40,11 @@ class SheetRenameRefs(ReferenceRewriter):
     old: str
     new: str
 
+    def formula(self, formula: str, host: str) -> str:
+        if "!" not in formula:  # Nothing in it names a sheet.
+            return formula
+        return super().formula(formula, host)
+
     def reference(self, text: str, host: str) -> str:
         pieces = split_top_level(text, "!")
         if len(pieces) != 2:
