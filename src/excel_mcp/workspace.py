@@ -86,6 +86,25 @@ class Workspace:
             )
         return path.read_bytes()
 
+    def resolve_csv_existing(self, raw_path: str) -> Path:
+        """Resolve a CSV file to read, within the file size limit."""
+        path = self.paths.resolve_csv(raw_path)
+        if not path.is_file():
+            raise InvalidArgumentError(f"CSV file {self.display(path)} does not exist.")
+        size = path.stat().st_size
+        if size > self.limits.max_file_bytes:
+            raise LimitExceededError(
+                f"CSV file is {size:,} bytes; the limit is {self.limits.max_file_bytes:,}."
+            )
+        return path
+
+    def store_csv(self, raw_path: str, content: bytes, *, overwrite: bool) -> Path:
+        path = self.paths.resolve_csv(raw_path)
+        with self._write_lock:
+            self._check_overwrite(path, overwrite)
+            write_atomically(path, content)
+        return path
+
     def resolve_directory(self, raw_path: str) -> Path:
         return self.paths.resolve_directory(raw_path)
 

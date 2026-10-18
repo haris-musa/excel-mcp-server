@@ -82,6 +82,14 @@
       "description": "Save an uploaded workbook file on the server, e.g. to edit it remotely."
     },
     {
+      "name": "import_csv",
+      "description": "Import a CSV file into a sheet, with numbers and dates typed and never formulas."
+    },
+    {
+      "name": "export_csv",
+      "description": "Export a range as a CSV file, formula results included."
+    },
+    {
       "name": "describe_sheet",
       "description": "Describe a sheet's structure: used range, frozen panes, merged ranges, tables, charts, PivotTables, hyperlinks, data validation, conditional formats, notes, view settings and custom column widths."
     },

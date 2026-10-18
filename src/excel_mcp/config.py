@@ -30,5 +30,7 @@ class Settings:
     allowed_dirs: list[Path] = field(default_factory=list)
     read_only: bool = False
     allow_vba_write: bool = False
+    # Names of the tool areas to offer besides the core tools; None offers every tool.
+    tool_areas: tuple[str, ...] | None = None
     limits: Limits = field(default_factory=Limits)
     log_level: LogLevel = "WARNING"

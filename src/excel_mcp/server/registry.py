@@ -34,11 +34,17 @@ DESTRUCTIVE = ToolAnnotations(
 
 
 class ToolRegistry:
-    """Registers tools on the server; in read-only mode, only read-only tools."""
+    """Registers tools on the server; in read-only mode, only read-only tools.
 
-    def __init__(self, server: MCPServer, read_only: bool) -> None:
+    ``only`` limits registration to the tools named, when given.
+    """
+
+    def __init__(
+        self, server: MCPServer, read_only: bool, only: frozenset[str] | None = None
+    ) -> None:
         self.server = server
         self.read_only = read_only
+        self.only = only
 
     def reader(self, title: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
         return self._register(title, READ_ONLY, advertises_output=True)
@@ -57,6 +63,8 @@ class ToolRegistry:
 
         def decorate(function: Callable[P, R]) -> Callable[P, R]:
             if self.read_only and not annotations.read_only_hint:
+                return function
+            if self.only is not None and function.__name__ not in self.only:
                 return function
             returns_text = inspect.signature(function).return_annotation is str
             returns_text = returns_text or not advertises_output

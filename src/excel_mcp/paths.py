@@ -8,6 +8,7 @@ EXCEL_SUFFIXES = frozenset({".xlsx", ".xlsm", ".xltx", ".xltm"})
 MACRO_SUFFIXES = frozenset({".xlsm", ".xltm"})
 TEMPLATE_SUFFIXES = frozenset({".xltx", ".xltm"})
 IMAGE_SUFFIXES = frozenset({".png", ".jpg", ".jpeg"})
+CSV_SUFFIXES = frozenset({".csv", ".tsv"})
 
 # Windows opens these names as devices in every folder, with or without an extension.
 _DEVICE_NAMES = frozenset(
@@ -46,6 +47,13 @@ class PathPolicy:
         if path.suffix.lower() not in IMAGE_SUFFIXES:
             allowed = ", ".join(sorted(IMAGE_SUFFIXES))
             raise PathNotAllowedError(f"Path {raw_path!r} must point to an image ({allowed}).")
+        return path
+
+    def resolve_csv(self, raw_path: str) -> Path:
+        path = self._resolve(raw_path)
+        if path.suffix.lower() not in CSV_SUFFIXES:
+            allowed = ", ".join(sorted(CSV_SUFFIXES))
+            raise PathNotAllowedError(f"Path {raw_path!r} must point to a CSV file ({allowed}).")
         return path
 
     def resolve_directory(self, raw_path: str) -> Path:
