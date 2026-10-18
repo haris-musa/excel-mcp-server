@@ -10,8 +10,6 @@ rows in a block, are lowered so that every edit takes the large-sheet path.
 import datetime as dt
 import re
 import shutil
-from collections.abc import Iterator
-from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 from zipfile import ZipFile
@@ -26,8 +24,8 @@ from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.formula import ArrayFormula
 from openpyxl.worksheet.table import Table
 
-from excel_mcp import lazy_edit, lazy_workbook
-from tests.conftest import ToolCall
+from excel_mcp import lazy_edit
+from tests.conftest import ToolCall, lazily
 from tests.package_support import (
     FIXTURES,
     assert_namespaces_declared,
@@ -39,16 +37,6 @@ from tests.package_support import (
 pytestmark = pytest.mark.anyio
 
 ROWS = 40
-
-
-@contextmanager
-def lazily(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
-    """Every sheet is edited as a large one, in blocks of four rows."""
-    with monkeypatch.context() as context:
-        context.setattr(lazy_edit, "LAZY_SHEET_BYTES", 0)
-        context.setattr(lazy_edit, "BLOCK_ROWS", 4)
-        context.setattr(lazy_workbook, "BLOCK_ROWS", 4)
-        yield
 
 
 def make_book(path: Path) -> None:
@@ -421,7 +409,7 @@ async def test_the_dimension_covers_the_rows_written_and_the_rows_kept(
     assert '<dimension ref="A1:Z60"/>' in saved
 
 
-@pytest.mark.parametrize("marker", ['t="array"', 't="shared"', 'cm="1"'])
+@pytest.mark.parametrize("marker", ['t="array"', 't="dataTable"', 'cm="1"'])
 def test_sheets_whose_cells_depend_on_each_other_are_loaded_whole(
     files: Path, monkeypatch: pytest.MonkeyPatch, marker: str
 ) -> None:
@@ -444,7 +432,8 @@ def test_sheets_whose_cells_depend_on_each_other_are_loaded_whole(
     assert edit is None
 
 
-def test_small_sheets_are_loaded_whole(files: Path) -> None:
+def test_small_sheets_are_loaded_whole(files: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(lazy_edit, "LAZY_SHEET_BYTES", 1_000_000)
     make_book(files / "book.xlsx")
 
     assert not lazy_edit.has_large_sheet(files / "book.xlsx")

@@ -1,4 +1,5 @@
-from collections.abc import AsyncIterator, Callable, Coroutine
+from collections.abc import AsyncIterator, Callable, Coroutine, Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -7,10 +8,40 @@ from mcp import Client
 from mcp.types import CallToolResult, TextContent
 from openpyxl import Workbook
 
+from excel_mcp import lazy_edit, lazy_workbook
 from excel_mcp.config import Settings
 from excel_mcp.server import create_server
 
 ToolCall = Callable[..., Coroutine[Any, Any, Any]]
+
+
+@contextmanager
+def lazily(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    """Every sheet is edited and read as a large one, in blocks of four rows."""
+    with monkeypatch.context() as context:
+        context.setattr(lazy_edit, "LAZY_SHEET_BYTES", 0)
+        context.setattr(lazy_edit, "BLOCK_ROWS", 4)
+        context.setattr(lazy_workbook, "BLOCK_ROWS", 4)
+        yield
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--lazy-sheets",
+        action="store_true",
+        help="Run every test with all sheets taken through the large-sheet path.",
+    )
+
+
+@pytest.fixture(autouse=True)
+def forced_lazy_sheets(
+    request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch
+) -> Iterator[None]:
+    if request.config.getoption("--lazy-sheets"):
+        with lazily(monkeypatch):
+            yield
+    else:
+        yield
 
 
 def error_text(result: CallToolResult) -> str:
