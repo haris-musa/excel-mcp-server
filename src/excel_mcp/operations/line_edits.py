@@ -91,7 +91,10 @@ def edit_lines(
 
 def _check_room(sheet: Worksheet, edit: LineEdit) -> None:
     rows = edit.axis == "rows"
-    if isinstance(sheet._cells, LazyCells) and extent(sheet)[not rows] + edit.count <= edit.limit:
+    if (
+        isinstance(sheet._cells, LazyCells)
+        and extent(sheet)[0 if rows else 1] + edit.count <= edit.limit
+    ):
         return
     area = used_range(sheet)
     needed = (area.max_row if rows else area.max_col) + edit.count

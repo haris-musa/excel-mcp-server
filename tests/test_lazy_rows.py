@@ -19,7 +19,7 @@ from openpyxl.worksheet.formula import ArrayFormula
 
 from excel_mcp import lazy_rows
 from excel_mcp.lazy_shared import Translators
-from excel_mcp.lazy_workbook import split_sheet
+from excel_mcp.lazy_source import split_sheet
 
 NAMESPACE = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 TEXTS = [

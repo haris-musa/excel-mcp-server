@@ -33,15 +33,8 @@ from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.xml.constants import SHARED_STRINGS
 
 from excel_mcp import lazy_rows, lazy_shared
-from excel_mcp.lazy_workbook import (
-    BLOCK_ROWS,
-    LazyCells,
-    Parts,
-    SheetSource,
-    lazy_sheets,
-    open_lazily,
-    split_sheet,
-)
+from excel_mcp.lazy_source import SheetSource, split_sheet
+from excel_mcp.lazy_workbook import BLOCK_ROWS, LazyCells, Parts, lazy_sheets, open_lazily
 from excel_mcp.package.opc import REL_BASE, Package, Rel, free_id
 from excel_mcp.package.restore import MAIN, sheet_parts
 from excel_mcp.package.scan import declare_in_root, root_scope

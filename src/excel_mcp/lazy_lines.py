@@ -25,7 +25,8 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.formulas import storable_formula
 from excel_mcp.lazy_shared import SharedMaster
-from excel_mcp.lazy_workbook import CellKey, LazyCells, SheetSource
+from excel_mcp.lazy_source import SheetSource
+from excel_mcp.lazy_workbook import CellKey, LazyCells
 from excel_mcp.package.lines import LineEdit
 from excel_mcp.refs import parse_range
 from excel_mcp.rewrite import ReferenceRewriter
