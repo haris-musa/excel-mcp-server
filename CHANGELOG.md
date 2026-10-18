@@ -6,6 +6,34 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Edits that look at every cell of a large sheet no longer load it whole. On a 200,000-row
+  sheet with four filled-down formula columns (Excel's file / one written by openpyxl):
+  inserting or deleting rows took 140-170 s and now takes 9 / 16 s, inserting or deleting columns
+  93-218 s and now 10-13 / 13-18 s, `replace_cells` about 100 s (any text) and now 4 s when the text is
+  rare (40 / 32 s when it changes 200,000 formulas), `sort_range` of 100,000 rows 31 / 25 s and
+  now 21 / 15 s, `copy_sheet` of 950,000 cells 94 s and now 4 s, and `create_pivot_table`
+  108 s (50,000 rows: 28 s) and now 19 s (8 s). Their results are the ones loading
+  the whole sheet gave. How:
+  - Rows that only move are renumbered in their XML, and the references in their formulas are
+    rewritten as text; a group of filled-down formulas that the edit cuts, or whose references
+    it cuts, is parsed and becomes ordinary formulas, as Excel splits it. Only the rows around
+    the edit are parsed.
+  - `replace_cells` parses only the blocks of rows that may hold the text. A copy of a sheet
+    shares the original's rows that were not parsed. A PivotTable source is read as the file
+    stores it (the stored results of formulas) when every formula has one.
+  - Rows that are parsed are read and written as text instead of through an XML library, 2 to 3
+    times faster, in the forms Excel and openpyxl write; any other form goes through openpyxl.
+  - Formulas made only of plain cell references are moved, translated and checked by the formula
+    check once per shape instead of by the tokenizer one by one. The check gives the same
+    answers (tests compare it with the tokenizer on random formulas).
+- Inserting columns creates the formats of the inserted cells once per kind of neighbour
+  instead of once per cell, which was most of the 130 s that inserting two columns into a
+  200,000-row sheet took.
+- `copy_sheet` of a sheet over the cell limit is refused without loading the sheet (it took
+  31 s to count its cells).
+
 ## [2.2.0] - 2026-10-18
 
 ### Added

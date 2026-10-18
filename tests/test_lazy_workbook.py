@@ -8,7 +8,8 @@ import pytest
 from openpyxl import Workbook
 
 from excel_mcp import lazy_workbook
-from excel_mcp.lazy_workbook import LazyCells, load_lazy, split_sheet
+from excel_mcp.lazy_source import split_sheet
+from excel_mcp.lazy_workbook import LazyCells, load_lazy
 from tests.conftest import ToolCall
 
 pytestmark = pytest.mark.anyio
