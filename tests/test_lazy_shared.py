@@ -47,15 +47,15 @@ def make_shared_book(path: Path) -> None:
             ]
         )
     workbook.save(path)
-    _share(path, 0, "D", 2, FILLED)
-    _share(path, 1, "E", 2, ROWS)
-    _share(path, 2, "FG", 2, ROWS)
+    share(path, 0, "D", 2, FILLED)
+    share(path, 1, "E", 2, ROWS)
+    share(path, 2, "FG", 2, ROWS)
 
 
-def _share(path: Path, group: int, columns: str, first: int, last: int) -> None:
+def share(path: Path, group: int, columns: str, first: int, last: int, sheet: str = "Data") -> None:
     """Rewrite the cells of a range the way Excel stores a formula filled over it."""
     parts = read_parts(path)
-    name = sheet_part(parts, "Data")
+    name = sheet_part(parts, sheet)
     ref = f"{columns[0]}{first}:{columns[-1]}{last}"
 
     def convert(found: re.Match[str]) -> str:
@@ -78,9 +78,9 @@ def _share(path: Path, group: int, columns: str, first: int, last: int) -> None:
             archive.writestr(part, content)
 
 
-def groups(path: Path) -> dict[str, dict[str, Any]]:
+def groups(path: Path, sheet: str = "Data") -> dict[str, dict[str, Any]]:
     """The shared formulas a saved sheet has: each one's master, its range, its children."""
-    xml = read_parts(path)[sheet_part(read_parts(path), "Data")].decode()
+    xml = read_parts(path)[sheet_part(read_parts(path), sheet)].decode()
     found: dict[str, dict[str, Any]] = {}
     for cell in _CELL.finditer(xml):
         attributes = dict(_ATTRIBUTES.findall(cell[3].split(">")[0]))

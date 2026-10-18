@@ -55,6 +55,7 @@ _ROW = re.compile(rb"<row\b[^>]*?/>|<row\b[^>]*>.*?</row>", re.S)
 _ROW_NUMBER = re.compile(rb'\br="(\d+)"')
 _DIMENSION = re.compile(rb'<dimension\s+ref="[^"]*"\s*/>')
 _CELL_COLUMN = re.compile(rb'<c\b[^>]*?\br="([A-Z]+)\d')
+_UNADDRESSED_CELL = re.compile(rb"<c\b(?![^>]*\br=)")
 # A row with attributes of its own (a height, a style, hidden), not just its number.
 _ATTRIBUTED_ROW = re.compile(rb"<row\b[^>]*\s(?!r=|spans=|[\w.-]+:)[\w.-]+=[^>]*>")
 # What a formula stored as its result when Excel last calculated it, which an edit makes stale.
@@ -72,6 +73,8 @@ def has_large_sheet(path: Path) -> bool:
 def _split(data: bytes) -> tuple[bytes, SheetSource] | None:
     cross_cell = (b't="array"', b't="dataTable"', b' cm="', b' vm="')
     if len(data) < LAZY_SHEET_BYTES or any(marker in data for marker in cross_cell):
+        return None
+    if _UNADDRESSED_CELL.search(data):  # Its column is not known until the row is read.
         return None
     split = split_sheet(data)
     return split if split and split[1].row_numbers else None

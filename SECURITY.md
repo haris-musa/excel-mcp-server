@@ -47,7 +47,9 @@ or anyone who can reach the HTTP endpoint. Its defences are:
   Formulas written by `copy_range`, `transform_range` (text to columns) and
   `replace_cells` pass the same check, as do list sources and rule operands, and the
   formulas that `insert_rows_or_columns`, `delete_rows_or_columns` and `rename_sheet`
-  rewrite.
+  rewrite. A formula made only of plain cell references and text (`=IF(D2>50,"big","small")`)
+  is checked once for all formulas that differ only in the cells they use, since which cells
+  a formula refers to cannot change the verdict; any other formula is checked as itself.
 - **CSV**: `import_csv` and `export_csv` accept only `.csv` and `.tsv` files, through the same
   path rules as workbooks, within the cell and file size limits, and the file is read as a
   stream. An imported field is never a formula: text starting with `=`, `+`, `-` or `@` is
