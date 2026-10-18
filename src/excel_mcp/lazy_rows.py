@@ -30,9 +30,9 @@ from openpyxl.worksheet.formula import ArrayFormula, DataTableFormula
 _ROW = re.compile(rb'<row\b[^>]*?\br="(\d+)"[^>]*?(?:/>|>(.*)</row>)', re.S)
 _CELL = re.compile(
     rb'<c r="(?P<column>[A-Z]+)(?P<row>\d+)"(?: s="(?P<style>\d+)")?(?: t="(?P<type>\w+)")?'
-    rb"(?:/>|>"
+    rb"(?: ?/>|>"
     rb'(?P<formula><f(?: t="(?P<kind>\w+)")?(?: ref="[^"]*")?(?: si="(?P<group>\d+)")?'
-    rb"(?:/>|>(?P<text>[^<]*)</f>))?"
+    rb"(?: ?/>|>(?P<text>[^<]*)</f>))?"
     rb"(?:<v>(?P<value>[^<]*)</v>|<v ?/>)?"
     rb'(?:<is><t(?: xml:space="preserve")?>(?P<inline>[^<]*)</t></is>)?'
     rb"</c>)"

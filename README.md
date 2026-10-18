@@ -62,6 +62,9 @@ Excel**, and runs on Windows, macOS and Linux.
 **Large files**
 - Reads stream the workbook and return pages, so memory stays flat on sheets with hundreds of
   thousands of rows; every call is bounded by size and cell limits
+- Edits of a sheet of 1 MB of XML or more parse only the rows they touch, so inserting or
+  deleting rows and columns, sorting, replacing, copying a sheet and creating a PivotTable
+  take seconds on a 200,000-row sheet instead of minutes
 
 **Macros (opt-in)**
 - Read the VBA code in `.xlsm` files. Writing VBA is off unless you start the server with
