@@ -16,7 +16,7 @@ from openpyxl.workbook.properties import CalcProperties
 from openpyxl.worksheet._read_only import ReadOnlyWorksheet
 from openpyxl.worksheet.worksheet import Worksheet
 
-from excel_mcp import chart_roundtrip, macros, package
+from excel_mcp import chart_roundtrip, lazy_edit, macros, package
 from excel_mcp.config import Limits
 from excel_mcp.errors import (
     InvalidArgumentError,
@@ -26,7 +26,8 @@ from excel_mcp.errors import (
     WorkbookExistsError,
     WorkbookNotFoundError,
 )
-from excel_mcp.lazy_workbook import Parts, load_lazy
+from excel_mcp.lazy_edit import LazyEdit
+from excel_mcp.lazy_workbook import Parts, held_cells, load_lazy
 from excel_mcp.package import lazy_records
 from excel_mcp.paths import MACRO_SUFFIXES, TEMPLATE_SUFFIXES, PathPolicy
 from excel_mcp.zip_limits import check_expansion
@@ -167,7 +168,7 @@ class Workspace:
         """Open a workbook and save it only if the block finishes without error."""
         with self._write_lock:
             path = self.resolve_existing(raw_path)
-            workbook = self._load(path, data_only=False)
+            workbook, lazy = self._load_for_edit(path)
             _restore_area_chart_axes(workbook)
             package.capture(path, workbook, self.limits.max_file_bytes)
             workbook.calculation = workbook.calculation or CalcProperties()
@@ -179,7 +180,7 @@ class Workspace:
 
                 refresh_spills(workbook, self.limits.max_cells)
                 _pin_hyperlinks(workbook)
-                save_atomically(workbook, path, self.limits.max_file_bytes)
+                save_atomically(workbook, path, self.limits.max_file_bytes, lazy)
             finally:
                 close_workbook(workbook)
 
@@ -235,6 +236,16 @@ class Workspace:
         except Exception as error:
             raise self._unreadable(path, error) from None
 
+    def _load_for_edit(self, path: Path) -> tuple[Workbook, LazyEdit | None]:
+        """Load for editing; a large sheet's rows are parsed only as far as the edit looks."""
+        self._check_zip(path)
+        if path.suffix.lower() in MACRO_SUFFIXES or not lazy_edit.has_large_sheet(path):
+            return self._load(path, data_only=False), None
+        try:
+            return lazy_edit.load(path)
+        except Exception as error:
+            raise self._unreadable(path, error) from None
+
     def _check_zip(self, path: Path) -> None:
         if not zipfile.is_zipfile(path):
             raise WorkbookError(
@@ -249,7 +260,9 @@ class Workspace:
         )
 
 
-def save_atomically(workbook: Workbook, path: Path, max_bytes: int) -> None:
+def save_atomically(
+    workbook: Workbook, path: Path, max_bytes: int, lazy: LazyEdit | None = None
+) -> None:
     """Serialize the workbook in memory, then write it atomically.
 
     A result larger than the size limit is refused, because the server could not open it again.
@@ -257,11 +270,15 @@ def save_atomically(workbook: Workbook, path: Path, max_bytes: int) -> None:
     buffer = io.BytesIO()
     try:
         package.prepare(workbook)
+        if lazy:
+            lazy.freeze()
         workbook.save(buffer)
     except Exception as error:
         # openpyxl reports invalid workbook states with many exception types.
         raise WorkbookError(f"Could not save the workbook: {error}") from None
     content = package.apply(workbook, buffer.getvalue())
+    if lazy:
+        content = lazy.merge(workbook, content)
     if len(content) > max_bytes:
         raise LimitExceededError(
             f"The saved workbook would be {len(content):,} bytes; the limit is "
@@ -318,7 +335,7 @@ def _pin_hyperlinks(workbook: Workbook) -> None:
     or columns would leave links on the cells that took their place.
     """
     for sheet in worksheets(workbook):
-        for cell in sheet._cells.values():
+        for cell in held_cells(sheet).values():
             if cell.hyperlink:
                 cell.hyperlink.ref = cell.coordinate
 

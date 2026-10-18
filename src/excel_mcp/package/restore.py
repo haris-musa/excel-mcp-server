@@ -24,6 +24,13 @@ _TAB_ID = re.compile(r'(<(?:[\w.-]+:)?pivotTable\b[^>]*?\btabId=")(\d+)(")')
 _TABLE_ID = re.compile(r'(<(?:[\w.-]+:)?tableSlicerCache\b[^>]*?\btableId=")(\d+)(")')
 
 
+def sheet_parts(package: Package) -> dict[str, str]:
+    """The part that holds each sheet of the workbook, by sheet name."""
+    document = scan(package.read(MAIN))
+    targets = {rel.id: rel.target for rel in package.rels(MAIN)}
+    return {values["name"]: targets[rel_id(values, document)] for values in tags(document, "sheet")}
+
+
 def apply(workbook: Workbook, written: bytes) -> bytes:
     """``written``, the file openpyxl saved for ``workbook``, with what it dropped put back."""
     state = state_of(workbook)
@@ -60,12 +67,7 @@ class Restorer:
         return self.package.to_bytes()
 
     def sheet_parts(self) -> dict[Sheet, str]:
-        document = scan(self.package.read(MAIN))
-        targets = {rel.id: rel.target for rel in self.package.rels(MAIN)}
-        return {
-            self.workbook[values["name"]]: targets[rel_id(values, document)]
-            for values in tags(document, "sheet")
-        }
+        return {self.workbook[name]: part for name, part in sheet_parts(self.package).items()}
 
     # -- parts and relationships -------------------------------------------------------------
 
