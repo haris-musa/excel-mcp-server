@@ -242,6 +242,10 @@ def _declared_names(tokens: list[Token], call: _Call) -> set[str]:
 
 def display_formula(formula: str) -> str:
     """Return the formula as a user types it: no storage prefixes, spill references as ``A1#``."""
+    # The tokenizer renders runs of spaces and line breaks differently, so those take its path.
+    plain = formula.isprintable() and "  " not in formula
+    if plain and "_xl" not in formula and "ANCHORARRAY" not in formula.upper():
+        return formula
     try:
         return show_spills(remove_prefixes(formula))
     except TokenizerError:  # text that merely starts with "=", or a formula Excel would reject

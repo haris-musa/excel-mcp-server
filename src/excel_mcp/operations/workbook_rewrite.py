@@ -6,15 +6,19 @@ from openpyxl.formatting.rule import FormatObject, Rule
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.formula import ArrayFormula
 
+from excel_mcp import lazy_lines
 from excel_mcp.formulas import storable_formula, storable_operand
-from excel_mcp.operations.cells import stored_cells
+from excel_mcp.lazy_workbook import LazyCells
+from excel_mcp.operations.cells import parsed_cells
 from excel_mcp.rewrite import ReferenceRewriter, chart_references
 from excel_mcp.workspace import worksheets
 
 
 def rewrite_formulas(workbook: Workbook, rewriter: ReferenceRewriter, names: list[str]) -> None:
     for sheet in worksheets(workbook):
-        for cell in stored_cells(sheet):
+        if isinstance(sheet._cells, LazyCells):
+            lazy_lines.rewrite_formulas(sheet._cells, sheet.title, rewriter, names)
+        for cell in parsed_cells(sheet):
             value = cell.value
             if isinstance(value, ArrayFormula):
                 moved = rewriter.formula(str(value.text), sheet.title)

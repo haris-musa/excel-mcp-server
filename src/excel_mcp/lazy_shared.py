@@ -52,6 +52,12 @@ class SharedMaster:
         area = parse_range(self.ref)
         return area.min_row, area.max_row
 
+    @property
+    def wide(self) -> bool:
+        """Whether the range the formula covers has more than one column."""
+        area = parse_range(self.ref)
+        return area.min_col < area.max_col
+
 
 def index(data: bytes, start: int, end: int) -> dict[str, SharedMaster]:
     """The masters of the shared formulas in ``data[start:end]``, by group number."""

@@ -160,6 +160,39 @@ class LazyCells(dict[CellKey, Any]):
         for block in range(first // BLOCK_ROWS, last // BLOCK_ROWS + 1):
             self.load(block * BLOCK_ROWS)
 
+    def parsed_rows(self) -> list[tuple[int, int]]:
+        """The first and last row of each block that is parsed."""
+        return [(block * BLOCK_ROWS, (block + 1) * BLOCK_ROWS - 1) for block in sorted(self.loaded)]
+
+    def in_row(self, row: int) -> list[tuple[CellKey, Any]]:
+        """The cells of one row, which is parsed."""
+        self.load(row)
+        return [
+            ((row, column), super().__getitem__((row, column)))
+            for column in self.columns.get(row, ())
+        ]
+
+    def replace(
+        self, cells: dict[CellKey, Any], source: SheetSource, parsed: list[tuple[int, int]]
+    ) -> None:
+        """Hold ``cells`` (those that were parsed, moved) over ``source`` (the rows that were not
+        parsed, moved), and parse the blocks that ``parsed`` rows are in now, so that a block is
+        either parsed whole or not at all."""
+        dict.clear(self)
+        self.columns = {}
+        self.last_row = self.last_column = 0
+        self.source = source
+        self.loaded = set()
+        for key, cell in cells.items():
+            dict.__setitem__(self, key, cell)
+            self.columns.setdefault(key[0], []).append(key[1])
+            self.last_row, self.last_column = (
+                max(self.last_row, key[0]),
+                max(self.last_column, key[1]),
+            )
+        for first, last in parsed:
+            self.load_between(first, last)
+
     def extent(self) -> tuple[int, int]:
         """The last row and column that hold a cell, without parsing any."""
         return max(self.source.max_row, self.last_row), max(

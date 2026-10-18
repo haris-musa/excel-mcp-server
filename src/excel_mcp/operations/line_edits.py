@@ -1,11 +1,9 @@
 """Inserting and deleting rows and columns, with every reference updated as Excel does."""
 
 from copy import copy
-from typing import cast
 
 from openpyxl.cell.cell import Cell, MergedCell
 from openpyxl.formula.tokenizer import TokenizerError
-from openpyxl.styles import Border, Side
 from openpyxl.utils.cell import column_index_from_string, get_column_letter
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.cell_range import MultiCellRange
@@ -14,8 +12,10 @@ from openpyxl.worksheet.merge import MergedCellRange
 from openpyxl.worksheet.pagebreak import Break
 from openpyxl.worksheet.worksheet import Worksheet
 
+from excel_mcp import lazy_lines
 from excel_mcp.errors import InvalidArgumentError, UnsafeFormulaError
-from excel_mcp.operations.cells import stored_cells, used_range
+from excel_mcp.lazy_workbook import LazyCells, extent, held_cells
+from excel_mcp.operations.cells import parsed_cells, used_range
 from excel_mcp.operations.comparison import FormulaResults
 from excel_mcp.operations.filters import FormulaValues
 from excel_mcp.operations.line_edit_objects import (
@@ -29,6 +29,7 @@ from excel_mcp.operations.line_edit_objects import (
     update_tables,
 )
 from excel_mcp.operations.line_edit_rules import update_rules
+from excel_mcp.operations.line_edit_styles import InheritedStyles, inherit_cell_styles
 from excel_mcp.operations.shifting import Shifter
 from excel_mcp.operations.slicer_manage import drop_table_slicers
 from excel_mcp.operations.spans import format_span, parse_span
@@ -67,6 +68,9 @@ def edit_lines(
     names = workbook.sheetnames
     results = filter_results(sheet, edit, formula_values)
     try:
+        for other in worksheets(workbook):
+            if isinstance(other._cells, LazyCells):
+                lazy_lines.unshare(other._cells, other.title, shifter, edit)
         rewrite_formulas(workbook, shifter, names)
         rewrite_names(workbook, shifter, names)
         for other in worksheets(workbook):
@@ -79,15 +83,18 @@ def edit_lines(
     _move_cells(sheet, edit)
     _move_dimensions(sheet, edit)
     _move_merged_ranges(sheet, edit)
-    _inherit_cell_styles(sheet, edit)
+    inherit_cell_styles(sheet, edit)
     update_tables(sheet, edit, names, results)
     update_anchors(sheet, edit)
     _move_sheet_settings(sheet, edit, results)
 
 
 def _check_room(sheet: Worksheet, edit: LineEdit) -> None:
+    rows = edit.axis == "rows"
+    if isinstance(sheet._cells, LazyCells) and extent(sheet)[not rows] + edit.count <= edit.limit:
+        return
     area = used_range(sheet)
-    needed = (area.max_row if edit.axis == "rows" else area.max_col) + edit.count
+    needed = (area.max_row if rows else area.max_col) + edit.count
     if needed > edit.limit:
         raise InvalidArgumentError(
             f"Inserting would push data past the last of Excel's {edit.limit:,} {edit.axis}."
@@ -97,7 +104,7 @@ def _check_room(sheet: Worksheet, edit: LineEdit) -> None:
 def _check_arrays(workbook: Workbook, sheet: Worksheet, edit: LineEdit) -> None:
     """Refuse cutting legacy array formulas; dynamic ones spill again wherever they land."""
     dynamic = {id(cell) for cell in dynamic_anchors(workbook)}
-    for cell in stored_cells(sheet):
+    for cell in parsed_cells(sheet):
         if isinstance(cell.value, ArrayFormula) and id(cell) not in dynamic:
             area = parse_range(cell.value.ref)
             first, last = (
@@ -115,7 +122,7 @@ def _check_arrays(workbook: Workbook, sheet: Worksheet, edit: LineEdit) -> None:
 def _move_cells(sheet: Worksheet, edit: LineEdit) -> None:
     rows = edit.axis == "rows"
     moved: dict[tuple[int, int], Cell | MergedCell] = {}
-    for (row, column), cell in sheet._cells.items():
+    for (row, column), cell in held_cells(sheet).items():
         index = edit.index(row if rows else column)
         if index is None:
             continue
@@ -126,19 +133,25 @@ def _move_cells(sheet: Worksheet, edit: LineEdit) -> None:
                 cell.hyperlink.ref = cell.coordinate
             if isinstance(cell.value, ArrayFormula):
                 cell.value.ref = str(edit.range(parse_range(cell.value.ref)))
-    sheet._cells = moved
-    sheet._current_row = sheet.max_row  # pyright: ignore[reportAttributeAccessIssue]
+    if isinstance(sheet._cells, LazyCells):
+        style = None if edit.delete or rows else InheritedStyles(sheet, edit).style_id
+        lazy_lines.move_lines(sheet._cells, edit, moved, style)
+    else:
+        sheet._cells = moved
+    sheet._current_row = extent(sheet)[0]  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def _move_dimensions(sheet: Worksheet, edit: LineEdit) -> None:
     if edit.axis == "rows":
-        rows = dict(sheet.row_dimensions)
-        sheet.row_dimensions.clear()
+        # Not through the holder's own methods, which parse the rows of a large sheet.
+        holder = sheet.row_dimensions
+        rows = dict(dict.items(holder))
+        holder.clear()
         for index, dimension in rows.items():
             moved = edit.index(index)
             if moved is not None:
                 dimension.index = moved
-                sheet.row_dimensions[moved] = dimension
+                dict.__setitem__(holder, moved, dimension)
         _move_breaks(sheet.row_breaks.brk, edit)
         _inherit_row_dimension(sheet, edit)
         return
@@ -153,45 +166,6 @@ def _move_dimensions(sheet: Worksheet, edit: LineEdit) -> None:
             sheet.column_dimensions[dimension.index] = dimension
     _move_breaks(sheet.col_breaks.brk, edit)
     _inherit_column_dimensions(sheet, edit)
-
-
-def _inherit_cell_styles(sheet: Worksheet, edit: LineEdit) -> None:
-    """Inserted cells are formatted like the cells above or to the left, as in Excel's default.
-
-    Excel keeps a side border only where the cell on the far side of the insertion has the
-    same one, and the borders along the insertion belong to the neighbours.
-    """
-    if edit.delete:
-        return
-    rows = edit.axis == "rows"
-    for (row, column), cell in list(sheet._cells.items()):
-        if (row if rows else column) != edit.at - 1:
-            continue
-        beyond = edit.at + edit.count
-        after = sheet._cells.get((beyond, column) if rows else (row, beyond))
-        for line in range(edit.at, edit.at + edit.count):
-            clone = sheet.cell(line, column) if rows else sheet.cell(row, line)
-            clone._style = copy(cell._style)
-            clone.border = _inherited_border(
-                cast(Border, copy(cell.border)),
-                cast(Border, copy(after.border)) if after else None,
-                rows,
-            )
-
-
-def _inherited_border(above: Border, after: Border | None, rows: bool) -> Border:
-    sides = {name: Side() for name in ("left", "right", "top", "bottom")}
-    across = ("left", "right") if rows else ("top", "bottom")
-    trailing, leading = ("bottom", "top") if rows else ("right", "left")
-    if after is not None:
-        for name in across:
-            if getattr(above, name).style == getattr(after, name).style:
-                sides[name] = getattr(above, name)
-        if getattr(above, trailing).style == getattr(after, leading).style:
-            sides[trailing] = sides[leading] = getattr(above, trailing)
-    return Border(
-        left=sides["left"], right=sides["right"], top=sides["top"], bottom=sides["bottom"]
-    )
 
 
 def _inherit_row_dimension(sheet: Worksheet, edit: LineEdit) -> None:

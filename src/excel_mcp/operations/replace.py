@@ -5,7 +5,9 @@ import re
 from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
 
-from excel_mcp.operations.cells import store_typed, stored_cells
+from excel_mcp import lazy_find
+from excel_mcp.lazy_workbook import LazyCells
+from excel_mcp.operations.cells import parsed_cells, store_typed
 from excel_mcp.workspace import sheet_names
 from excel_mcp.xlfn import display_formula
 
@@ -31,11 +33,18 @@ def replace_cells(
     """
     flags = 0 if case_sensitive else re.IGNORECASE
     pattern = re.compile(re.escape(query), flags)
+    found = pattern.fullmatch if exact else pattern.search
+
+    def matches(text: str) -> bool:
+        return found(text) is not None
+
     replaced: dict[str, int] = {}
     for sheet in sheets:
         names = sheet_names(sheet)
         changed = 0
-        for cell in list(stored_cells(sheet)):
+        if isinstance(sheet._cells, LazyCells):
+            lazy_find.load_matches(sheet._cells, matches, query, in_formulas=in_formulas)
+        for cell in list(parsed_cells(sheet)):
             text = _searchable_text(cell.value, cell.data_type, in_formulas)
             if text is None:
                 continue

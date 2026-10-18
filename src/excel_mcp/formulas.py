@@ -16,10 +16,12 @@ else before a "!" (a file, a path, a URL, "[1]") points at another workbook.
 
 import re
 from collections.abc import Iterable, Iterator
+from functools import lru_cache
 
 from openpyxl.formula import Tokenizer
 from openpyxl.formula.tokenizer import Token, TokenizerError
 
+from excel_mcp import plain_refs
 from excel_mcp.errors import InvalidFormulaError, UnsafeFormulaError
 from excel_mcp.formula_syntax import check_syntax, invalid_formula
 from excel_mcp.spill import store_spills
@@ -118,8 +120,26 @@ def storable_formula(formula: str, sheet_names: Iterable[str]) -> str:
 
     Every formula that is written anywhere in a workbook goes through here.
     """
+    pattern = plain_refs.shape(formula)
+    if pattern is not None and _is_plain_and_allowed(pattern):
+        return formula
     check_formula(formula, sheet_names)
     return add_prefixes(store_spills(formula))
+
+
+@lru_cache(maxsize=4096)
+def _is_plain_and_allowed(pattern: str) -> bool:
+    """Whether formulas of this shape pass the check and need no prefixes.
+
+    Which cells a plain formula refers to cannot change the outcome, so a sheet with hundreds
+    of thousands of formulas filled down from a few is checked a few times, not that often.
+    A formula that does not pass is checked again as itself, to raise its own error.
+    """
+    try:
+        check_formula(pattern, ())
+    except (InvalidFormulaError, UnsafeFormulaError):
+        return False
+    return add_prefixes(pattern) == pattern
 
 
 def storable_operand(operand: str, sheet_names: Iterable[str]) -> str:
