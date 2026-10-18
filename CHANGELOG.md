@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-10-18
+
 ### Added
 
 - `import_csv` reads a `.csv` or `.tsv` file into a sheet (new or existing) at a cell, and
@@ -46,19 +48,14 @@ All notable changes to this project are documented here. The format follows
   `Range.DirectPrecedents`, `Precedents`, `DirectDependents` and `Dependents` recorded from
   Excel (`tests/fixtures/audit_golden.json`).
 
-### Fixed
-
-- `=EXP(1000)` and other overflowing exponentials are `#NUM!`, as in Excel, instead of
-  leaving the formula uncalculated.
-
 ### Changed
 
 - Edits and descriptions of large workbooks are much faster. A sheet of 1 MB or more (of XML)
   is loaded without its rows: an edit parses only the blocks of 128 rows it touches, and the
   save writes those and copies the other rows as the file has them (their stored formula
   results are dropped, as for any edit). A 10-cell write to a 200,000-row sheet went from
-  41 s to 6 s, and `describe_workbook` finds the used range in the sheet's XML text instead of
-  parsing every cell (14 s to 2 s). Sheets with array or data-table formulas or cell
+  about 50 s to 3 s (50,000 rows: 11 s to under 1 s), and `describe_workbook` finds the used range in the sheet's XML text instead of
+  parsing every cell (200,000 rows: 12 s to 1.4 s). Sheets with array or data-table formulas or cell
   metadata, and macro-enabled workbooks, are still loaded whole; so are edits that look at
   every cell (inserting rows, sorting, replacing).
 - Sheets with shared formulas, which Excel writes whenever a formula is filled down, get the
@@ -66,6 +63,11 @@ All notable changes to this project are documented here. The format follows
   the master formula wherever it is, and a master in a block that was parsed is written as a
   master again, so the rows kept from the file still refer to it. Overwriting a master parses
   the blocks of its range, and its formulas become ordinary ones, as when every row is parsed.
+
+### Fixed
+
+- `=EXP(1000)` and other overflowing exponentials are `#NUM!`, as in Excel, instead of
+  leaving the formula uncalculated.
 
 ## [2.1.1] - 2026-10-16
 
@@ -484,7 +486,8 @@ Ideas and fixes from these pull requests were reimplemented in this release: #78
 
 See the [GitHub releases](https://github.com/haris-musa/excel-mcp-server/releases).
 
-[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.1.1...HEAD
+[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/haris-musa/excel-mcp-server/compare/v2.1.1...v2.2.0
 [2.1.1]: https://github.com/haris-musa/excel-mcp-server/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/haris-musa/excel-mcp-server/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/haris-musa/excel-mcp-server/compare/v1.1.2...v2.0.0
