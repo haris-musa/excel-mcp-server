@@ -25,7 +25,7 @@ from openpyxl.worksheet._reader import WorkSheetParser
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.xml.constants import SHEET_MAIN_NS, WORKSHEET_TYPE
 
-from excel_mcp import lazy_shared
+from excel_mcp import lazy_rows, lazy_shared
 
 BLOCK_ROWS = 128
 _SHEET_DATA = b"<sheetData"
@@ -35,6 +35,8 @@ _ROW_NUMBER = re.compile(rb'\br="(\d+)"')
 _HIDDEN = re.compile(rb'\bhidden="(?:1|true)"')
 _CELL = re.compile(rb"<c[ >/]")
 _CELL_COLUMN = re.compile(rb'<c\b[^>]*?\br="([A-Z]+)\d')
+# A formula that is not followed by a result.
+_UNCALCULATED = re.compile(rb"<f\b[^>]*(?:/>|>[^<]*</f>)(?!<v>[^<])")
 _ROOT = re.compile(rb'<worksheet\b[^>]*?\bxmlns="([^"]+)"[^>]*>')
 
 CellKey = tuple[int, int]
@@ -159,6 +161,46 @@ class LazyCells(dict[CellKey, Any]):
     def load_between(self, first: int, last: int) -> None:
         for block in range(first // BLOCK_ROWS, last // BLOCK_ROWS + 1):
             self.load(block * BLOCK_ROWS)
+
+    def stored_rows(self, first: int, last: int) -> list[dict[int, tuple[int, Any, str]]] | None:
+        """Rows ``first`` to ``last`` as the file stores them: the last results of formulas, not
+        the formulas. Each row is its cells' style, value and type by column. Nothing is parsed
+        into cells, and the sheet is not changed.
+
+        None where that is not what the sheet holds or means: a block of these rows was parsed
+        (it may have changed), a formula has no result, the first row has a formula, durations
+        are formatted (a result is not told from its format), or a row is in an unusual form.
+        """
+        book: Any = self.sheet.parent
+        source = self.source
+        if book._timedelta_formats or any(
+            block in self.loaded for block in range(first // BLOCK_ROWS, last // BLOCK_ROWS + 1)
+        ):
+            return None
+        reading = lazy_rows.Reading(self.strings, {}, book._date_formats, set(), book.epoch, True)
+        rows: list[dict[int, tuple[int, Any, str]]] = [{} for _ in range(last - first + 1)]
+        found = source.between(first, last)
+        for number, (start, stop) in zip(
+            source.row_numbers[found], source.spans[found], strict=True
+        ):
+            xml = source.data[start:stop]
+            if _UNCALCULATED.search(xml) or (number == first and b"<f" in xml):
+                return None
+            parsed = lazy_rows.read(xml, reading)
+            if parsed is None:
+                return None
+            rows[number - first] = {c: (s, v, t) for c, s, v, t in parsed[1]}
+        return rows
+
+    def count(self) -> int:
+        """The number of cells, without parsing any."""
+        source = self.source
+        unparsed = (
+            source.data.count(b"<c ", start, stop)
+            for number, (start, stop) in zip(source.row_numbers, source.spans, strict=True)
+            if not self.is_loaded(number)
+        )
+        return dict.__len__(self) + sum(unparsed)
 
     def parsed_rows(self) -> list[tuple[int, int]]:
         """The first and last row of each block that is parsed."""
@@ -296,8 +338,29 @@ class LazyCells(dict[CellKey, Any]):
         self._parse(self.source.spans[self.source.between(first, last)])
 
     def _parse(self, spans: list[tuple[int, int]]) -> None:
-        if not spans:
-            return
+        """Parse rows: those in the usual forms as text, the others with openpyxl's parser."""
+        book: Any = self.sheet.parent
+        shared = lazy_shared.Translators(self.source.masters)
+        reading = lazy_rows.Reading(
+            self.strings,
+            shared,
+            book._date_formats,
+            book._timedelta_formats,
+            book.epoch,
+            book._data_only,
+        )
+        unusual = []
+        for start, end in spans:
+            row = lazy_rows.read(self.source.data[start:end], reading)
+            if row is None:
+                unusual.append((start, end))
+                continue
+            for column, style, value, data_type in row[1]:
+                self._parsed(row[0], column, style, value, data_type)
+        if unusual:
+            self._parse_unusual(unusual, shared)
+
+    def _parse_unusual(self, spans: list[tuple[int, int]], shared: lazy_shared.Translators) -> None:
         rows = b"".join(self.source.data[start:end] for start, end in spans)
         document = self.source.root + b"<sheetData>" + rows + b"</sheetData></worksheet>"
         book: Any = self.sheet.parent
@@ -309,21 +372,25 @@ class LazyCells(dict[CellKey, Any]):
             book._date_formats,
             book._timedelta_formats,
         )
-        parser.shared_formulae = lazy_shared.Translators(self.source.masters)
+        parser.shared_formulae = shared
         for _, parsed in parser.parse():
             for item in parsed:
-                key = (item["row"], item["column"])
-                if super().__contains__(key):
-                    continue
-                cell = Cell(
-                    self.sheet,
-                    row=key[0],
-                    column=key[1],
-                    style_array=book._cell_styles[item["style_id"]],
+                self._parsed(
+                    item["row"],
+                    item["column"],
+                    item["style_id"],
+                    item["value"],
+                    item["data_type"],
                 )
-                cell._value = item["value"]
-                cell.data_type = item["data_type"]
-                self.keep(cell)
+
+    def _parsed(self, row: int, column: int, style: int, value: Any, data_type: str) -> None:
+        if super().__contains__((row, column)):
+            return
+        book: Any = self.sheet.parent
+        cell = Cell(self.sheet, row=row, column=column, style_array=book._cell_styles[style])
+        cell._value = value
+        cell.data_type = data_type
+        self.keep(cell)
 
 
 Parts = dict[str, tuple[bytes, SheetSource | None]]
@@ -399,6 +466,12 @@ def held_cells(sheet: Worksheet) -> dict[CellKey, Any]:
     """
     cells = sheet._cells
     return cells.held() if isinstance(cells, LazyCells) else cells
+
+
+def cell_count(sheet: Worksheet) -> int:
+    """The number of cells a sheet has, which loading a lazy sheet's rows must not."""
+    cells = sheet._cells
+    return cells.count() if isinstance(cells, LazyCells) else len(cells)
 
 
 def extent(sheet: Worksheet) -> tuple[int, int]:

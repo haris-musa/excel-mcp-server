@@ -18,6 +18,11 @@ class SheetCopyRefs(ReferenceRewriter):
     tables: dict[str, str]
     """Lower-case source table name to the copy's table name."""
 
+    def formula(self, formula: str, host: str) -> str:
+        if "!" not in formula and "[" not in formula:  # Nothing in it names a sheet or a table.
+            return formula
+        return super().formula(formula, host)
+
     def reference(self, text: str, host: str) -> str:
         parts = split_top_level(text, "!")
         if len(parts) > 1 and unquote(parts[0]).casefold() == self.source.casefold():

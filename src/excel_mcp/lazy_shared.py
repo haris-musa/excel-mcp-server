@@ -16,12 +16,15 @@ formulas. A long fill-down is parsed whole only if its first cell is overwritten
 
 import re
 from dataclasses import dataclass
+from functools import cached_property
 from html import unescape
 from typing import TYPE_CHECKING
 
+from openpyxl.formula import Tokenizer
 from openpyxl.formula.translate import Translator
-from openpyxl.utils import column_index_from_string, get_column_letter
+from openpyxl.utils import column_index_from_string, coordinate_to_tuple, get_column_letter
 
+from excel_mcp import plain_refs
 from excel_mcp.refs import parse_range
 
 if TYPE_CHECKING:
@@ -82,17 +85,54 @@ def index(data: bytes, start: int, end: int) -> dict[str, SharedMaster]:
 
 
 class _Translator(Translator):
+    """A master's formula, translated to the cells that follow it.
+
+    A formula of plain references is translated as text. The tokenizer renders runs of spaces
+    and line breaks in its own way, so a formula with those is translated through it.
+    """
+
     def __init__(self, master: SharedMaster) -> None:
         self.master = master
-        super().__init__("=" + master.text, master.coordinate)
+        self.formula = "=" + master.text
+        self.row, self.col = master.row, master.column
+        self.plain = (
+            self.formula.isprintable()
+            and "  " not in self.formula
+            and plain_refs.shape(self.formula) is not None
+        )
+
+    @cached_property
+    def tokenizer(self) -> Tokenizer:  # pyright: ignore[reportIncompatibleVariableOverride]
+        return Tokenizer(self.formula)
 
     def translate_formula(
         self, dest: str | None = None, row_delta: int = 0, col_delta: int = 0
     ) -> str:
         # The master is read as it is written, not as the tokens of it come out again.
         if dest == self.master.coordinate:
-            return "=" + self.master.text
+            return self.formula
+        if dest:
+            row, column = coordinate_to_tuple(dest)
+            row_delta, col_delta = row - self.row, column - self.col
+        if self.plain:
+            moved = plain_refs.sub(self.formula, lambda m: _translated(m, row_delta, col_delta))
+            assert moved is not None
+            return moved
         return super().translate_formula(dest, row_delta, col_delta)
+
+
+def _translated(match: plain_refs.Match, rows: int, columns: int) -> str:
+    """A reference moved as openpyxl's `Translator.translate_range` moves it."""
+    first = _moved(match[1] + match[2], match[3] + match[4], rows, columns)
+    if match[6] is None:
+        return first
+    return f"{first}:{_moved(match[5] + match[6], match[7] + match[8], rows, columns)}"
+
+
+def _moved(column: str, row: str, rows: int, columns: int) -> str:
+    if Translator.CELL_REF_RE.match(column + row) is None:  # a name, not a cell
+        return column + row
+    return Translator.translate_col(column, columns) + Translator.translate_row(row, rows)
 
 
 class Translators(dict[str, Translator]):

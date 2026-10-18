@@ -32,7 +32,7 @@ from openpyxl.worksheet.dimensions import DimensionHolder
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.xml.constants import SHARED_STRINGS
 
-from excel_mcp import lazy_shared
+from excel_mcp import lazy_rows, lazy_shared
 from excel_mcp.lazy_workbook import (
     BLOCK_ROWS,
     LazyCells,
@@ -148,27 +148,31 @@ class LazyEdit:
 
     path: Path
     strings_part: str | None
-    sheets: list[Worksheet] = field(default_factory=list)
-    frozen: dict[Worksheet, LazyCells] = field(default_factory=dict)
+    frozen: dict[Worksheet, tuple[LazyCells, dict[int, bytes]]] = field(default_factory=dict)
 
-    def freeze(self) -> None:
-        """Leave each sheet with the cells and row dimensions that were parsed, for saving.
+    def freeze(self, workbook: Workbook) -> None:
+        """Prepare each sheet for saving, with the rows that were parsed written as text.
 
-        openpyxl writes what a sheet holds, and the rows of blocks that were not parsed are
-        put in from the file by `merge`.
+        openpyxl writes what a sheet holds, which is only the rows that need it (those with a
+        link, a note or a value it writes in a form of its own). The other rows of blocks that
+        were parsed are written by `lazy_rows`, and the rows of blocks that were not parsed are
+        put in from the file; `merge` puts them all together.
         """
-        for sheet in self.sheets:
+        for sheet in workbook.worksheets:
             cells = sheet._cells
-            if isinstance(cells, LazyCells):
-                lazy_shared.settle(cells)
+            if not isinstance(cells, LazyCells):
+                continue
+            lazy_shared.settle(cells)
             dimensions = DimensionHolder(worksheet=sheet, default_factory=sheet._add_row)
             for row, dimension in dict.items(sheet.row_dimensions):
-                if not isinstance(cells, LazyCells) or cells.is_loaded(row):
+                if cells.is_loaded(row):
                     dimensions[row] = dimension
-            sheet.row_dimensions = dimensions
-            if isinstance(cells, LazyCells):
-                sheet._cells = cells.held()
-                self.frozen[sheet] = cells
+            rendered, sheet._cells = lazy_rows.render(cells.held(), dimensions)
+            kept = {row for row, _ in sheet._cells}
+            sheet.row_dimensions = DimensionHolder(worksheet=sheet, default_factory=sheet._add_row)
+            for row in kept & dimensions.keys():
+                sheet.row_dimensions[row] = dimensions[row]
+            self.frozen[sheet] = (cells, rendered)
 
     def merge(self, workbook: Workbook, content: bytes) -> bytes:
         """The saved workbook with the rows that were not parsed put back, as the file has them."""
@@ -179,8 +183,9 @@ class LazyEdit:
             return content
         package = Package(content)
         parts = sheet_parts(package)
-        for sheet, cells in spliced.items():
-            package.write(parts[sheet.title], _splice(package.read(parts[sheet.title]), cells))
+        for sheet, (cells, rendered) in spliced.items():
+            xml = _splice(package.read(parts[sheet.title]), cells, rendered)
+            package.write(parts[sheet.title], xml)
         if self.strings_part:
             self._restore_strings(package)
         return package.to_bytes()
@@ -206,10 +211,10 @@ def load(path: Path) -> tuple[Workbook, LazyEdit | None]:
     reader.read()
     strings = reader.package.find(SHARED_STRINGS)
     edit = LazyEdit(path, strings.PartName.lstrip("/") if strings is not None else None)
-    for sheet, source in lazy_sheets(reader, parts):
+    lazy = list(lazy_sheets(reader, parts))
+    for sheet, source in lazy:
         _install(sheet, source, reader.shared_strings)
-        edit.sheets.append(sheet)
-    return reader.wb, edit if edit.sheets else None
+    return reader.wb, edit if lazy else None
 
 
 def _install(sheet: Worksheet, source: SheetSource, strings: list[str]) -> None:
@@ -250,13 +255,14 @@ def _self_closed(tag: bytes) -> bytes:
     return tag if tag.endswith(b"/>") else tag[:-1] + b"/>"
 
 
-def _splice(xml: bytes, cells: LazyCells) -> bytes:
+def _splice(xml: bytes, cells: LazyCells, rendered: dict[int, bytes]) -> bytes:
     """The sheet openpyxl wrote, holding the rows of the parsed blocks, with the others added."""
     source = cells.source
     data = _SHEET_DATA.search(xml)
     if data is None:
         raise ValueError("A saved worksheet has no sheetData.")
     produced = {_row_number(row[0]): row[0] for row in _ROW.finditer(data[0])}
+    produced.update(rendered)
     lazy_shared.restore(cells, produced)
     pieces = _rows(cells, produced)
     head, tail = xml[: data.start()], xml[data.end() :]

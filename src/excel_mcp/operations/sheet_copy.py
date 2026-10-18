@@ -9,10 +9,13 @@ from openpyxl.worksheet.copier import WorksheetCopy
 from openpyxl.worksheet.formula import ArrayFormula
 from openpyxl.worksheet.worksheet import Worksheet
 
+from excel_mcp import lazy_lines
 from excel_mcp.errors import LimitExceededError
 from excel_mcp.formulas import storable_formula, storable_operand
+from excel_mcp.lazy_edit import RowDimensions
+from excel_mcp.lazy_workbook import LazyCells, cell_count
 from excel_mcp.operations import chartex
-from excel_mcp.operations.cells import stored_cells
+from excel_mcp.operations.cells import parsed_cells
 from excel_mcp.operations.sheet_refs import SheetCopyRefs
 from excel_mcp.operations.sheet_shapes import copy_shapes, copy_sheet_elements
 from excel_mcp.operations.sheets import validate_sheet_name
@@ -26,14 +29,14 @@ from excel_mcp.workspace import get_sheet
 def copy_sheet(workbook: Workbook, name: str, new_name: str, max_cells: int) -> list[str]:
     """Add a copy of a sheet at the end of the workbook. Returns what could not be copied."""
     source = get_sheet(workbook, name)
-    cells = len(source._cells)  # pyright: ignore[reportAttributeAccessIssue]
+    cells = cell_count(source)
     if cells > max_cells:
         raise LimitExceededError(
             f"Sheet {name!r} has {cells:,} cells; at most {max_cells:,} can be copied."
         )
     validate_sheet_name(new_name, workbook.sheetnames)
     target = workbook.create_sheet(new_name)
-    WorksheetCopy(source, target).copy_worksheet()
+    _Copy(source, target).copy_worksheet()
     tables = _copy_tables(workbook, source, target)
     refs = SheetCopyRefs(source.title, target.title, tables)
     _copy_formulas(workbook, target, refs)
@@ -46,6 +49,25 @@ def copy_sheet(workbook: Workbook, name: str, new_name: str, max_cells: int) -> 
     arrays.copy_marks(source, target)
     copy_slicers(workbook, source, target, tables)
     return copy_sheet_elements(workbook, source, target)
+
+
+class _Copy(WorksheetCopy):
+    """openpyxl's copy of a sheet, which shares what a large sheet's rows hold that was not
+    parsed with the original, as XML."""
+
+    def _copy_cells(self) -> None:
+        cells = self.source._cells  # pyright: ignore[reportAttributeAccessIssue]
+        if not isinstance(cells, LazyCells):
+            super()._copy_cells()  # pyright: ignore[reportAttributeAccessIssue]
+            return
+        self.target._cells = lazy_lines.copied(cells, self.target)  # pyright: ignore[reportAttributeAccessIssue]
+        self.target.row_dimensions = RowDimensions(self.target)
+        self.target._current_row = cells.extent()[0]  # pyright: ignore[reportAttributeAccessIssue]
+        self.source._cells = cells.held()  # pyright: ignore[reportAttributeAccessIssue]
+        try:
+            super()._copy_cells()  # pyright: ignore[reportAttributeAccessIssue]
+        finally:
+            self.source._cells = cells  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def _copy_tables(workbook: Workbook, source: Worksheet, target: Worksheet) -> dict[str, str]:
@@ -67,7 +89,9 @@ def _copy_tables(workbook: Workbook, source: Worksheet, target: Worksheet) -> di
 
 def _copy_formulas(workbook: Workbook, target: Worksheet, refs: SheetCopyRefs) -> None:
     names = workbook.sheetnames
-    for cell in stored_cells(target):
+    if isinstance(target._cells, LazyCells):  # pyright: ignore[reportAttributeAccessIssue]
+        lazy_lines.rewrite_formulas(target._cells, target.title, refs, names, check_all=True)  # pyright: ignore[reportAttributeAccessIssue]
+    for cell in parsed_cells(target):
         value = cell.value
         if isinstance(value, ArrayFormula):
             cell.value = ArrayFormula(
