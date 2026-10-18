@@ -38,7 +38,7 @@ def _untyped_schemas(schema: Any, where: str = "") -> list[str]:
 
 async def test_every_tool_is_documented_and_typed(client: Client) -> None:
     tools = (await client.list_tools()).tools
-    assert len(tools) == 44
+    assert len(tools) == 46
     for tool in tools:
         assert tool.title, tool.name
         assert tool.description and not tool.description.startswith(" "), tool.name
@@ -54,7 +54,7 @@ async def test_every_tool_is_documented_and_typed(client: Client) -> None:
 
 async def test_schema_budget(files: Path) -> None:
     """Every tool's description and schema is paid for in each client's context."""
-    for allow_vba_write, budget in ((False, 51_360), (True, 52_360)):
+    for allow_vba_write, budget in ((False, 51_380), (True, 52_380)):
         settings = Settings(allowed_dirs=[files], allow_vba_write=allow_vba_write)
         async with Client(create_server(settings)) as client:
             tools = (await client.list_tools()).tools
