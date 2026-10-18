@@ -7,6 +7,7 @@ from zipfile import ZipFile
 import pytest
 from openpyxl import Workbook
 
+from excel_mcp import lazy_workbook
 from excel_mcp.lazy_workbook import LazyCells, load_lazy, split_sheet
 from tests.conftest import ToolCall
 
@@ -51,7 +52,8 @@ async def test_formulas_far_apart_are_calculated_from_the_rows_they_use(
     assert "uncalculated" not in tail and "uncalculated" not in top
 
 
-def test_rows_are_parsed_only_when_asked_for(files: Path) -> None:
+def test_rows_are_parsed_only_when_asked_for(files: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(lazy_workbook, "BLOCK_ROWS", 128)
     make_running_totals(files / "totals.xlsx")
 
     book = load_lazy(files / "totals.xlsx", {}, data_only=False)
@@ -62,7 +64,7 @@ def test_rows_are_parsed_only_when_asked_for(files: Path) -> None:
     assert cells.loaded == {300 // 128}
 
 
-async def test_shared_formulas_are_read_whole(call: ToolCall, files: Path) -> None:
+async def test_shared_formulas_are_read_from_their_masters(call: ToolCall, files: Path) -> None:
     workbook = Workbook()
     sheet = workbook.worksheets[0]
     sheet.title = "Data"
@@ -83,7 +85,8 @@ async def test_shared_formulas_are_read_whole(call: ToolCall, files: Path) -> No
     data = await call("read_range", path="shared.xlsx", sheet="Data")
 
     assert data["values"][5] == [6, 12]
-    assert split_sheet(parts["xl/worksheets/sheet1.xml"]) is None
+    split = split_sheet(parts["xl/worksheets/sheet1.xml"])
+    assert split is not None and split[1].masters["0"].text == "A1*2"
 
 
 async def test_parts_that_mention_worksheets_are_not_taken_for_sheets(

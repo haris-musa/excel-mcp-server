@@ -58,9 +58,14 @@ All notable changes to this project are documented here. The format follows
   save writes those and copies the other rows as the file has them (their stored formula
   results are dropped, as for any edit). A 10-cell write to a 200,000-row sheet went from
   41 s to 6 s, and `describe_workbook` finds the used range in the sheet's XML text instead of
-  parsing every cell (14 s to 2 s). Sheets with array, shared or data-table formulas or cell
+  parsing every cell (14 s to 2 s). Sheets with array or data-table formulas or cell
   metadata, and macro-enabled workbooks, are still loaded whole; so are edits that look at
   every cell (inserting rows, sorting, replacing).
+- Sheets with shared formulas, which Excel writes whenever a formula is filled down, get the
+  same fast edits, so most large workbooks made in Excel do. A block of rows is translated from
+  the master formula wherever it is, and a master in a block that was parsed is written as a
+  master again, so the rows kept from the file still refer to it. Overwriting a master parses
+  the blocks of its range, and its formulas become ordinary ones, as when every row is parsed.
 
 ## [2.1.1] - 2026-10-16
 

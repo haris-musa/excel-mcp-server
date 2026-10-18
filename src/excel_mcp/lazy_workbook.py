@@ -10,7 +10,7 @@ cells and the hidden state of rows are loaded this way: that is all the calculat
 import re
 from bisect import bisect_left, bisect_right
 from collections.abc import Callable, Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cached_property
 from io import BytesIO
 from pathlib import Path
@@ -24,6 +24,8 @@ from openpyxl.utils import column_index_from_string
 from openpyxl.worksheet._reader import WorkSheetParser
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.xml.constants import SHEET_MAIN_NS, WORKSHEET_TYPE
+
+from excel_mcp import lazy_shared
 
 BLOCK_ROWS = 128
 _SHEET_DATA = b"<sheetData"
@@ -47,6 +49,7 @@ class SheetSource:
     row_numbers: list[int]
     spans: list[tuple[int, int]]
     hidden_rows: list[int]
+    masters: dict[str, lazy_shared.SharedMaster] = field(default_factory=dict)
 
     def between(self, first: int, last: int) -> slice:
         """Where the rows numbered ``first`` to ``last`` are among the sheet's rows."""
@@ -90,19 +93,14 @@ class SheetSource:
 def split_sheet(data: bytes) -> tuple[bytes, SheetSource] | None:
     """The sheet without its rows, and the rows; None for a layout this does not handle.
 
-    Shared formulas are left out because a row's formula can depend on the row that
-    declares it, and rows without a number because they are numbered by their position.
+    Rows without a number are left out because they are numbered by their position. The
+    masters of shared formulas are indexed, as a row's formula can depend on the row that
+    declares it.
     """
     root = _ROOT.search(data)
     start = data.find(_SHEET_DATA)
     end = data.find(_SHEET_DATA_END)
-    if (
-        root is None
-        or root[1] != SHEET_MAIN_NS.encode()
-        or start < 0
-        or end < start
-        or b't="shared"' in data
-    ):
+    if root is None or root[1] != SHEET_MAIN_NS.encode() or start < 0 or end < start:
         return None
     numbers: list[int] = []
     spans: list[tuple[int, int]] = []
@@ -120,7 +118,8 @@ def split_sheet(data: bytes) -> tuple[bytes, SheetSource] | None:
     if numbers != sorted(set(numbers)):
         return None
     without_rows = data[:start] + _SHEET_DATA + b"/>" + data[end + len(_SHEET_DATA_END) :]
-    return without_rows, SheetSource(data, root.group(), numbers, spans, hidden)
+    masters = lazy_shared.index(data, start, end) if b't="shared"' in data else {}
+    return without_rows, SheetSource(data, root.group(), numbers, spans, hidden, masters)
 
 
 class LazyCells(dict[CellKey, Any]):
@@ -150,6 +149,16 @@ class LazyCells(dict[CellKey, Any]):
 
     def is_loaded(self, row: int) -> bool:
         return row // BLOCK_ROWS in self.loaded
+
+    def all_loaded(self, first: int, last: int) -> bool:
+        """Whether the blocks that hold rows ``first`` to ``last`` are parsed."""
+        return all(
+            block in self.loaded for block in range(first // BLOCK_ROWS, last // BLOCK_ROWS + 1)
+        )
+
+    def load_between(self, first: int, last: int) -> None:
+        for block in range(first // BLOCK_ROWS, last // BLOCK_ROWS + 1):
+            self.load(block * BLOCK_ROWS)
 
     def extent(self) -> tuple[int, int]:
         """The last row and column that hold a cell, without parsing any."""
@@ -267,6 +276,7 @@ class LazyCells(dict[CellKey, Any]):
             book._date_formats,
             book._timedelta_formats,
         )
+        parser.shared_formulae = lazy_shared.Translators(self.source.masters)
         for _, parsed in parser.parse():
             for item in parsed:
                 key = (item["row"], item["column"])

@@ -9,9 +9,11 @@ when something asks for them, and saved by putting the rows of the blocks that w
 (which may have changed) together with the rows of the others, as the file has them.
 
 A block that was not parsed is as in the file, so nothing that needs a cell may skip it. That
-is why the sheets this handles hold no array formulas, shared formulas or cell metadata (their
-cells depend on each other), why cells that carry a hyperlink, a comment or a merged range
-are parsed when the workbook is opened, and why using a row's dimensions parses its block.
+is why the sheets this handles hold no array or data-table formulas or cell metadata (their
+cells depend on each other: arrays spill into cells that are cleared or kept with them), why
+cells that carry a hyperlink, a comment or a merged range are parsed when the workbook is
+opened, and why using a row's dimensions parses its block. Shared formulas, which depend on
+their master cell, are looked after by `lazy_shared`.
 Anything that looks at all cells parses all of them: slower, never wrong.
 """
 
@@ -30,6 +32,7 @@ from openpyxl.worksheet.dimensions import DimensionHolder
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.xml.constants import SHARED_STRINGS
 
+from excel_mcp import lazy_shared
 from excel_mcp.lazy_workbook import (
     BLOCK_ROWS,
     LazyCells,
@@ -156,6 +159,8 @@ class LazyEdit:
         """
         for sheet in self.sheets:
             cells = sheet._cells
+            if isinstance(cells, LazyCells):
+                lazy_shared.settle(cells)
             dimensions = DimensionHolder(worksheet=sheet, default_factory=sheet._add_row)
             for row, dimension in dict.items(sheet.row_dimensions):
                 if not isinstance(cells, LazyCells) or cells.is_loaded(row):
@@ -252,6 +257,7 @@ def _splice(xml: bytes, cells: LazyCells) -> bytes:
     if data is None:
         raise ValueError("A saved worksheet has no sheetData.")
     produced = {_row_number(row[0]): row[0] for row in _ROW.finditer(data[0])}
+    lazy_shared.restore(cells, produced)
     pieces = _rows(cells, produced)
     head, tail = xml[: data.start()], xml[data.end() :]
     head = _DIMENSION.sub(b'<dimension ref="%b"/>' % _dimension(source, produced), head, 1)
