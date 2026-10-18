@@ -572,6 +572,8 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
                     <dd><code>describe_sheet</code>, <code>create_sheet</code>, <code>rename_sheet</code>, <code>copy_sheet</code>, <code>delete_sheet</code>, <code>insert_rows_or_columns</code>, <code>delete_rows_or_columns</code>: inspect a sheet and change its structure, with references updated.</dd>
                     <dt>Cells</dt>
                     <dd><code>read_range</code>, <code>write_range</code>, <code>clear_range</code>, <code>copy_range</code>, <code>sort_range</code>, <code>transform_range</code>, <code>find_cells</code>, <code>replace_cells</code>: read in pages, write values and formulas, copy, sort, deduplicate, fill, search and replace.</dd>
+                    <dt>Formulas</dt>
+                    <dd><code>trace_formula</code>, <code>goal_seek</code>: trace precedents and dependents, evaluate a formula step by step, and Goal Seek.</dd>
                     <dt>Formatting</dt>
                     <dd><code>format_range</code>, <code>merge_cells</code>, <code>set_sheet_layout</code>, <code>add_conditional_format</code>, <code>add_data_validation</code>: styles, widths, panes, filters, printing, protection, rules and dropdowns.</dd>
                     <dt>Objects</dt>
