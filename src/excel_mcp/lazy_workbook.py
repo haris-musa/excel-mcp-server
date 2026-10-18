@@ -117,7 +117,7 @@ class LazyCells(dict[CellKey, Any]):
         """The cells of one row, which is parsed."""
         self.load(row)
         return [
-            ((row, column), super().__getitem__((row, column)))
+            ((row, column), dict.__getitem__(self, (row, column)))
             for column in self.columns.get(row, ())
         ]
 
