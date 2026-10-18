@@ -29,6 +29,7 @@ AREAS: dict[str, tuple[str, ...]] = {
         "find_cells",
         "replace_cells",
     ),
+    "formulas": ("trace_formula", "goal_seek"),
     "formatting": (
         "format_range",
         "merge_cells",

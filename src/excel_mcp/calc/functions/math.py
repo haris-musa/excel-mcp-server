@@ -150,7 +150,10 @@ def power(number: Scalar, exponent: Scalar) -> Scalar:
 
 @function("EXP", kind="scalar")
 def exp(number: Scalar) -> float:
-    return math.exp(to_number(number))
+    try:
+        return math.exp(to_number(number))
+    except OverflowError:
+        raise fail(NUM) from None
 
 
 @function("LN", kind="scalar")

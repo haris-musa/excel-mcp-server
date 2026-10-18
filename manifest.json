@@ -150,6 +150,14 @@
       "description": "Find and replace text in cells, including formulas, like Excel's Replace All."
     },
     {
+      "name": "trace_formula",
+      "description": "Trace precedents and dependents of formulas across the workbook, or evaluate a formula step by step, like Excel's Formulas auditing tools."
+    },
+    {
+      "name": "goal_seek",
+      "description": "Change an input cell until a formula reaches a value, like Excel's Goal Seek."
+    },
+    {
       "name": "format_range",
       "description": "Change fonts, fill, borders, alignment, number format or protection flags of a range."
     },

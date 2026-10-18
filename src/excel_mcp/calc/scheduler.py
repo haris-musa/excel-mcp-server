@@ -9,6 +9,9 @@ from openpyxl.worksheet.formula import ArrayFormula
 from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.calc.cells import key, stored_in
+from excel_mcp.calc.functions.arrays import anchor_target
+from excel_mcp.calc.functions.indirect import indirect_target
+from excel_mcp.calc.functions.lookup import offset_target
 from excel_mcp.calc.parser import (
     ArrayLiteral,
     Binary,
@@ -29,6 +32,11 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 MAX_NAME_DEPTH = 8
+_TARGETS = {
+    "INDIRECT": indirect_target,
+    "OFFSET": offset_target,
+    "ANCHORARRAY": anchor_target,
+}
 
 
 class TooDeepError(Exception):
@@ -129,34 +137,59 @@ class Scheduler:
     def _references(
         self, node: Node, home: Worksheet, depth: int
     ) -> Iterator[tuple[Worksheet, int, int, int, int]]:
-        """The rectangles a syntax tree refers to, as (sheet, top, left, bottom, right)."""
+        """The rectangles a syntax tree refers to, as (sheet, top, left, bottom, right), with
+        whole rows and columns cut off at the last used cell."""
+        for target, top, left, bottom, right in self.rectangles(node, home, depth):
+            yield (
+                target,
+                top or 1,
+                left or 1,
+                bottom or extent(target)[0],
+                right or extent(target)[1],
+            )
+
+    def rectangles(
+        self, node: Node, home: Worksheet, depth: int = 0, dynamic: list[Call] | None = None
+    ) -> Iterator[tuple[Worksheet, int | None, int | None, int | None, int | None]]:
+        """The rectangles a syntax tree refers to; a whole row or column has no bottom or right.
+
+        With ``dynamic``, the engine's current cell is the formula, and INDIRECT, OFFSET and
+        spill references count for the cells they point at; those that cannot be worked out
+        are added to it.
+        """
         engine = self.engine
         match node:
             case Ref():
                 for target in engine.sheets_in(node, home):
-                    yield (
-                        target,
-                        node.top or 1,
-                        node.left or 1,
-                        node.bottom or extent(target)[0],
-                        node.right or extent(target)[1],
-                    )
+                    yield target, node.top, node.left, node.bottom, node.right
             case Name() if depth < MAX_NAME_DEPTH:
                 scope = engine.sheets.get((node.sheet or "").casefold(), home)
                 try:
                     inner = parse(engine.lookup_name(scope, node.name))
                 except UncalculableError:
                     return
-                yield from self._references(inner, home, depth + 1)
+                yield from self.rectangles(inner, home, depth + 1, dynamic)
             case Unary(_, operand) | Percent(operand):
-                yield from self._references(operand, home, depth)
+                yield from self.rectangles(operand, home, depth, dynamic)
             case Binary(_, left, right):
-                yield from self._references(left, home, depth)
-                yield from self._references(right, home, depth)
+                yield from self.rectangles(left, home, depth, dynamic)
+                yield from self.rectangles(right, home, depth, dynamic)
+            case Call() if dynamic is not None and node.name in _TARGETS:
+                arguments = node.args
+                try:
+                    target = _TARGETS[node.name](engine, *arguments)
+                except (UncalculableError, FormulaError):
+                    dynamic.append(node)
+                else:
+                    yield from self.rectangles(target, home, depth, dynamic)
+                    if node.name != "INDIRECT":
+                        arguments = arguments[1:]
+                for argument in arguments:
+                    yield from self.rectangles(argument, home, depth, dynamic)
             case Call():
                 for argument in node.args:
-                    yield from self._references(argument, home, depth)
+                    yield from self.rectangles(argument, home, depth, dynamic)
             case ArrayLiteral(rows):
                 for row in rows:
                     for item in row:
-                        yield from self._references(item, home, depth)
+                        yield from self.rectangles(item, home, depth, dynamic)

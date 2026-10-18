@@ -299,3 +299,11 @@ async def test_hyperlink_is_its_friendly_name_or_its_link(call: ToolCall, files:
         ["text"],
         ["#DIV/0!"],
     ]
+
+
+async def test_exp_of_a_huge_number_is_a_num_error(call: ToolCall, files: Path) -> None:
+    make_workbook(files / "calc.xlsx", {"B1": "=EXP(1000)", "B2": "=EXP(0)"})
+
+    data = await read_values(call, "B1:B2")
+
+    assert data["values"] == [["#NUM!"], [1]]

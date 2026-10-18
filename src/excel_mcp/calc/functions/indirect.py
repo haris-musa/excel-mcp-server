@@ -46,9 +46,8 @@ def _text(engine: "Engine", node: Node) -> str:
     return to_text(value)
 
 
-@function("INDIRECT", kind="lazy")
-def indirect(engine: "Engine", ref_text: Node, a1: Node | None = None) -> Value:
-    """A reference to a cell or range of this workbook, given as text."""
+def indirect_target(engine: "Engine", ref_text: Node, a1: Node | None = None) -> Node:
+    """The reference (or defined name) that INDIRECT's text stands for."""
     text = _text(engine, ref_text)
     qualifier, body = split_sheet(text)
     if a1 is not None and not to_bool(engine.scalar(a1)):
@@ -58,6 +57,13 @@ def indirect(engine: "Engine", ref_text: Node, a1: Node | None = None) -> Value:
     target = bind(target, engine.workbook, here.sheet, here.row, here.col)
     if isinstance(target, Name) and not engine.is_defined(target):
         raise FormulaError(REF)
+    return target
+
+
+@function("INDIRECT", kind="lazy")
+def indirect(engine: "Engine", ref_text: Node, a1: Node | None = None) -> Value:
+    """A reference to a cell or range of this workbook, given as text."""
+    target = indirect_target(engine, ref_text, a1)
     result = engine.eval(target)
     # A name that holds a constant is not a reference.
     if isinstance(target, Name) and not isinstance(result, RefGrid):

@@ -79,6 +79,7 @@ class Engine:
         self.filename = filename
         self.sheets = {ws.title.casefold(): ws for ws in worksheets(formulas)}
         self.cached_sheets = {ws.title.casefold(): ws for ws in worksheets(cached)}
+        self.stale: set[CellKey] = set()  # cells whose stored results no longer hold
         self.memo: dict[CellKey, Scalar | UncalculableError] = {}
         self.trees: dict[CellKey, Node] = {}
         self.spills: dict[CellKey, Grid] = {}
@@ -153,6 +154,8 @@ class Engine:
         return result
 
     def cached_value(self, sheet: Worksheet, row: int, col: int) -> Scalar:
+        if (sheet.title, row, col) in self.stale:
+            return None
         cached_sheet = self.cached_sheets.get(sheet.title.casefold())
         cell = cached_sheet._cells.get((row, col)) if cached_sheet else None
         return None if cell is None else constant(cell)
