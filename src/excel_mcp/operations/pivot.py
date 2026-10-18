@@ -11,7 +11,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from excel_mcp.calc.values import ExcelError
 from excel_mcp.config import Limits
 from excel_mcp.errors import InvalidArgumentError
-from excel_mcp.operations.cells import stored_cells, writable_cell
+from excel_mcp.operations.cells import stored_cells_in, writable_cell
 from excel_mcp.operations.pivot_axis import Axis, Path, Ranker, build_axis
 from excel_mcp.operations.pivot_cache import build_cache
 from excel_mcp.operations.pivot_calc import CalcField, compile_calculated
@@ -291,12 +291,11 @@ def _check_free(
             raise InvalidArgumentError(
                 f"{area} overlaps the PivotTable {pivot.name!r} at {pivot.location.ref}."
             )
-    for cell in stored_cells(sheet):
-        if area.min_row <= cell.row <= area.max_row and area.min_col <= cell.column <= area.max_col:
-            raise InvalidArgumentError(
-                f"The PivotTable would cover {area}, but {cell.coordinate} already holds a "
-                "value. Choose an empty `at`, or clear the range first."
-            )
+    if (cell := next(stored_cells_in(sheet, area), None)) is not None:
+        raise InvalidArgumentError(
+            f"The PivotTable would cover {area}, but {cell.coordinate} already holds a "
+            "value. Choose an empty `at`, or clear the range first."
+        )
 
 
 def _pivot_name(workbook: Workbook, name: str | None, copy_of_name: bool) -> str:
