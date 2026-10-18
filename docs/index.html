@@ -566,6 +566,8 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
                 <dl class="tools">
                     <dt>Workbooks</dt>
                     <dd><code>create_workbook</code>, <code>describe_workbook</code>, <code>set_workbook_settings</code>, <code>list_workbooks</code>, <code>export_workbook</code>, <code>import_workbook</code>: create files, list sheets and settings, move files to and from remote servers.</dd>
+                    <dt>CSV</dt>
+                    <dd><code>import_csv</code>, <code>export_csv</code>: bring a CSV file into a sheet with numbers and dates typed (never formulas), or save a range as CSV with any delimiter and encoding.</dd>
                     <dt>Sheets</dt>
                     <dd><code>describe_sheet</code>, <code>create_sheet</code>, <code>rename_sheet</code>, <code>copy_sheet</code>, <code>delete_sheet</code>, <code>insert_rows_or_columns</code>, <code>delete_rows_or_columns</code>: inspect a sheet and change its structure, with references updated.</dd>
                     <dt>Cells</dt>
@@ -589,6 +591,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
                         <tr><td><code>--allow-dir DIR</code></td><td><code>EXCEL_FILES_PATH</code></td><td>Folders workbooks must be in (repeat the flag; separate several in the variable with <code>:</code>, or <code>;</code> on Windows). HTTP defaults to <code>./excel_files</code>.</td></tr>
                         <tr><td><code>--read-only</code></td><td><code>EXCEL_MCP_READ_ONLY=1</code></td><td>Only offer tools that do not change files.</td></tr>
                         <tr><td><code>--allow-vba-write</code></td><td><code>EXCEL_MCP_ALLOW_VBA_WRITE=1</code></td><td>Add the tools that write VBA macros. Off by default and ignored with <code>--read-only</code>.</td></tr>
+                        <tr><td><code>--tools AREAS</code></td><td><code>EXCEL_MCP_TOOLS</code></td><td>Only offer the core tools (<code>describe_workbook</code>, <code>describe_sheet</code>, <code>read_range</code>) and these comma-separated areas, to save context. Areas and their size in characters of tool schema: <code>workbooks</code> 2,600, <code>csv</code> 2,200, <code>sheets</code> 2,000, <code>data</code> 6,700, <code>formatting</code> 14,000, <code>tables</code> 1,900, <code>charts</code> 9,900, <code>pivots</code> 4,600, <code>slicers</code> 2,500, <code>names</code> 900, <code>notes</code> 500, <code>images</code> 800, <code>vba</code> 1,900; the core is 8,900 (about 3.5 characters per token). Combines with <code>--read-only</code> and <code>--allow-vba-write</code>.</td></tr>
                         <tr><td><code>--max-file-mb N</code></td><td><code>EXCEL_MCP_MAX_FILE_MB</code></td><td>Largest workbook to open, 100 by default.</td></tr>
                         <tr><td><code>--max-cells N</code></td><td><code>EXCEL_MCP_MAX_CELLS</code></td><td>Most cells one tool call may read, write or format, 100000 by default.</td></tr>
                         <tr><td><code>--max-pivot-cells N</code></td><td><code>EXCEL_MCP_MAX_PIVOT_CELLS</code></td><td>Largest PivotTable source in cells, 3000000 by default.</td></tr>
@@ -611,7 +614,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
                 </details>
                 <details>
                     <summary>Which file types work?</summary>
-                    <p><code>.xlsx</code>, <code>.xlsm</code> (macros are preserved), <code>.xltx</code> and <code>.xltm</code>. Legacy <code>.xls</code> and <code>.csv</code> files are not supported.</p>
+                    <p><code>.xlsx</code>, <code>.xlsm</code> (macros are preserved), <code>.xltx</code> and <code>.xltm</code>. Legacy <code>.xls</code> files are not supported; CSV files are imported with <code>import_csv</code>.</p>
                 </details>
                 <details>
                     <summary>Where are my files saved?</summary>

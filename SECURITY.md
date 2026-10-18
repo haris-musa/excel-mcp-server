@@ -48,6 +48,12 @@ or anyone who can reach the HTTP endpoint. Its defences are:
   `replace_cells` pass the same check, as do list sources and rule operands, and the
   formulas that `insert_rows_or_columns`, `delete_rows_or_columns` and `rename_sheet`
   rewrite.
+- **CSV**: `import_csv` and `export_csv` accept only `.csv` and `.tsv` files, through the same
+  path rules as workbooks, within the cell and file size limits, and the file is read as a
+  stream. An imported field is never a formula: text starting with `=`, `+`, `-` or `@` is
+  stored as text with Excel's quote prefix. `export_csv` prefixes text cells that start with
+  those characters (or a tab or carriage return) with `'` by default, so a spreadsheet that
+  opens the file does not run them (CSV injection); numbers are never prefixed.
 - **Uploads**: `import_workbook` scans every XML part of the package, found by content and not
   by name, in constant memory, including defined names, conditional formats, data validation,
   tables and chart references. It rejects packages with duplicate or traversing part names,

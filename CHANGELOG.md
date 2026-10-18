@@ -6,6 +6,31 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `import_csv` reads a `.csv` or `.tsv` file into a sheet (new or existing) at a cell, and
+  `export_csv` writes a range as a CSV file. Import detects the delimiter (or takes `comma`,
+  `semicolon`, `tab`, `pipe`), reads UTF-8 with or without a BOM, UTF-16 and `cp1252`, keeps
+  quoted fields and line breaks in them, and types fields as Excel's import does: numbers
+  (also `1,234.50` and `12%`; `decimal` for a decimal comma), `TRUE`/`FALSE` and ISO dates
+  become values. Text Excel would alter stays text: leading zeros, more than 15 digits and
+  numeric dates such as `01/02/2026`, which are read only in the `date_order` you name.
+  `as_text` keeps everything as text. Export writes raw values (ISO dates) or, with
+  `formatted`, what Excel shows, with any delimiter and encoding including `utf-8-sig` (a BOM
+  for Excel). Both stay within `--max-cells` and the file size limit, and go through the path
+  gate (only `.csv` and `.tsv` files).
+- CSV formula injection: imported fields are never formulas. Text starting with `=`, `+`, `-`
+  or `@` (or a tab or carriage return) is stored as text with Excel's quote prefix, so editing
+  the cell does not run it; a field that is a number, such as `-5`, is a number. On export,
+  text cells starting with those characters get a `'` prefix (`escape_formulas`, on by
+  default); numbers never do.
+- `--tools AREAS` (`EXCEL_MCP_TOOLS`) offers only the core tools (`describe_workbook`,
+  `describe_sheet`, `read_range`) and the chosen areas, to cut the context the tool list uses.
+  Areas: `workbooks`, `csv`, `sheets`, `data`, `formatting`, `tables`, `charts`, `pivots`,
+  `slicers`, `names`, `notes`, `images`, `vba`. It combines with `--read-only` and
+  `--allow-vba-write` (VBA writing needs the flag and the `vba` area). An unknown area stops the
+  server at startup with the valid names.
+
 ## [2.1.1] - 2026-10-16
 
 ### Fixed

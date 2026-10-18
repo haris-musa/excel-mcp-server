@@ -188,6 +188,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
 | `--allow-dir DIR` | `EXCEL_FILES_PATH` | none (stdio), `./excel_files` (HTTP) | Folders workbooks must be in |
 | `--read-only` | `EXCEL_MCP_READ_ONLY=1` | off | Only offer tools that do not change files |
 | `--allow-vba-write` | `EXCEL_MCP_ALLOW_VBA_WRITE=1` | off | Add tools that write VBA macros (see warning below); ignored with `--read-only` |
+| `--tools AREAS` | `EXCEL_MCP_TOOLS` | all | Only offer the core tools and these comma-separated areas, to save context (see [Choosing tools](#choosing-tools)) |
 | `--max-file-mb N` | `EXCEL_MCP_MAX_FILE_MB` | `100` | Largest workbook the server opens. Also sets the unpacked-size limit (10 times this) that every opened or uploaded workbook must stay under; parts compressed over 500:1 are refused |
 | `--max-cells N` | `EXCEL_MCP_MAX_CELLS` | `100000` | Most cells one call may read, write or format; reads are still returned in pages |
 | `--max-pivot-cells N` | `EXCEL_MCP_MAX_PIVOT_CELLS` | `3000000` | Largest PivotTable source in cells (a 230,000-row, 13-column sheet); creating one from the biggest sources takes a minute and about 2 GB of memory |
@@ -202,12 +203,63 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
 | Area | Tools |
 | --- | --- |
 | Workbooks | `create_workbook`, `describe_workbook`, `set_workbook_settings`, `list_workbooks`, `export_workbook`, `import_workbook` |
+| CSV | `import_csv`, `export_csv` |
 | Sheets | `describe_sheet`, `create_sheet`, `rename_sheet`, `copy_sheet`, `delete_sheet`, `insert_rows_or_columns`, `delete_rows_or_columns` |
 | Cells | `read_range`, `write_range`, `clear_range`, `copy_range`, `sort_range`, `transform_range`, `find_cells`, `replace_cells` |
 | Formatting | `format_range`, `merge_cells`, `set_sheet_layout`, `add_conditional_format`, `add_data_validation` |
 | Objects | `set_table`, `create_chart`, `delete_chart`, `create_pivot_table`, `delete_pivot_table`, `add_slicer`, `delete_slicer`, `insert_image`, `delete_image`, `add_sparklines`, `delete_sparklines` |
 | Names and notes | `set_defined_name`, `delete_defined_name`, `set_note`, `delete_note` |
 | Macros | `read_vba`; with `--allow-vba-write`: `write_vba_module`, `delete_vba_module` |
+
+### Choosing tools
+
+Every tool costs context in every request. `--tools` offers only the core tools
+(`describe_workbook`, `describe_sheet`, `read_range`) and the areas you list, for example
+`uvx excel-mcp-server stdio --tools data,charts`. It combines with `--read-only` (read-only tools
+of the areas) and `--allow-vba-write` (which also needs the `vba` area). An unknown area stops the
+server at startup and lists the valid ones. The sizes are characters of tool descriptions and
+schemas, at about 3.5 characters per token:
+
+| Area | Tools | Characters |
+| --- | --- | ---: |
+| core (always) | `describe_workbook`, `describe_sheet`, `read_range` | 8,900 |
+| `workbooks` | `create_workbook`, `set_workbook_settings`, `list_workbooks`, `export_workbook`, `import_workbook` | 2,600 |
+| `csv` | `import_csv`, `export_csv` | 2,200 |
+| `sheets` | `create_sheet`, `rename_sheet`, `copy_sheet`, `delete_sheet`, `insert_rows_or_columns`, `delete_rows_or_columns` | 2,000 |
+| `data` | `write_range`, `clear_range`, `copy_range`, `sort_range`, `transform_range`, `find_cells`, `replace_cells` | 6,700 |
+| `formatting` | `format_range`, `merge_cells`, `set_sheet_layout`, `add_conditional_format`, `add_data_validation` | 14,000 |
+| `tables` | `set_table` | 1,900 |
+| `charts` | `create_chart`, `delete_chart`, `add_sparklines`, `delete_sparklines` | 9,900 |
+| `pivots` | `create_pivot_table`, `delete_pivot_table` | 4,600 |
+| `slicers` | `add_slicer`, `delete_slicer` | 2,500 |
+| `names` | `set_defined_name`, `delete_defined_name` | 900 |
+| `notes` | `set_note`, `delete_note` | 500 |
+| `images` | `insert_image`, `delete_image` | 800 |
+| `vba` | `read_vba`; with `--allow-vba-write`: `write_vba_module`, `delete_vba_module` | 1,900 |
+
+### CSV
+
+`import_csv` reads a `.csv` or `.tsv` file into a sheet (created if missing) at a cell, and
+`export_csv` writes a range as CSV. Both stay in the allowed folders, within `--max-cells` and
+`--max-file-mb`, and never run anything.
+
+- Import detects the delimiter from the first record (or takes `comma`, `semicolon`, `tab`,
+  `pipe`) and reads UTF-8 with or without a BOM, UTF-16 and `cp1252`. Quoted fields and line
+  breaks inside them are kept.
+- Fields are typed as in Excel's import: numbers (also `1,234.50`, `12%`; `decimal` for a
+  decimal comma), `TRUE`/`FALSE` and ISO dates (`2026-01-31`, `2026-01-31 09:30`) become values.
+  Text Excel would alter stays text: leading zeros (`007`), more than 15 digits, a leading `+`,
+  and numeric dates such as `01/02/2026`, which are read only in the `date_order` you name
+  (`dmy` or `mdy`). `as_text` keeps every field as text.
+- Fields are never formulas. Text starting with `=`, `+`, `-` or `@` is stored as text with
+  Excel's quote prefix, so editing the cell does not run it; a number such as `-5` is a number.
+- Export writes raw values (full precision, ISO dates) or, with `formatted`, what Excel shows.
+  Text cells starting with `=`, `+`, `-` or `@` get a `'` prefix (`escape_formulas`, on by
+  default) so a spreadsheet that opens the file does not run them; numbers are never prefixed.
+  Datetimes are written as `2026-01-31T09:30:00`, which Excel opens as text; use `formatted`
+  for Excel.
+  Use `encoding: utf-8-sig` for a BOM, which Excel needs to show accents when it opens a UTF-8
+  file by double-click. Lines end with CRLF.
 
 Every parameter is documented in [TOOLS.md](TOOLS.md). Parameters mean the same in every tool:
 
@@ -266,7 +318,7 @@ Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
 - Functions Excel added after 2007 (`IFS`, `XLOOKUP`, `STDEV.S`, `SORT`, ...) are written
   with the `_xlfn.` prefix Excel expects, wherever formulas are stored (cells, copied and
   sorted cells, conditional formats, data validation, defined names).
-- Legacy `.xls` and `.csv` files are not supported.
+- Legacy `.xls` files are not supported; use `import_csv` for CSV files.
 - PivotTables are created from a snapshot and can use text, number and date columns of up to
   3,000,000 cells (`--max-pivot-cells`); Excel refreshes them from the live source data. They support number formats,
   "show values as" (percent of total, row, column or parent, difference from, running total,

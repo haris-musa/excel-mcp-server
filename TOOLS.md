@@ -14,6 +14,8 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`list_workbooks`](#list_workbooks) | List Excel files in a directory: path to size in bytes. |
 | [`export_workbook`](#export_workbook) | Return the workbook file as an embedded base64 resource (remote servers). |
 | [`import_workbook`](#import_workbook) | Upload a workbook to the server (remote editing). |
+| [`import_csv`](#import_csv) | Import a CSV file into a sheet from `at`, overwriting cells. |
+| [`export_csv`](#export_csv) | Export a range (formula results) as a CSV file, like Save As CSV. |
 | [`describe_sheet`](#describe_sheet) | Describe a sheet: used range, panes, merges and everything on it (tables, charts, PivotTables, slicers, images, notes, hyperlinks, validation, conditional formats, sparklines...) with names and cells. Slow on very large files. |
 | [`create_sheet`](#create_sheet) | Add an empty worksheet. |
 | [`rename_sheet`](#rename_sheet) | Rename a worksheet; references to it are updated as in Excel. |
@@ -159,6 +161,47 @@ Drops unsafe hyperlinks (see `note`); refuses external links, connections, linke
 | `path` | string | yes | Workbook file path, relative to the allowed folder or absolute inside it. |
 | `content_base64` | string | yes |  |
 | `overwrite` | boolean | no |  |
+
+## import_csv
+
+**Import CSV** (modifies files, may overwrite data)
+
+Import a CSV file into a sheet from `at`, overwriting cells.
+
+Numbers, TRUE/FALSE and ISO dates become values; leading zeros ('007'), over 15 digits
+and ambiguous dates stay text. Never formulas: text starting with = + - @ is text.
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Workbook file path, relative to the allowed folder or absolute inside it. |
+| `csv_path` | string | yes | .csv or .tsv file, located like workbooks. |
+| `sheet` | string | yes | Created if missing. |
+| `at` | string | no | Top-left cell. Default: `"A1"`. |
+| `delimiter` | `auto` \| `comma` \| `semicolon` \| `tab` \| `pipe` | no | 'auto': most frequent in the first record. Default: `"auto"`. |
+| `encoding` | `utf-8` \| `utf-8-sig` \| `cp1252` \| `utf-16` | no | 'utf-8' also reads a BOM. Default: `"utf-8"`. |
+| `decimal` | `.` \| `,` | no | Decimal mark; the other groups thousands. Default: `"."`. |
+| `date_order` | `ymd` \| `dmy` \| `mdy` | no | 'dmy' or 'mdy' also read 31/12/2026-style dates; else only ISO ones are dates. Default: `"ymd"`. |
+| `as_text` | boolean | no | Keep every field as text. |
+
+## export_csv
+
+**Export CSV** (modifies files, may overwrite data)
+
+Export a range (formula results) as a CSV file, like Save As CSV.
+
+Text starting with = + - @ gets a ' prefix unless `escape_formulas` is false.
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Workbook file path, relative to the allowed folder or absolute inside it. |
+| `sheet` | string | yes | Sheet name. |
+| `csv_path` | string | yes | .csv or .tsv file, located like workbooks. |
+| `range` | string | no | e.g. 'A1:D20'. Default: the used range. |
+| `formatted` | boolean | no | Apply number formats, as Excel shows cells; else raw values. |
+| `delimiter` | `comma` \| `semicolon` \| `tab` \| `pipe` | no | Default: `"comma"`. |
+| `encoding` | `utf-8` \| `utf-8-sig` \| `cp1252` \| `utf-16` | no | 'utf-8-sig' adds a BOM, which Excel needs for UTF-8. Default: `"utf-8"`. |
+| `escape_formulas` | boolean | no | Prefix text starting with = + - @ with ' so Excel does not run it. Default: `true`. |
+| `overwrite` | boolean | no | Replace an existing file (else an error). |
 
 ## describe_sheet
 

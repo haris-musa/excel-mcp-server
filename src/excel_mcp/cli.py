@@ -11,6 +11,7 @@ from typing import TextIO
 from excel_mcp import __version__
 from excel_mcp.config import Limits, Settings
 from excel_mcp.server import create_server
+from excel_mcp.server.areas import AREAS, parse_areas
 from excel_mcp.server.http import is_loopback, serve
 
 DEFAULT_HOST = "127.0.0.1"
@@ -72,6 +73,7 @@ def _settings(args: argparse.Namespace) -> Settings:
         allowed_dirs=[Path(directory).expanduser() for directory in directories],
         read_only=args.read_only or os.environ.get("EXCEL_MCP_READ_ONLY") == "1",
         allow_vba_write=args.allow_vba_write or os.environ.get("EXCEL_MCP_ALLOW_VBA_WRITE") == "1",
+        tool_areas=args.tools,
         limits=Limits(
             max_file_bytes=args.max_file_mb * MB,
             max_cells=args.max_cells,
@@ -92,6 +94,13 @@ def _positive_int(text: str) -> int:
     if value < 1:
         raise argparse.ArgumentTypeError(f"expected a whole number above 0, got {text!r}")
     return value
+
+
+def _tool_areas(text: str) -> tuple[str, ...]:
+    try:
+        return parse_areas(text)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(str(error)) from None
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -119,6 +128,16 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Add tools that write VBA macro code into .xlsm files (never run by the server). "
         "Off by default and ignored with --read-only. Also EXCEL_MCP_ALLOW_VBA_WRITE=1.",
+    )
+    common.add_argument(
+        "--tools",
+        type=_tool_areas,
+        # argparse converts a string default with the option's type, so a bad value is
+        # reported as a usage error for that option.
+        default=os.environ.get("EXCEL_MCP_TOOLS") or None,
+        metavar="AREAS",
+        help="Only offer the core tools (describe_workbook, describe_sheet, read_range) and "
+        f"these comma-separated areas: {', '.join(AREAS)}. Default: all. Also EXCEL_MCP_TOOLS.",
     )
     common.add_argument(
         "--max-file-mb",
