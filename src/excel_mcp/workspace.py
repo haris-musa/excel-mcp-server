@@ -271,7 +271,7 @@ def save_atomically(
     try:
         package.prepare(workbook)
         if lazy:
-            lazy.freeze()
+            lazy.freeze(workbook)
         workbook.save(buffer)
     except Exception as error:
         # openpyxl reports invalid workbook states with many exception types.

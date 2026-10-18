@@ -21,6 +21,7 @@ from xml.sax.saxutils import escape
 
 from openpyxl.formula.translate import Translator
 from openpyxl.utils import column_index_from_string, get_column_letter
+from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.formulas import storable_formula
 from excel_mcp.lazy_shared import SharedMaster
@@ -71,9 +72,18 @@ def _moves_alike(
 
 
 def rewrite_formulas(
-    cells: LazyCells, host: str, rewriter: ReferenceRewriter, names: list[str]
+    cells: LazyCells,
+    host: str,
+    rewriter: ReferenceRewriter,
+    names: list[str],
+    *,
+    check_all: bool = False,
 ) -> None:
-    """Rewrite the references of the formulas in the rows that are not parsed."""
+    """Rewrite the references of the formulas in the rows that are not parsed.
+
+    A formula that changes is checked as every written formula is; ``check_all`` also checks
+    those that stay as they are (a copy of a sheet writes them all).
+    """
     source = cells.source
     cache: dict[str, str] = {}
 
@@ -81,7 +91,8 @@ def rewrite_formulas(
         if text not in cache:
             formula = "=" + text
             moved = rewriter.formula(formula, host)
-            cache[text] = text if moved == formula else storable_formula(moved, names)[1:]
+            unchanged = moved == formula and not check_all
+            cache[text] = text if unchanged else storable_formula(moved, names)[1:]
         return cache[text]
 
     def replace_formula(match: re.Match[bytes]) -> bytes:
@@ -130,6 +141,19 @@ def move_lines(
             if not cells.is_loaded(number):
                 rows.append((number, move_cells(source.data[start:stop])))
     cells.replace(moved, _assembled(source, rows, _moved_masters(source, edit), hidden), parsed)
+
+
+def copied(cells: LazyCells, sheet: Worksheet) -> LazyCells:
+    """The cells of a copy of a sheet: the rows that are not parsed are shared with the original,
+    which keeps the cells that are parsed."""
+    source = cells.source
+    rows = [
+        (number, source.data[start:stop])
+        for number, (start, stop) in zip(source.row_numbers, source.spans, strict=True)
+        if not cells.is_loaded(number)
+    ]
+    masters = dict(source.masters)
+    return LazyCells(sheet, _assembled(source, rows, masters, source.hidden_rows), cells.strings)
 
 
 def _moved_masters(source: SheetSource, edit: LineEdit) -> dict[str, SharedMaster]:

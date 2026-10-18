@@ -8,12 +8,14 @@ from typing import Literal, TypeGuard, cast
 
 from openpyxl.cell.cell import Cell, MergedCell
 from openpyxl.utils.datetime import to_excel
+from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.calc.values import ERRORS, ExcelError
 from excel_mcp.errors import InvalidArgumentError, LimitExceededError
+from excel_mcp.lazy_workbook import LazyCells
 from excel_mcp.operations.comparison import FormulaResults
-from excel_mcp.refs import CellRange, parse_range
+from excel_mcp.refs import CellRange, cell_name, parse_range
 from excel_mcp.text import quoted
 
 Value = str | int | float | bool | dt.datetime | ExcelError | None
@@ -93,6 +95,10 @@ def read_source(sheet: Worksheet, source_range: str, max_cells: int, results: Re
         )
     if area.rows < 2:
         raise InvalidArgumentError(f"source {area} needs a header row and at least one data row.")
+    if isinstance(sheet._cells, LazyCells) and (
+        stored := sheet._cells.stored_rows(area.min_row, area.max_row)
+    ):
+        return _read_stored(sheet, area, stored)
     rows = [
         list(row)
         for row in sheet.iter_rows(
@@ -111,6 +117,48 @@ def read_source(sheet: Worksheet, source_range: str, max_cells: int, results: Re
         for index, name in enumerate(names)
     ]
     return Source(sheet.title, str(area), columns)
+
+
+def _read_stored(
+    sheet: Worksheet, area: CellRange, rows: list[dict[int, tuple[int, object, str]]]
+) -> Source:
+    """`read_source` of a large sheet read as the file stores it (`LazyCells.stored_rows`):
+    the same columns, without making a cell of each of the sheet's millions."""
+    book = cast(Workbook, sheet.parent)
+    formats: dict[int, tuple[str, int]] = {}
+
+    def format_of(style: int) -> tuple[str, int]:
+        if style not in formats:
+            probe = Cell(sheet, row=1, column=1, style_array=book._cell_styles[style])  # pyright: ignore[reportAttributeAccessIssue]
+            formats[style] = (probe.number_format, probe._style.numFmtId)
+        return formats[style]
+
+    columns = []
+    for column in range(area.min_col, area.max_col + 1):
+        cells = [row.get(column) for row in rows]
+        title = cells[0]
+        if title is None or title[2] != "s" or not str(title[1]).strip():
+            raise InvalidArgumentError(
+                f"Header cell {cell_name(area.min_row, column)} must contain text: the first row "
+                "of source is the header row, with one label per column."
+            )
+        data = cells[1:]
+        # A position the file has no cell for is a blank cell of the default format.
+        used = {format_of(cell[0] if cell else 0) for cell in data}
+        shared = used.pop() if len(used) == 1 else ("General", 0)
+        columns.append(Column(str(title[1]), [_stored_value(cell) for cell in data], *shared))
+    names = [column.name for column in columns]
+    folded = [name.strip().casefold() for name in names]
+    if len(set(folded)) < len(folded):
+        raise InvalidArgumentError(f"Header names must be unique, got {names}.")
+    return Source(sheet.title, str(area), columns)
+
+
+def _stored_value(cell: tuple[int, object, str] | None) -> Value:
+    if cell is None:
+        return None
+    _, value, data_type = cell
+    return ExcelError(str(value)) if data_type == "e" else _plain(value)
 
 
 def _header(cell: Cell | MergedCell) -> str:
