@@ -1,3 +1,6 @@
+# pyright: reportAttributeAccessIssue=false
+# openpyxl's stubs lack the private members of worksheets that this module replaces.
+
 """Editing large sheets without parsing or writing the rows an edit leaves alone.
 
 Loading and saving a sheet with a million cells takes a minute, and most edits touch a
@@ -22,8 +25,8 @@ from zipfile import ZipFile
 from openpyxl import Workbook
 from openpyxl.cell import MergedCell
 from openpyxl.utils import column_index_from_string, get_column_letter
-from openpyxl.worksheet.dimensions import DimensionHolder
 from openpyxl.worksheet._reader import WorksheetReader
+from openpyxl.worksheet.dimensions import DimensionHolder
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.xml.constants import SHARED_STRINGS
 
@@ -50,7 +53,7 @@ _ROW_NUMBER = re.compile(rb'\br="(\d+)"')
 _DIMENSION = re.compile(rb'<dimension\s+ref="[^"]*"\s*/>')
 _CELL_COLUMN = re.compile(rb'<c\b[^>]*?\br="([A-Z]+)\d')
 # A row with attributes of its own (a height, a style, hidden), not just its number.
-_ATTRIBUTED_ROW = re.compile(rb'<row\b[^>]*\s(?!r=|spans=|[\w.-]+:)[\w.-]+=[^>]*>')
+_ATTRIBUTED_ROW = re.compile(rb"<row\b[^>]*\s(?!r=|spans=|[\w.-]+:)[\w.-]+=[^>]*>")
 # What a formula stored as its result when Excel last calculated it, which an edit makes stale.
 _RESULT = re.compile(rb"(</f>|<f\b[^>]*/>)(?:<v>[^<]*</v>|<v\s*/>)")
 

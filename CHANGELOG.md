@@ -51,6 +51,17 @@ All notable changes to this project are documented here. The format follows
 - `=EXP(1000)` and other overflowing exponentials are `#NUM!`, as in Excel, instead of
   leaving the formula uncalculated.
 
+### Changed
+
+- Edits and descriptions of large workbooks are much faster. A sheet of 1 MB or more (of XML)
+  is loaded without its rows: an edit parses only the blocks of 128 rows it touches, and the
+  save writes those and copies the other rows as the file has them (their stored formula
+  results are dropped, as for any edit). A 10-cell write to a 200,000-row sheet went from
+  41 s to 6 s, and `describe_workbook` finds the used range in the sheet's XML text instead of
+  parsing every cell (14 s to 2 s). Sheets with array, shared or data-table formulas or cell
+  metadata, and macro-enabled workbooks, are still loaded whole; so are edits that look at
+  every cell (inserting rows, sorting, replacing).
+
 ## [2.1.1] - 2026-10-16
 
 ### Fixed
