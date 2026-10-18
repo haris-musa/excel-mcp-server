@@ -1,0 +1,628 @@
+{
+ "excel": "16.0",
+ "trace": [
+  {
+   "range": "F1",
+   "direction": "precedents",
+   "all_levels": false,
+   "expected": "$D$2:$D$9"
+  },
+  {
+   "range": "F2",
+   "direction": "precedents",
+   "all_levels": false,
+   "expected": "$F$1"
+  },
+  {
+   "range": "F3",
+   "direction": "precedents",
+   "all_levels": false,
+   "expected": "$D$2:$D$9,$A$2:$A$9"
+  },
+  {
+   "range": "F4",
+   "direction": "precedents",
+   "all_levels": false,
+   "expected": "$B$2:$B$9"
+  },
+  {
+   "range": "F5",
+   "direction": "precedents",
+   "all_levels": false,
+   "expected": "$H$1:$H$8"
+  },
+  {
+   "range": "F6",
+   "direction": "precedents",
+   "all_levels": false,
+   "expected": "$B$2:$C$9"
+  },
+  {
+   "range": "F7",
+   "direction": "precedents",
+   "all_levels": false,
+   "expected": "$F$1:$F$3"
+  },
+  {
+   "range": "F7",
+   "direction": "precedents",
+   "all_levels": true,
+   "expected": "$F$1:$F$3,$A$2:$D$9"
+  },
+  {
+   "range": "F8",
+   "direction": "precedents",
+   "all_levels": false,
+   "expected": "$F$7"
+  },
+  {
+   "range": "F9",
+   "direction": "precedents",
+   "all_levels": false,
+   "expected": "$B:$B"
+  },
+  {
+   "range": "F10",
+   "direction": "precedents",
+   "all_levels": false,
+   "expected": "$C$2:$C$9"
+  },
+  {
+   "range": "F11",
+   "direction": "precedents",
+   "all_levels": false,
+   "expected": "$A$2:$A$9,$D$2:$D$9"
+  },
+  {
+   "range": "G1",
+   "direction": "precedents",
+   "all_levels": false,
+   "expected": "$F$1,$F$4"
+  },
+  {
+   "range": "G2",
+   "direction": "precedents",
+   "all_levels": false,
+   "expected": "$G$1"
+  },
+  {
+   "range": "G2",
+   "direction": "precedents",
+   "all_levels": true,
+   "expected": "$F$1:$G$1,$F$4,$B$2:$D$9"
+  },
+  {
+   "range": "H1",
+   "direction": "precedents",
+   "all_levels": false,
+   "expected": "$B$2:$B$9"
+  },
+  {
+   "range": "D2",
+   "direction": "precedents",
+   "all_levels": false,
+   "expected": "$B$2:$C$2"
+  },
+  {
+   "range": "D2:D4",
+   "direction": "precedents",
+   "all_levels": false,
+   "expected": "$B$2:$C$4"
+  },
+  {
+   "range": "F1:F4",
+   "direction": "precedents",
+   "all_levels": false,
+   "expected": "$F$1,$D$2:$D$9,$A$2:$B$9"
+  },
+  {
+   "range": "G3",
+   "direction": "precedents",
+   "all_levels": false,
+   "expected": "$A$2:$D$9"
+  },
+  {
+   "range": "B2",
+   "direction": "dependents",
+   "all_levels": false,
+   "expected": "$H$1:$H$8,$D$2,$F$4,$G$3:$G$5,$F$6,$F$9"
+  },
+  {
+   "range": "B2",
+   "direction": "dependents",
+   "all_levels": true,
+   "expected": "$H$1:$H$8,$D$2,$F$11,$G$1:$G$5,$F$1:$F$9"
+  },
+  {
+   "range": "C2",
+   "direction": "dependents",
+   "all_levels": false,
+   "expected": "$D$2,$G$3:$G$4,$F$6,$F$10"
+  },
+  {
+   "range": "C2",
+   "direction": "dependents",
+   "all_levels": true,
+   "expected": "$D$2,$G$4,$F$1:$G$3,$F$10:$F$11,$F$6:$F$8"
+  },
+  {
+   "range": "D2",
+   "direction": "dependents",
+   "all_levels": false,
+   "expected": "$F$1,$F$3:$G$3,$F$11"
+  },
+  {
+   "range": "D2:D9",
+   "direction": "dependents",
+   "all_levels": true,
+   "expected": "$F$1:$G$3,$F$11,$F$7:$F$8"
+  },
+  {
+   "range": "F1",
+   "direction": "dependents",
+   "all_levels": false,
+   "expected": "$G$1,$F$2,$F$7"
+  },
+  {
+   "range": "F1",
+   "direction": "dependents",
+   "all_levels": true,
+   "expected": "$G$1,$F$2:$G$2,$F$7:$F$8"
+  },
+  {
+   "range": "F4",
+   "direction": "dependents",
+   "all_levels": false,
+   "expected": "$G$1"
+  },
+  {
+   "range": "F4",
+   "direction": "dependents",
+   "all_levels": true,
+   "expected": "$G$1:$G$2"
+  },
+  {
+   "range": "A2",
+   "direction": "dependents",
+   "all_levels": false,
+   "expected": "$F$3:$G$3,$F$11"
+  },
+  {
+   "range": "B2:B3",
+   "direction": "dependents",
+   "all_levels": false,
+   "expected": "$H$1:$H$8,$D$2:$D$3,$F$4,$G$3:$G$5,$F$6,$F$9"
+  },
+  {
+   "range": "H1",
+   "direction": "dependents",
+   "all_levels": false,
+   "expected": "$F$5"
+  },
+  {
+   "range": "H1",
+   "direction": "dependents",
+   "all_levels": true,
+   "expected": "$F$5"
+  },
+  {
+   "range": "G1",
+   "direction": "dependents",
+   "all_levels": true,
+   "expected": "$G$2"
+  }
+ ],
+ "evaluate": [
+  {
+   "cell": "F1",
+   "steps": [
+    {
+     "expr": "tblSales[Revenue]",
+     "value": "{15;10;10.5;7.5;39;12;18;9}"
+    },
+    {
+     "expr": "SUM(tblSales[Revenue])",
+     "value": "121"
+    }
+   ]
+  },
+  {
+   "cell": "F2",
+   "steps": [
+    {
+     "expr": "F1",
+     "value": "121"
+    },
+    {
+     "expr": "TaxRate",
+     "value": "0.2"
+    },
+    {
+     "expr": "F1*TaxRate",
+     "value": "24.2"
+    }
+   ]
+  },
+  {
+   "cell": "F3",
+   "steps": [
+    {
+     "expr": "tblSales[Revenue]",
+     "value": "{15;10;10.5;7.5;39;12;18;9}"
+    },
+    {
+     "expr": "tblSales[Region]",
+     "value": "{\"North\";\"South\";\"East\";\"West\";\"North\";\"South\";\"East\";\"West\"}"
+    },
+    {
+     "expr": "SUMIFS(tblSales[Revenue],tblSales[Region],\"North\")",
+     "value": "54"
+    }
+   ]
+  },
+  {
+   "cell": "F5",
+   "steps": [
+    {
+     "expr": "H1",
+     "value": "3"
+    },
+    {
+     "expr": "H1#",
+     "value": "{3;4;5;7;8;9;10;12}"
+    },
+    {
+     "expr": "SUM(H1#)",
+     "value": "58"
+    }
+   ]
+  },
+  {
+   "cell": "F6",
+   "steps": [
+    {
+     "expr": "B2:B9",
+     "value": "{10;5;7;3;12;8;9;4}"
+    },
+    {
+     "expr": "INDEX(B2:B9,3)",
+     "value": "7"
+    },
+    {
+     "expr": "C2:C9",
+     "value": "{1.5;2;1.5;2.5;3.25;1.5;2;2.25}"
+    },
+    {
+     "expr": "MIN(C2:C9)",
+     "value": "1.5"
+    },
+    {
+     "expr": "INDEX(B2:B9,3)+MIN(C2:C9)",
+     "value": "8.5"
+    }
+   ]
+  },
+  {
+   "cell": "F7",
+   "steps": [
+    {
+     "expr": "F1",
+     "value": "121"
+    },
+    {
+     "expr": "F1>100",
+     "value": "TRUE"
+    },
+    {
+     "expr": "F2",
+     "value": "24.2"
+    },
+    {
+     "expr": "IF(F1>100,F2,F3)",
+     "value": "24.2"
+    }
+   ]
+  },
+  {
+   "cell": "F8",
+   "steps": [
+    {
+     "expr": "F7",
+     "value": "24.2"
+    },
+    {
+     "expr": "Assumptions!B2",
+     "value": "5"
+    },
+    {
+     "expr": "F7+Assumptions!B2",
+     "value": "29.2"
+    }
+   ]
+  },
+  {
+   "cell": "F9",
+   "steps": [
+    {
+     "expr": "B:B",
+     "value": "{\"Units\";10;5;7;3;12;8;9;4;;}"
+    },
+    {
+     "expr": "SUM(B:B)",
+     "value": "58"
+    }
+   ]
+  },
+  {
+   "cell": "F10",
+   "steps": [
+    {
+     "expr": "Sales!C2:C9",
+     "value": "{1.5;2;1.5;2.5;3.25;1.5;2;2.25}"
+    },
+    {
+     "expr": "AVERAGE(Sales!C2:C9)",
+     "value": "2.0625"
+    },
+    {
+     "expr": "Assumptions!B1",
+     "value": "0.2"
+    },
+    {
+     "expr": "AVERAGE(Sales!C2:C9)*Assumptions!B1",
+     "value": "0.4125"
+    }
+   ]
+  },
+  {
+   "cell": "F11",
+   "steps": [
+    {
+     "expr": "IF(A2:A9=\"North\",D2:D9)",
+     "value": "{15;FALSE;FALSE;FALSE;39;FALSE;FALSE;FALSE}"
+    },
+    {
+     "expr": "MAX(IF(A2:A9=\"North\",D2:D9))",
+     "value": "39"
+    }
+   ]
+  },
+  {
+   "cell": "G1",
+   "steps": [
+    {
+     "expr": "F1",
+     "value": "121"
+    },
+    {
+     "expr": "F4",
+     "value": "58"
+    },
+    {
+     "expr": "F1+F4",
+     "value": "179"
+    }
+   ]
+  },
+  {
+   "cell": "G2",
+   "steps": [
+    {
+     "expr": "G1",
+     "value": "179"
+    },
+    {
+     "expr": "G1*2",
+     "value": "358"
+    }
+   ]
+  },
+  {
+   "cell": "G3",
+   "steps": [
+    {
+     "expr": "A2:D9",
+     "value": "{\"North\",10,1.5,15,\"South\",5,2,10,\"East\",7,1.5,10.5,\"West\",3,2.5,7.5,\"North\",12,3.25,39,\"South\",8,1.5,12,\"East\",9,2,18,\"West\",4,...} 8x4"
+    },
+    {
+     "expr": "VLOOKUP(\"East\",A2:D9,4,FALSE)",
+     "value": "10.5"
+    },
+    {
+     "expr": "B2",
+     "value": "10"
+    },
+    {
+     "expr": "B2-10",
+     "value": "0"
+    },
+    {
+     "expr": "VLOOKUP(\"East\",A2:D9,4,FALSE)/(B2-10)",
+     "value": "#DIV/0!"
+    },
+    {
+     "expr": "IFERROR(VLOOKUP(\"East\",A2:D9,4,FALSE)/(B2-10),\"none\")",
+     "value": "\"none\""
+    }
+   ]
+  },
+  {
+   "cell": "G4",
+   "steps": [
+    {
+     "expr": "B2:B9",
+     "value": "{10;5;7;3;12;8;9;4}"
+    },
+    {
+     "expr": "C2:C9",
+     "value": "{1.5;2;1.5;2.5;3.25;1.5;2;2.25}"
+    },
+    {
+     "expr": "SUMPRODUCT(B2:B9,C2:C9)",
+     "value": "121"
+    },
+    {
+     "expr": "B2:B9",
+     "value": "{10;5;7;3;12;8;9;4}"
+    },
+    {
+     "expr": "COUNT(B2:B9)",
+     "value": "8"
+    },
+    {
+     "expr": "SUMPRODUCT(B2:B9,C2:C9)/COUNT(B2:B9)",
+     "value": "15.125"
+    },
+    {
+     "expr": "ROUND(SUMPRODUCT(B2:B9,C2:C9)/COUNT(B2:B9),2)",
+     "value": "15.13"
+    },
+    {
+     "expr": "ROUND(SUMPRODUCT(B2:B9,C2:C9)/COUNT(B2:B9),2)&\" avg\"",
+     "value": "\"15.13 avg\""
+    }
+   ]
+  },
+  {
+   "cell": "G5",
+   "steps": [
+    {
+     "expr": "B2",
+     "value": "10"
+    },
+    {
+     "expr": "B2+3",
+     "value": "13"
+    },
+    {
+     "expr": "-(B2+3)",
+     "value": "-13"
+    },
+    {
+     "expr": "2%",
+     "value": "0.02"
+    },
+    {
+     "expr": "-(B2+3)^2%",
+     "value": "#NUM!"
+    }
+   ]
+  }
+ ],
+ "goal_seek": [
+  {
+   "name": "loan rate",
+   "found": true,
+   "x": 0.06006989975967126,
+   "f": 1199.999995864959
+  },
+  {
+   "name": "loan rate from 1%",
+   "found": true,
+   "x": 0.060069900208164176,
+   "f": 1200.0000016337478
+  },
+  {
+   "name": "loan amount",
+   "found": true,
+   "x": 250187.42158850294,
+   "f": 1499.9999999999998
+  },
+  {
+   "name": "break-even units",
+   "found": true,
+   "x": 1250.0000000000005,
+   "f": 0.0
+  },
+  {
+   "name": "npv of zero",
+   "found": true,
+   "x": 0.15322125179389665,
+   "f": 0.00025236855640287104
+  },
+  {
+   "name": "x squared from 1",
+   "found": true,
+   "x": 1.9999169833055708,
+   "f": -0.00033205988594531277
+  },
+  {
+   "name": "x squared from -1",
+   "found": true,
+   "x": -1.9999169833055708,
+   "f": -0.00033205988594531277
+  },
+  {
+   "name": "x squared from 0",
+   "found": true,
+   "x": 2.000022875392319,
+   "f": 9.150209255981423e-05
+  },
+  {
+   "name": "no solution",
+   "found": false,
+   "x": -28147497671065.71,
+   "f": 7.922816251426496e+26
+  },
+  {
+   "name": "cubic stuck",
+   "found": false,
+   "x": -0.9100000000000029,
+   "f": -3.9335710000000015
+  },
+  {
+   "name": "named input",
+   "found": true,
+   "x": 0.024973966715975338,
+   "f": 1000.0000002997799
+  },
+  {
+   "name": "sine",
+   "found": true,
+   "x": 0.5228953821747103,
+   "f": 0.4993907197859767
+  },
+  {
+   "name": "exponential",
+   "found": true,
+   "x": 6.907755280696071,
+   "f": 1000.0000017139337
+  },
+  {
+   "name": "square root",
+   "found": true,
+   "x": 8.999884150609585,
+   "f": 2.999980691706129
+  },
+  {
+   "name": "absolute value",
+   "found": true,
+   "x": 2.0,
+   "f": 0.0
+  },
+  {
+   "name": "independent",
+   "found": false,
+   "x": -335543.32,
+   "f": 5.0
+  },
+  {
+   "name": "across sheets",
+   "found": true,
+   "x": 18.0,
+   "f": 100.0
+  },
+  {
+   "name": "blank input",
+   "found": true,
+   "x": 3.0,
+   "f": 10.0
+  },
+  {
+   "name": "interest on balance",
+   "found": true,
+   "x": 1590.0914993091342,
+   "f": 1000.0000000000005
+  }
+ ]
+}

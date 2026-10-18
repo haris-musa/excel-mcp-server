@@ -274,15 +274,15 @@ def lookup(value: Value, lookup_vector: Value, result_vector: Value = None) -> S
     return results[found]
 
 
-@function("OFFSET", kind="lazy")
-def offset(
+def offset_target(
     engine: "Engine",
     reference: Node,
     rows: Node,
     columns: Node,
     height: Node | None = None,
     width: Node | None = None,
-) -> Value:
+) -> Ref:
+    """The range OFFSET moves to."""
     if not (
         isinstance(reference, Ref)
         and reference.top
@@ -299,5 +299,16 @@ def offset(
         raise FormulaError(REF)
     if top + tall - 1 > MAX_ROW or left + wide - 1 > MAX_COLUMN:
         raise FormulaError(REF)
-    moved = Ref(reference.sheets, top, left, top + tall - 1, left + wide - 1, False)
-    return engine.reference(moved)
+    return Ref(reference.sheets, top, left, top + tall - 1, left + wide - 1, False)
+
+
+@function("OFFSET", kind="lazy")
+def offset(
+    engine: "Engine",
+    reference: Node,
+    rows: Node,
+    columns: Node,
+    height: Node | None = None,
+    width: Node | None = None,
+) -> Value:
+    return engine.reference(offset_target(engine, reference, rows, columns, height, width))

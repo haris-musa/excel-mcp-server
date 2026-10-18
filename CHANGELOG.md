@@ -26,10 +26,30 @@ All notable changes to this project are documented here. The format follows
   default); numbers never do.
 - `--tools AREAS` (`EXCEL_MCP_TOOLS`) offers only the core tools (`describe_workbook`,
   `describe_sheet`, `read_range`) and the chosen areas, to cut the context the tool list uses.
-  Areas: `workbooks`, `csv`, `sheets`, `data`, `formatting`, `tables`, `charts`, `pivots`,
+  Areas: `workbooks`, `csv`, `sheets`, `data`, `formulas`, `formatting`, `tables`, `charts`, `pivots`,
   `slicers`, `names`, `notes`, `images`, `vba`. It combines with `--read-only` and
   `--allow-vba-write` (VBA writing needs the flag and the `vba` area). An unknown area stops the
   server at startup with the valid names.
+- `trace_formula` audits formulas like Excel's Formulas tab, calculated by the built-in engine
+  (read-only): `precedents` (the cells and ranges a formula uses) and `dependents` (the
+  formulas that use a cell or range), one level or all, across sheets, defined names, table
+  references and spill references, merged into A1 ranges by sheet, with `INDIRECT` and
+  `OFFSET` followed to the cells they compute and the formulas where that cannot be worked
+  out listed as `unknown`; and `evaluate`, the steps of Evaluate Formula (each
+  sub-expression with its value, innermost first, only the branches Excel takes). Results are
+  capped at 200 ranges and 100 steps, with `more` counting what was left out.
+- `goal_seek` is Excel's Goal Seek: it changes a constant until a formula reaches a value
+  (within 0.001, at most 100 iterations) and stores the answer, or changes nothing and says
+  that it may not have found a solution. It refuses a target without a formula, an input that
+  holds a formula or text, a formula that does not depend on the input, and a formula the
+  calculator cannot calculate. Results are checked against `Range.GoalSeek` and
+  `Range.DirectPrecedents`, `Precedents`, `DirectDependents` and `Dependents` recorded from
+  Excel (`tests/fixtures/audit_golden.json`).
+
+### Fixed
+
+- `=EXP(1000)` and other overflowing exponentials are `#NUM!`, as in Excel, instead of
+  leaving the formula uncalculated.
 
 ## [2.1.1] - 2026-10-16
 

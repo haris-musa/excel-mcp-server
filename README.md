@@ -45,6 +45,9 @@ Excel**, and runs on Windows, macOS and Linux.
   for files that were never opened in Excel
 - Dynamic arrays (`FILTER`, `SORT`, `UNIQUE`, `SEQUENCE`, `LET`) are stored as Excel stores
   them and spill into the cells next to them
+- Find out why a number is wrong: trace precedents and dependents across sheets, names and
+  tables, and evaluate a formula step by step as Excel's Evaluate Formula does
+- Goal Seek: change an input until a formula reaches the value you want
 
 **Data, tables and rules**
 - Read and write cells, dates and hyperlinks; tables with totals rows and calculated columns
@@ -206,6 +209,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
 | CSV | `import_csv`, `export_csv` |
 | Sheets | `describe_sheet`, `create_sheet`, `rename_sheet`, `copy_sheet`, `delete_sheet`, `insert_rows_or_columns`, `delete_rows_or_columns` |
 | Cells | `read_range`, `write_range`, `clear_range`, `copy_range`, `sort_range`, `transform_range`, `find_cells`, `replace_cells` |
+| Formulas | `trace_formula`, `goal_seek` |
 | Formatting | `format_range`, `merge_cells`, `set_sheet_layout`, `add_conditional_format`, `add_data_validation` |
 | Objects | `set_table`, `create_chart`, `delete_chart`, `create_pivot_table`, `delete_pivot_table`, `add_slicer`, `delete_slicer`, `insert_image`, `delete_image`, `add_sparklines`, `delete_sparklines` |
 | Names and notes | `set_defined_name`, `delete_defined_name`, `set_note`, `delete_note` |
@@ -227,6 +231,7 @@ schemas, at about 3.5 characters per token:
 | `csv` | `import_csv`, `export_csv` | 2,200 |
 | `sheets` | `create_sheet`, `rename_sheet`, `copy_sheet`, `delete_sheet`, `insert_rows_or_columns`, `delete_rows_or_columns` | 2,000 |
 | `data` | `write_range`, `clear_range`, `copy_range`, `sort_range`, `transform_range`, `find_cells`, `replace_cells` | 6,700 |
+| `formulas` | `trace_formula`, `goal_seek` | 1,300 |
 | `formatting` | `format_range`, `merge_cells`, `set_sheet_layout`, `add_conditional_format`, `add_data_validation` | 14,000 |
 | `tables` | `set_table` | 1,900 |
 | `charts` | `create_chart`, `delete_chart`, `add_sparklines`, `delete_sparklines` | 9,900 |
@@ -315,6 +320,12 @@ Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
   (not array-entered) formulas do the same, and volatile functions such as `RAND` are not
   calculated. The calculator is checked against more than 2,500 formulas recorded from real
   Excel (`tests/fixtures/formula_golden.json`).
+- `trace_formula` and `goal_seek` use that calculator, so `goal_seek` refuses a formula it
+  cannot calculate. Where Excel's Trace Precedents shows the cells an `OFFSET` starts from,
+  `trace_formula` shows the cells `INDIRECT` and `OFFSET` point at; when those cannot be
+  worked out the formula is listed in `unknown`. Where Excel's search stops at the
+  "may not have found a solution" message, `goal_seek` may still find a root, and it stores
+  the answer only when it converges (within 0.001 of the target, as Excel does).
 - Functions Excel added after 2007 (`IFS`, `XLOOKUP`, `STDEV.S`, `SORT`, ...) are written
   with the `_xlfn.` prefix Excel expects, wherever formulas are stored (cells, copied and
   sorted cells, conditional formats, data validation, defined names).

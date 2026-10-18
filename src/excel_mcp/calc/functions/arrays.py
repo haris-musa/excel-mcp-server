@@ -13,6 +13,7 @@ from excel_mcp.calc.values import (
     ExcelError,
     FormulaError,
     Grid,
+    RefGrid,
     Scalar,
     UncalculableError,
     Value,
@@ -33,6 +34,18 @@ def anchor_array(engine: "Engine", reference: Node) -> Value:
     if not isinstance(reference, Ref):
         raise UncalculableError("spill reference to a computed value")
     return engine.anchored(reference)
+
+
+def anchor_target(engine: "Engine", reference: Node) -> Ref:
+    """The range a spill reference stands for."""
+    spilled = anchor_array(engine, reference)
+    assert isinstance(reference, Ref) and isinstance(spilled, Grid)
+    top, left = reference.top, reference.left
+    if isinstance(spilled, RefGrid):
+        top, left = spilled.top, spilled.left
+    assert top is not None and left is not None
+    bottom, right = top + spilled.height - 1, left + spilled.width - 1
+    return Ref(reference.sheets, top, left, bottom, right, False)
 
 
 @function("SEQUENCE", kind="scalar")

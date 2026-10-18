@@ -31,6 +31,8 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`transform_range`](#transform_range) | Remove duplicate rows, split text into columns, or fill down, right or as a series, like Excel's Data and Fill commands. |
 | [`find_cells`](#find_cells) | Find cells whose value contains (or equals) the query, grouped by sheet. |
 | [`replace_cells`](#replace_cells) | Replace text in cells, like Excel's Replace All (literal, no wildcards). The result is retyped as in Excel: '1' becomes a number, '=...' a formula. Returns cells changed. |
+| [`trace_formula`](#trace_formula) | Audit formulas, calculated here. `cells`: ranges by sheet (names and table references resolved); `unknown`: formulas with references that cannot be worked out (a computed INDIRECT); `steps`: innermost first; `more`: results left out. |
+| [`goal_seek`](#goal_seek) | Goal Seek: change the constant `changing_cell` until the formula in `cell` equals `target`, and store it. Stops within 0.001 after at most 100 iterations; if it does not converge, nothing is changed. |
 | [`format_range`](#format_range) | Change the font, fill, borders, alignment, number format or protection flags of a range. `locked` and `formula_hidden` apply once the sheet is protected. |
 | [`merge_cells`](#merge_cells) | Merge a range into one cell (keeping the top-left value), or unmerge it. |
 | [`set_sheet_layout`](#set_sheet_layout) | Set column widths, row heights, hidden or grouped lines, frozen panes, auto filter, tab color, visibility, position, view options, print setup and protection. |
@@ -460,6 +462,38 @@ is retyped as in Excel: '1' becomes a number, '=...' a formula. Returns cells ch
 | `exact` | boolean | no | Match whole cells. |
 | `case_sensitive` | boolean | no |  |
 | `in_formulas` | boolean | no | Also replace inside formula text. Default: `true`. |
+
+## trace_formula
+
+**Trace formula** (read-only)
+
+Audit formulas, calculated here. `cells`: ranges by sheet (names and table
+references resolved); `unknown`: formulas with references that cannot be worked out (a
+computed INDIRECT); `steps`: innermost first; `more`: results left out.
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Workbook file path, relative to the allowed folder or absolute inside it. |
+| `sheet` | string | yes | Sheet name. |
+| `range` | string | yes | A cell; a range for 'dependents'. |
+| `direction` | `precedents` \| `dependents` \| `evaluate` | yes | 'precedents': what the formulas use; 'dependents': formulas using `range`; 'evaluate': Evaluate Formula steps. |
+| `all_levels` | boolean | no | Follow to the end, not one level. |
+
+## goal_seek
+
+**Goal Seek** (modifies files, may overwrite data)
+
+Goal Seek: change the constant `changing_cell` until the formula in `cell` equals
+`target`, and store it. Stops within 0.001 after at most 100 iterations; if it does not
+converge, nothing is changed.
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | yes | Workbook file path, relative to the allowed folder or absolute inside it. |
+| `sheet` | string | yes | Sheet name. |
+| `cell` | string | yes | Formula cell to set. |
+| `target` | number | yes | The value it should reach. |
+| `changing_cell` | string | yes | Constant to change. |
 
 ## format_range
 

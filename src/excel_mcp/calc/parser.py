@@ -84,6 +84,21 @@ Node = (
     Literal | ErrorLiteral | Ref | TableRef | Name | Unary | Percent | Binary | Call | ArrayLiteral
 )
 
+
+def children(node: Node) -> tuple[Node, ...]:
+    """The nodes a node is made of, in the order they are written."""
+    match node:
+        case Unary(_, operand) | Percent(operand):
+            return (operand,)
+        case Binary(_, left, right):
+            return (left, right)
+        case Call():
+            return node.args
+        case ArrayLiteral(rows):
+            return tuple(item for row in rows for item in row)
+    return ()
+
+
 _PRECEDENCE = {
     "=": 1, "<>": 1, "<": 1, ">": 1, "<=": 1, ">=": 1,
     "&": 2,
