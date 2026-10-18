@@ -11,6 +11,7 @@ from excel_mcp.errors import InvalidArgumentError, LimitExceededError
 from excel_mcp.operations.date_width import FITTED_WIDTHS, widen_for_dates
 from excel_mcp.operations.hyperlinks import Link, set_link
 from excel_mcp.operations.spill import spill_formulas
+from excel_mcp.operations.used_range import used_range_in
 from excel_mcp.refs import (
     MAX_COLUMN,
     MAX_ROW,
@@ -79,7 +80,13 @@ def streamed_cells(sheet: ReadOnlyWorksheet) -> Iterator[tuple[int, int, object]
 
 
 def streamed_used_range(sheet: ReadOnlyWorksheet) -> CellRange:
-    """Like used_range, for a streamed sheet: one full pass over its cells."""
+    """Like used_range, for a streamed sheet: read from the sheet's XML text, or else one full
+    pass over its cells."""
+    if not sheet.parent.data_only:  # pyright: ignore[reportOptionalMemberAccess]
+        with sheet._get_source() as source:  # pyright: ignore[reportPrivateUsage]
+            found = used_range_in(source.read())
+        if found is not None:
+            return found
     min_row = min_col = MAX_ROW + 1
     max_row = max_col = 0
     for row, col, _ in streamed_cells(sheet):

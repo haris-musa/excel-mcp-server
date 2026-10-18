@@ -7,6 +7,7 @@ from openpyxl.cell.cell import Cell
 from openpyxl.worksheet.formula import ArrayFormula
 from openpyxl.worksheet.worksheet import Worksheet
 
+from excel_mcp.lazy_workbook import held_cells
 from excel_mcp.package.model import CellMark, state_of
 from excel_mcp.refs import CellRange, parse_range
 
@@ -48,7 +49,7 @@ def legacy_anchors(workbook: Workbook) -> list[Cell]:
         cell
         for sheet in workbook.worksheets
         if isinstance(sheet, Worksheet)
-        for cell in sheet._cells.values()
+        for cell in held_cells(sheet).values()
         if isinstance(cell, Cell)
         and isinstance(cell.value, ArrayFormula)
         and id(cell) not in dynamic
@@ -71,7 +72,7 @@ def holds(cell: Cell) -> bool:
 
 
 def _realign(sheet: Worksheet) -> None:
-    for (row, col), cell in sheet._cells.items():
+    for (row, col), cell in held_cells(sheet).items():
         formula = cell.value
         if isinstance(formula, ArrayFormula):
             area = parse_range(formula.ref)

@@ -7,6 +7,7 @@ from xml.sax.saxutils import escape
 from openpyxl.worksheet.formula import ArrayFormula
 from openpyxl.worksheet.worksheet import Worksheet
 
+from excel_mcp.lazy_workbook import held_cells
 from excel_mcp.package import consistency, pivots, vml
 from excel_mcp.package import extensions as extensions_module
 from excel_mcp.package.model import CellMark, Link, Part, SheetPackage
@@ -84,7 +85,7 @@ def _threaded_comments(sheet: Worksheet, links: list[Link]) -> list[Link]:
     """Point threaded comments at the notes they are shown with; drop those without a note."""
     live = {
         cell.comment.author[3:]: cell.coordinate
-        for cell in sheet._cells.values()
+        for cell in held_cells(sheet).values()
         if cell.comment and (cell.comment.author or "").startswith("tc=")
     }
     kept = []
