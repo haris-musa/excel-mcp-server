@@ -8,6 +8,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
 
 from excel_mcp.errors import InvalidArgumentError, LimitExceededError
+from excel_mcp.lazy_workbook import held_cells
 from excel_mcp.operations.date_width import FITTED_WIDTHS, widen_for_dates
 from excel_mcp.operations.hyperlinks import Link, set_link
 from excel_mcp.operations.spill import spill_formulas
@@ -52,6 +53,13 @@ def stored_cells(sheet: Worksheet) -> Iterator[Cell]:
     position up to max_row x max_column, as iter_rows() would.
     """
     for _, cell in sorted(sheet._cells.items()):
+        if cell.value is not None:
+            yield cell
+
+
+def parsed_cells(sheet: Worksheet) -> Iterator[Cell]:
+    """`stored_cells`, but for the rows a large sheet has not parsed, which are as in the file."""
+    for _, cell in sorted(held_cells(sheet).items()):
         if cell.value is not None:
             yield cell
 

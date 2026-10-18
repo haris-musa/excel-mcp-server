@@ -5,6 +5,7 @@ from dataclasses import dataclass, replace
 
 from openpyxl.utils.cell import column_index_from_string, get_column_letter
 
+from excel_mcp import plain_refs
 from excel_mcp.formulas import split_top_level, unquote
 from excel_mcp.package.lines import LineEdit
 from excel_mcp.refs import MAX_COLUMN, MAX_ROW
@@ -55,6 +56,37 @@ class Shifter(ReferenceRewriter):
     def __init__(self, edit: LineEdit, dead_tables: dict[str, frozenset[str] | None]) -> None:
         self.edit = edit
         self.dead_tables = dead_tables
+
+    def formula(self, formula: str, host: str) -> str:
+        if host.casefold() != self.edit.sheet.casefold():
+            # Without a sheet name or a table, a reference is to the formula's own sheet.
+            if "!" not in formula and "[" not in formula:
+                return formula
+        else:
+            plain = plain_refs.sub(formula, self._plain)
+            if plain is not None:
+                return plain
+        return super().formula(formula, host)
+
+    def _plain(self, match: plain_refs.Match) -> str:
+        """`reference` for a plain reference of a formula on the edited sheet."""
+        ends = plain_refs.references(match)
+        if ends is None:
+            return match[0]
+        first, last = ends[0], ends[-1]
+        rows = self.edit.axis == "rows"
+        a, b = (first.row, last.row) if rows else (first.column, last.column)
+        if a > b:
+            first, last, a, b = last, first, b, a
+        moved = self.edit.span(a, b)
+        if moved is None:
+            return REF_ERROR
+        if len(ends) == 1:
+            setattr(first, "row" if rows else "column", moved[0])
+            return first.text()
+        setattr(first, "row" if rows else "column", moved[0])
+        setattr(last, "row" if rows else "column", moved[1])
+        return f"{first.text()}:{last.text()}"
 
     def reference(self, text: str, host: str) -> str:
         table, bracket, _ = text.partition("[")
