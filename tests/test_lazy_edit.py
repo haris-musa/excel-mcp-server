@@ -1,3 +1,5 @@
+# pyright: reportAttributeAccessIssue=false, reportOptionalMemberAccess=false
+# The tests look at openpyxl internals and at what the lazy cells hold.
 """Edits of a large sheet leave the rows they do not touch alone, and give the same workbook as
 loading and saving the whole sheet does.
 
@@ -20,8 +22,8 @@ from openpyxl.cell import MergedCell
 from openpyxl.comments import Comment
 from openpyxl.formatting.rule import CellIsRule
 from openpyxl.styles import Font, PatternFill
-from openpyxl.worksheet.formula import ArrayFormula
 from openpyxl.worksheet.datavalidation import DataValidation
+from openpyxl.worksheet.formula import ArrayFormula
 from openpyxl.worksheet.table import Table
 
 from excel_mcp import lazy_edit, lazy_workbook
@@ -196,7 +198,10 @@ STEPS: list[tuple[str, dict[str, Any]]] = [
     ("set_table", {"sheet": "Data", "name": "Keys", "options": {"style": "TableStyleMedium2"}}),
     ("write_range", {"sheet": "Data", "at": "L1", "rows": [["a", "b"], [1, 2], [3, 4], [5, 6]]}),
     ("set_table", {"sheet": "Data", "name": "Extra", "range": "L1:M4"}),
-    ("create_chart", {"sheet": "Data", "chart_type": "column", "source": "Data!B1:D12", "at": "O2"}),
+    (
+        "create_chart",
+        {"sheet": "Data", "chart_type": "column", "source": "Data!B1:D12", "at": "O2"},
+    ),
     (
         "add_conditional_format",
         {
@@ -213,14 +218,22 @@ STEPS: list[tuple[str, dict[str, Any]]] = [
     ("replace_cells", {"query": "item 3", "replacement": "thing 3", "sheet": "Data"}),
     (
         "sort_range",
-        {"sheet": "Data", "range": "H1:J13", "sort_by": [{"column": "Count", "order": "descending"}]},
+        {
+            "sheet": "Data",
+            "range": "H1:J13",
+            "sort_by": [{"column": "Count", "order": "descending"}],
+        },
     ),
     ("insert_rows_or_columns", {"sheet": "Data", "axis": "rows", "start": 10, "count": 3}),
     ("delete_rows_or_columns", {"sheet": "Data", "axis": "rows", "start": 30, "count": 2}),
     ("insert_rows_or_columns", {"sheet": "Data", "axis": "columns", "start": 3, "count": 1}),
     (
         "transform_range",
-        {"sheet": "Data", "range": "D2:D36", "transform": {"operation": "fill", "direction": "down"}},
+        {
+            "sheet": "Data",
+            "range": "D2:D36",
+            "transform": {"operation": "fill", "direction": "down"},
+        },
     ),
     ("write_range", {"sheet": "Notes", "at": "B1", "rows": [["other sheet"]]}),
 ]
@@ -332,7 +345,9 @@ async def test_rows_that_are_not_parsed_are_kept_with_their_results_dropped(
     make_book(files / "book.xlsx")
     parts = read_parts(files / "book.xlsx")
     sheet = parts["xl/worksheets/sheet1.xml"].decode()
-    stored = re.sub(r'(<c r="E(\d+)"[^>]*>)<f>(.*?)</f><v ?/?>(</v>)?', r"\1<f>\3</f><v>\2</v>", sheet)
+    stored = re.sub(
+        r'(<c r="E(\d+)"[^>]*>)<f>(.*?)</f><v ?/?>(</v>)?', r"\1<f>\3</f><v>\2</v>", sheet
+    )
     assert len(re.findall(r"</f><v>\d", stored)) == ROWS - 1
     parts["xl/worksheets/sheet1.xml"] = stored.encode()
     with ZipFile(files / "book.xlsx", "w") as archive:

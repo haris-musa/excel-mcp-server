@@ -235,9 +235,14 @@ class LazyCells(dict[CellKey, Any]):
                     yield (row, col), super().__getitem__((row, col))
 
     def load_all(self) -> None:
-        blocks = {number // BLOCK_ROWS for number in self.source.row_numbers}
-        for block in sorted(blocks - self.loaded):
-            self.load(block * BLOCK_ROWS)
+        source = self.source
+        spans = [
+            span
+            for number, span in zip(source.row_numbers, source.spans, strict=True)
+            if number // BLOCK_ROWS not in self.loaded
+        ]
+        self.loaded.update(number // BLOCK_ROWS for number in source.row_numbers)
+        self._parse(spans)
 
     def load(self, row: int) -> None:
         """Parse the block of rows that holds ``row``, unless that is done."""
@@ -245,9 +250,10 @@ class LazyCells(dict[CellKey, Any]):
         if block in self.loaded:
             return
         self.loaded.add(block)
-        spans = self.source.spans[
-            self.source.between(block * BLOCK_ROWS, (block + 1) * BLOCK_ROWS - 1)
-        ]
+        first, last = block * BLOCK_ROWS, (block + 1) * BLOCK_ROWS - 1
+        self._parse(self.source.spans[self.source.between(first, last)])
+
+    def _parse(self, spans: list[tuple[int, int]]) -> None:
         if not spans:
             return
         rows = b"".join(self.source.data[start:end] for start, end in spans)

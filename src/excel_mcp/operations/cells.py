@@ -83,7 +83,7 @@ def streamed_used_range(sheet: ReadOnlyWorksheet) -> CellRange:
     """Like used_range, for a streamed sheet: read from the sheet's XML text, or else one full
     pass over its cells."""
     if not sheet.parent.data_only:  # pyright: ignore[reportOptionalMemberAccess]
-        with sheet._get_source() as source:  # pyright: ignore[reportPrivateUsage]
+        with sheet._get_source() as source:  # pyright: ignore[reportAttributeAccessIssue]
             found = used_range_in(source.read())
         if found is not None:
             return found

@@ -110,7 +110,8 @@ def test_inline_strings_with_and_without_content() -> None:
         b'<worksheet><sheetData><row r="2"><c r="A2"><v>1</v></c></row>'
         b'<row r="1"><c r="A1"><v>1</v></c></row></sheetData></worksheet>',
         b'<worksheet><sheetData><row><c r="A1"><v>1</v></c></row></sheetData></worksheet>',
-        b'<worksheet><sheetData><row r="1"><c s="1" r="A1"><v>1</v></c></row></sheetData></worksheet>',
+        b'<worksheet><sheetData><row r="1"><c s="1" r="A1"><v>1</v></c></row></sheetData>'
+        b"</worksheet>",
         b'<worksheet><sheetData><row r="1"><c><v>1</v></c></row></sheetData></worksheet>',
         b"<worksheet></worksheet>",
     ],
@@ -144,7 +145,9 @@ async def test_a_wrong_dimension_does_not_matter(call: ToolCall, files: Path) ->
     with ZipFile(files / "book.xlsx") as archive:
         parts = {name: archive.read(name) for name in archive.namelist()}
     xml = parts["xl/worksheets/sheet1.xml"].decode()
-    parts["xl/worksheets/sheet1.xml"] = re.sub(r'<dimension ref="[^"]*"', '<dimension ref="A1"', xml).encode()
+    parts["xl/worksheets/sheet1.xml"] = re.sub(
+        r'<dimension ref="[^"]*"', '<dimension ref="A1"', xml
+    ).encode()
     with ZipFile(files / "book.xlsx", "w") as archive:
         for name, content in parts.items():
             archive.writestr(name, content)
