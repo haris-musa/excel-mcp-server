@@ -140,6 +140,11 @@
             max-width: 640px;
             margin: 0 auto 1.5rem;
         }
+        .hero .news {
+            font-size: 0.95rem;
+            color: #b0b0b0;
+            margin: 1.25rem auto 0;
+        }
         .cta {
             display: flex;
             flex-wrap: wrap;
@@ -403,6 +408,7 @@
                     <a class="btn primary" href="#install">Install in two minutes</a>
                     <a class="btn" href="https://github.com/haris-musa/excel-mcp-server">View on GitHub</a>
                 </div>
+                <p class="news">New: CSV import and export, formula tracing and Goal Seek, and edits of 200,000-row sheets in seconds. <a href="https://github.com/haris-musa/excel-mcp-server/releases">What's new</a></p>
             </section>
 
             <section class="section" id="install">
@@ -515,6 +521,8 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
                     <li>"Open report.xlsx, a sheet with 200,000 rows. How many rows have status Failed, and what is the date range?"</li>
                     <li>"Clean up the Contacts sheet: remove duplicate emails, trim names, sort by last name and add a dropdown for the Country column."</li>
                     <li>"Highlight overdue tasks in red, add sparklines for the weekly trend, and freeze the header row."</li>
+                    <li>"The total in Summary!F12 looks wrong. Trace where it comes from and show me how it is calculated."</li>
+                    <li>"What price in B3 gives a 25% margin in B10? Use Goal Seek."</li>
                 </ul>
             </section>
 
@@ -531,11 +539,11 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
                     </div>
                     <div class="card">
                         <h3>Formulas without Excel</h3>
-                        <p>Formulas are calculated by a built-in engine (about 260 functions, checked against results recorded from Excel), so values can be read back without opening Excel. Dynamic arrays (<code>FILTER</code>, <code>SORT</code>, <code>UNIQUE</code>, <code>SEQUENCE</code>, <code>LET</code>) are supported.</p>
+                        <p>Formulas are calculated by a built-in engine (about 260 functions, checked against results recorded from Excel), so values can be read back without opening Excel. Dynamic arrays (<code>FILTER</code>, <code>SORT</code>, <code>UNIQUE</code>, <code>SEQUENCE</code>, <code>LET</code>) are supported. Trace what a formula uses and what uses a cell, evaluate a formula step by step, and run Goal Seek.</p>
                     </div>
                     <div class="card">
                         <h3>Large files</h3>
-                        <p>Reads stream the workbook and return pages, so memory stays flat on sheets with hundreds of thousands of rows.</p>
+                        <p>Reads stream the workbook and return pages, and edits touch only the rows they change, so a 200,000-row sheet is read or edited in seconds with flat memory. PivotTables summarize sources of up to 3 million cells.</p>
                     </div>
                     <div class="card">
                         <h3>Tables, rules and data tools</h3>
@@ -593,7 +601,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
                         <tr><td><code>--allow-dir DIR</code></td><td><code>EXCEL_FILES_PATH</code></td><td>Folders workbooks must be in (repeat the flag; separate several in the variable with <code>:</code>, or <code>;</code> on Windows). HTTP defaults to <code>./excel_files</code>.</td></tr>
                         <tr><td><code>--read-only</code></td><td><code>EXCEL_MCP_READ_ONLY=1</code></td><td>Only offer tools that do not change files.</td></tr>
                         <tr><td><code>--allow-vba-write</code></td><td><code>EXCEL_MCP_ALLOW_VBA_WRITE=1</code></td><td>Add the tools that write VBA macros. Off by default and ignored with <code>--read-only</code>.</td></tr>
-                        <tr><td><code>--tools AREAS</code></td><td><code>EXCEL_MCP_TOOLS</code></td><td>Only offer the core tools (<code>describe_workbook</code>, <code>describe_sheet</code>, <code>read_range</code>) and these comma-separated areas, to save context. Areas and their size in characters of tool schema: <code>workbooks</code> 2,600, <code>csv</code> 2,200, <code>sheets</code> 2,000, <code>data</code> 6,700, <code>formulas</code> 1,300, <code>formatting</code> 14,000, <code>tables</code> 1,900, <code>charts</code> 9,900, <code>pivots</code> 4,600, <code>slicers</code> 2,500, <code>names</code> 900, <code>notes</code> 500, <code>images</code> 800, <code>vba</code> 1,900; the core is 8,900 (about 3.5 characters per token). Combines with <code>--read-only</code> and <code>--allow-vba-write</code>.</td></tr>
+                        <tr><td><code>--tools AREAS</code></td><td><code>EXCEL_MCP_TOOLS</code></td><td>Only offer the core tools (<code>describe_workbook</code>, <code>describe_sheet</code>, <code>read_range</code>) and these comma-separated areas, to save context. Areas and their size in characters of tool schema: <code>workbooks</code> 2,600, <code>csv</code> 2,200, <code>sheets</code> 2,000, <code>data</code> 6,700, <code>formulas</code> 1,300, <code>formatting</code> 14,000, <code>tables</code> 1,900, <code>charts</code> 9,900, <code>pivots</code> 4,600, <code>slicers</code> 2,500, <code>names</code> 900, <code>notes</code> 500, <code>images</code> 800, <code>vba</code> 1,900; the core is 8,900 (about 3.5 characters per token). Combines with <code>--read-only</code> and <code>--allow-vba-write</code>. Example: <code>--tools charts,pivots,formatting</code>.</td></tr>
                         <tr><td><code>--max-file-mb N</code></td><td><code>EXCEL_MCP_MAX_FILE_MB</code></td><td>Largest workbook to open, 100 by default.</td></tr>
                         <tr><td><code>--max-cells N</code></td><td><code>EXCEL_MCP_MAX_CELLS</code></td><td>Most cells one tool call may read, write or format, 100000 by default.</td></tr>
                         <tr><td><code>--max-pivot-cells N</code></td><td><code>EXCEL_MCP_MAX_PIVOT_CELLS</code></td><td>Largest PivotTable source in cells, 3000000 by default.</td></tr>
@@ -641,7 +649,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
             <p>
                 <a href="https://github.com/haris-musa/excel-mcp-server">GitHub</a> &middot;
                 <a href="https://pypi.org/project/excel-mcp-server/">PyPI</a> &middot;
-                <a href="https://registry.modelcontextprotocol.io/v0/servers?search=io.github.haris-musa/excel-mcp-server">MCP Registry</a> &middot;
+                <a href="https://registry.modelcontextprotocol.io/">MCP Registry</a> &middot;
                 <a href="https://github.com/haris-musa/excel-mcp-server/blob/main/CHANGELOG.md">Changelog</a> &middot;
                 <a href="https://github.com/haris-musa/excel-mcp-server/blob/main/SECURITY.md">Security policy</a>
             </p>
