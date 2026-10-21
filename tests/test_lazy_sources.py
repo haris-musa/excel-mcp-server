@@ -13,6 +13,7 @@ import pytest
 from openpyxl import Workbook
 
 from excel_mcp import lazy_edit
+from excel_mcp.cell_budget import CellBudget
 from excel_mcp.operations import sheet_copy
 from tests.conftest import ToolCall, lazily
 from tests.package_support import read_parts
@@ -107,10 +108,10 @@ def test_the_source_is_read_without_parsing_it_when_every_formula_has_a_result(
     make_sales(files / "calculated.xlsx", stored=False)
 
     with lazily(monkeypatch):
-        book, _ = lazy_edit.load(files / "stored.xlsx")
+        book, _ = lazy_edit.load(files / "stored.xlsx", CellBudget(3_000_000))
         assert book["Data"]._cells.stored_rows(1, RECORDS + 2) is not None
         assert book["Data"]._cells.loaded == set()
-        book, _ = lazy_edit.load(files / "calculated.xlsx")
+        book, _ = lazy_edit.load(files / "calculated.xlsx", CellBudget(3_000_000))
         assert book["Data"]._cells.stored_rows(1, RECORDS + 2) is None
 
 
@@ -135,7 +136,7 @@ def test_a_copy_shares_the_rows_of_the_original_that_were_not_parsed(
     make_linked_book(files / "book.xlsx")
 
     with lazily(monkeypatch):
-        book, _ = lazy_edit.load(files / "book.xlsx")
+        book, _ = lazy_edit.load(files / "book.xlsx", CellBudget(3_000_000))
         original = book["Data"]._cells
         before = set(original.loaded)
         sheet_copy.copy_sheet(book, "Data", "Copy", 1_000_000)

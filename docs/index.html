@@ -605,6 +605,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
                         <tr><td><code>--max-file-mb N</code></td><td><code>EXCEL_MCP_MAX_FILE_MB</code></td><td>Largest workbook to open, 100 by default.</td></tr>
                         <tr><td><code>--max-cells N</code></td><td><code>EXCEL_MCP_MAX_CELLS</code></td><td>Most cells one tool call may read, write or format, 100000 by default.</td></tr>
                         <tr><td><code>--max-pivot-cells N</code></td><td><code>EXCEL_MCP_MAX_PIVOT_CELLS</code></td><td>Largest PivotTable source in cells, 3000000 by default.</td></tr>
+                        <tr><td><code>--max-loaded-cells N</code></td><td><code>EXCEL_MCP_MAX_LOADED_CELLS</code></td><td>Most cells and rows of a workbook that may be loaded into memory at once, 3000000 by default (about 1.5 GB). Larger workbooks are refused by the tools that must load whole sheets.</td></tr>
                         <tr><td><code>--log-level LEVEL</code></td><td></td><td>Logging on stderr, <code>WARNING</code> by default.</td></tr>
                         <tr><td><code>--host</code>, <code>--port</code></td><td><code>EXCEL_MCP_HOST</code>, <code>EXCEL_MCP_PORT</code></td><td>HTTP listen address, <code>127.0.0.1:8017</code> by default.</td></tr>
                         <tr><td></td><td><code>EXCEL_MCP_AUTH_TOKEN</code></td><td>Bearer token required on HTTP requests.</td></tr>

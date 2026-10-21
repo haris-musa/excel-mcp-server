@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from excel_mcp import lazy_edit
+from excel_mcp.cell_budget import CellBudget
 from excel_mcp.operations import replace
 from tests.conftest import ToolCall, lazily
 from tests.package_support import read_parts, sheet_part
@@ -64,7 +65,7 @@ def test_only_the_blocks_that_may_hold_the_text_are_parsed(
     make_book(files / "book.xlsx")
 
     with lazily(monkeypatch):
-        book, _ = lazy_edit.load(files / "book.xlsx")
+        book, _ = lazy_edit.load(files / "book.xlsx", CellBudget(3_000_000))
         cells = book["Data"]._cells
         opened = set(cells.loaded)  # the rows of a merge, a link and a note
         replace.replace_cells(
@@ -93,7 +94,7 @@ def test_text_that_only_the_cells_following_a_master_hold_is_found(
     assert stored
 
     with lazily(monkeypatch):
-        book, _ = lazy_edit.load(files / "book.xlsx")
+        book, _ = lazy_edit.load(files / "book.xlsx", CellBudget(3_000_000))
         done = replace.replace_cells(
             [book["Data"]], "B30", "B31", exact=False, case_sensitive=False, in_formulas=True
         )

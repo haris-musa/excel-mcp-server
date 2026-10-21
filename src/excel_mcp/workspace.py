@@ -16,9 +16,11 @@ from openpyxl.workbook.properties import CalcProperties
 from openpyxl.worksheet._read_only import ReadOnlyWorksheet
 from openpyxl.worksheet.worksheet import Worksheet
 
-from excel_mcp import chart_roundtrip, lazy_edit, macros, package
+from excel_mcp import cell_budget, chart_roundtrip, lazy_edit, macros, package
+from excel_mcp.cell_budget import CellBudget
 from excel_mcp.config import Limits
 from excel_mcp.errors import (
+    ExcelMCPError,
     InvalidArgumentError,
     LimitExceededError,
     SheetNotFoundError,
@@ -139,9 +141,10 @@ class Workspace:
         path = self.resolve_existing(raw_path)
         self._check_zip(path)
         parts: Parts = {}
+        budget = CellBudget(self.limits.max_loaded_cells)
         try:
-            stored = load_lazy(path, parts, data_only=True)
-            formulas = load_lazy(path, parts, data_only=False)
+            stored = load_lazy(path, parts, budget, data_only=True)
+            formulas = load_lazy(path, parts, budget, data_only=False)
         except Exception as error:
             raise self._unreadable(path, error) from None
         try:
@@ -227,6 +230,8 @@ class Workspace:
     def _load(self, path: Path, *, data_only: bool, stream: bool = False) -> Workbook:
         self._check_zip(path)
         try:
+            if not stream:
+                cell_budget.check_workbook(path, self.limits.max_loaded_cells)
             return load_workbook(
                 path,
                 data_only=data_only,
@@ -242,7 +247,7 @@ class Workspace:
         if path.suffix.lower() in MACRO_SUFFIXES or not lazy_edit.has_large_sheet(path):
             return self._load(path, data_only=False), None
         try:
-            return lazy_edit.load(path)
+            return lazy_edit.load(path, CellBudget(self.limits.max_loaded_cells))
         except Exception as error:
             raise self._unreadable(path, error) from None
 
@@ -253,7 +258,9 @@ class Workspace:
                 "supported; legacy .xls and CSV files must be converted first."
             )
 
-    def _unreadable(self, path: Path, error: Exception) -> WorkbookError:
+    def _unreadable(self, path: Path, error: Exception) -> ExcelMCPError:
+        if isinstance(error, ExcelMCPError):
+            return error
         # openpyxl raises many different exception types for damaged files.
         return WorkbookError(
             f"{self.display(path)} could not be opened as an Excel workbook ({error})."

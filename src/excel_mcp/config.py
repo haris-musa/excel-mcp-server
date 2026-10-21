@@ -14,6 +14,8 @@ class Limits:
     max_cells: int = 100_000
     max_pivot_source_cells: int = 3_000_000
     max_copy_cells: int = 1_000_000
+    # Cells and rows that all the sheets of a workbook may create in memory, about 0.5 KB each.
+    max_loaded_cells: int = 3_000_000
     # Zip bomb guards, applied to every workbook the server opens or receives. Real workbooks
     # compress 10 to 30 times and sparse sheets far more, so these leave room for them.
     max_unpack_factor: int = 10

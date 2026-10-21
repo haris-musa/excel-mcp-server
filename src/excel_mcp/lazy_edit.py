@@ -33,6 +33,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.xml.constants import SHARED_STRINGS
 
 from excel_mcp import lazy_rows, lazy_shared
+from excel_mcp.cell_budget import CellBudget
 from excel_mcp.lazy_source import SheetSource, split_sheet
 from excel_mcp.lazy_workbook import BLOCK_ROWS, LazyCells, Parts, lazy_sheets, open_lazily
 from excel_mcp.package.opc import REL_BASE, Package, Rel, free_id
@@ -48,7 +49,6 @@ _ROW = re.compile(rb"<row\b[^>]*?/>|<row\b[^>]*>.*?</row>", re.S)
 _ROW_NUMBER = re.compile(rb'\br="(\d+)"')
 _DIMENSION = re.compile(rb'<dimension\s+ref="[^"]*"\s*/>')
 _CELL_COLUMN = re.compile(rb'<c\b[^>]*?\br="([A-Z]+)\d')
-_UNADDRESSED_CELL = re.compile(rb"<c\b(?![^>]*\br=)")
 # A row with attributes of its own (a height, a style, hidden), not just its number.
 _ATTRIBUTED_ROW = re.compile(rb"<row\b[^>]*\s(?!r=|spans=|[\w.-]+:)[\w.-]+=[^>]*>")
 # What a formula stored as its result when Excel last calculated it, which an edit makes stale.
@@ -66,8 +66,6 @@ def has_large_sheet(path: Path) -> bool:
 def _split(data: bytes) -> tuple[bytes, SheetSource] | None:
     cross_cell = (b't="array"', b't="dataTable"', b' cm="', b' vm="')
     if len(data) < LAZY_SHEET_BYTES or any(marker in data for marker in cross_cell):
-        return None
-    if _UNADDRESSED_CELL.search(data):  # Its column is not known until the row is read.
         return None
     split = split_sheet(data)
     return split if split and split[1].row_numbers else None
@@ -200,22 +198,22 @@ class LazyEdit:
         rels.append(Rel(free_id(rels, ""), REL_BASE + "sharedStrings", name))
 
 
-def load(path: Path) -> tuple[Workbook, LazyEdit | None]:
+def load(path: Path, budget: CellBudget) -> tuple[Workbook, LazyEdit | None]:
     """Load a workbook for editing, its large sheets without their rows."""
     parts: Parts = {}
-    reader = open_lazily(path, parts, _split)
+    reader = open_lazily(path, parts, _split, budget)
     reader.read()
     strings = reader.package.find(SHARED_STRINGS)
     edit = LazyEdit(path, strings.PartName.lstrip("/") if strings is not None else None)
     lazy = list(lazy_sheets(reader, parts))
     for sheet, source in lazy:
-        _install(sheet, source, reader.shared_strings)
+        _install(sheet, source, reader.shared_strings, budget)
     return reader.wb, edit if lazy else None
 
 
-def _install(sheet: Worksheet, source: SheetSource, strings: list[str]) -> None:
+def _install(sheet: Worksheet, source: SheetSource, strings: list[str], budget: CellBudget) -> None:
     carried = sheet._cells
-    cells = LazyCells(sheet, source, strings)
+    cells = LazyCells(sheet, source, strings, budget)
     sheet._cells = cells
     _bind_row_dimensions(sheet, source, strings)
     for (row, column), carried_cell in carried.items():

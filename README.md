@@ -198,6 +198,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
 | `--max-file-mb N` | `EXCEL_MCP_MAX_FILE_MB` | `100` | Largest workbook the server opens. Also sets the unpacked-size limit (10 times this) that every opened or uploaded workbook must stay under; parts compressed over 500:1 are refused |
 | `--max-cells N` | `EXCEL_MCP_MAX_CELLS` | `100000` | Most cells one call may read, write or format; reads are still returned in pages |
 | `--max-pivot-cells N` | `EXCEL_MCP_MAX_PIVOT_CELLS` | `3000000` | Largest PivotTable source in cells (a 230,000-row, 13-column sheet); creating one from the biggest sources takes a minute and about 2 GB of memory |
+| `--max-loaded-cells N` | `EXCEL_MCP_MAX_LOADED_CELLS` | `3000000` | Most cells and rows of a workbook that may be loaded into memory at once, about 0.5 KB each (a 3,000,000 limit is about 1.5 GB). A workbook with more is refused by the tools that must load whole sheets; `read_range` and the other streaming reads, and edits of large sheets that parse only some rows, are not limited by the size of the sheet |
 | `--log-level LEVEL` | | `WARNING` | Logging on stderr |
 | `--host HOST` | `EXCEL_MCP_HOST` | `127.0.0.1` | HTTP listen address |
 | `--port PORT` | `EXCEL_MCP_PORT` | `8017` | HTTP port |

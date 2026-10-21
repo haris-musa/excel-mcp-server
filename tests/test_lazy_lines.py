@@ -16,6 +16,7 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Border, Font, PatternFill, Side
 
 from excel_mcp import lazy_edit
+from excel_mcp.cell_budget import CellBudget
 from excel_mcp.operations import line_edits
 from tests.conftest import ToolCall, lazily
 from tests.package_support import read_parts, sheet_part
@@ -164,7 +165,7 @@ def test_inserting_below_the_filled_formulas_parses_only_the_rows_around_the_edi
     make_linked_book(files / "book.xlsx")
 
     with lazily(monkeypatch):
-        book, _ = lazy_edit.load(files / "book.xlsx")
+        book, _ = lazy_edit.load(files / "book.xlsx", CellBudget(3_000_000))
         sheet = book["Data"]
         line_edits.edit_lines(book, sheet, "rows", 30, 3, delete=False, formula_values=lambda _: {})
         cells = sheet._cells

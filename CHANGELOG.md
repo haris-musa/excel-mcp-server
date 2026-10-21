@@ -6,6 +6,20 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Security
+
+- A small workbook can no longer make the server use gigabytes of memory by holding millions of
+  cells: the size limits counted bytes, and memory depends on cells (GHSA-5p2h-j6m4-5fm2,
+  reported by @arpitjain099). The cells and rows of each worksheet, and the cells of merged and
+  hyperlink ranges, are now counted before the sheet is parsed, and a workbook that would create
+  more than 3,000,000 is refused. `--max-loaded-cells` (`EXCEL_MCP_MAX_LOADED_CELLS`) sets the
+  limit. Reads that stream (`read_range`, `export_csv`) are not affected.
+
+### Changed
+
+- Sheets whose rows or cells carry no `r` attribute, as some writers make them, are edited
+  through the large-sheet path like any other, instead of being loaded whole.
+
 ## [2.2.1] - 2026-10-18
 
 ### Changed

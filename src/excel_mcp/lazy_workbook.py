@@ -22,6 +22,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.xml.constants import WORKSHEET_TYPE
 
 from excel_mcp import lazy_rows, lazy_shared
+from excel_mcp.cell_budget import CellBudget, spend_sheet
 from excel_mcp.lazy_source import SheetSource, split_sheet
 
 BLOCK_ROWS = 128
@@ -39,11 +40,14 @@ class LazyCells(dict[CellKey, Any]):
     parsed holds all of its rows: what is not in ``loaded`` is as the file has it.
     """
 
-    def __init__(self, sheet: Worksheet, source: SheetSource, strings: list[str]) -> None:
+    def __init__(
+        self, sheet: Worksheet, source: SheetSource, strings: list[str], budget: CellBudget
+    ) -> None:
         super().__init__()
         self.sheet = sheet
         self.source = source
         self.strings = strings
+        self.budget = budget
         self.loaded: set[int] = set()
         self.columns: dict[int, list[int]] = {}
         self.last_row = self.last_column = 0
@@ -246,6 +250,9 @@ class LazyCells(dict[CellKey, Any]):
 
     def _parse(self, spans: list[tuple[int, int]]) -> None:
         """Parse rows: those in the usual forms as text, the others with openpyxl's parser."""
+        data = self.source.data
+        # The rows and their cells, counted before they are parsed as `spend_sheet` counts a sheet.
+        self.budget.spend(len(spans) + sum(data.count(b"<c", start, end) for start, end in spans))
         book: Any = self.sheet.parent
         shared = lazy_shared.Translators(self.source.masters)
         reading = lazy_rows.Reading(
@@ -307,11 +314,14 @@ Splitter = Callable[[bytes], tuple[bytes, SheetSource] | None]
 class _SheetArchive(ZipFile):
     """An archive that serves each worksheet without its rows, which are kept in ``parts``."""
 
-    def __init__(self, path: Path, parts: Parts, sheet_parts: set[str], split: Splitter) -> None:
+    def __init__(
+        self, path: Path, parts: Parts, sheet_parts: set[str], split: Splitter, budget: CellBudget
+    ) -> None:
         super().__init__(path)
         self.parts = parts
         self.sheet_parts = sheet_parts
         self.split = split
+        self.budget = budget
         self.worksheets: list[str] = []
 
     def open(self, name: Any, mode: Any = "r", pwd: Any = None, **options: Any) -> IO[bytes]:
@@ -324,16 +334,24 @@ class _SheetArchive(ZipFile):
             split = self.split(data)
             self.parts[name] = split if split else (data, None)
         self.worksheets.append(name)
-        return BytesIO(self.parts[name][0])
+        parsed = self.parts[name][0]
+        spend_sheet(BytesIO(parsed), self.budget)
+        return BytesIO(parsed)
 
 
-def open_lazily(path: Path, parts: Parts, split: Splitter, **options: Any) -> ExcelReader:
-    """A reader that has not read the workbook yet, whose sheets are served by ``split``."""
+def open_lazily(
+    path: Path, parts: Parts, split: Splitter, budget: CellBudget, **options: Any
+) -> ExcelReader:
+    """A reader that has not read the workbook yet, whose sheets are served by ``split``.
+
+    The cells and rows of the sheets that are not split are spent from ``budget`` when they
+    are read, and those of the split sheets when their rows are parsed.
+    """
     reader = ExcelReader(path, **options)
     reader.read_manifest()
     sheet_parts = {part.PartName.lstrip("/") for part in reader.package.findall(WORKSHEET_TYPE)}
     reader.archive.close()
-    reader.archive = _SheetArchive(path, parts, sheet_parts, split)
+    reader.archive = _SheetArchive(path, parts, sheet_parts, split, budget)
     return reader
 
 
@@ -346,16 +364,16 @@ def lazy_sheets(reader: ExcelReader, parts: Parts) -> Iterator[tuple[Worksheet, 
             yield sheet, source
 
 
-def load_lazy(path: Path, parts: Parts, *, data_only: bool) -> Workbook:
+def load_lazy(path: Path, parts: Parts, budget: CellBudget, *, data_only: bool) -> Workbook:
     """Load a workbook the way ``load_workbook`` does, leaving the cells to be read on demand.
 
     A sheet this cannot split into rows is loaded whole. ``parts`` is shared by the loads of
     one file, so that each sheet is read from the file once.
     """
-    reader = open_lazily(path, parts, split_sheet, data_only=data_only, keep_links=False)
+    reader = open_lazily(path, parts, split_sheet, budget, data_only=data_only, keep_links=False)
     reader.read()
     for sheet, source in lazy_sheets(reader, parts):
-        cells = LazyCells(sheet, source, reader.shared_strings)
+        cells = LazyCells(sheet, source, reader.shared_strings, budget)
         for cell in sheet._cells.values():
             if isinstance(cell, MergedCell):
                 cells.keep(cell)

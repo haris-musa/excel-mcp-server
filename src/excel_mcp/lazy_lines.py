@@ -154,7 +154,9 @@ def copied(cells: LazyCells, sheet: Worksheet) -> LazyCells:
         if not cells.is_loaded(number)
     ]
     masters = dict(source.masters)
-    return LazyCells(sheet, _assembled(source, rows, masters, source.hidden_rows), cells.strings)
+    return LazyCells(
+        sheet, _assembled(source, rows, masters, source.hidden_rows), cells.strings, cells.budget
+    )
 
 
 def _moved_masters(source: SheetSource, edit: LineEdit) -> dict[str, SharedMaster]:

@@ -8,6 +8,7 @@ import pytest
 from openpyxl import Workbook
 
 from excel_mcp import lazy_workbook
+from excel_mcp.cell_budget import CellBudget
 from excel_mcp.lazy_source import split_sheet
 from excel_mcp.lazy_workbook import LazyCells, load_lazy
 from tests.conftest import ToolCall
@@ -57,7 +58,7 @@ def test_rows_are_parsed_only_when_asked_for(files: Path, monkeypatch: pytest.Mo
     monkeypatch.setattr(lazy_workbook, "BLOCK_ROWS", 128)
     make_running_totals(files / "totals.xlsx")
 
-    book = load_lazy(files / "totals.xlsx", {}, data_only=False)
+    book = load_lazy(files / "totals.xlsx", {}, CellBudget(3_000_000), data_only=False)
     cells = book["Data"]._cells  # pyright: ignore[reportPrivateUsage]
 
     assert isinstance(cells, LazyCells) and cells.loaded == set()

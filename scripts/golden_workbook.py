@@ -9,6 +9,7 @@ from openpyxl.workbook.defined_name import DefinedName
 
 from excel_mcp.calc.engine import Engine
 from excel_mcp.calc.values import ExcelError, UncalculableError
+from excel_mcp.cell_budget import CellBudget
 from excel_mcp.config import Limits
 from excel_mcp.lazy_workbook import Parts, load_lazy
 from excel_mcp.operations.cells import write_range
@@ -64,8 +65,9 @@ def calculate_cases(path: Path, count: int, *, lazy: bool = False) -> list[objec
     """
     if lazy:
         parts: Parts = {}
-        formulas = load_lazy(path, parts, data_only=False)
-        cached = load_lazy(path, parts, data_only=True)
+        budget = CellBudget(Limits().max_loaded_cells)
+        formulas = load_lazy(path, parts, budget, data_only=False)
+        cached = load_lazy(path, parts, budget, data_only=True)
     else:
         formulas = load_workbook(path)
         cached = load_workbook(path, data_only=True)

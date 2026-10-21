@@ -78,6 +78,7 @@ def _settings(args: argparse.Namespace) -> Settings:
             max_file_bytes=args.max_file_mb * MB,
             max_cells=args.max_cells,
             max_pivot_source_cells=args.max_pivot_cells,
+            max_loaded_cells=args.max_loaded_cells,
         ),
         log_level=args.log_level,
     )
@@ -158,6 +159,13 @@ def _parser() -> argparse.ArgumentParser:
         default=_env_default("EXCEL_MCP_MAX_PIVOT_CELLS", DEFAULT_LIMITS.max_pivot_source_cells),
         help="Largest PivotTable source, in cells (default %(default)s). "
         "Also EXCEL_MCP_MAX_PIVOT_CELLS.",
+    )
+    common.add_argument(
+        "--max-loaded-cells",
+        type=_positive_int,
+        default=_env_default("EXCEL_MCP_MAX_LOADED_CELLS", DEFAULT_LIMITS.max_loaded_cells),
+        help="Most cells and rows of a workbook that may be loaded into memory at once, about "
+        "0.5 KB each (default %(default)s). Also EXCEL_MCP_MAX_LOADED_CELLS.",
     )
     common.add_argument(
         "--log-level",

@@ -16,6 +16,7 @@ import pytest
 from openpyxl import Workbook, load_workbook
 
 from excel_mcp import lazy_edit
+from excel_mcp.cell_budget import CellBudget
 from tests.conftest import ToolCall, lazily
 from tests.package_support import read_parts, sheet_part
 from tests.test_lazy_edit import snapshot
@@ -152,7 +153,7 @@ def test_a_block_with_children_and_not_their_master_has_their_formulas(
     make_shared_book(files / "book.xlsx")
 
     with lazily(monkeypatch):
-        book, edit = lazy_edit.load(files / "book.xlsx")
+        book, edit = lazy_edit.load(files / "book.xlsx", CellBudget(3_000_000))
         assert edit is not None
         cells = book["Data"]._cells
         assert cells[30, 4].value == "=B30*C30"

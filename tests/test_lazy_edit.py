@@ -25,6 +25,7 @@ from openpyxl.worksheet.formula import ArrayFormula
 from openpyxl.worksheet.table import Table
 
 from excel_mcp import lazy_edit
+from excel_mcp.cell_budget import CellBudget
 from tests.conftest import ToolCall, lazily
 from tests.package_support import (
     FIXTURES,
@@ -287,7 +288,7 @@ def test_an_edit_parses_the_blocks_it_touches_and_no_others(
     workbook.save(files / "plain.xlsx")
 
     with lazily(monkeypatch):
-        book, edit = lazy_edit.load(files / "plain.xlsx")
+        book, edit = lazy_edit.load(files / "plain.xlsx", CellBudget(3_000_000))
         assert edit is not None
         cells = book.worksheets[0]._cells  # pyright: ignore[reportPrivateUsage]
         cells[50, 1].value = "changed"
@@ -301,7 +302,7 @@ def test_hyperlinks_comments_and_merges_are_parsed_when_the_workbook_is_opened(
     make_book(files / "book.xlsx")
 
     with lazily(monkeypatch):
-        book, edit = lazy_edit.load(files / "book.xlsx")
+        book, edit = lazy_edit.load(files / "book.xlsx", CellBudget(3_000_000))
         assert edit is not None
         cells = book["Data"]._cells  # pyright: ignore[reportPrivateUsage]
         assert cells.loaded == {20 // 4, 30 // 4, 35 // 4}
@@ -317,7 +318,7 @@ def test_row_dimensions_are_all_there_and_using_one_parses_its_rows(
     make_book(files / "book.xlsx")
 
     with lazily(monkeypatch):
-        book, _ = lazy_edit.load(files / "book.xlsx")
+        book, _ = lazy_edit.load(files / "book.xlsx", CellBudget(3_000_000))
         sheet = book["Data"]
         cells = sheet._cells  # pyright: ignore[reportPrivateUsage]
         before = set(cells.loaded)
@@ -427,7 +428,7 @@ def test_sheets_whose_cells_depend_on_each_other_are_loaded_whole(
             archive.writestr(name, content)
 
     with lazily(monkeypatch):
-        _, edit = lazy_edit.load(files / "book.xlsx")
+        _, edit = lazy_edit.load(files / "book.xlsx", CellBudget(3_000_000))
 
     assert edit is None
 

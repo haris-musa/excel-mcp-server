@@ -63,7 +63,11 @@ or anyone who can reach the HTTP endpoint. Its defences are:
   external relationship that is not a hyperlink, and packages that expand beyond
   `max_unpack_factor` times the file size limit or compress more densely than
   `max_compression_ratio`, both checked while reading. The same limits apply to every
-  workbook the server opens, so a zip bomb already on disk is refused before it is read. Hyperlinks are not refused but
+  workbook the server opens, so a zip bomb already on disk is refused before it is read.
+  Memory use depends on the number of cells and not on the bytes, so the cells and rows of every
+  worksheet are also counted before it is parsed (a merged or hyperlinked range counts as its
+  cells), and a workbook that would create more than `max_loaded_cells` is refused; the large-sheet
+  path parses rows in blocks within the same limit. Hyperlinks are not refused but
   neutralised: external links to anything other than `http`, `https` and `mailto` addresses
   without credentials (file paths, network shares, `smb:`, `ms-excel:`, `javascript:` and so
   on) are removed from cells, shapes, pictures and legacy drawings, the cell text and format
