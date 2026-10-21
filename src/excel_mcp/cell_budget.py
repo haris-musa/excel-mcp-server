@@ -61,9 +61,8 @@ def spend_sheet(source: IO[bytes], budget: CellBudget) -> None:
     parser.Parse(b"", True)
 
 
-def check_workbook(path: Path, limit: int) -> None:
-    """Refuse a workbook whose worksheets would create more than ``limit`` cells and rows."""
-    budget = CellBudget(limit)
+def check_workbook(path: Path, budget: CellBudget) -> None:
+    """Spend the cells and rows that loading all of a workbook's worksheets would create."""
     reader = ExcelReader(path)
     try:
         reader.read_manifest()

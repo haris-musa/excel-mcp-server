@@ -7,6 +7,7 @@ import threading
 import zipfile
 from collections.abc import Iterator
 from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path
 from typing import TypeVar, cast
 
@@ -35,6 +36,8 @@ from excel_mcp.paths import MACRO_SUFFIXES, TEMPLATE_SUFFIXES, PathPolicy
 from excel_mcp.zip_limits import check_expansion
 
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
+# The cells loaded by the edit this call is part of, which reads it makes for results share.
+_edit_budget: ContextVar[CellBudget | None] = ContextVar("edit_budget", default=None)
 Sheet = TypeVar("Sheet")
 
 
@@ -115,17 +118,13 @@ class Workspace:
         return self.paths.display(path)
 
     @contextmanager
-    def read(
-        self, raw_path: str, *, data_only: bool = False, with_package: bool = False
-    ) -> Iterator[Workbook]:
-        """Open a workbook for reading; changes are never saved.
-
-        ``with_package`` also loads what openpyxl drops, as `edit` does, for readers of it.
+    def read(self, raw_path: str) -> Iterator[Workbook]:
+        """Open a workbook as `edit` does, for readers of everything on a sheet but its cells;
+        changes are never saved. The rows of a large sheet are parsed only where needed.
         """
         path = self.resolve_existing(raw_path)
-        workbook = self._load(path, data_only=data_only)
-        if with_package:
-            package.capture(path, workbook, self.limits.max_file_bytes)
+        workbook, _ = self._load_for_edit(path, self._budget())
+        package.capture(path, workbook, self.limits.max_file_bytes)
         try:
             yield workbook
         finally:
@@ -141,7 +140,7 @@ class Workspace:
         path = self.resolve_existing(raw_path)
         self._check_zip(path)
         parts: Parts = {}
-        budget = CellBudget(self.limits.max_loaded_cells)
+        budget = self._budget()
         try:
             stored = load_lazy(path, parts, budget, data_only=True)
             formulas = load_lazy(path, parts, budget, data_only=False)
@@ -171,11 +170,13 @@ class Workspace:
         """Open a workbook and save it only if the block finishes without error."""
         with self._write_lock:
             path = self.resolve_existing(raw_path)
-            workbook, lazy = self._load_for_edit(path)
+            budget = CellBudget(self.limits.max_loaded_cells)
+            workbook, lazy = self._load_for_edit(path, budget)
             _restore_area_chart_axes(workbook)
             package.capture(path, workbook, self.limits.max_file_bytes)
             workbook.calculation = workbook.calculation or CalcProperties()
             workbook.calculation.fullCalcOnLoad = True
+            token = _edit_budget.set(budget)
             try:
                 yield workbook
                 # Imported here because the calculator imports this module.
@@ -185,6 +186,7 @@ class Workspace:
                 _pin_hyperlinks(workbook)
                 save_atomically(workbook, path, self.limits.max_file_bytes, lazy)
             finally:
+                _edit_budget.reset(token)
                 close_workbook(workbook)
 
     def create(self, raw_path: str, sheets: list[str], *, overwrite: bool) -> Path:
@@ -230,8 +232,6 @@ class Workspace:
     def _load(self, path: Path, *, data_only: bool, stream: bool = False) -> Workbook:
         self._check_zip(path)
         try:
-            if not stream:
-                cell_budget.check_workbook(path, self.limits.max_loaded_cells)
             return load_workbook(
                 path,
                 data_only=data_only,
@@ -241,13 +241,21 @@ class Workspace:
         except Exception as error:
             raise self._unreadable(path, error) from None
 
-    def _load_for_edit(self, path: Path) -> tuple[Workbook, LazyEdit | None]:
+    def _budget(self) -> CellBudget:
+        """The budget of the edit that this call is part of, or else a new one."""
+        return _edit_budget.get() or CellBudget(self.limits.max_loaded_cells)
+
+    def _load_for_edit(self, path: Path, budget: CellBudget) -> tuple[Workbook, LazyEdit | None]:
         """Load for editing; a large sheet's rows are parsed only as far as the edit looks."""
         self._check_zip(path)
         if path.suffix.lower() in MACRO_SUFFIXES or not lazy_edit.has_large_sheet(path):
+            try:
+                cell_budget.check_workbook(path, budget)
+            except Exception as error:
+                raise self._unreadable(path, error) from None
             return self._load(path, data_only=False), None
         try:
-            return lazy_edit.load(path, CellBudget(self.limits.max_loaded_cells))
+            return lazy_edit.load(path, budget)
         except Exception as error:
             raise self._unreadable(path, error) from None
 

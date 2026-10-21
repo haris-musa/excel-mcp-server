@@ -12,7 +12,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.calc.engine import Engine
 from excel_mcp.calc.values import ExcelError, Scalar, UncalculableError
-from excel_mcp.errors import InvalidArgumentError
+from excel_mcp.errors import InvalidArgumentError, LimitExceededError
 from excel_mcp.operations import cells
 from excel_mcp.operations.cells import RangeData
 from excel_mcp.operations.comparison import FormulaResults
@@ -70,7 +70,14 @@ def formula_values(
     ]
     if not formula_cells:
         return {}
-    data = read_calculated(workspace, path, sheet.title, str(area), area.size)
+    try:
+        data = read_calculated(workspace, path, sheet.title, str(area), area.size)
+    except LimitExceededError as error:
+        raise LimitExceededError(
+            f"{error} Calculating the formulas of {area} needs the cells in memory because "
+            "the file stores no results for them. Open the workbook in Excel and save it, or "
+            "use a smaller range."
+        ) from None
     if data.uncalculated:
         cells_list = ", ".join(data.uncalculated)
         raise InvalidArgumentError(

@@ -7,7 +7,7 @@ from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
 
-from excel_mcp.operations.cells import streamed_used_range, used_range
+from excel_mcp.operations.cells import described_used_range, streamed_used_range
 from excel_mcp.operations.chart_index import list_charts
 from excel_mcp.operations.chart_info import ChartInfo
 from excel_mcp.operations.conditional_x14 import extended_rules
@@ -139,7 +139,7 @@ def describe_workbook(
 
 def describe_sheet(sheet: Worksheet) -> SheetDetails:
     return SheetDetails(
-        used_range=str(used_range(sheet)),
+        used_range=str(described_used_range(sheet)),
         freeze_panes=sheet.freeze_panes,
         auto_filter=sheet.auto_filter.ref,
         merged_ranges=sorted(str(merged) for merged in sheet.merged_cells.ranges),

@@ -157,7 +157,7 @@ def set_visibility(sheet: Worksheet, visibility: Literal["visible", "hidden"]) -
 
 def hidden_lines(sheet: Worksheet, axis: Axis) -> list[str]:
     if axis == "rows":
-        indices = {index for index, row in sheet.row_dimensions.items() if row.hidden}
+        indices = {index for index, row in dict.items(sheet.row_dimensions) if row.hidden}
     else:
         indices = set()
         for column in sheet.column_dimensions.values():

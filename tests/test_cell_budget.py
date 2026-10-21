@@ -7,7 +7,8 @@ from typing import cast
 
 import pytest
 from mcp import Client
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
+from openpyxl.comments import Comment
 
 from excel_mcp import cell_budget, lazy_edit
 from excel_mcp.cell_budget import CellBudget
@@ -275,3 +276,52 @@ def test_a_cell_with_a_link_is_counted_as_several() -> None:
     budget = CellBudget(100)
     cell_budget.spend_sheet(io.BytesIO(xml.encode()), budget)
     assert budget.used == 12
+
+
+async def test_describe_sheet_of_a_large_sheet_does_not_parse_all_its_cells(
+    files: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workbook = Workbook()
+    sheet = workbook.worksheets[0]
+    sheet.title = "Data"
+    for row in range(1, ROWS + 1):
+        sheet.append([row * column for column in range(1, COLUMNS + 1)])
+    sheet["B3"].comment = Comment("check", "Ann")
+    sheet["C30"].hyperlink = "https://example.com/"
+    sheet.merge_cells("A38:B39")
+    sheet.row_dimensions[20].hidden = True
+    sheet["Z2"] = "far"
+    workbook.save(files / "notes.xlsx")
+    arguments = {"path": "notes.xlsx", "sheet": "Data"}
+    failed, whole = await call(files, "describe_sheet", 10_000, **arguments)
+    assert not failed, whole
+    with lazily(monkeypatch):
+        failed, lazy = await call(files, "describe_sheet", 200, **arguments)
+    assert not failed, lazy
+    assert lazy == whole
+    assert '"check"' in lazy and "example.com" in lazy and "A38:B39" in lazy and "20" in lazy
+    assert "Z40" in lazy
+
+
+async def test_formulas_calculated_during_an_edit_share_its_budget(files: Path) -> None:
+    workbook = Workbook()
+    sheet = workbook.worksheets[0]
+    sheet.title = "Data"
+    sheet.append(["Region", "Units", "Double"])
+    for row in range(2, 31):
+        sheet.append(["N" if row % 2 else "S", row, f"=B{row}*2"])
+    workbook.save(files / "formulas.xlsx")
+    arguments = {
+        "path": "formulas.xlsx",
+        "sheet": "Data",
+        "at": "F1",
+        "source": "Data!A1:C30",
+        "row_fields": ["Region"],
+        "value_fields": [{"field": "Double"}],
+    }
+    cells = 30 * 3 + 30
+    failed, message = await call(files, "create_pivot_table", 5 * cells, **arguments)
+    assert not failed, message
+    failed, message = await call(files, "create_pivot_table", 2 * cells, **arguments)
+    assert failed
+    assert "Open the workbook in Excel and save it" in message

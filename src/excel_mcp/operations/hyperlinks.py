@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.formulas import split_top_level, unquote
 from excel_mcp.inputs import InputModel
+from excel_mcp.lazy_workbook import held_cells
 from excel_mcp.links import is_allowed_address
 from excel_mcp.refs import parse_range
 
@@ -58,7 +59,7 @@ def list_links(sheet: Worksheet) -> list[LinkInfo]:
             + ("#" + cell.hyperlink.location if cell.hyperlink.location else ""),
             tooltip=cell.hyperlink.tooltip,
         )
-        for _, cell in sorted(sheet._cells.items())
+        for _, cell in sorted(held_cells(sheet).items())
         if cell.hyperlink
     ]
 

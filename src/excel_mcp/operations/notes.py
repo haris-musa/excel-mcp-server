@@ -5,6 +5,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
 
 from excel_mcp.errors import InvalidArgumentError
+from excel_mcp.lazy_workbook import held_cells
 from excel_mcp.operations.cells import writable_cell
 from excel_mcp.refs import parse_cell
 
@@ -18,7 +19,7 @@ class NoteInfo(BaseModel):
 def list_notes(sheet: Worksheet) -> list[NoteInfo]:
     return [
         NoteInfo(cell=cell.coordinate, text=cell.comment.text, author=cell.comment.author or "")
-        for _, cell in sorted(sheet._cells.items())
+        for _, cell in sorted(held_cells(sheet).items())
         if cell.comment
     ]
 

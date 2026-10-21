@@ -57,6 +57,14 @@ def stored_cells(sheet: Worksheet) -> Iterator[Cell]:
             yield cell
 
 
+def described_used_range(sheet: Worksheet) -> CellRange:
+    """`used_range` of a sheet that is not being changed: a large sheet's is read from its XML."""
+    cells = sheet._cells
+    if isinstance(cells, LazyCells) and (found := used_range_in(cells.source.data)):
+        return found
+    return used_range(sheet)
+
+
 def stored_cells_in(sheet: Worksheet, area: CellRange) -> Iterator[Cell]:
     """The cells that hold a value inside ``area``; a large sheet parses only those rows."""
     cells = sheet._cells

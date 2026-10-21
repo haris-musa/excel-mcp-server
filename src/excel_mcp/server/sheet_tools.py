@@ -23,7 +23,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
         """Describe a sheet: used range, panes, merges and everything on it (tables, charts,
         PivotTables, slicers, images, notes, hyperlinks, validation, conditional formats,
         sparklines...) with names and cells. Slow on very large files."""
-        with workspace.read(path, with_package=True) as workbook:
+        with workspace.read(path) as workbook:
             return inspect.describe_sheet(get_sheet(workbook, sheet))
 
     @tools.writer("Create sheet")

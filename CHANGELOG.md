@@ -19,6 +19,10 @@ All notable changes to this project are documented here. The format follows
 
 - Sheets whose rows or cells carry no `r` attribute, as some writers make them, are edited
   through the large-sheet path like any other, instead of being loaded whole.
+- `describe_sheet` of a large sheet no longer parses every cell: it reads the notes, links, hidden
+  rows and used range from the rows that carry them and from the sheet's XML, with the same result.
+  A `create_pivot_table` source whose formulas have no stored results, which needs the cells in
+  memory to be calculated, says to open and save the workbook in Excel when it is over the limit.
 
 ## [2.2.1] - 2026-10-18
 
