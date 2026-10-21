@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.2.2] - 2026-10-21
+
 ### Security
 
 - A small workbook can no longer make the server use gigabytes of memory by holding millions of
@@ -14,6 +16,9 @@ All notable changes to this project are documented here. The format follows
   hyperlink ranges, are now counted before the sheet is parsed, and a workbook that would create
   more than 3,000,000 is refused. `--max-loaded-cells` (`EXCEL_MCP_MAX_LOADED_CELLS`) sets the
   limit. Reads that stream (`read_range`, `export_csv`) are not affected.
+- Pillow, used to read images for `insert_image`, is required at 13.0 or later, which fixes
+  memory-safety and denial-of-service issues in its image decoders (CVE-2026-112895 and
+  others); 2.2.1 allowed only 12.x.
 
 ### Changed
 
@@ -536,7 +541,8 @@ Ideas and fixes from these pull requests were reimplemented in this release: #78
 
 See the [GitHub releases](https://github.com/haris-musa/excel-mcp-server/releases).
 
-[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.1...HEAD
+[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.2...HEAD
+[2.2.2]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/haris-musa/excel-mcp-server/compare/v2.1.1...v2.2.0
 [2.1.1]: https://github.com/haris-musa/excel-mcp-server/compare/v2.1.0...v2.1.1

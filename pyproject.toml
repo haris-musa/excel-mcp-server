@@ -1,6 +1,6 @@
 [project]
 name = "excel-mcp-server"
-version = "2.2.1"
+version = "2.2.2"
 description = "MCP server for creating, reading and editing Excel workbooks without Microsoft Excel"
 readme = "README.md"
 license = "MIT"
@@ -44,7 +44,7 @@ dependencies = [
     "mcp>=2.2,<3",
     "olefile>=0.47,<1",
     "openpyxl>=3.1.5,<4",
-    "pillow>=12,<13",
+    "pillow>=13,<14",
     "pydantic>=2.12,<3",
     "starlette>=1,<2",
     "uvicorn>=0.31,<1",
