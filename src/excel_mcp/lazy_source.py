@@ -86,7 +86,7 @@ def split_sheet(data: bytes) -> tuple[bytes, SheetSource] | None:
     end = data.find(_SHEET_DATA_END)
     if root is None or root[1] != SHEET_MAIN_NS.encode() or start < 0 or end < start:
         return None
-    if _UNADDRESSED.search(data, start, end):
+    if not _all_addressed(data, start, end) and _UNADDRESSED.search(data, start, end):
         data = data[:start] + _address(data[start:end]) + data[end:]
         end = data.find(_SHEET_DATA_END)
     numbers: list[int] = []
@@ -104,6 +104,14 @@ def split_sheet(data: bytes) -> tuple[bytes, SheetSource] | None:
     without_rows = data[:start] + _SHEET_DATA + b"/>" + data[end + len(_SHEET_DATA_END) :]
     masters = lazy_shared.index(data, start, end) if b't="shared"' in data else {}
     return without_rows, SheetSource(data, root.group(), numbers, spans, hidden, masters)
+
+
+def _all_addressed(data: bytes, start: int, end: int) -> bool:
+    """Whether every row and cell opens with its address, as counting them (quickly) shows."""
+    return all(
+        data.count(tag, start, end) == data.count(tag + b' r="', start, end)
+        for tag in (b"<row", b"<c")
+    )
 
 
 def _address(rows: bytes) -> bytes:
