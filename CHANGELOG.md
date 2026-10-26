@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- `SUBSTITUTE` counts non-overlapping matches when an occurrence is specified, as Excel does.
+
 ## [2.2.2] - 2026-10-21
 
 ### Security

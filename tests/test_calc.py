@@ -40,6 +40,28 @@ async def test_formulas_without_a_stored_result_are_calculated(call: ToolCall, f
     assert "uncalculated" not in data
 
 
+@pytest.mark.parametrize(
+    ("formula", "expected"),
+    [
+        ('=SUBSTITUTE("aaaa","aa","b",2)', "aab"),
+        ('=SUBSTITUTE("aaaa","aa","b",3)', "aaaa"),
+        ('=SUBSTITUTE("banana","ana","X",2)', "banana"),
+        ('=SUBSTITUTE("aaaa","aa","b",1)', "baa"),
+        ('=SUBSTITUTE("aaaa","aa","b")', "bb"),
+        ('=SUBSTITUTE("abcabcabc","abc","X",2)', "abcXabc"),
+    ],
+)
+async def test_substitute_counts_nonoverlapping_occurrences(
+    call: ToolCall, files: Path, formula: str, expected: str
+) -> None:
+    make_workbook(files / "calc.xlsx", {"A1": formula})
+
+    data = await read_values(call, "A1")
+
+    assert data["values"] == [[expected]]
+    assert "uncalculated" not in data
+
+
 async def test_stored_results_are_kept(call: ToolCall, files: Path) -> None:
     source = files / "calc.xlsx"
     make_workbook(source, {"A1": 1, "B1": "=A1+1"})

@@ -118,9 +118,9 @@ def substitute(text: Scalar, old: Scalar, new: Scalar, instance: Scalar = None) 
     which = to_int(instance)
     if which < 1:
         raise FormulaError(VALUE)
-    position = -1
+    position = -len(target)
     for _ in range(which):
-        position = source.find(target, position + 1)
+        position = source.find(target, position + len(target))
         if position < 0:
             return source
     return source[:position] + replacement + source[position + len(target) :]
