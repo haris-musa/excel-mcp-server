@@ -374,6 +374,8 @@ CASES: list[str | tuple[str, float]] = [
     '=TEXTJOIN(",",TRUE,Data!A2:A4)', '=TEXTJOIN(",",FALSE,Data!Q2:Q6)', '=TEXTJOIN(",",TRUE,Data!Q2:Q6)', '=TEXTJOIN("-",TRUE,"a","","b")',
     '=TEXTJOIN(", ",TRUE,Data!C2:C4,Data!A2)', '=SUBSTITUTE("banana","a","o")', '=SUBSTITUTE("banana","a","o",2)', '=SUBSTITUTE("banana","x","o")',
     '=SUBSTITUTE("banana","A","o")', '=SUBSTITUTE("banana","","o")', '=SUBSTITUTE("banana","a","o",0)', '=SUBSTITUTE("banana","a","o",9)',
+    '=SUBSTITUTE("aaaa","aa","b",2)', '=SUBSTITUTE("aaaa","aa","b",3)', '=SUBSTITUTE("aaaaa","aa","b",2)', '=SUBSTITUTE("banana","ana","X",2)',
+    '=SUBSTITUTE("abababa","aba","X",2)', '=SUBSTITUTE("abababa","aba","X")',
     '=FIND("n","banana")', '=FIND("n","banana",4)', '=FIND("N","banana")', '=FIND("","banana")', '=FIND("z","banana")', '=FIND("a","banana",0)',
     '=FIND("a","banana",7)', '=SEARCH("N","banana")', '=SEARCH("a?a","banana")', '=SEARCH("b*n","banana")', '=SEARCH("~?","what?")', '=SEARCH("z","banana")',
     '=REPT("ab",3)', '=REPT("ab",0)', '=REPT("ab",-1)', '=REPT("a",1.9)', '=VALUE("12")', '=VALUE(" 12 ")', '=VALUE("1,234.5")', '=VALUE("12%")',
