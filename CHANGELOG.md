@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Security
+
+- A crafted workbook can no longer make saving it take quadratic time (GHSA-5px3-v5xm-4jhw,
+  reported by @q7256). Conditional formats of Excel 2010 that the server cannot restore are
+  removed in one pass over the sheet's extensions instead of one pass per rule. The same flaw
+  is fixed wherever preserved content was rescanned per item: elements that close themselves
+  in sparkline, conditional format and validation extensions, the relationships and part names
+  of a package, cells with dynamic array metadata, and slicer caches that no slicer uses.
+
 ## [2.2.2] - 2026-10-21
 
 ### Security

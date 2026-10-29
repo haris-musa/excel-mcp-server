@@ -27,7 +27,8 @@ _CACHE_LISTS = {
 }
 _SLICER_REFERENCE = re.compile(r'<(?:[\w.-]+:)?(?:slicer|timeline)\b[^>]*?\bcache="([^"]*)"')
 PIVOT_ENTRY = re.compile(r"<(?:[\w.-]+:)?pivotTable\b[^>]*/>")
-_CACHE_ENTRY = r'<(?:[\w.-]+:)?(?:slicerCache|timelineCacheRef)\b[^>]*?\b[\w.-]+:id="{id}"[^>]*/>'
+_CACHE_ENTRY = re.compile(r"<(?:[\w.-]+:)?(?:slicerCache|timelineCacheRef)\b[^>]*/>")
+_RELATIONSHIP_ID = re.compile(r'\b[\w.-]+:id="([^"]*)"')
 
 
 def cache_name(part: Part) -> str:
@@ -80,11 +81,11 @@ def without_caches(
         and link.target.content_type in _CACHES
         and cache_name(link.target) in dropped
     }
-    kept = []
-    for text in texts:
-        for identifier in gone:
-            text = re.sub(_CACHE_ENTRY.format(id=re.escape(identifier)), "", text)
-        kept.append(text)
+
+    def entry(match: re.Match[str]) -> str:
+        return "" if gone.intersection(_RELATIONSHIP_ID.findall(match[0])) else match[0]
+
+    kept = [_CACHE_ENTRY.sub(entry, text) for text in texts] if gone else texts
     return [link for link in links if link.id not in gone], kept
 
 

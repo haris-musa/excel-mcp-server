@@ -150,11 +150,12 @@ def patch_cells(data: bytes, edits: dict[str, CellEdit]) -> bytes:
     """Rewrite chosen cells of ``sheetData``; an edit gets a cell's attributes and its content."""
     if not edits:
         return data
-    names = b"|".join(re.escape(name.encode()) for name in edits)
-    cell = re.compile(rb'<c r="(' + names + rb')"([^>]*?)(?:/>|>(.*?)</c>)', re.S)
+    cell = re.compile(rb'<c r="([^"]*)"([^>]*?)(?:/>|>(.*?)</c>)', re.S)
 
     def rewrite(match: re.Match[bytes]) -> bytes:
         coordinate = match[1].decode()
+        if coordinate not in edits:
+            return match[0]
         attributes, body = edits[coordinate](match[2].decode(), (match[3] or b"").decode())
         start = f'<c r="{coordinate}"{attributes}'
         return f"{start}>{body}</c>".encode() if body else f"{start}/>".encode()

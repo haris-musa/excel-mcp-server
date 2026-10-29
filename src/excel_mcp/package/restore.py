@@ -14,7 +14,7 @@ from excel_mcp.package.model import (
     state_of,
     workbook_sheets,
 )
-from excel_mcp.package.opc import Package, Rel, free_id
+from excel_mcp.package.opc import Package, Rel, free_ids
 from excel_mcp.package.patch import WORKBOOK_ORDER, append_to_root, insertions, splice
 from excel_mcp.package.restore_sheet import restore_sheet
 from excel_mcp.package.scan import attributes, rel_id, remap_relationship_ids, scan, tags
@@ -103,13 +103,18 @@ class Restorer:
     ) -> list[str]:
         """Add relationships to a part that is being merged into, and renumber the XML to match."""
         rels = self.package.rels(owner)
+        free_id = free_ids(rels)
+        known: dict[tuple[str, str], Rel] = {}
+        for rel in rels:
+            known.setdefault((rel.type, rel.target), rel)
         mapping: dict[str, str] = {}
         for link in links:
             rel = Rel(link.id, link.type, self.target(link), isinstance(link.target, str))
-            existing = next((r for r in rels if (r.type, r.target) == (rel.type, rel.target)), None)
+            existing = known.get((rel.type, rel.target))
             if existing is None:
-                rel.id = free_id(rels, link.id)
+                rel.id = free_id(link.id)
                 rels.append(rel)
+                known[rel.type, rel.target] = rel
             mapping[link.id] = (existing or rel).id
         return [remap_relationship_ids(text, mapping, scope) for text in texts]
 

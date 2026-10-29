@@ -4,7 +4,9 @@ import io
 import posixpath
 import re
 import zipfile
+from collections.abc import Callable
 from dataclasses import dataclass
+from itertools import count
 from xml.sax.saxutils import quoteattr
 
 from excel_mcp.errors import WorkbookError
@@ -75,15 +77,25 @@ def write_rels(rels: list[Rel]) -> bytes:
     return (XML_DECLARATION + "".join(lines)).encode()
 
 
-def free_id(rels: list[Rel], wanted: str) -> str:
-    """``wanted`` if it is a free ``rIdN``, else the first free one."""
+def free_ids(rels: list[Rel]) -> Callable[[str], str]:
+    """A function that gives, for each id wanted, that id if it is a free ``rIdN`` and else the
+    first free one, and then counts it as taken. Many calls cost no more than one scan."""
     taken = {rel.id for rel in rels}
-    if re.fullmatch(r"rId\d+", wanted) and wanted not in taken:
-        return wanted
-    number = 1
-    while f"rId{number}" in taken:
-        number += 1
-    return f"rId{number}"
+    numbers = count(1)
+
+    def allocate(wanted: str) -> str:
+        if re.fullmatch(r"rId\d+", wanted) and wanted not in taken:
+            chosen = wanted
+        else:
+            chosen = next(f"rId{n}" for n in numbers if f"rId{n}" not in taken)
+        taken.add(chosen)
+        return chosen
+
+    return allocate
+
+
+def free_id(rels: list[Rel], wanted: str) -> str:
+    return free_ids(rels)(wanted)
 
 
 class ContentTypes:
@@ -135,15 +147,16 @@ class Package:
 
     def __init__(self, data: bytes) -> None:
         self._source = zipfile.ZipFile(io.BytesIO(data))
+        self._source_names = set(self._source.namelist())
         self._changes: dict[str, bytes] = {}
         self._rels: dict[str, list[Rel]] = {}
         self.content_types = ContentTypes(self.read(CONTENT_TYPES))
 
     def names(self) -> set[str]:
-        return set(self._source.namelist()) | set(self._changes)
+        return self._source_names | set(self._changes)
 
     def exists(self, name: str) -> bool:
-        return name in self._changes or name in self._source.namelist()
+        return name in self._changes or name in self._source_names
 
     def read(self, name: str) -> bytes:
         if name in self._changes:
@@ -162,13 +175,12 @@ class Package:
 
     def unique_name(self, wanted: str) -> str:
         """``wanted``, or the same name with the next free number in it."""
-        taken = self.names()
-        if wanted not in taken:
+        if not self.exists(wanted):
             return wanted
         match = re.fullmatch(r"(.*?)(\d*)(\.[^./]*)?", wanted)
         stem, number, extension = match.groups() if match else (wanted, "", "")
         counter = int(number or 0) + 1
-        while f"{stem}{counter}{extension or ''}" in taken:
+        while self.exists(f"{stem}{counter}{extension or ''}"):
             counter += 1
         return f"{stem}{counter}{extension or ''}"
 
@@ -189,6 +201,6 @@ class Package:
                 elif content:
                     target.writestr(name, content)
             for name, content in self._changes.items():
-                if content and name not in self._source.namelist():
+                if content and name not in self._source_names:
                     target.writestr(name, content)
         return output.getvalue()

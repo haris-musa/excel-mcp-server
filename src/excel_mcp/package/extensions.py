@@ -41,21 +41,27 @@ class Rewriter(Protocol):
 
 
 _SPARKLINE = re.compile(r"<x14:sparkline>.*?</x14:sparkline>", re.S)
+# An element is its start tag, then either "/>" or its content up to its end tag. Written
+# like this, a self-closing element never makes the match run on to some later end tag, so
+# a document of many such elements is scanned once and not once per element.
 _EMPTY_GROUP = re.compile(
-    r"<x14:sparklineGroup\b[^>]*>(?:(?!<x14:sparkline>).)*?</x14:sparklineGroup>", re.S
+    r"<x14:sparklineGroup\b[^>]*?(?:/>|>(?:(?!<x14:sparkline>).)*?</x14:sparklineGroup>)", re.S
 )
-_RULE_GROUP = re.compile(r"<x14:conditionalFormatting\b[^>]*>.*?</x14:conditionalFormatting>", re.S)
-_VALIDATION = re.compile(r"<x14:dataValidation\b[^>]*>.*?</x14:dataValidation>", re.S)
+_RULE_GROUP = re.compile(
+    r"<x14:conditionalFormatting\b[^>]*?(?:/>|>.*?</x14:conditionalFormatting>)", re.S
+)
+_RULE = re.compile(r"<x14:cfRule\b[^>]*?(?:/>|>.*?</x14:cfRule>)", re.S)
+_VALIDATION = re.compile(r"<x14:dataValidation\b[^>]*?(?:/>|>.*?</x14:dataValidation>)", re.S)
 _DATED_GROUP = re.compile(
-    r"(<x14:sparklineGroup(?!s)[^>]*>(?:(?!<x14:sparklines>).)*?)<xm:f>([^<]*)</xm:f>(<x14:sparklines>)",
+    r"(<x14:sparklineGroup(?!s)[^>]*(?<!/)>(?:(?!<x14:sparklines>|</x14:sparklineGroup>).)*?)"
+    r"<xm:f>([^<]*)</xm:f>(<x14:sparklines>)",
     re.S,
 )
 _GROUP_DATES = re.compile(r"<xm:f>([^<]*)</xm:f>(?=<x14:sparklines>)")
 _RANGE = re.compile(r"<xm:sqref>([^<]*)</xm:sqref>")
 _FORMULA = re.compile(r"<xm:f>([^<]*)</xm:f>")
-_FORMULA_ITEM = re.compile(
-    r"<x14:cfRule\b.*?</x14:cfRule>|<x14:dataValidation\b.*?</x14:dataValidation>", re.S
-)
+_FORMULA_ITEM = re.compile(f"{_RULE.pattern}|{_VALIDATION.pattern}", re.S)
+_RULE_ID_ATTRIBUTE = re.compile(r'\bid="([^"]*)"')
 _GUID = re.compile(r'(<x14:id>|\b(?:xr2:uid|id)=")(\{[0-9A-Fa-f-]{36}\})')
 _CELL = re.compile(r"(\$?)\b([A-Z]{1,3})(\$?)(\d+)\b(?![!(\w])")
 
@@ -196,21 +202,18 @@ def rule_sub(xml: str, rule: Callable[[str], str]) -> str:
 
 
 def without_rules(extensions: dict[str, str], identifiers: set[str]) -> None:
-    """Remove the Excel 2010 conditional format rules with these ids (``{GUID}``)."""
+    """Remove the Excel 2010 conditional format rules with these ids (``{GUID}``), and the
+    groups left without a rule."""
     xml = extensions.get(CONDITIONAL_FORMATS)
     if xml is None:
         return
-    for identifier in identifiers:
-        pattern = (
-            rf'<x14:cfRule\b(?=[^>]*\bid="{re.escape(identifier)}")'
-            r"(?:[^>]*/>|[^>]*>.*?</x14:cfRule>)"
-        )
-        xml = re.sub(pattern, "", xml, flags=re.S)
-    emptied = (
-        r"<x14:conditionalFormatting\b[^>]*>(?:(?!<x14:cfRule\b).)*?"
-        r"</x14:conditionalFormatting>"
-    )
-    xml = re.sub(emptied, "", xml, flags=re.S)
+
+    def dropped(rule: re.Match[str]) -> str:
+        start_tag = rule[0][: rule[0].index(">") + 1]
+        return "" if identifiers.intersection(_RULE_ID_ATTRIBUTE.findall(start_tag)) else rule[0]
+
+    xml = _RULE.sub(dropped, xml)
+    xml = _RULE_GROUP.sub(lambda group: group[0] if "<x14:cfRule" in group[0] else "", xml)
     if "<x14:cfRule" in xml:
         extensions[CONDITIONAL_FORMATS] = xml
     else:
