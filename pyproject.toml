@@ -1,6 +1,6 @@
 [project]
 name = "excel-mcp-server"
-version = "2.2.2"
+version = "2.2.3"
 description = "MCP server for creating, reading and editing Excel workbooks without Microsoft Excel"
 readme = "README.md"
 license = "MIT"
