@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.2.3] - 2026-10-30
+
 ### Security
 
 - A crafted workbook can no longer make saving it take quadratic time (GHSA-5px3-v5xm-4jhw,
@@ -550,7 +552,8 @@ Ideas and fixes from these pull requests were reimplemented in this release: #78
 
 See the [GitHub releases](https://github.com/haris-musa/excel-mcp-server/releases).
 
-[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.2...HEAD
+[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.3...HEAD
+[2.2.3]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.2...v2.2.3
 [2.2.2]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/haris-musa/excel-mcp-server/compare/v2.1.1...v2.2.0
