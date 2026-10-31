@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.2.6] - 2026-11-01
+
+### Fixed
+
+- A workbook with a table slicer made before a PivotTable slicer or timeline no longer fails
+  to open in Excel: the `<ext>` entries of the workbook's and sheets' `<extLst>` are written in
+  the order Excel uses.
+
 ## [2.2.5] - 2026-10-31
 
 ### Security
@@ -24,12 +32,6 @@ All notable changes to this project are documented here. The format follows
   (GHSA-xw9m-c2v4-2hhq, reported by @anelyberdecias-oss). Slicer names and captions are limited
   to 255 characters as in Excel, and every tool refuses text with characters that XML cannot
   hold (control characters other than tab and line break).
-
-### Fixed
-
-- A workbook with a table slicer made before a PivotTable slicer or timeline no longer fails
-  to open in Excel: the `<ext>` entries of the workbook's and sheets' `<extLst>` are written in
-  the order Excel uses.
 
 ## [2.2.4] - 2026-10-31
 
@@ -593,7 +595,8 @@ Ideas and fixes from these pull requests were reimplemented in this release: #78
 
 See the [GitHub releases](https://github.com/haris-musa/excel-mcp-server/releases).
 
-[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.5...HEAD
+[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.6...HEAD
+[2.2.6]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.5...v2.2.6
 [2.2.5]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.4...v2.2.5
 [2.2.4]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.3...v2.2.4
 [2.2.3]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.2...v2.2.3
