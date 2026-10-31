@@ -12,6 +12,7 @@ from xml.sax.saxutils import escape
 
 from openpyxl.utils.cell import column_index_from_string, get_column_letter
 
+from excel_mcp.errors import WorkbookError
 from excel_mcp.package.lines import LineEdit
 from excel_mcp.package.scan import unescape
 from excel_mcp.refs import CellRange, clip_areas, parse_range
@@ -232,11 +233,21 @@ def _sparklines(xml: str, handle: Callable[[str], list[str]]) -> str | None:
     return xml if re.search(r"<x14:sparklineGroup\b", xml) else None
 
 
-def _moved_sparkline(item: str, rewriter: Rewriter) -> list[str]:
+def sparkline_location(item: str) -> str:
+    """The cell of a ``<x14:sparkline>``. Excel refuses a file with a sparkline that has none."""
     location = _RANGE.search(item)
+    if location is None:
+        raise WorkbookError(
+            "The workbook has a sparkline without a location (<xm:sqref>), which Excel "
+            "cannot open. Remove it from the file."
+        )
+    return location[1]
+
+
+def _moved_sparkline(item: str, rewriter: Rewriter) -> list[str]:
+    location = sparkline_location(item)
     source = _FORMULA.search(item)
-    assert location is not None
-    moved = rewriter.ranges(location[1], grow=False)
+    moved = rewriter.ranges(location, grow=False)
     if moved is None:
         return []
     item = _RANGE.sub(lambda _: f"<xm:sqref>{moved}</xm:sqref>", item)
@@ -246,7 +257,7 @@ def _moved_sparkline(item: str, rewriter: Rewriter) -> list[str]:
             item = item.replace(source[0], "")
         else:
             item = item.replace(source[0], f"<xm:f>{escape(read)}</xm:f>")
-    return [item, *_inserted_copies(item, location[1], rewriter)]
+    return [item, *_inserted_copies(item, location, rewriter)]
 
 
 def _moved_formula(match: re.Match[str], rewriter: Rewriter) -> str:

@@ -26,6 +26,7 @@ from xml.sax.saxutils import escape
 from openpyxl import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
+from excel_mcp.errors import WorkbookError
 from excel_mcp.package import extensions
 from excel_mcp.package.anchors import Geometry, Moved, move_anchors, move_vml_shape
 from excel_mcp.package.lines import LineEdit
@@ -120,7 +121,8 @@ def _ranged_items(xml: str, item: str, attribute: str, rewriter: _Rewriter) -> s
     def move(match: re.Match[str]) -> str:
         text = match[0]
         value = re.search(rf'\b{attribute}="([^"]*)"', text)
-        assert value is not None
+        if value is None:
+            raise WorkbookError(f"A <{item}> of the workbook has no {attribute} attribute.")
         moved = rewriter.ranges(value[1], grow=attribute == "sqref")
         return "" if moved is None else text.replace(value[0], f'{attribute}="{moved}"', 1)
 
@@ -134,7 +136,8 @@ def _sort_state(xml: str, rewriter: _Rewriter) -> str | None:
 
     def move(match: re.Match[str]) -> str:
         found = ref.search(match[0])
-        assert found is not None
+        if found is None:
+            raise WorkbookError("A <sortCondition> of the workbook has no ref attribute.")
         moved = rewriter.ranges(found[1])
         return "" if moved is None else match[0].replace(found[0], f'ref="{moved}"', 1)
 

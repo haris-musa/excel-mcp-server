@@ -7,6 +7,7 @@ from openpyxl.workbook import Workbook
 from openpyxl.workbook.defined_name import DefinedName
 from openpyxl.worksheet.worksheet import Worksheet
 
+from excel_mcp.errors import WorkbookError
 from excel_mcp.operations import slicer_xml as xml
 from excel_mcp.package import Link, Part, SheetPackage, state_of
 from excel_mcp.package.anchors import Geometry
@@ -119,7 +120,8 @@ def _list_in(extensions: dict[str, str], uri: str, element: str) -> None:
     assert reference is not None
     existing = extensions[uri]
     closing = re.search(r"</(?:\w+:)(?:slicerCaches|timelineCacheRefs)>", existing)
-    assert closing is not None
+    if closing is None:
+        raise WorkbookError("The workbook's list of slicer or timeline caches is malformed.")
     extensions[uri] = existing[: closing.start()] + reference[0] + existing[closing.start() :]
 
 

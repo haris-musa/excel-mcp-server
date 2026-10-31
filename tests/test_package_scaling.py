@@ -15,8 +15,10 @@ from pathlib import Path
 import pytest
 from openpyxl import Workbook
 
+from excel_mcp.errors import WorkbookError
 from excel_mcp.package import consistency
 from excel_mcp.package import extensions as ext
+from excel_mcp.package import patch as patch_module
 from excel_mcp.package.lines import LineEdit
 from excel_mcp.package.model import Link, Part
 from excel_mcp.package.patch import patch_cells
@@ -170,6 +172,36 @@ def test_many_marked_cells_are_patched_in_one_pass() -> None:
     result = []
     assert _timed(lambda: result.append(patch_cells(data.encode(), edits))) < LIMIT
     assert result[0].count(b' cm="1"') == count
+
+
+@pytest.mark.parametrize("few", [True, False])
+def test_few_marked_cells_are_patched_the_same_as_many(
+    monkeypatch: pytest.MonkeyPatch, few: bool
+) -> None:
+    monkeypatch.setattr(patch_module, "_FEW_CELLS", 16 if few else 0)
+    data = (
+        b'<row r="1"><c r="A1" vm="1"><v>1</v></c><c r="B1"/><c r="AA1" vm="1"><v>2</v></c></row>'
+        b'<row r="2"><c r="A2"><f>A1</f></c><c r="A2" vm="1"><v>1</v></c></row>'
+    )
+    edits = {
+        "A1": lambda attributes, body: (attributes + ' cm="1"', body),
+        "B1": lambda attributes, body: (attributes, "<v>3</v>"),
+        "A2": lambda attributes, body: (attributes + ' cm="2"', ""),
+        "Z9": lambda attributes, body: (attributes, body),
+    }
+
+    assert patch_cells(data, edits) == (
+        b'<row r="1"><c r="A1" vm="1" cm="1"><v>1</v></c><c r="B1"><v>3</v></c>'
+        b'<c r="AA1" vm="1"><v>2</v></c></row>'
+        b'<row r="2"><c r="A2" cm="2"/><c r="A2" vm="1" cm="2"/></row>'
+    )
+
+
+def test_cells_inside_cells_are_refused_when_few_are_patched() -> None:
+    data = b'<c r="A1"><c r="B1"><v>1</v></c></c>'
+    edits = {name: (lambda attributes, body: (attributes, body)) for name in ("A1", "B1")}
+    with pytest.raises(WorkbookError, match="inside other cells"):
+        patch_cells(data, edits)
 
 
 def test_many_orphaned_slicer_caches_are_removed_in_one_pass() -> None:
