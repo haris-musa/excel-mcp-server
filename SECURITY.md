@@ -80,8 +80,9 @@ or anyone who can reach the HTTP endpoint. Its defences are:
 - **Network**: HTTP binds to localhost by default with DNS rebinding protection. A public
   host requires `EXCEL_MCP_AUTH_TOKEN` unless `--allow-unauthenticated` is passed for a
   deployment where a proxy handles authentication.
-- **Resources**: limits on file size, on the cells read or written per call, and on the
-  cells of a sheet that `copy_sheet` duplicates.
+- **Resources**: limits on file size, on the cells read or written per call (chart ranges
+  included, checked before anything is built), and on the cells of a sheet that `copy_sheet`
+  duplicates.
 - **Preserved content**: parts of a workbook that the server cannot edit (extensions,
   slicers, newer charts, comments, form controls, custom XML, embedded objects and data
   connections that are part of the file) are carried over unchanged when it is edited, as

@@ -16,7 +16,7 @@ from excel_mcp.operations.formatting import parse_color
 from excel_mcp.operations.print_setup import PrintSetup, apply_print_setup
 from excel_mcp.operations.protection import Protection, apply_protection
 from excel_mcp.operations.sheet_view import ViewOptions, apply_view, move_sheet
-from excel_mcp.operations.spans import parse_span, to_spans
+from excel_mcp.operations.spans import MAX_ROW_SPAN, parse_span, to_spans
 from excel_mcp.package.lines import Axis
 from excel_mcp.refs import MAX_ROW, parse_cell
 
@@ -88,6 +88,7 @@ def apply_layout(
         apply_auto_filter(sheet, layout.auto_filter, formula_values, max_cells)
     if layout.tab_color is not None:
         sheet.sheet_properties.tabColor = parse_color(layout.tab_color)
+    check_row_spans(layout.rows or [])
     for action in layout.rows or []:
         change_lines(sheet, "rows", action)
     for action in layout.columns or []:
@@ -100,6 +101,16 @@ def apply_layout(
         apply_protection(sheet, layout.protection)
     if layout.view is not None:
         apply_view(sheet, layout.view)
+
+
+def check_row_spans(actions: list[LineAction]) -> None:
+    """Every row of a span gets an object, so the spans of one call share the span limit."""
+    total = 0
+    for action in actions:
+        first, last = parse_span(action.span, "rows")
+        total += last - first + 1
+    if total > MAX_ROW_SPAN:
+        raise InvalidArgumentError(f"One call can change at most {MAX_ROW_SPAN:,} rows.")
 
 
 def split_column_dimensions(sheet: Worksheet) -> None:

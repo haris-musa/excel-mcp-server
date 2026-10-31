@@ -13,6 +13,12 @@ All notable changes to this project are documented here. The format follows
   follows, whatever the upload holds (GHSA-px2f-qx58-w2qr, reported by
   @anelyberdecias-oss). Uploads to `.xlsx` and `.xltx` paths still have macros removed.
 
+- `create_chart` now checks the size of the ranges it is given, and the number of series they
+  make, before it builds anything, so one request cannot make the server work for minutes
+  (GHSA-pwqg-v6rw-x2xh, reported by @anelyberdecias-oss). Chart ranges are limited by
+  `--max-cells` like other ranges, and one call to `set_sheet_layout` can change at most 10,000
+  rows in total.
+
 ## [2.2.4] - 2026-10-31
 
 ### Changed

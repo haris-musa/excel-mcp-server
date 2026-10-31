@@ -3,6 +3,7 @@
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.operations.charts_data import Plot
 from excel_mcp.operations.charts_options import (
+    MAX_SERIES,
     ROUND_TYPES,
     Axis,
     ChartOptions,
@@ -12,7 +13,6 @@ from excel_mcp.operations.charts_options import (
 )
 from excel_mcp.operations.formatting import parse_color
 
-MAX_SERIES = 255
 _COMBINABLE = ("column", "line", "area")
 _SECONDARY = ("column", "line", "area", "scatter")
 _GROUPED = ("column", "bar", "line", "area")

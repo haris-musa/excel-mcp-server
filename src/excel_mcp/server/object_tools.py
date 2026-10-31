@@ -114,6 +114,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 options,
                 replace,
                 name,
+                workspace.limits.max_cells,
             )
         return Changed(sheet=sheet, name=made, range=area)
 

@@ -10,6 +10,7 @@ ChartType = Literal[
     "column", "bar", "line", "area", "pie", "doughnut", "radar", "scatter", "bubble",
     "waterfall", "histogram", "pareto", "box_whisker", "treemap", "sunburst", "funnel",
 ]  # fmt: skip
+MAX_SERIES = 255
 SeriesType = Literal["column", "line", "area"]
 Grouping = Literal["standard", "stacked", "percent_stacked"]
 LegendPosition = Literal["right", "left", "top", "bottom", "none"]

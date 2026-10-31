@@ -5,9 +5,10 @@ from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
 
 from excel_mcp.errors import InvalidArgumentError
-from excel_mcp.operations.charts_check import MAX_SERIES, check_labels, require
+from excel_mcp.operations.charts_check import check_labels, require
 from excel_mcp.operations.charts_data import (
     Plot,
+    check_series_count,
     one_line,
     qualified,
     series_name,
@@ -51,6 +52,7 @@ def resolve_modern(
     source: str | None,
     series: list[SeriesSpec],
     categories: str | None,
+    max_cells: int,
 ) -> list[Plot]:
     if (source is None) == (not series):
         raise InvalidArgumentError(
@@ -58,33 +60,41 @@ def resolve_modern(
             "and not neither."
         )
     if source is not None:
-        series, categories = _block(workbook, sheet, chart_type, source), None
-    plots = [_plot(workbook, sheet, chart_type, spec, categories) for spec in series]
+        series, categories = _block(workbook, sheet, chart_type, source, max_cells), None
+    check_series_count(len(series))
+    plots = [_plot(workbook, sheet, chart_type, spec, categories, max_cells) for spec in series]
     if chart_type not in _MANY and len(plots) != 1:
         raise InvalidArgumentError(f"A {chart_type} chart plots one series, got {len(plots)}.")
     return plots
 
 
 def _plot(
-    workbook: Workbook, sheet: str, chart_type: str, spec: SeriesSpec, categories: str | None
+    workbook: Workbook,
+    sheet: str,
+    chart_type: str,
+    spec: SeriesSpec,
+    categories: str | None,
+    max_cells: int,
 ) -> Plot:
-    values, points = one_line(workbook, sheet, spec.values, "values")
+    values, points = one_line(workbook, sheet, spec.values, "values", max_cells)
     labels = spec.categories or categories
     if labels is None:
         found = None
     elif chart_type in _HIERARCHIES:
         title, cells = split_sheet(workbook, sheet, labels)
-        found = qualified(title, parse_range(cells))
+        found = qualified(title, parse_range(cells).within(max_cells))
     else:
-        found = one_line(workbook, sheet, labels, "categories")[0]
+        found = one_line(workbook, sheet, labels, "categories", max_cells)[0]
     return Plot(spec, values, found, None, series_name(workbook, spec.name), points)
 
 
-def _block(workbook: Workbook, default: str, chart_type: str, source: str) -> list[SeriesSpec]:
+def _block(
+    workbook: Workbook, default: str, chart_type: str, source: str, max_cells: int
+) -> list[SeriesSpec]:
     """Series for a block with a header row, read as Excel reads it: leading text columns are
     labels (one, or the levels of a treemap or sunburst), the number columns are the series."""
     sheet, cells = split_sheet(workbook, default, source)
-    area = parse_range(cells)
+    area = parse_range(cells).within(max_cells)
     if area.rows < 2:
         raise InvalidArgumentError("source needs a header row and at least one row of data.")
     labels = _text_columns(workbook[sheet], area)
@@ -120,8 +130,6 @@ def _text_columns(sheet: Worksheet, area: CellRange) -> int:
 
 
 def check_modern(plots: list[Plot], chart_type: ChartType, options: ChartOptions) -> None:
-    if len(plots) > MAX_SERIES:
-        raise InvalidArgumentError(f"A chart has at most {MAX_SERIES} series, got {len(plots)}.")
     _check_options(options, chart_type)
     for number, plot in enumerate(plots, start=1):
         try:

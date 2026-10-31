@@ -78,6 +78,7 @@ def create_chart(
     options: ChartOptions,
     replace: str | None,
     name: str | None,
+    max_cells: int,
 ) -> tuple[str | None, str | None]:
     """Add a chart (or replace the chart called `replace`); return its name and cells."""
     host = None if at is None else get_sheet(workbook, sheet)
@@ -96,7 +97,17 @@ def create_chart(
                 f"{chart_type} charts read their data in columns; list rows with `series`."
             )
         return _create_modern(
-            workbook, host, anchor, chart_type, source, series, categories, options, replace, name
+            workbook,
+            host,
+            anchor,
+            chart_type,
+            source,
+            series,
+            categories,
+            options,
+            replace,
+            name,
+            max_cells,
         )
     plots = resolve_series(
         workbook,
@@ -106,6 +117,7 @@ def create_chart(
         series_in,
         series,
         categories,
+        max_cells,
     )
     check_chart(plots, chart_type, options)
     chart = build_chart(plots, chart_type, options)
@@ -146,10 +158,11 @@ def _create_modern(
     options: ChartOptions,
     replace: str | None,
     name: str | None,
+    max_cells: int,
 ) -> tuple[str, str]:
     if host is None or anchor is None:
         raise InvalidArgumentError(f"A {chart_type} chart sits on the sheet: give at, e.g. 'E2'.")
-    plots = resolve_modern(workbook, host.title, chart_type, source, series, categories)
+    plots = resolve_modern(workbook, host.title, chart_type, source, series, categories, max_cells)
     check_modern(plots, chart_type, options)
     index, name = _place(host, replace, name)
     if index is None:

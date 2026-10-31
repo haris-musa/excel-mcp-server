@@ -9,7 +9,7 @@ from openpyxl.chart.series import SeriesLabel
 from openpyxl.utils import absolute_coordinate, quote_sheetname
 
 from excel_mcp.errors import InvalidArgumentError
-from excel_mcp.operations.charts_options import ChartType, SeriesSpec
+from excel_mcp.operations.charts_options import MAX_SERIES, ChartType, SeriesSpec
 from excel_mcp.refs import CellRange, parse_cell, parse_range
 from excel_mcp.workspace import get_sheet
 
@@ -36,6 +36,7 @@ def resolve_series(
     series_in: SeriesIn,
     series: list[SeriesSpec],
     categories: str | None,
+    max_cells: int,
 ) -> list[Plot]:
     if (source is None) == (not series):
         raise InvalidArgumentError(
@@ -43,22 +44,32 @@ def resolve_series(
             "and not neither."
         )
     if source is not None:
-        series = _block_series(workbook, sheet, source, chart_type, series_in)
+        series = _block_series(workbook, sheet, source, chart_type, series_in, max_cells)
         categories = None
-    return [_resolve(workbook, sheet, item, categories) for item in series]
+    check_series_count(len(series))
+    return [_resolve(workbook, sheet, item, categories, max_cells) for item in series]
 
 
-def _resolve(workbook: Workbook, sheet: str, spec: SeriesSpec, categories: str | None) -> Plot:
-    values, points = one_line(workbook, sheet, spec.values, "values")
+def _resolve(
+    workbook: Workbook, sheet: str, spec: SeriesSpec, categories: str | None, max_cells: int
+) -> Plot:
+    values, points = one_line(workbook, sheet, spec.values, "values", max_cells)
     labels = spec.categories or categories
     return Plot(
         spec=spec,
         values=values,
-        categories=one_line(workbook, sheet, labels, "categories")[0] if labels else None,
-        sizes=one_line(workbook, sheet, spec.sizes, "sizes")[0] if spec.sizes else None,
+        categories=one_line(workbook, sheet, labels, "categories", max_cells)[0]
+        if labels
+        else None,
+        sizes=one_line(workbook, sheet, spec.sizes, "sizes", max_cells)[0] if spec.sizes else None,
         name=series_name(workbook, spec.name),
         points=points,
     )
+
+
+def check_series_count(count: int) -> None:
+    if count > MAX_SERIES:
+        raise InvalidArgumentError(f"A chart has at most {MAX_SERIES} series, got {count}.")
 
 
 def split_sheet(workbook: Workbook, default: str, text: str) -> tuple[str, str]:
@@ -74,10 +85,12 @@ def qualified(sheet: str, area: CellRange) -> str:
     return f"{quote_sheetname(sheet)}!{absolute_coordinate(str(area))}"
 
 
-def one_line(workbook: Workbook, default: str, text: str, what: str) -> tuple[str, int]:
+def one_line(
+    workbook: Workbook, default: str, text: str, what: str, max_cells: int
+) -> tuple[str, int]:
     """A one-row or one-column range as an absolute formula, and its number of cells."""
     sheet, cells = split_sheet(workbook, default, text)
-    area = parse_range(cells)
+    area = parse_range(cells).within(max_cells)
     if area.rows > 1 and area.cols > 1:
         raise InvalidArgumentError(
             f"Series {what} must be one row or one column, got {text!r}. List one series per "
@@ -99,11 +112,16 @@ def series_name(workbook: Workbook, text: str | None) -> SeriesLabel | None:
 
 
 def _block_series(
-    workbook: Workbook, default: str, source: str, chart_type: ChartType, series_in: SeriesIn
+    workbook: Workbook,
+    default: str,
+    source: str,
+    chart_type: ChartType,
+    series_in: SeriesIn,
+    max_cells: int,
 ) -> list[SeriesSpec]:
     """Series for a block with a header line and a label line, by columns or by rows."""
     sheet, cells = split_sheet(workbook, default, source)
-    area = parse_range(cells)
+    area = parse_range(cells).within(max_cells)
     if area.rows < 2 or area.cols < 2:
         raise InvalidArgumentError(
             "source needs a header row and a label column plus at least one series, "
@@ -112,6 +130,7 @@ def _block_series(
     by_columns = series_in == "columns"
     lines = area.cols if by_columns else area.rows
     points = (area.rows if by_columns else area.cols) - 1
+    check_series_count(lines - 1)
 
     def segment(line: int, start: int, stop: int) -> str:
         """Cells `start` to `stop` along line number `line`, the label line being 0."""
