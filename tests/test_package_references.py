@@ -11,6 +11,7 @@ import pytest
 from openpyxl import Workbook, load_workbook
 
 from excel_mcp import package
+from excel_mcp.errors import WorkbookError
 from excel_mcp.package import extensions as ext
 from excel_mcp.package import state_of
 from excel_mcp.package.lines import LineEdit
@@ -272,6 +273,28 @@ def test_two_cell_shapes_move_and_resize_like_excel(
     _run(workbook, edit)
 
     assert _corners(sheet.anchors[0])[:2] == expected
+
+
+@pytest.mark.parametrize(
+    ("name", "xml", "message"),
+    [
+        ("ignoredErrors", '<ignoredErrors><ignoredError formula="1"/></ignoredErrors>', "sqref"),
+        (
+            "protectedRanges",
+            '<protectedRanges><protectedRange name="a"/></protectedRanges>',
+            "sqref",
+        ),
+        ("sortState", '<sortState ref="A1:B5"><sortCondition descending="1"/></sortState>', "ref"),
+    ],
+)
+def test_ranged_content_without_its_range_is_refused(
+    files: Path, name: str, xml: str, message: str
+) -> None:
+    workbook, sheet = _open(files, "excel_sparklines.xlsx", "Data")
+    sheet.elements = [(name, xml)]
+
+    with pytest.raises(WorkbookError, match=message):
+        _run(workbook, _edit("Data", "rows", 2))
 
 
 def test_one_cell_shapes_in_deleted_rows_keep_their_size(files: Path) -> None:

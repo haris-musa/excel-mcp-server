@@ -2,6 +2,7 @@
 
 import re
 from collections.abc import Callable
+from itertools import pairwise
 
 from excel_mcp.errors import WorkbookError
 from excel_mcp.package.scan import Scan, scan
@@ -146,18 +147,44 @@ def _with_extension(rule: bytes, qname: str, extension: str, offset: int) -> Edi
     return (offset, offset + len(rule), text)
 
 
+# Looking each cell up by its address reads the sheet once per cell, which is fastest for a
+# few cells; for more, one pass over all the cells does not grow with the number to patch.
+_FEW_CELLS = 16
+_CELL = re.compile(rb'<c r="([^"]*)"([^>]*?)(?:/>|>(.*?)</c>)', re.S)
+
+
 def patch_cells(data: bytes, edits: dict[str, CellEdit]) -> bytes:
     """Rewrite chosen cells of ``sheetData``; an edit gets a cell's attributes and its content."""
     if not edits:
         return data
-    cell = re.compile(rb'<c r="([^"]*)"([^>]*?)(?:/>|>(.*?)</c>)', re.S)
+    if len(edits) <= _FEW_CELLS:
+        return splice(data, _located_edits(data, edits))
 
     def rewrite(match: re.Match[bytes]) -> bytes:
-        coordinate = match[1].decode()
-        if coordinate not in edits:
-            return match[0]
-        attributes, body = edits[coordinate](match[2].decode(), (match[3] or b"").decode())
-        start = f'<c r="{coordinate}"{attributes}'
-        return f"{start}>{body}</c>".encode() if body else f"{start}/>".encode()
+        edit = edits.get(match[1].decode())
+        return _rewritten(match, edit) if edit else match[0]
 
-    return cell.sub(rewrite, data)
+    return _CELL.sub(rewrite, data)
+
+
+def _located_edits(data: bytes, edits: dict[str, CellEdit]) -> list[Edit]:
+    found: list[Edit] = []
+    for coordinate, edit in edits.items():
+        opening = b'<c r="%b"' % coordinate.encode()
+        start = data.find(opening)
+        while start >= 0:
+            match = _CELL.match(data, start)
+            if match is None:
+                raise WorkbookError(f"Cell {coordinate} of a worksheet is malformed.")
+            found.append((match.start(), match.end(), _rewritten(match, edit)))
+            start = data.find(opening, match.end())
+    found.sort()
+    if any(before[1] > after[0] for before, after in pairwise(found)):
+        raise WorkbookError("A worksheet has cells inside other cells.")
+    return found
+
+
+def _rewritten(match: re.Match[bytes], edit: CellEdit) -> bytes:
+    attributes, body = edit(match[2].decode(), (match[3] or b"").decode())
+    start = f'<c r="{match[1].decode()}"{attributes}'
+    return f"{start}>{body}</c>".encode() if body else f"{start}/>".encode()

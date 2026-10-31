@@ -6,6 +6,20 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Saving a workbook after a cell patch is fast again on huge sheets that have only a few cells
+  to patch (dynamic array cells): a few cells are looked up by address instead of scanning
+  every cell, which GHSA-5px3-v5xm-4jhw's fix made about 1.3 s slower per 2 million cells.
+
+### Fixed
+
+- A workbook with a sparkline that has no location (`<xm:sqref>`) no longer fails with
+  "Unexpected error" and a logged traceback when rows or columns are edited or sparklines are
+  deleted. Excel itself cannot open such a file, so the server refuses it with a clear error.
+  Ignored errors and protected ranges without `sqref`, sort conditions without `ref`, and a
+  malformed list of slicer caches are refused the same way.
+
 ## [2.2.3] - 2026-10-30
 
 ### Security

@@ -2,7 +2,9 @@
 
 import re
 import zipfile
+from collections.abc import Callable, Coroutine
 from pathlib import Path
+from typing import Any
 
 import pytest
 from mcp import Client
@@ -128,3 +130,35 @@ async def test_preserved_content_beyond_the_size_limit_is_refused(files: Path) -
 
     assert result.is_error
     assert "bytes this server can carry along" in str(result.content[0])
+
+
+def _without_sparkline_location(source: Path) -> None:
+    with zipfile.ZipFile(source) as archive:
+        parts = {name: archive.read(name) for name in archive.namelist()}
+    name = sheet_part(parts, "Data")
+    location = re.compile(rb"<xm:sqref>[^<]*</xm:sqref>(?=</x14:sparkline>)")
+    parts[name] = location.sub(b"", parts[name], count=1)
+    with zipfile.ZipFile(source, "w") as archive:
+        for part, data in parts.items():
+            archive.writestr(part, data)
+
+
+@pytest.mark.parametrize(
+    ("tool", "arguments"),
+    [
+        ("insert_rows_or_columns", {"sheet": "Data", "axis": "rows", "start": 2, "count": 1}),
+        ("delete_sparklines", {"sheet": "Data", "range": "A1:Z99"}),
+    ],
+)
+async def test_a_sparkline_without_a_location_is_refused_cleanly(
+    call_error: Callable[..., Coroutine[Any, Any, str]],
+    files: Path,
+    tool: str,
+    arguments: dict[str, Any],
+) -> None:
+    _without_sparkline_location(copy_fixture(files, "excel_sparklines.xlsx"))
+
+    message = await call_error(tool, **BOOK, **arguments)
+
+    assert "sparkline without a location" in message
+    assert "Unexpected error" not in message

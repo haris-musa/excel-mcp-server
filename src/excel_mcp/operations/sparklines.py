@@ -17,7 +17,7 @@ from excel_mcp.operations.sparkline_style import SparklineInfo, SparklineStyle, 
 from excel_mcp.operations.sparkline_xml import build_group, read_groups
 from excel_mcp.operations.x14_xml import X14, XM, sheet_prefix
 from excel_mcp.package import state_of
-from excel_mcp.package.extensions import SPARKLINES, edit_sparklines
+from excel_mcp.package.extensions import SPARKLINES, edit_sparklines, sparkline_location
 from excel_mcp.refs import CellRange, cell_name, parse_range
 from excel_mcp.workspace import get_sheet
 
@@ -117,9 +117,7 @@ def _delete(extensions: dict[str, str], doomed: Callable[[str], bool]) -> int:
 
     def handle(item: str) -> list[str]:
         nonlocal removed
-        location = _LOCATION.search(item)
-        assert location is not None
-        if doomed(location[1]):
+        if doomed(sparkline_location(item)):
             removed += 1
             return []
         return [item]
