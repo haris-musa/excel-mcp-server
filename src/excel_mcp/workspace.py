@@ -192,11 +192,7 @@ class Workspace:
     def create(self, raw_path: str, sheets: list[str], *, overwrite: bool) -> Path:
         path = self.resolve(raw_path)
         macro_enabled = path.suffix.lower() in MACRO_SUFFIXES
-        if macro_enabled and not self.allow_macro_workbooks:
-            raise InvalidArgumentError(
-                "New workbooks cannot contain macros unless the server allows VBA writing. "
-                "Create an .xlsx or .xltx file instead."
-            )
+        self._check_macro_target(path, "New workbooks cannot contain macros")
         workbook = Workbook()
         workbook.properties.creator = None
         workbook.worksheets[0].title = sheets[0]
@@ -214,14 +210,26 @@ class Workspace:
         return path
 
     def store(self, raw_path: str, content: bytes, *, overwrite: bool) -> Path:
-        """Save uploaded workbook bytes as a file, without macros unless the file may hold them."""
+        """Save uploaded workbook bytes as a file, without macros unless the file may hold them.
+
+        Macro-enabled targets need VBA writing, whatever the upload holds, as in `create`.
+        """
         path = self.resolve(raw_path)
-        if path.suffix.lower() not in MACRO_SUFFIXES:
+        if path.suffix.lower() in MACRO_SUFFIXES:
+            self._check_macro_target(path, "Uploads cannot be stored as macro-enabled workbooks")
+        else:
             content = macros.without_macros(content)
         with self._write_lock:
             self._check_overwrite(path, overwrite)
             write_atomically(path, content)
         return path
+
+    def _check_macro_target(self, path: Path, problem: str) -> None:
+        if path.suffix.lower() in MACRO_SUFFIXES and not self.allow_macro_workbooks:
+            raise InvalidArgumentError(
+                f"{problem} unless the server is started with --allow-vba-write. "
+                "Use an .xlsx or .xltx file instead."
+            )
 
     def _check_overwrite(self, path: Path, overwrite: bool) -> None:
         if path.exists() and not overwrite:

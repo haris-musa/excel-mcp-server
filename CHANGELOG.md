@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Security
+
+- `import_workbook` no longer stores uploads as macro-enabled workbooks (`.xlsm`, `.xltm`)
+  unless the server is started with `--allow-vba-write`, the same rule `create_workbook`
+  follows, whatever the upload holds (GHSA-px2f-qx58-w2qr, reported by
+  @anelyberdecias-oss). Uploads to `.xlsx` and `.xltx` paths still have macros removed.
+
 ## [2.2.4] - 2026-10-31
 
 ### Changed

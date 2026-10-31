@@ -97,7 +97,9 @@ or anyone who can reach the HTTP endpoint. Its defences are:
   mode, and are marked destructive. They write only to `.xlsm`/`.xltm` files inside the
   allowed folders, limit the size of code, and only store it: whether macros run is up to
   Excel and the user. A prompt-injected model could plant harmful code with this option on,
-  so users must review macro code before enabling macros.
+  so users must review macro code before enabling macros. Without the option no tool can add a
+  VBA project: `create_workbook` and `import_workbook` refuse `.xlsm`/`.xltm` paths (whatever an
+  upload holds), and uploads to other paths have their macros removed.
 
 Out of scope: an assistant acting on instructions hidden in cell text (prompt injection)
 is a risk of the client and model; the server marks cell contents as untrusted data but
