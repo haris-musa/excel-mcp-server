@@ -78,7 +78,7 @@ def _extensions(restorer: "Restorer", package: SheetPackage, restored: list[str]
     dead -= {i for xml in restored for i in _RULE_ID.findall(xml)}
     extensions_module.without_rules(extensions, dead)
     extensions_module.forget_sheets(extensions, restorer.gone)
-    return extensions
+    return extensions_module.in_excel_order(extensions)
 
 
 def _threaded_comments(sheet: Worksheet, links: list[Link]) -> list[Link]:

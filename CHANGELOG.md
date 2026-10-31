@@ -25,6 +25,12 @@ All notable changes to this project are documented here. The format follows
   to 255 characters as in Excel, and every tool refuses text with characters that XML cannot
   hold (control characters other than tab and line break).
 
+### Fixed
+
+- A workbook with a table slicer made before a PivotTable slicer or timeline no longer fails
+  to open in Excel: the `<ext>` entries of the workbook's and sheets' `<extLst>` are written in
+  the order Excel uses.
+
 ## [2.2.4] - 2026-10-31
 
 ### Changed

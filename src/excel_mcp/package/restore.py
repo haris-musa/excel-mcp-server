@@ -6,6 +6,7 @@ from openpyxl import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.package import consistency, metadata, properties
+from excel_mcp.package.extensions import in_excel_order
 from excel_mcp.package.model import (
     Link,
     PackageState,
@@ -145,13 +146,14 @@ class Restorer:
     def _workbook(self, links: list[Link]) -> None:
         package = self.state.workbook
         names = [name for name, _ in package.elements]
+        ordered = in_excel_order(package.extensions)
         links, texts = consistency.without_caches(
             links,
-            [xml for _, xml in package.elements] + list(package.extensions.values()),
+            [xml for _, xml in package.elements] + list(ordered.values()),
             self.orphans,
         )
         extensions = consistency.empty_cache_lists(
-            dict(zip(package.extensions, texts[len(names) :], strict=True))
+            dict(zip(ordered, texts[len(names) :], strict=True))
         )
         remapped = self.attach(
             MAIN, links, texts[: len(names)] + list(extensions.values()), package.namespaces
