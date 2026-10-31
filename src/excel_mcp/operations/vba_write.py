@@ -30,8 +30,6 @@ def write_module(
         raise InvalidArgumentError(
             "Code lines cannot start with 'Attribute': the server writes module attributes itself."
         )
-    if "\0" in code:
-        raise InvalidArgumentError("The code contains a NUL character.")
     project = _project(workbook)
     existing = project.find(name)
     if existing is None and not _MODULE_NAME.fullmatch(name):

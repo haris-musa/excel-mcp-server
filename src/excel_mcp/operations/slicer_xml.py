@@ -3,10 +3,10 @@
 import datetime as dt
 import re
 from dataclasses import dataclass
-from xml.sax.saxutils import quoteattr
 
 from excel_mcp.package.opc import XML_DECLARATION
 from excel_mcp.package.scan import attributes
+from excel_mcp.xml_text import attribute
 
 X14 = "http://schemas.microsoft.com/office/spreadsheetml/2009/9/main"
 X15 = "http://schemas.microsoft.com/office/spreadsheetml/2010/11/main"
@@ -47,7 +47,7 @@ class CacheOptions:
 
 
 def _attrs(**values: object) -> str:
-    return "".join(f" {k}={quoteattr(str(v))}" for k, v in values.items() if v is not None)
+    return "".join(f" {k}={attribute(str(v))}" for k, v in values.items() if v is not None)
 
 
 def _date(moment: dt.date | dt.datetime) -> str:

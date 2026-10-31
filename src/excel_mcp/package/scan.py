@@ -7,6 +7,7 @@ Excel reject the file.
 
 import re
 from dataclasses import dataclass
+from html import unescape
 from xml.parsers import expat
 
 from excel_mcp.errors import WorkbookError
@@ -167,16 +168,6 @@ def _relationship_prefixes(xml: str, scope: dict[str, str]) -> set[str]:
 def attributes(tag: str) -> dict[str, str]:
     """The attributes of a start tag, unescaped."""
     return {m[1]: unescape(m[2] if m[2] is not None else m[3]) for m in _ATTRIBUTE.finditer(tag)}
-
-
-def unescape(value: str) -> str:
-    return (
-        value.replace("&lt;", "<")
-        .replace("&gt;", ">")
-        .replace("&quot;", '"')
-        .replace("&apos;", "'")
-        .replace("&amp;", "&")
-    )
 
 
 def tags(document: Scan, name: str) -> list[dict[str, str]]:

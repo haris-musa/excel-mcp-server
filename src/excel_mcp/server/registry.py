@@ -15,6 +15,7 @@ from pydantic import BaseModel, ValidationError
 from excel_mcp.errors import ExcelMCPError
 from excel_mcp.inputs import InputModel
 from excel_mcp.server.validation import format_validation_error
+from excel_mcp.xml_text import ILLEGAL_CHARACTERS
 
 _REJECTED = "_rejected_arguments"
 logger = logging.getLogger(__name__)
@@ -106,10 +107,34 @@ class _Validated(BaseModel):
 
     @classmethod
     def model_validate(cls, obj: Any, **kwargs: Any) -> Any:
+        illegal = _illegal_text(obj)
+        if illegal is not None:
+            return _Rejected(
+                f"Invalid arguments for {cls.tool_name}: text cannot contain control characters "
+                f"such as {illegal!r}."
+            )
         try:
             return super().model_validate(obj, **kwargs)
         except ValidationError as error:
             return _Rejected(format_validation_error(cls.tool_name, error))
+
+
+def _illegal_text(value: Any) -> str | None:
+    """The first character in the arguments that no XML part can hold, in any string or key.
+
+    Text ends up in XML parts of the workbook, so it is refused once, here, rather than by
+    every tool that writes it.
+    """
+    if isinstance(value, str):
+        found = ILLEGAL_CHARACTERS.search(value)
+        return found[0] if found else None
+    if isinstance(value, dict):
+        items = [*value.keys(), *value.values()]
+    elif isinstance(value, list):
+        items = value
+    else:
+        return None
+    return next((found for item in items if (found := _illegal_text(item))), None)
 
 
 def _as_tool_errors(function: Callable[P, R]) -> Callable[P, R]:

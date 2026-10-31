@@ -7,6 +7,7 @@ in the sheet proper. They hold ranges and formulas that must follow the cells th
 import re
 import uuid
 from collections.abc import Callable
+from html import unescape
 from typing import Protocol
 from xml.sax.saxutils import escape
 
@@ -14,7 +15,6 @@ from openpyxl.utils.cell import column_index_from_string, get_column_letter
 
 from excel_mcp.errors import WorkbookError
 from excel_mcp.package.lines import LineEdit
-from excel_mcp.package.scan import unescape
 from excel_mcp.refs import CellRange, clip_areas, parse_range
 
 SPARKLINES = "{05C60535-1F16-4fd2-B633-F4F36F0B64E0}"

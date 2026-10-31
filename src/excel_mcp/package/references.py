@@ -21,6 +21,7 @@ and panes of custom sheet views, and consolidation sources.
 
 import re
 from collections.abc import Callable
+from html import unescape
 from xml.sax.saxutils import escape
 
 from openpyxl import Workbook
@@ -31,7 +32,6 @@ from excel_mcp.package import extensions
 from excel_mcp.package.anchors import Geometry, Moved, move_anchors, move_vml_shape
 from excel_mcp.package.lines import LineEdit
 from excel_mcp.package.model import Part, SheetPackage, state_of
-from excel_mcp.package.scan import unescape
 from excel_mcp.refs import parse_range
 
 Formula = Callable[[str, str], str]

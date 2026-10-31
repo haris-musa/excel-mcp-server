@@ -83,6 +83,9 @@ or anyone who can reach the HTTP endpoint. Its defences are:
 - **Resources**: limits on file size, on the cells read or written per call (chart ranges
   included, checked before anything is built), and on the cells of a sheet that `copy_sheet`
   duplicates.
+- **Text in XML**: text from clients (names, captions, titles) is escaped wherever the server
+  writes XML itself, and every tool argument is refused up front if it holds a character that
+  XML cannot (control characters other than tab and line break, lone surrogates).
 - **Preserved content**: parts of a workbook that the server cannot edit (extensions,
   slicers, newer charts, comments, form controls, custom XML, embedded objects and data
   connections that are part of the file) are carried over unchanged when it is edited, as

@@ -31,6 +31,7 @@ from excel_mcp.package import state_of
 from excel_mcp.refs import parse_cell
 
 EMU_PER_CM = 360_000
+MAX_TEXT_LENGTH = 255
 _SLICER_SIZE = (1_828_800, 2_667_000)
 _TIMELINE_SIZE = (3_333_750, 1_371_600)
 
@@ -71,6 +72,8 @@ def add_slicer(
 ) -> tuple[str, bool]:
     """Add the slicer or timeline to ``sheet``; returns its name, and whether the figures of
     PivotTables it limits were left for Excel to recalculate when it opens the file."""
+    if request.caption:
+        _check_text(request.caption, "caption")
     owner, target = find_source(workbook, request.source.sheet, request.source.name)
     if isinstance(target, Table):
         if request.timeline or request.connect:
@@ -235,6 +238,7 @@ def _names(workbook: Workbook, request: SlicerRequest, stem: str) -> tuple[str, 
     """The slicer's name and its cache's, unique in the workbook as Excel makes them."""
     taken = {entry.name.casefold() for entry in entries(workbook)}
     if request.name is not None:
+        _check_text(request.name, "name")
         if request.name.casefold() in taken:
             raise InvalidArgumentError(f"A slicer or timeline named {request.name!r} exists.")
         name = request.name
@@ -243,13 +247,20 @@ def _names(workbook: Workbook, request: SlicerRequest, stem: str) -> tuple[str, 
         while name.casefold() in taken:
             number += 1
             name = f"{request.field} {number}"
-    stem += re.sub(r"\W", "_", request.field).rstrip("_")
+    # Excel keeps letters, digits and . \ ? in a cache name, and a defined name is at most 255.
+    stem += re.sub(r"[^\w.\\?]", "_", request.field).rstrip("_")[: MAX_TEXT_LENGTH - 20]
     used = {n.casefold() for n in workbook.defined_names} | {c.casefold() for c in caches(workbook)}
     cache, number = stem, 0
     while cache.casefold() in used:
         number += 1
         cache = f"{stem}{number}"
     return name, cache
+
+
+def _check_text(text: str, what: str) -> None:
+    """Excel takes any slicer name, caption and cache name of 1 to 255 characters."""
+    if not text.strip() or len(text) > MAX_TEXT_LENGTH:
+        raise InvalidArgumentError(f"A slicer's {what} must be 1 to {MAX_TEXT_LENGTH} characters.")
 
 
 def _check_style(style: str | None, kind: str) -> None:

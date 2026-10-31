@@ -1,6 +1,7 @@
 """Reading from the original file what openpyxl is going to drop from a worksheet."""
 
 import re
+from html import unescape
 from typing import Literal
 from xml.etree import ElementTree
 
@@ -21,7 +22,6 @@ from excel_mcp.package.scan import (
     relationship_ids,
     scan,
     scan_fragment,
-    unescape,
     with_namespaces,
 )
 from excel_mcp.package.shape_names import anchored_name, restore_names

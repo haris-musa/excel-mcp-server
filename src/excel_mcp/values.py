@@ -10,7 +10,7 @@ import re
 from collections.abc import Iterable
 from decimal import Decimal
 
-from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE, Cell
+from openpyxl.cell.cell import Cell
 from openpyxl.worksheet.formula import ArrayFormula
 
 from excel_mcp.errors import InvalidArgumentError
@@ -55,8 +55,6 @@ def to_cell(value: CellValue, sheet_names: Iterable[str]) -> CellValue | dt.date
     """
     if not isinstance(value, str):
         return value
-    if ILLEGAL_CHARACTERS_RE.search(value):
-        raise InvalidArgumentError("Text cannot contain control characters such as '\x01'.")
     if value.startswith("="):
         return storable_formula(value, sheet_names)
     try:

@@ -4,6 +4,7 @@ connectors, groups and form controls."""
 import re
 import uuid
 from collections.abc import Callable
+from html import unescape
 from xml.sax.saxutils import escape, quoteattr
 
 from openpyxl.workbook import Workbook
@@ -15,7 +16,7 @@ from excel_mcp.package import PackageState, Part, SheetPackage, state_of
 from excel_mcp.package.consistency import THREADED_COMMENTS
 from excel_mcp.package.extensions import CONDITIONAL_FORMATS, SPARKLINES
 from excel_mcp.package.model import cloned
-from excel_mcp.package.scan import relationship_ids, unescape
+from excel_mcp.package.scan import relationship_ids
 
 # Charts of Excel 2016 and slicers are copied with the parts they need, by their own code.
 _COPIED_ELSEWHERE = (

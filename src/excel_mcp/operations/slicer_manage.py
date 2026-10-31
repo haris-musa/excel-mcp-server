@@ -2,7 +2,6 @@
 
 import re
 import uuid
-from xml.sax.saxutils import quoteattr
 
 from openpyxl.pivot.table import TableDefinition
 from openpyxl.workbook import Workbook
@@ -29,7 +28,9 @@ from excel_mcp.operations.slicer_index import (
 from excel_mcp.operations.slicer_place import add_cache, add_entry, next_shape_id
 from excel_mcp.package import state_of
 from excel_mcp.package.anchors import Corner
+from excel_mcp.package.scan import attributes
 from excel_mcp.text import quoted
+from excel_mcp.xml_text import attribute
 
 
 class SlicerInfo(BaseModel):
@@ -112,10 +113,12 @@ def placed_range(workbook: Workbook, sheet: Worksheet, name: str) -> str | None:
 
 
 def _anchor_of(anchors: list[str], name: str) -> str | None:
-    wanted = f'name="{name}"'
-    return next(
-        (a for a in anchors if re.search(rf"<\w+:(?:slicer|timeslicer)\b[^>]*{wanted}", a)), None
-    )
+    return next((a for a in anchors if _shape_name(a) == name), None)
+
+
+def _shape_name(anchor: str) -> str | None:
+    tag = re.search(r"<\w+:(?:slicer|timeslicer)\b[^>]*>", anchor)
+    return attributes(tag[0]).get("name") if tag else None
 
 
 def delete_slicer(
@@ -141,7 +144,11 @@ def remove_entry(workbook: Workbook, entry: Entry) -> None:
     """Take a slicer or timeline out of its sheet; its cache goes when nothing uses it."""
     package = state_of(workbook).sheet(entry.sheet)
     text = entry.part.data.decode("utf-8")
-    text = re.sub(rf'<(?:slicer|timeline)\b[^>]*\bname="{re.escape(entry.name)}"[^>]*/>', "", text)
+    text = re.sub(
+        r"<(?:slicer|timeline)\b[^>]*/>",
+        lambda tag: "" if attributes(tag[0]).get("name") == entry.name else tag[0],
+        text,
+    )
     entry.part.data = text.encode("utf-8")
     if not xml.read_entries(text):
         package.links.remove(entry.link)
@@ -200,6 +207,7 @@ __all__ = ["Corner", "SlicerInfo", "delete_slicer", "list_slicers", "sheet_of"]
 # -- copying a sheet ---------------------------------------------------------------------------
 
 _SHAPE_ID = re.compile(r'(<xdr:cNvPr\b[^>]*?\bid=")\d+(")')
+_SHAPE_NAME = re.compile(r'(<xdr:cNvPr\b[^>]*?\bname=)"[^"]*"')
 _GUID = re.compile(r'(<a16:creationId\b[^>]*?\bid=")[^"]*(")')
 _UID = re.compile(r'(\b\w+:uid=")[^"]*(")')
 
@@ -236,7 +244,7 @@ def copy_slicers(
 def _join_cache(workbook: Workbook, name: str, pivots: list[tuple[int, str]], tab: int) -> None:
     link = caches(workbook)[name][0]
     text = link.target.data.decode("utf-8")  # pyright: ignore[reportAttributeAccessIssue]
-    added = "".join(f'<pivotTable tabId="{tab}" name="{p}"/>' for _, p in pivots)
+    added = "".join(f'<pivotTable tabId="{tab}" name={attribute(p)}/>' for _, p in pivots)
     link.target.data = text.replace("</pivotTables>", added + "</pivotTables>").encode("utf-8")  # pyright: ignore[reportAttributeAccessIssue]
 
 
@@ -259,7 +267,7 @@ def _copy_cache(
         number += 1
     new = f"{stem}{number}"
     text = link.target.data.decode("utf-8")  # pyright: ignore[reportAttributeAccessIssue]
-    text = text.replace(f'name="{name}"', f'name="{new}"', 1)
+    text = re.sub(r'\bname="[^"]*"', lambda _: f"name={attribute(new)}", text, count=1)
     text = _UID.sub(lambda m: m[1] + _new_guid() + m[2], text, count=1)
     if tab_id is not None:
         text = re.sub(r'(<pivotTable\b[^>]*?\btabId=")\d+', rf"\g<1>{tab_id}", text)
@@ -281,11 +289,11 @@ def _copy_entry(workbook: Workbook, entry: Entry, target: Worksheet, cache: str,
         "name": name,
         "cache": cache,
     }
-    tag = entry.kind + "".join(f" {k}={quoteattr(v)}" for k, v in values.items()) + "/>"
+    tag = entry.kind + "".join(f" {k}={attribute(v)}" for k, v in values.items()) + "/>"
     package = state_of(workbook).sheet(entry.sheet)
     shape = _anchor_of(package.anchors, entry.name)
     assert shape is not None
-    shape = shape.replace(f'name="{entry.name}"', f'name="{name}"')
+    shape = _SHAPE_NAME.sub(lambda m: f"{m[1]}{attribute(name)}", shape, count=1)
     shape = _SHAPE_ID.sub(
         rf"\g<1>{next_shape_id(state_of(workbook).sheet(target))}\g<2>", shape, count=1
     )
