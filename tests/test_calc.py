@@ -307,3 +307,68 @@ async def test_exp_of_a_huge_number_is_a_num_error(call: ToolCall, files: Path) 
     data = await read_values(call, "B1:B2")
 
     assert data["values"] == [["#NUM!"], [1]]
+
+
+async def test_whole_number_cells_calculate_as_doubles(call: ToolCall, files: Path) -> None:
+    chain = "^".join(["A1"] * 20)
+    make_workbook(
+        files / "calc.xlsx",
+        {"A1": 3, "A2": 10**30, "B1": f"={chain}", "B2": "=A1^A1^A1", "B3": "=MOD(A2,7)"},
+    )
+
+    data = await read_values(call, "B1:B3")
+
+    assert data["values"] == [["#NUM!"], [19683], ["#NUM!"]]
+    assert "uncalculated" not in data
+
+
+async def test_a_whole_number_cell_beyond_a_double_is_uncalculated(
+    call: ToolCall, files: Path
+) -> None:
+    source = files / "calc.xlsx"
+    make_workbook(source, {"A1": 12345, "B1": "=A1+1"})
+    with ZipFile(source) as archive:
+        parts = {name: archive.read(name) for name in archive.namelist()}
+    parts["xl/worksheets/sheet1.xml"] = parts["xl/worksheets/sheet1.xml"].replace(
+        b"<v>12345</v>", b"<v>1" + b"0" * 400 + b"</v>"
+    )
+    with ZipFile(source, "w") as archive:
+        for name, content in parts.items():
+            archive.writestr(name, content)
+
+    data = await read_values(call, "B1")
+
+    assert list(data["uncalculated"]) == ["B1"]
+
+
+@pytest.mark.parametrize(
+    ("formula", "expected"),
+    [
+        ("=" + "^".join(["3"] * 20), "#NUM!"),
+        ("=POWER(-1,1E15)", "#NUM!"),
+        ("=POWER(-1,4294967294)", 1),
+        ("=COMBIN(1030,515)", "#NUM!"),
+        ("=COMBIN(1E10,1)", "#NUM!"),
+        ("=PERMUT(100000,70)", "#NUM!"),
+        ("=MOD(1E14,3)", "#NUM!"),
+        ("=MOD(1E12,3)", 1),
+        ("=QUOTIENT(1E300,1E-300)", "#NUM!"),
+        ("=GCD(1E16,2)", "#NUM!"),
+        ("=LCM(1E15,11)", "#NUM!"),
+        ("=LCM(1E15,7)", 7e15),
+        ("=SINH(710)", "#NUM!"),
+        ("=COSH(-710)", "#NUM!"),
+        ("=SIN(2^27)", "#NUM!"),
+        ("=CEILING(1E307,1E-10)", "#NUM!"),
+        ("=ROUND(1E307,300)", 1e307),
+    ],
+)
+async def test_overflow_gives_the_error_excel_gives(
+    call: ToolCall, files: Path, formula: str, expected: object
+) -> None:
+    make_workbook(files / "calc.xlsx", {"B1": formula})
+
+    data = await read_values(call, "B1")
+
+    assert data["values"] == [[expected]]
+    assert "uncalculated" not in data

@@ -23302,6 +23302,1014 @@
   {
    "formula": "=ROWS(UNIQUE(Mix!B1:B18))",
    "expected": 4.0
+  },
+  {
+   "formula": "=3^3^3",
+   "expected": 19683.0
+  },
+  {
+   "formula": "=(-2)^2",
+   "expected": 4.0
+  },
+  {
+   "formula": "=2^-2",
+   "expected": 0.25
+  },
+  {
+   "formula": "=3^3^3^3",
+   "expected": 7625597484987.0
+  },
+  {
+   "formula": "=2^2^2^2^2",
+   "expected": 65536.0
+  },
+  {
+   "formula": "=1.5^1.5^1.5^1.5",
+   "expected": 3.929234958430532
+  },
+  {
+   "formula": "=3^3^3^3^3^3^3^3^3^3^3^3^3^3^3^3^3^3^3^3",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1^1.1",
+   "expected": 4.535404357808644
+  },
+  {
+   "formula": "=0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5",
+   "expected": 0.9999986779275468
+  },
+  {
+   "formula": "=10^308",
+   "expected": 1e+308
+  },
+  {
+   "formula": "=10^309",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=2^1023",
+   "expected": 8.98846567431158e+307
+  },
+  {
+   "formula": "=2^1024",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=2^-1074",
+   "expected": 0.0
+  },
+  {
+   "formula": "=2^-1075",
+   "expected": 0.0
+  },
+  {
+   "formula": "=10^-324",
+   "expected": 0.0
+  },
+  {
+   "formula": "=(-2)^1024",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=(-2)^1025",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=(-8)^(1/2)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=(-8)^(2/3)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=(-8)^0.5",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=(-1)^0.5",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=(-27)^(1/3)",
+   "expected": -2.9999999999999996
+  },
+  {
+   "formula": "=(-2)^2.5",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=0^1",
+   "expected": 0.0
+  },
+  {
+   "formula": "=0^0.5",
+   "expected": 0.0
+  },
+  {
+   "formula": "=0^-0.5",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=1^1E307",
+   "expected": 1.0
+  },
+  {
+   "formula": "=(-1)^1E307",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=(-1)^(1E307+1)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=1E307^2",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=1E-308^2",
+   "expected": 0.0
+  },
+  {
+   "formula": "=POWER(10,309)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=POWER(10,308)",
+   "expected": 1e+308
+  },
+  {
+   "formula": "=POWER(2,1024)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=POWER(0,-1)",
+   "expected": "#DIV/0!"
+  },
+  {
+   "formula": "=POWER(-8,0.5)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=POWER(3,3^3^3)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=POWER(1.0000001,1E10)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=POWER(-1,1E15)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=POWER(1E307,1E307)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=POWER(0.5,1E10)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=EXP(709)",
+   "expected": 8.218407461554972e+307
+  },
+  {
+   "formula": "=EXP(709.78)",
+   "expected": 1.7928227943945155e+308
+  },
+  {
+   "formula": "=EXP(709.79)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=EXP(710)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=EXP(-745)",
+   "expected": 5e-324
+  },
+  {
+   "formula": "=EXP(-746)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=EXP(-1E10)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=EXP(1E10)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=1E307*10",
+   "expected": 1e+308
+  },
+  {
+   "formula": "=1E307*1.5",
+   "expected": 1.5e+307
+  },
+  {
+   "formula": "=-1E307*10",
+   "expected": -1e+308
+  },
+  {
+   "formula": "=1E307+1E307",
+   "expected": 2e+307
+  },
+  {
+   "formula": "=-1E307-1E307",
+   "expected": -2e+307
+  },
+  {
+   "formula": "=1E-308/1E10",
+   "expected": 0.0
+  },
+  {
+   "formula": "=1E307/1E-10",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=1E307/0.1",
+   "expected": 1e+308
+  },
+  {
+   "formula": "=1E200*1E200",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=1E200*1E200*0",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=1E-200*1E-200",
+   "expected": 0.0
+  },
+  {
+   "formula": "=2^1023*2",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=FACT(1E10)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=FACT(170.9)",
+   "expected": 7.257415615308004e+306
+  },
+  {
+   "formula": "=FACT(171.5)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COMBIN(1030,515)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COMBIN(1029,515)",
+   "expected": 1.4298206864989032e+308
+  },
+  {
+   "formula": "=COMBIN(2000,1000)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COMBIN(1E10,1E10)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COMBIN(1E10,0)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COMBIN(1E10,1)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COMBIN(1E10,2)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COMBIN(1E10,3)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COMBIN(1E10,1E10-1)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COMBIN(1E15,2)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COMBIN(1E100,2)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COMBIN(1E100,1)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COMBIN(1E307,1)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COMBIN(300,150)",
+   "expected": 9.375970277282754e+88
+  },
+  {
+   "formula": "=COMBIN(1100,1030)",
+   "expected": 6.996308527972263e+111
+  },
+  {
+   "formula": "=PERMUT(170,170)",
+   "expected": 7.257415615307994e+306
+  },
+  {
+   "formula": "=PERMUT(171,171)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=PERMUT(1E10,2)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=PERMUT(1E10,1)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=PERMUT(1E10,0)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=PERMUT(1E10,1E10)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=PERMUT(1E100,2)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=PERMUT(1000,100)",
+   "expected": 5.958926632240476e+297
+  },
+  {
+   "formula": "=PERMUT(1000,200)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=PERMUT(1E10,171)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=MOD(1E307,7)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=MOD(1E307,3)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=MOD(1E15,7)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=MOD(1E20,7)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=MOD(1E300,1E-300)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=MOD(5,1E-300)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=MOD(1E307,1E307)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=MOD(-1E307,7)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=MOD(1E16,3)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=MOD(1E12,1E-3)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=MOD(1E10,1E-5)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=QUOTIENT(1E307,1E-10)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=QUOTIENT(1E307,7)",
+   "expected": 1.4285714285714287e+306
+  },
+  {
+   "formula": "=QUOTIENT(1E300,1E-300)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=GCD(1E15,3)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=GCD(1E300,3)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=GCD(1E307,1E307)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=GCD(2^53,6)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=GCD(1E10,1E15)",
+   "expected": 10000000000.0
+  },
+  {
+   "formula": "=GCD(1E300,1E200)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=GCD(1E12,1E-3)",
+   "expected": 1000000000000.0
+  },
+  {
+   "formula": "=GCD(1E15,1E15+2)",
+   "expected": 2.0
+  },
+  {
+   "formula": "=GCD(1E16,2)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=GCD(9.99E9,1)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=GCD(1E10,1)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=GCD(2.5E9,5E9)",
+   "expected": 2500000000.0
+  },
+  {
+   "formula": "=GCD(1E300)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=GCD(1E307)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=GCD(10000000000,5)",
+   "expected": 5.0
+  },
+  {
+   "formula": "=LCM(1E10,1E10-1)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=LCM(1E15,1E15-1)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=LCM(1E300,3)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=LCM(1E307,1E307)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=LCM(1E10,1)",
+   "expected": 10000000000.0
+  },
+  {
+   "formula": "=LCM(1E5,1E5+1)",
+   "expected": 10000100000.0
+  },
+  {
+   "formula": "=LCM(1E8,1E8+1)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=LCM(1E9,1E9+1)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=LCM(1E154,1E154-1)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=LCM(1E300)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=LCM(1E307)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=LCM(2^53,3)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=LCM(1E10,1E10)",
+   "expected": 10000000000.0
+  },
+  {
+   "formula": "=LCM(1E10,3E10)",
+   "expected": 30000000000.0
+  },
+  {
+   "formula": "=LCM(1E15,1E15)",
+   "expected": 1000000000000000.0
+  },
+  {
+   "formula": "=LCM(1E16,1E16)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=LCM(1E10,1E300)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=LCM(1E307,3)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=LCM(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40)",
+   "expected": 5342931457063200.0
+  },
+  {
+   "formula": "=LCM(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=ROUND(1E307,-308)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=ROUND(1E307,-309)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=ROUND(1E307,300)",
+   "expected": 1e+307
+  },
+  {
+   "formula": "=ROUND(1E307,1000)",
+   "expected": 1e+307
+  },
+  {
+   "formula": "=ROUND(1.5E307,-308)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=ROUND(1E-308,308)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=ROUND(5,-1000)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=ROUND(1E307,-1000)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=ROUND(1,1000)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=ROUNDUP(1E307,-308)",
+   "expected": 1e+308
+  },
+  {
+   "formula": "=ROUNDUP(1.5E307,-308)",
+   "expected": 1e+308
+  },
+  {
+   "formula": "=ROUNDUP(9.5E307,-308)",
+   "expected": 1e+308
+  },
+  {
+   "formula": "=ROUNDDOWN(1E307,-1000)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=ROUNDUP(1E307,-1000)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=ROUNDUP(1,-1000)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=ROUNDUP(1,1000)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=INT(1E307)",
+   "expected": 1e+307
+  },
+  {
+   "formula": "=INT(-1E307)",
+   "expected": -1e+307
+  },
+  {
+   "formula": "=TRUNC(1E307)",
+   "expected": 1e+307
+  },
+  {
+   "formula": "=TRUNC(1E307,5)",
+   "expected": 1e+307
+  },
+  {
+   "formula": "=EVEN(1E307)",
+   "expected": 1e+307
+  },
+  {
+   "formula": "=ODD(1E307)",
+   "expected": 1e+307
+  },
+  {
+   "formula": "=EVEN(-1E307)",
+   "expected": -1e+307
+  },
+  {
+   "formula": "=EVEN(1.7E307)",
+   "expected": 1.7e+307
+  },
+  {
+   "formula": "=ODD(1.7E307)",
+   "expected": 1.7e+307
+  },
+  {
+   "formula": "=CEILING(1E307,3)",
+   "expected": 9.99999999999999e+306
+  },
+  {
+   "formula": "=CEILING(1E307,1E-10)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=FLOOR(1E307,1E-10)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=CEILING(1E307,1)",
+   "expected": 1e+307
+  },
+  {
+   "formula": "=CEILING.MATH(1E307,1E-10)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=FLOOR.MATH(1E307,1E-10)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=MROUND(1E307,3)",
+   "expected": 9.999999999999999e+306
+  },
+  {
+   "formula": "=MROUND(1E307,1E-10)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=MROUND(10,1E-300)",
+   "expected": 10.0
+  },
+  {
+   "formula": "=PRODUCT(1E200,1E200)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=PRODUCT(1E200,1E200,0)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=PRODUCT(1E-200,1E-200,1E200,1E200)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=PRODUCT(1E200,1E200,1E-200,1E-200)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=PRODUCT(1E307,10,0.1)",
+   "expected": 1.0000000000000001e+307
+  },
+  {
+   "formula": "=PRODUCT(1E307,10,0)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=SUM(1E307,1E307)",
+   "expected": 2e+307
+  },
+  {
+   "formula": "=SUM(1E307,1E307,-1E307)",
+   "expected": 1e+307
+  },
+  {
+   "formula": "=SUM(1E307,-1E307,1E307)",
+   "expected": 1e+307
+  },
+  {
+   "formula": "=SUMSQ(1E200)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=SUMSQ(1E154)",
+   "expected": 1e+308
+  },
+  {
+   "formula": "=SUMSQ(1E155)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=SUMPRODUCT({1E200},{1E200})",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=SUMPRODUCT({1E200,1},{1E200,0})",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=SUMX2MY2({1E200},{1})",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=SUMX2PY2({1E200},{1})",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=SQRT(1E307)",
+   "expected": 3.1622776601683792e+153
+  },
+  {
+   "formula": "=SQRTPI(1E307)",
+   "expected": 5.604991216397929e+153
+  },
+  {
+   "formula": "=LN(1E307)",
+   "expected": 706.893623549172
+  },
+  {
+   "formula": "=LOG10(1E307)",
+   "expected": 307.0
+  },
+  {
+   "formula": "=LOG(2,1+1E-15)",
+   "expected": 624331476816536.2
+  },
+  {
+   "formula": "=SINH(710)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=SINH(709)",
+   "expected": 4.109203730777486e+307
+  },
+  {
+   "formula": "=SINH(-710)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COSH(710)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COSH(709)",
+   "expected": 4.109203730777486e+307
+  },
+  {
+   "formula": "=COSH(-710)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=TANH(1000)",
+   "expected": 1.0
+  },
+  {
+   "formula": "=SINH(1E10)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COSH(1E10)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=SINH(710.4)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COSH(710.4)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=SINH(710.5)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COSH(710.5)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=SIN(1E307)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COS(1E307)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=TAN(1E307)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=SIN(1E15)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=COS(1E15)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=SIN(1E300)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=DEGREES(1E307)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RADIANS(1E307)",
+   "expected": 1.7453292519943295e+305
+  },
+  {
+   "formula": "=DEGREES(1E306)",
+   "expected": 5.729577951308232e+307
+  },
+  {
+   "formula": "=1E307*1E307-1E307*1E307",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=(1E307*10)+1",
+   "expected": 1e+308
+  },
+  {
+   "formula": "=IFERROR(1E307*10,\"x\")",
+   "expected": 1e+308
+  },
+  {
+   "formula": "=ISERROR(2^1024)",
+   "expected": true
+  },
+  {
+   "formula": "=ISNUMBER(2^1023)",
+   "expected": true
+  },
+  {
+   "formula": "=IFERROR(3^3^3^3^3^3,\"x\")",
+   "expected": 8.718964248596097e+115
+  },
+  {
+   "formula": "=ISNUMBER(3^3^3^3)",
+   "expected": true
+  },
+  {
+   "formula": "=3^3^3^3^3^3",
+   "expected": 8.718964248596097e+115
+  },
+  {
+   "formula": "=1E307^1",
+   "expected": 1e+307
+  },
+  {
+   "formula": "=1E307^1.0001",
+   "expected": 1.0732477829171699e+307
+  },
+  {
+   "formula": "=1E307^0.5",
+   "expected": 3.1622776601683792e+153
+  },
+  {
+   "formula": "=1E154^2",
+   "expected": 1e+308
+  },
+  {
+   "formula": "=1E155^2",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=(2^512)^2",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=(2^512)*(2^512)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=2^512*2^512",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=SQRT(POWER(10,308))",
+   "expected": 1e+154
+  },
+  {
+   "formula": "=POWER(10,308.2)",
+   "expected": 1.584893192461132e+308
+  },
+  {
+   "formula": "=POWER(10,308.25)",
+   "expected": 1.7782794100390943e+308
+  },
+  {
+   "formula": "=POWER(10,308.3)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=POWER(2,1023.9)",
+   "expected": 1.6773070034856612e+308
+  },
+  {
+   "formula": "=POWER(2,1023.99)",
+   "expected": 1.7852755613303754e+308
+  },
+  {
+   "formula": "=POWER(2,1024-1E-13)",
+   "expected": 1.7976931348620688e+308
+  },
+  {
+   "formula": "=POWER(2,-1074.4)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=POWER(2,-1075)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=POWER(2,-1100)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=POWER(0.5,1074)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=POWER(0.5,1075)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=1.797693134862315E307",
+   "expected": 1.79769313486231e+307
+  },
+  {
+   "formula": "=1.797693134862315E307+1E292",
+   "expected": 1.797693134862311e+307
+  },
+  {
+   "formula": "=1.797693134862315E307*1.0000000000000002",
+   "expected": 1.79769313486231e+307
+  },
+  {
+   "formula": "=-1.797693134862315E307*1.0000000000000002",
+   "expected": -1.79769313486231e+307
+  },
+  {
+   "formula": "=2.2250738585072014E-308/2",
+   "expected": 0.0
+  },
+  {
+   "formula": "=1E-300*1E-300",
+   "expected": 0.0
+  },
+  {
+   "formula": "=1E-200*1E-100",
+   "expected": 1e-300
+  },
+  {
+   "formula": "=1E-200*1E-200*1E200*1E200",
+   "expected": 0.0
   }
  ],
  "uncalculated": [

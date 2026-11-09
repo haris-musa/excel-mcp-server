@@ -23,6 +23,15 @@ from excel_mcp.calc.values import (
     to_number,
 )
 
+# Excel gives #NUM! for MOD when the quotient reaches this size.
+_MOD_RATIO_LIMIT = 1.1259e12
+# Counting functions take arguments below 2**31 - 1; GCD and LCM take whole numbers up to 2**53.
+_COUNT_LIMIT = 2**31 - 1
+_WHOLE_LIMIT = 2**53
+# SIN, COS and TAN refuse arguments from 2**27 on; SINH and COSH where EXP overflows.
+_ANGLE_LIMIT = 2**27
+_SINH_LIMIT = 709.7827128933849
+
 
 def naive_sum(values: Iterable[float]) -> float:
     """Add in order without compensation, as Excel does."""
@@ -39,7 +48,7 @@ def round_to(number: float, digits: float, rounding: str) -> float:
     if places > 300:
         return number
     exact = Decimal(f"{number:.15g}").scaleb(places)
-    return float(exact.quantize(Decimal(1), rounding=rounding).scaleb(-places))
+    return float(exact.to_integral_value(rounding=rounding).scaleb(-places))
 
 
 @function("SUM")
@@ -113,6 +122,8 @@ def mod(number: Scalar, divisor: Scalar) -> float:
     n, d = to_number(number), to_number(divisor)
     if d == 0:
         raise fail(DIV0)
+    if abs(n / d) >= _MOD_RATIO_LIMIT:
+        raise fail(NUM)
     return n - d * math.floor(n / d)
 
 
@@ -150,10 +161,7 @@ def power(number: Scalar, exponent: Scalar) -> Scalar:
 
 @function("EXP", kind="scalar")
 def exp(number: Scalar) -> float:
-    try:
-        return math.exp(to_number(number))
-    except OverflowError:
-        raise fail(NUM) from None
+    return math.exp(to_number(number))
 
 
 @function("LN", kind="scalar")
@@ -241,7 +249,7 @@ def fact(number: Scalar) -> float:
 def combin(number: Scalar, chosen: Scalar) -> float:
     n, k = to_int(number), to_int(chosen)
     # Past 1030 chosen items the result exceeds the largest number, and computing it is slow.
-    if n < 0 or k < 0 or k > n or min(k, n - k) > 1030:
+    if n < 0 or k < 0 or k > n or n >= _COUNT_LIMIT or min(k, n - k) > 1030:
         raise fail(NUM)
     return float(math.comb(n, k))
 
@@ -249,14 +257,14 @@ def combin(number: Scalar, chosen: Scalar) -> float:
 @function("PERMUT", kind="scalar")
 def permut(number: Scalar, chosen: Scalar) -> float:
     n, k = to_int(number), to_int(chosen)
-    if n < 0 or k < 0 or k > n or k > 170:
+    if n < 0 or k < 0 or k > n or n >= _COUNT_LIMIT or k > 170:
         raise fail(NUM)
     return float(math.perm(n, k))
 
 
 def _integers(args: tuple[Value, ...]) -> list[int]:
     values = [int(v) for v in numbers(args)]
-    if any(v < 0 for v in values):
+    if any(v < 0 or v > _WHOLE_LIMIT for v in values):
         raise fail(NUM)
     return values
 
@@ -268,7 +276,10 @@ def gcd(*args: Value) -> float:
 
 @function("LCM")
 def lcm(*args: Value) -> float:
-    return float(math.lcm(*_integers(args)))
+    result = math.lcm(*_integers(args))
+    if result > _WHOLE_LIMIT:
+        raise fail(NUM)
+    return float(result)
 
 
 def _trig(
@@ -283,14 +294,18 @@ def _trig(
     function(name, kind="scalar")(calculate)
 
 
-_trig("SIN", math.sin)
-_trig("COS", math.cos)
-_trig("TAN", math.tan)
+def _angle(n: float) -> bool:
+    return abs(n) < _ANGLE_LIMIT
+
+
+_trig("SIN", math.sin, _angle)
+_trig("COS", math.cos, _angle)
+_trig("TAN", math.tan, _angle)
 _trig("ASIN", math.asin, lambda n: -1 <= n <= 1)
 _trig("ACOS", math.acos, lambda n: -1 <= n <= 1)
 _trig("ATAN", math.atan)
-_trig("SINH", math.sinh)
-_trig("COSH", math.cosh)
+_trig("SINH", math.sinh, lambda n: abs(n) <= _SINH_LIMIT)
+_trig("COSH", math.cosh, lambda n: abs(n) <= _SINH_LIMIT)
 _trig("TANH", math.tanh)
 _trig("DEGREES", math.degrees)
 _trig("RADIANS", math.radians)

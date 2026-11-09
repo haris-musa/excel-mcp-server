@@ -6,6 +6,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Arithmetic that overflows a double now gives `#NUM!` as in Excel instead of an uncalculated
+  cell or a wrong value. Whole numbers stored in cells are calculated as doubles, so a chain like
+  `=A1^A1^...` with `A1` holding 3 no longer builds a huge exact integer. `COMBIN`, `PERMUT`,
+  `CEILING`, `FLOOR`, `MROUND`, `QUOTIENT`, `SINH` and `COSH` return `#NUM!` when the result is
+  too large, and the calculator reproduces Excel's other limits: `MOD` with a quotient from
+  1.1259E12 on, `SIN`/`COS`/`TAN` from 2^27 on, `GCD` and `LCM` beyond 2^53, `COMBIN` and `PERMUT`
+  from 2^31-1 on, and a negative base raised to a whole number of 2^32-1 or more. `ROUND` and
+  `TRUNC` of a number with more than 28 digits no longer fail.
+
 ## [2.2.9] - 2026-11-09
 
 ### Fixed

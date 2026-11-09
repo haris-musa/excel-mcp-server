@@ -26,6 +26,9 @@ from excel_mcp.calc.values import (
 # rounding noise: =0.1+0.2-0.3 is 0, while =(0.1+0.2-0.3)*1 is 5.55E-17.
 _SNAP = 2.0**-50
 
+# Excel gives #NUM! for a negative base raised to a whole number this large, whatever the base.
+_INTEGER_POWER_LIMIT = 2**32 - 1
+
 
 def apply_binary(op: str, left: Scalar, right: Scalar) -> Scalar:
     if isinstance(left, ExcelError):
@@ -36,6 +39,8 @@ def apply_binary(op: str, left: Scalar, right: Scalar) -> Scalar:
         return _BINARY[op](left, right)
     except FormulaError as error:
         return error.error
+    except OverflowError:
+        return NUM
 
 
 def snap(op: str, left: Scalar, right: Scalar, result: Scalar) -> Scalar:
@@ -126,10 +131,9 @@ def _power(left: float, right: float) -> float:
         raise FormulaError(DIV0)
     if left < 0 and right != int(right):
         return _odd_root(left, right)
-    try:
-        return left**right
-    except OverflowError:
-        raise FormulaError(NUM) from None
+    if left < 0 and abs(right) >= _INTEGER_POWER_LIMIT:
+        raise FormulaError(NUM)
+    return left**right
 
 
 def _odd_root(base: float, exponent: float) -> float:
