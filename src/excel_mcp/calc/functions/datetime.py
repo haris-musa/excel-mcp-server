@@ -3,6 +3,7 @@
 import calendar
 import datetime as dt
 
+from excel_mcp.calc.dateparts import LAST_SERIAL, month_day_year, serial_day
 from excel_mcp.calc.functions.helpers import flat
 from excel_mcp.calc.registry import function
 from excel_mcp.calc.values import (
@@ -60,24 +61,31 @@ def date_(year: Scalar, month: Scalar, day: Scalar) -> float:
     return serial
 
 
+def _ymd(serial: Scalar) -> tuple[int, int, int]:
+    days = serial_day(to_number(serial))
+    if days < 0 or days > LAST_SERIAL:
+        raise FormulaError(NUM)
+    return month_day_year(days)
+
+
 @function("YEAR", kind="scalar")
 def year(serial: Scalar) -> float:
-    return float(_date(serial).year)
+    return float(_ymd(serial)[0])
 
 
 @function("MONTH", kind="scalar")
 def month(serial: Scalar) -> float:
-    return float(_date(serial).month)
+    return float(_ymd(serial)[1])
 
 
 @function("DAY", kind="scalar")
 def day(serial: Scalar) -> float:
-    return float(_date(serial).day)
+    return float(_ymd(serial)[2])
 
 
 def _seconds(serial: Scalar) -> int:
     number = to_number(serial)
-    if number < 0:
+    if number < 0 or number >= LAST_SERIAL + 1:
         raise FormulaError(NUM)
     return round((number % 1) * 86400) % 86400
 
@@ -149,7 +157,10 @@ def timevalue(text: Scalar) -> float:
 
 @function("DAYS", kind="scalar")
 def days(end: Scalar, start: Scalar) -> float:
-    return float(int(to_number(end)) - int(to_number(start)))
+    first, last = int(to_number(start)), int(to_number(end))
+    if not 0 <= first <= LAST_SERIAL or not 0 <= last <= LAST_SERIAL:
+        raise FormulaError(NUM)
+    return float(last - first)
 
 
 def days360(start: dt.date, end: dt.date, european: bool) -> int:
@@ -237,7 +248,29 @@ def datedif(start: Scalar, end: Scalar, unit: Scalar) -> float:
             return float((last - first).days)
         case "YM":
             return float(months % 12)
-    raise UncalculableError("DATEDIF unit")
+        case "MD":
+            if last.day >= first.day:
+                return float(last.day - first.day)
+            previous = add_months(last.replace(day=1), -1)
+            return float(
+                last.day + calendar.monthrange(previous.year, previous.month)[1] - first.day
+            )
+        case "YD":
+            return float(_days_in_year_cycle(first, last))
+    raise FormulaError(NUM)
+
+
+def _days_in_year_cycle(first: dt.date, last: dt.date) -> int:
+    """DATEDIF "YD": Excel puts the end's month and day into the first year it can be reached
+    from, except from 29 February to 30 March of a leap year, where it counts from the last
+    anniversary."""
+    if calendar.isleap(last.year) and (2, 29) <= (last.month, last.day) <= (3, 30):
+        year = last.year - ((last.month, last.day) < (first.month, first.day))
+        day = min(first.day, calendar.monthrange(year, first.month)[1])
+        return (last - dt.date(year, first.month, day)).days
+    year = first.year + ((last.month, last.day) < (first.month, first.day))
+    day = min(last.day, calendar.monthrange(year, last.month)[1])
+    return (dt.date(year, last.month, day) - first).days
 
 
 _WEEK_START = {1: 6, 2: 0, **{n: n - 11 for n in range(11, 18)}}
@@ -245,7 +278,10 @@ _WEEK_START = {1: 6, 2: 0, **{n: n - 11 for n in range(11, 18)}}
 
 @function("WEEKDAY", kind="scalar")
 def weekday(serial: Scalar, kind: Scalar = 1) -> float:
-    day_index = _date(serial).weekday()
+    days = serial_day(to_number(serial))
+    if days < 0 or days > LAST_SERIAL:
+        raise FormulaError(NUM)
+    day_index = (days - 2) % 7  # Excel's weekdays are those of its own calendar
     match to_int(kind):
         case 1:
             return float((day_index + 1) % 7 + 1)
@@ -261,6 +297,8 @@ def weekday(serial: Scalar, kind: Scalar = 1) -> float:
 @function("WEEKNUM", kind="scalar")
 def weeknum(serial: Scalar, kind: Scalar = 1) -> float:
     date = _date(serial)
+    if date.year == 1900:
+        raise UncalculableError("week numbers in 1900, whose calendar Excel shifts")
     system = to_int(kind)
     if system == 21:
         return float(date.isocalendar().week)
@@ -273,7 +311,10 @@ def weeknum(serial: Scalar, kind: Scalar = 1) -> float:
 
 @function("ISOWEEKNUM", kind="scalar")
 def isoweeknum(serial: Scalar) -> float:
-    return float(_date(serial).isocalendar().week)
+    date = _date(serial)
+    if date.year == 1900:
+        raise UncalculableError("week numbers in 1900, whose calendar Excel shifts")
+    return float(date.isocalendar().week)
 
 
 _WEEKENDS = {

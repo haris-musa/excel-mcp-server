@@ -18,6 +18,7 @@ from excel_mcp.calc.values import (
     Value,
     check_array_size,
     compare,
+    flush,
     to_number,
     to_text,
 )
@@ -58,7 +59,7 @@ def apply_unary(op: str, operand: Scalar) -> Scalar:
     if isinstance(operand, ExcelError) or op == "+":
         return operand
     try:
-        return -to_number(operand)
+        return 0.0 - to_number(operand)
     except FormulaError as error:
         return error.error
 
@@ -67,7 +68,7 @@ def apply_percent(operand: Scalar) -> Scalar:
     if isinstance(operand, ExcelError):
         return operand
     try:
-        return to_number(operand) / 100
+        return flush(to_number(operand) / 100)
     except FormulaError as error:
         return error.error
 
@@ -110,10 +111,14 @@ def _element(value: Value, row: int, col: int) -> Scalar:
     return value.rows[row][col]  # pyright: ignore[reportReturnType]
 
 
-def _arithmetic(function: Callable[[float, float], float]) -> Callable[[Scalar, Scalar], Scalar]:
+def _arithmetic(
+    function: Callable[[float, float], float], *, flushing: bool = True
+) -> Callable[[Scalar, Scalar], Scalar]:
     def apply(left: Scalar, right: Scalar) -> Scalar:
         result = function(to_number(left), to_number(right))
-        return result if math.isfinite(result) else NUM
+        if not math.isfinite(result):
+            return NUM
+        return flush(result) if flushing else result + 0.0
 
     return apply
 
@@ -155,8 +160,8 @@ def _comparison(test: Callable[[int], bool]) -> Callable[[Scalar, Scalar], Scala
 
 
 _BINARY: dict[str, Callable[[Scalar, Scalar], Scalar]] = {
-    "+": _arithmetic(lambda a, b: a + b),
-    "-": _arithmetic(lambda a, b: a - b),
+    "+": _arithmetic(lambda a, b: a + b, flushing=False),
+    "-": _arithmetic(lambda a, b: a - b, flushing=False),
     "*": _arithmetic(lambda a, b: a * b),
     "/": _arithmetic(_divide),
     "^": _arithmetic(_power),

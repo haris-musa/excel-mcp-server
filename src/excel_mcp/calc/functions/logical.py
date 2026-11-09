@@ -117,7 +117,7 @@ def _logicals(args: tuple[Value, ...]) -> list[bool]:
                     raise FormulaError(item)
                 if isinstance(item, bool) or is_number(item):
                     found.append(bool(item))
-        else:
+        elif not isinstance(arg, str) or arg.upper() in ("TRUE", "FALSE"):
             found.append(to_bool(arg))
     if not found:
         raise FormulaError(VALUE)

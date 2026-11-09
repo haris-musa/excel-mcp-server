@@ -21,9 +21,11 @@ from excel_mcp.calc.values import (
     Scalar,
     UncalculableError,
     Value,
+    check_array_size,
     to_bool,
     to_text,
 )
+from excel_mcp.refs import MAX_COLUMN, MAX_ROW
 
 if TYPE_CHECKING:
     from excel_mcp.calc.engine import Engine
@@ -165,40 +167,47 @@ def info(engine: "Engine", info_type: Node) -> Value:
     raise FormulaError(VALUE)
 
 
-def _origin(engine: "Engine", node: Node | None, *, rows: bool) -> Ref:
+def _origin(engine: "Engine", node: Node | None) -> Ref:
     if node is None:
         here = engine.here
         return Ref((), here.row, here.col, here.row, here.col, False)
-    if isinstance(node, Name):
-        raise UncalculableError("ROW or COLUMN of a name")
-    if isinstance(node, Call) and node.name in ("INDIRECT", "OFFSET"):
-        return _located(engine.eval(node), rows=rows)
-    if not isinstance(node, Ref) or node.top is None or node.left is None:
+    if isinstance(node, Name) or (isinstance(node, Call) and node.name in ("INDIRECT", "OFFSET")):
+        return _located(engine.eval(node))
+    if not isinstance(node, Ref):
         raise UncalculableError("ROW or COLUMN of a computed range")
-    return node
+    return Ref(
+        node.sheets,
+        node.top or 1,
+        node.left or 1,
+        node.bottom or MAX_ROW,
+        node.right or MAX_COLUMN,
+        node.relative,
+    )
 
 
-def _located(value: Value, *, rows: bool) -> Ref:
-    """Where a reference returned by INDIRECT or OFFSET lies; whole rows or columns are cut off."""
+def _located(value: Value) -> Ref:
+    """Where a reference returned by a name, INDIRECT or OFFSET lies."""
     if isinstance(value, ExcelError):
         raise FormulaError(value)
-    if not isinstance(value, RefGrid) or (value.clipped_rows if rows else value.clipped_cols):
+    if not isinstance(value, RefGrid):
         raise UncalculableError("ROW or COLUMN of a computed range")
-    bottom, right = value.top + value.height - 1, value.left + value.width - 1
+    bottom, right = value.top + value.total_rows - 1, value.left + value.total_cols - 1
     return Ref((), value.top, value.left, bottom, right, False)
 
 
 @function("ROW", kind="lazy")
 def row(engine: "Engine", reference: Node | None = None) -> Value:
-    ref = _origin(engine, reference, rows=True)
+    ref = _origin(engine, reference)
     assert ref.top is not None and ref.bottom is not None
+    check_array_size(ref.bottom - ref.top + 1, 1)
     numbers = [[float(r)] for r in range(ref.top, ref.bottom + 1)]
     return numbers[0][0] if len(numbers) == 1 else Grid(numbers)  # pyright: ignore[reportReturnType]
 
 
 @function("COLUMN", kind="lazy")
 def column(engine: "Engine", reference: Node | None = None) -> Value:
-    ref = _origin(engine, reference, rows=False)
+    ref = _origin(engine, reference)
     assert ref.left is not None and ref.right is not None
+    check_array_size(1, ref.right - ref.left + 1)
     cols = [float(c) for c in range(ref.left, ref.right + 1)]
     return cols[0] if len(cols) == 1 else Grid([cols])

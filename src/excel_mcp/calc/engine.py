@@ -42,6 +42,8 @@ from excel_mcp.calc.scheduler import MAX_NAME_DEPTH, Scheduler, TooDeepError
 from excel_mcp.calc.tablerefs import bind
 from excel_mcp.calc.values import (
     ERRORS,
+    NAME,
+    NULL,
     NUM,
     REF,
     VALUE,
@@ -281,6 +283,7 @@ class Engine:
             len(sheets),
             clipped_rows=ref.top is None or ref.bottom is None,
             clipped_cols=ref.left is None or ref.right is None,
+            sheet=sheets[0].title if len(sheets) == 1 else None,
         )
 
     def intersect(self, value: Value) -> Value:
@@ -329,16 +332,18 @@ class Engine:
         scope = self.find_sheet(node.sheet) if node.sheet else self.here.sheet
         try:
             self.lookup_name(scope, node.name)
-        except UncalculableError:
+        except FormulaError:
             return False
         return True
 
     def lookup_name(self, scope: Worksheet, name: str) -> str:
         for names in (scope.defined_names, self.workbook.defined_names):
             for key, defined in names.items():
-                if key.casefold() == name.casefold() and defined.attr_text:
+                if key.casefold() == name.casefold():
+                    if not defined.attr_text:
+                        raise UncalculableError(f"name {name} without a definition")
                     return "=" + defined.attr_text
-        raise UncalculableError(f"name {name}")
+        raise FormulaError(NAME)
 
     # -- expressions -----------------------------------------------------------------------
 
@@ -366,8 +371,11 @@ class Engine:
                 return elementwise(apply_percent, self.operand(operand, array))
             case Binary():
                 base, chain = left_chain(node)
-                value = self.operand(base, array)
+                value = self.eval(base, array)
                 for step in chain:
+                    if step.op == " ":
+                        value = self.common_cells(value, self.eval(step.right, array))
+                        continue
                     left = value if array else self.intersect(value)
                     value = self.binary(step.op, left, self.operand(step.right, array))
                 return value
@@ -376,6 +384,27 @@ class Engine:
             case ArrayLiteral(rows):
                 return Grid([[self.scalar(item) for item in row] for row in rows])
         raise UncalculableError("unsupported syntax")
+
+    def common_cells(self, left: Value, right: Value) -> Value:
+        """The cells two references have in common, which is #NULL! when there are none."""
+        if isinstance(left, ExcelError):
+            return left
+        if isinstance(right, ExcelError):
+            return right
+        if not isinstance(left, RefGrid) or not isinstance(right, RefGrid):
+            return VALUE
+        if left.sheet is None or right.sheet is None:
+            raise UncalculableError("intersection of 3-D references")
+        top, left_edge = max(left.top, right.top), max(left.left, right.left)
+        bottom = min(left.top + left.total_rows, right.top + right.total_rows) - 1
+        right_edge = min(left.left + left.total_cols, right.left + right.total_cols) - 1
+        if left.sheet != right.sheet or top > bottom or left_edge > right_edge:
+            return NULL
+        rows: list[list[Value]] = [
+            [_cell_of(left, r, c) for c in range(left_edge, right_edge + 1)]
+            for r in range(top, bottom + 1)
+        ]
+        return RefGrid(rows, top, left_edge, 1, sheet=left.sheet)
 
     def binary(self, op: str, left: Value, right: Value) -> Value:
         return elementwise(lambda a, b: self.sized(apply_binary(op, a, b)), left, right)
@@ -447,6 +476,12 @@ class Engine:
                 return NUM
 
         return elementwise(apply, *values)
+
+
+def _cell_of(grid: RefGrid, row: int, col: int) -> Scalar:
+    """The value at a sheet position of a grid; past its read cells it is blank."""
+    r, c = row - grid.top, col - grid.left
+    return grid.rows[r][c] if r < grid.height and c < grid.width else None  # pyright: ignore[reportReturnType]
 
 
 def _has_relative_reference(node: Node) -> bool:

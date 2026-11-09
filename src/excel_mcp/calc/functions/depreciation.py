@@ -1,5 +1,7 @@
 """Depreciation functions: SLN, SYD, DB, DDB, VDB."""
 
+import math
+
 from excel_mcp.calc.registry import function
 from excel_mcp.calc.values import (
     DIV0,
@@ -55,17 +57,21 @@ def db(cost: Scalar, salvage: Scalar, life: Scalar, period: Scalar, month: Scala
 def _declining(
     cost: float, salvage: float, life: float, start: float, end: float, factor: float, switch: bool
 ) -> float:
-    if start != int(start) or end != int(end) or life != int(life):
-        raise UncalculableError("depreciation over fractional periods")
+    """Depreciation between two points in time; a period that is only partly covered counts
+    in proportion."""
+    if life != int(life):
+        raise UncalculableError("depreciation over a fractional life")
+    fractional = start != int(start) or end != int(end)
+    if fractional and switch and not (start == 0 and end <= 1):
+        raise UncalculableError("switching to straight-line depreciation over fractional periods")
     check_periods(end)
     total = taken = 0.0
-    for period in range(1, int(end) + 1):
+    for period in range(1, math.ceil(end) + 1):
         declining = min((cost - total) * factor / life, max(cost - salvage - total, 0.0))
         straight = (cost - total - salvage) / (life - period + 1) if switch else 0.0
         amount = max(declining, straight) if switch else declining
         amount = max(min(amount, cost - salvage - total), 0.0)
-        if period > start:
-            taken += amount
+        taken += amount * max(min(end, period) - max(start, period - 1), 0.0)
         total += amount
     return taken
 

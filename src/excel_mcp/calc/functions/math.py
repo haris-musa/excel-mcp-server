@@ -18,6 +18,7 @@ from excel_mcp.calc.values import (
     FormulaError,
     Scalar,
     Value,
+    flush,
     is_number,
     to_int,
     to_number,
@@ -59,7 +60,7 @@ def sum_(*args: Value) -> float:
 @function("PRODUCT")
 def product(*args: Value) -> float:
     values = numbers(args)
-    return math.prod(values) if values else 0.0
+    return flush(math.prod(values)) if values else 0.0
 
 
 @function("MIN")
@@ -88,7 +89,7 @@ def sumproduct(*arrays: Value) -> float:
         for item in items:
             if isinstance(item, ExcelError):
                 raise fail(item)
-        total += math.prod(float(i) if is_number(i) else 0.0 for i in items)  # pyright: ignore[reportArgumentType]
+        total += flush(math.prod(float(i) if is_number(i) else 0.0 for i in items))  # pyright: ignore[reportArgumentType]
     return total
 
 
@@ -124,7 +125,8 @@ def mod(number: Scalar, divisor: Scalar) -> float:
         raise fail(DIV0)
     if abs(n / d) >= _MOD_RATIO_LIMIT:
         raise fail(NUM)
-    return n - d * math.floor(n / d)
+    remainder = math.fmod(n, d)
+    return remainder + d if remainder and (remainder < 0) != (d < 0) else remainder
 
 
 @function("QUOTIENT", kind="scalar")
@@ -307,8 +309,8 @@ _trig("ATAN", math.atan)
 _trig("SINH", math.sinh, lambda n: abs(n) <= _SINH_LIMIT)
 _trig("COSH", math.cosh, lambda n: abs(n) <= _SINH_LIMIT)
 _trig("TANH", math.tanh)
-_trig("DEGREES", math.degrees)
-_trig("RADIANS", math.radians)
+_trig("DEGREES", lambda n: flush(math.degrees(n)))
+_trig("RADIANS", lambda n: flush(math.radians(n)))
 
 
 @function("ATAN2", kind="scalar")
