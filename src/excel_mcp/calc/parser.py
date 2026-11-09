@@ -99,6 +99,21 @@ def children(node: Node) -> tuple[Node, ...]:
     return ()
 
 
+def left_chain(node: Binary) -> tuple[Node, list[Binary]]:
+    """The innermost left operand of a run of operators, and the operators from there out.
+
+    A formula such as ``=A1+A1+...`` is a tree as deep as it is long; walking it by recursion
+    would overflow the stack, so every walk over it loops over this chain instead.
+    """
+    chain: list[Binary] = []
+    current: Node = node
+    while isinstance(current, Binary):
+        chain.append(current)
+        current = current.left
+    chain.reverse()
+    return current, chain
+
+
 _PRECEDENCE = {
     "=": 1, "<>": 1, "<": 1, ">": 1, "<=": 1, ">=": 1,
     "&": 2,
@@ -133,10 +148,13 @@ class _Parser:
         self.position = 0
         self.depth = 0
 
-    def nested(self, build: Callable[[], Node]) -> Node:
+    def enter(self) -> None:
         self.depth += 1
         if self.depth > MAX_NESTING:
             raise UncalculableError(f"formula nested more than {MAX_NESTING} levels")
+
+    def nested(self, build: Callable[[], Node]) -> Node:
+        self.enter()
         try:
             return build()
         finally:
@@ -170,9 +188,12 @@ class _Parser:
             self.take()
             return self.nested(lambda: Unary(token.value, self.unary()))
         node = self.primary()
+        outer = self.depth
         while (token := self.peek()) and token.type == Token.OP_POST:
             self.take()
+            self.enter()
             node = Percent(node)
+        self.depth = outer
         return node
 
     def primary(self) -> Node:

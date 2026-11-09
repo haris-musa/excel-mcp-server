@@ -22,6 +22,7 @@ from excel_mcp.calc.parser import (
     TableRef,
     Unary,
     children,
+    left_chain,
     parse,
 )
 from excel_mcp.calc.registry import FUNCTIONS
@@ -47,6 +48,7 @@ _ATOMIC = frozenset(
 _SHORT_CIRCUITS = frozenset(["IF", "IFERROR", "IFNA", "CHOOSE", "IFS"])
 _SIMPLE_SHEET = re.compile(r"\w+")
 MAX_SHOWN_ITEMS = 30
+MAX_STEP_DEPTH = 150  # the walk recurses once per level of the tree
 
 
 @dataclass
@@ -67,6 +69,10 @@ def evaluate(engine: Engine, sheet: Worksheet, row: int, col: int, limit: int) -
     tree = formula_tree(engine, cell)
     array = isinstance(cell.value, ArrayFormula)
     outer, engine.here = engine.here, Position(sheet, row, col)
+    if (depth := _depth(tree)) > MAX_STEP_DEPTH:
+        raise UncalculableError(
+            f"it is {depth} levels deep, more than {MAX_STEP_DEPTH} to step through"
+        )
     try:
         engine.scheduler.calculate_precedents(tree, sheet)
         walk = _Walk(engine, limit)
@@ -74,6 +80,15 @@ def evaluate(engine: Engine, sheet: Worksheet, row: int, col: int, limit: int) -
         return Steps(walk.shown, walk.skipped)
     finally:
         engine.here = outer
+
+
+def _depth(tree: Node) -> int:
+    deepest, pending = 0, [(tree, 1)]
+    while pending:
+        node, level = pending.pop()
+        deepest = max(deepest, level)
+        pending.extend((child, level + 1) for child in children(node))
+    return deepest
 
 
 class _Walk:
@@ -165,9 +180,14 @@ def render(node: Node) -> str:
             return op + _wrapped(operand, 6)
         case Percent(operand):
             return _wrapped(operand, 6) + "%"
-        case Binary(op, left, right):
-            level = _PRECEDENCE[op]
-            return f"{_wrapped(left, level)}{op}{_wrapped(right, level + 1)}"
+        case Binary():
+            base, chain = left_chain(node)
+            text, inner = render(base), base
+            for step in chain:
+                level = _PRECEDENCE[step.op]
+                left = f"({text})" if _binds_looser(inner, level) else text
+                text, inner = f"{left}{step.op}{_wrapped(step.right, level + 1)}", step
+            return text
         case Call("ANCHORARRAY", (Ref() as anchor,), _):
             return render(anchor) + "#"
         case Call(name, args, _):
@@ -179,11 +199,13 @@ def render(node: Node) -> str:
 
 def _wrapped(node: Node, level: int) -> str:
     inner = render(node)
-    if isinstance(node, Binary) and _PRECEDENCE[node.op] < level:
-        return f"({inner})"
-    if isinstance(node, Unary) and level > 6:
+    if _binds_looser(node, level) or (isinstance(node, Unary) and level > 6):
         return f"({inner})"
     return inner
+
+
+def _binds_looser(node: Node, level: int) -> bool:
+    return isinstance(node, Binary) and _PRECEDENCE[node.op] < level
 
 
 def _literal(value: float | str | bool | None) -> str:

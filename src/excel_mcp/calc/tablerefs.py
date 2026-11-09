@@ -14,6 +14,7 @@ from excel_mcp.calc.parser import (
     Ref,
     TableRef,
     Unary,
+    left_chain,
 )
 from excel_mcp.calc.values import REF, VALUE
 from excel_mcp.refs import parse_range
@@ -33,8 +34,12 @@ def bind(node: Node, workbook: Workbook, sheet: Worksheet, row: int, col: int) -
                 return Unary(op, walk(operand))
             case Percent(operand):
                 return Percent(walk(operand))
-            case Binary(op, left, right):
-                return Binary(op, walk(left), walk(right))
+            case Binary():
+                base, chain = left_chain(item)
+                rebuilt = walk(base)
+                for step in chain:
+                    rebuilt = Binary(step.op, rebuilt, walk(step.right))
+                return rebuilt
             case Call(name, args, prefixed):
                 return Call(name, tuple(walk(a) for a in args), prefixed)
             case ArrayLiteral(rows):

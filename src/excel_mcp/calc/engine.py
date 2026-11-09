@@ -34,6 +34,7 @@ from excel_mcp.calc.parser import (
     Percent,
     Ref,
     Unary,
+    left_chain,
     parse,
 )
 from excel_mcp.calc.registry import FUNCTIONS, Function
@@ -360,17 +361,21 @@ class Engine:
                 return elementwise(lambda v: apply_unary(op, v), self.operand(operand, array))
             case Percent(operand):
                 return elementwise(apply_percent, self.operand(operand, array))
-            case Binary(op, left, right):
-                return elementwise(
-                    lambda a, b: self.sized(apply_binary(op, a, b)),
-                    self.operand(left, array),
-                    self.operand(right, array),
-                )
+            case Binary():
+                base, chain = left_chain(node)
+                value = self.operand(base, array)
+                for step in chain:
+                    left = value if array else self.intersect(value)
+                    value = self.binary(step.op, left, self.operand(step.right, array))
+                return value
             case Call():
                 return self.call(node, array)
             case ArrayLiteral(rows):
                 return Grid([[self.scalar(item) for item in row] for row in rows])
         raise UncalculableError("unsupported syntax")
+
+    def binary(self, op: str, left: Value, right: Value) -> Value:
+        return elementwise(lambda a, b: self.sized(apply_binary(op, a, b)), left, right)
 
     def operand(self, node: Node, array: bool) -> Value:
         value = self.eval(node, array)
@@ -443,8 +448,11 @@ def _has_relative_reference(node: Node) -> bool:
             return node.relative
         case Unary(_, operand) | Percent(operand):
             return _has_relative_reference(operand)
-        case Binary(_, left, right):
-            return _has_relative_reference(left) or _has_relative_reference(right)
+        case Binary():
+            base, chain = left_chain(node)
+            return _has_relative_reference(base) or any(
+                _has_relative_reference(step.right) for step in chain
+            )
         case Call():
             return any(_has_relative_reference(arg) for arg in node.args)
         case _:
