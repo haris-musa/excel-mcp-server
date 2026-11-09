@@ -372,3 +372,20 @@ async def test_overflow_gives_the_error_excel_gives(
 
     assert data["values"] == [[expected]]
     assert "uncalculated" not in data
+
+
+def test_functions_added_after_excel_2007_get_their_prefixes() -> None:
+    assert add_prefixes("=ENCODEURL(A1)") == "=_xlfn.ENCODEURL(A1)"
+    assert add_prefixes('=IMSEC("1+i")+IMTAN("i")') == '=_xlfn.IMSEC("1+i")+_xlfn.IMTAN("i")'
+    assert add_prefixes("=FORECAST.ETS.STAT(A1:A5,B1:B5,1)") == (
+        "=_xlfn.FORECAST.ETS.STAT(A1:A5,B1:B5,1)"
+    )
+
+
+def test_lambdas_called_by_the_name_a_let_gave_them_are_prefixed() -> None:
+    assert add_prefixes("=LET(f,LAMBDA(x,x*2),f(5))") == (
+        "=_xlfn.LET(_xlpm.f,_xlfn.LAMBDA(_xlpm.x,_xlpm.x*2),_xlpm.f(5))"
+    )
+    assert (
+        add_prefixes("=MAP(A1:A3,LAMBDA(x,x))") == "=_xlfn.MAP(A1:A3,_xlfn.LAMBDA(_xlpm.x,_xlpm.x))"
+    )

@@ -1251,3 +1251,45 @@ CASES += [
 ]
 
 CASES += MORE
+
+from golden_dist_cases import CASES as DIST_CASES  # noqa: E402
+from golden_dist_cases import INPUTS as DIST_INPUTS  # noqa: E402
+
+INPUTS.update(DIST_INPUTS)
+CASES += DIST_CASES
+
+from golden_stat_cases import CASES as STAT_CASES  # noqa: E402
+from golden_stat_cases import INPUTS as STAT_INPUTS  # noqa: E402
+
+INPUTS.update(STAT_INPUTS)
+CASES += STAT_CASES
+
+from golden_reg_cases import CASES as REG_CASES  # noqa: E402
+from golden_reg_cases import INPUTS as REG_INPUTS  # noqa: E402
+
+INPUTS.update(REG_INPUTS)
+CASES += REG_CASES
+
+from golden_db_cases import CASES as DB_CASES  # noqa: E402
+from golden_db_cases import INPUTS as DB_INPUTS  # noqa: E402
+
+INPUTS.update(DB_INPUTS)
+CASES += DB_CASES
+
+from golden_engineering_cases import CASES as ENGINEERING_CASES  # noqa: E402
+from golden_engineering_cases import INPUTS as ENGINEERING_INPUTS  # noqa: E402
+
+INPUTS.update(ENGINEERING_INPUTS)
+CASES += ENGINEERING_CASES
+
+from golden_securities_cases import CASES as SECURITIES_CASES  # noqa: E402
+from golden_securities_cases import INPUTS as SECURITIES_INPUTS  # noqa: E402
+
+INPUTS.update(SECURITIES_INPUTS)
+CASES += SECURITIES_CASES
+
+from golden_lambda_cases import CASES as LAMBDA_CASES  # noqa: E402
+from golden_lambda_cases import INPUTS as LAMBDA_INPUTS  # noqa: E402
+
+INPUTS.update(LAMBDA_INPUTS)
+CASES += LAMBDA_CASES

@@ -8,7 +8,8 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.workbook.defined_name import DefinedName
 
 from excel_mcp.calc.engine import Engine
-from excel_mcp.calc.values import ExcelError, UncalculableError
+from excel_mcp.calc.functions.complexnum import parse_complex
+from excel_mcp.calc.values import ExcelError, FormulaError, UncalculableError
 from excel_mcp.cell_budget import CellBudget
 from excel_mcp.config import Limits
 from excel_mcp.lazy_workbook import Parts, load_lazy
@@ -84,9 +85,29 @@ def calculate_cases(path: Path, count: int, *, lazy: bool = False) -> list[objec
     return results
 
 
+def _complex(text: object) -> complex | None:
+    if not isinstance(text, str) or not text:
+        return None
+    try:
+        return parse_complex(text).value
+    except FormulaError:
+        return None
+
+
+def _unit(text: object) -> str:
+    return text[-1] if isinstance(text, str) and text[-1] in "ij" else ""
+
+
 def same(expected: object, actual: object, tolerance: float = DEFAULT_TOLERANCE) -> bool:
     if isinstance(expected, bool) or isinstance(actual, bool):
         return type(expected) is type(actual) and expected == actual
     if isinstance(expected, int | float) and isinstance(actual, int | float):
         return math.isclose(expected, actual, rel_tol=tolerance, abs_tol=tolerance)
-    return expected == actual
+    if expected == actual:
+        return True
+    # Excel's sine, cosine and powers differ from ours in the last digits of complex results.
+    left, right = _complex(expected), _complex(actual)
+    if left is None or right is None or _unit(expected) != _unit(actual):
+        return False
+    slack = tolerance * max(abs(left), abs(right), 1)  # noise is small beside the larger part
+    return abs(left.real - right.real) <= slack and abs(left.imag - right.imag) <= slack
