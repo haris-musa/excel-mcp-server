@@ -14,8 +14,10 @@ from xml.parsers import expat
 from openpyxl.reader.excel import ExcelReader
 from openpyxl.xml.constants import SHEET_MAIN_NS, WORKSHEET_TYPE
 
+from excel_mcp import shared_text
 from excel_mcp.errors import LimitExceededError
 from excel_mcp.refs import parse_range
+from excel_mcp.text_budget import TextBudget
 
 _CHUNK = 1 << 20
 _NAMESPACE = f"{SHEET_MAIN_NS} "
@@ -27,11 +29,18 @@ _LINK_COST = 3
 
 
 class CellBudget:
-    """The cells that may still be created for one workbook, shared by all its sheets."""
+    """The cells that may still be created for one workbook, shared by all its sheets, and the
+    formula text that its shared formulas may still expand to."""
 
     def __init__(self, limit: int) -> None:
         self.limit = limit
         self.used = 0
+        self.formula_text = TextBudget(
+            limit,
+            "The shared formulas of the workbook would expand to more than {limit} characters "
+            "of formula text, which takes too long to load. Split it into smaller workbooks, "
+            "or raise --max-loaded-cells.",
+        )
 
     def spend(self, count: int) -> None:
         self.used += count
@@ -61,13 +70,18 @@ def spend_sheet(source: IO[bytes], budget: CellBudget) -> None:
     parser.Parse(b"", True)
 
 
-def check_workbook(path: Path, budget: CellBudget) -> None:
-    """Spend the cells and rows that loading all of a workbook's worksheets would create."""
+def check_workbook(path: Path, budget: CellBudget, *, cells: bool = True) -> None:
+    """Spend the cells and rows that loading all of a workbook's worksheets would create, and
+    the text of the formulas they would expand to. Streaming creates no cells: ``cells=False``."""
     reader = ExcelReader(path)
     try:
         reader.read_manifest()
         for part in reader.package.findall(WORKSHEET_TYPE):
-            with reader.archive.open(part.PartName.lstrip("/")) as source:
-                spend_sheet(source, budget)
+            name = part.PartName.lstrip("/")
+            if cells:
+                with reader.archive.open(name) as source:
+                    spend_sheet(source, budget)
+            with reader.archive.open(name) as source:
+                shared_text.spend_sheet(source, budget.formula_text)
     finally:
         reader.archive.close()

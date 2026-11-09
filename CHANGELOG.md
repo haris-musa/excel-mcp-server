@@ -6,6 +6,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Security
+
+- A shared formula (a formula filled down, stored once) is translated for each cell that uses
+  it when a sheet is loaded or streamed, so one long formula shared by many cells kept the
+  server busy far longer than the cells suggested (GHSA-gpj4-f8p7-cg2v, found by the
+  maintainers). The text that a workbook's shared formulas expand to is now counted before any
+  of it is translated and refused past 256 characters per loaded cell on average
+  (`--max-loaded-cells` times 256), whatever range the file says the formula covers. An
+  array formula whose declared range is larger than `--max-cells` is refused when the file is
+  edited, instead of filling the range with cells.
+
 ## [2.2.7] - 2026-11-09
 
 ### Security

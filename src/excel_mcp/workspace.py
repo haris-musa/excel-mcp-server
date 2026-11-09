@@ -159,7 +159,16 @@ class Workspace:
         Its worksheets are openpyxl read-only views: they hold only cell values (no
         formatting, merged ranges, tables or charts) and re-parse the sheet on each pass.
         """
-        workbook = self._load(self.resolve_existing(raw_path), data_only=data_only, stream=True)
+        path = self.resolve_existing(raw_path)
+        if not data_only:  # stored results are read as they are, without translating formulas
+            self._check_zip(path)
+            try:
+                cell_budget.check_workbook(
+                    path, CellBudget(self.limits.max_loaded_cells), cells=False
+                )
+            except Exception as error:
+                raise self._unreadable(path, error) from None
+        workbook = self._load(path, data_only=data_only, stream=True)
         try:
             yield workbook
         finally:

@@ -95,6 +95,11 @@ def _recalculate_legacy(workbook: Workbook, anchor: Cell, max_cells: int) -> str
     array that is smaller leaves #N/A."""
     sheet = cast(Worksheet, anchor.parent)
     area = parse_range(cast(ArrayFormula, anchor.value).ref)
+    if area.size > max_cells:
+        raise LimitExceededError(
+            f"The array formula in {anchor.coordinate} covers {area.size:,} cells; at most "
+            f"{max_cells:,} cells can be written per call. Raise --max-cells."
+        )
     _, grid = _calculate(workbook, anchor, max_cells)
     for row in range(area.min_row, area.max_row + 1):
         for col in range(area.min_col, area.max_col + 1):
