@@ -2,6 +2,7 @@
 
 import re
 from pathlib import Path
+from typing import BinaryIO
 from zipfile import ZipFile
 
 import pytest
@@ -42,10 +43,12 @@ def full_loads(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     loaded: list[str] = []
     original = Workspace._load  # pyright: ignore[reportPrivateUsage]
 
-    def record(self: Workspace, path: Path, *, data_only: bool, stream: bool = False):
+    def record(
+        self: Workspace, path: Path, handle: BinaryIO, *, data_only: bool, stream: bool = False
+    ):
         if not stream:
             loaded.append(path.name)
-        return original(self, path, data_only=data_only, stream=stream)
+        return original(self, path, handle, data_only=data_only, stream=stream)
 
     monkeypatch.setattr(Workspace, "_load", record)
     return loaded

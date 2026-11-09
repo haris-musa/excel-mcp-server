@@ -69,9 +69,13 @@ def inherit_cell_styles(sheet: Worksheet, edit: LineEdit) -> None:
     inherited = InheritedStyles(sheet, edit)
     beyond = edit.at + edit.count
     for (row, column), cell in scan:
-        if (row if rows else column) != edit.at - 1:
+        if (
+            row if rows else column
+        ) != edit.at - 1 or cell._style is None:  # none: an unformatted cell
             continue
         after = cells.get((beyond, column) if rows else (row, beyond))
+        if after is not None and after._style is None:
+            after = None
         border = inherited.border_id(cell._style.borderId, after._style.borderId if after else None)
         for line in range(edit.at, edit.at + edit.count):
             clone = sheet.cell(line, column) if rows else sheet.cell(row, line)

@@ -5,11 +5,13 @@ import os
 import tempfile
 import threading
 import zipfile
+import zlib
 from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
-from typing import TypeVar, cast
+from typing import BinaryIO, TypeVar, cast
+from xml.etree.ElementTree import ParseError
 
 from openpyxl import Workbook, load_workbook
 from openpyxl.chart import AreaChart
@@ -127,7 +129,8 @@ class Workspace:
         workbook, _ = self._load_for_edit(path, self._budget())
         package.capture(path, workbook, self.limits.max_file_bytes)
         try:
-            yield workbook
+            with self._damage_as_error(path):
+                yield workbook
         finally:
             close_workbook(workbook)
 
@@ -148,7 +151,8 @@ class Workspace:
         except Exception as error:
             raise self._unreadable(path, error) from None
         try:
-            yield stored, formulas
+            with self._damage_as_error(path):
+                yield stored, formulas
         finally:
             close_workbook(stored)
             close_workbook(formulas)
@@ -169,11 +173,13 @@ class Workspace:
                 )
             except Exception as error:
                 raise self._unreadable(path, error) from None
-        workbook = self._load(path, data_only=data_only, stream=True)
-        try:
-            yield workbook
-        finally:
-            close_workbook(workbook)
+        with path.open("rb") as handle:  # openpyxl does not close a file it opened itself on error
+            workbook = self._load(path, handle, data_only=data_only, stream=True)
+            try:
+                with self._damage_as_error(path):
+                    yield workbook
+            finally:
+                close_workbook(workbook)
 
     @contextmanager
     def edit(self, raw_path: str) -> Iterator[Workbook]:
@@ -188,7 +194,8 @@ class Workspace:
             workbook.calculation.fullCalcOnLoad = True
             token = _edit_budget.set(budget)
             try:
-                yield workbook
+                with self._damage_as_error(path):
+                    yield workbook
                 # Imported here because the calculator imports this module.
                 from excel_mcp.operations.spill import refresh_spills
 
@@ -248,11 +255,13 @@ class Workspace:
                 f"{self.display(path)} already exists. Pass overwrite=true to replace it."
             )
 
-    def _load(self, path: Path, *, data_only: bool, stream: bool = False) -> Workbook:
+    def _load(
+        self, path: Path, handle: BinaryIO, *, data_only: bool, stream: bool = False
+    ) -> Workbook:
         self._check_zip(path)
         try:
             return load_workbook(
-                path,
+                handle,
                 data_only=data_only,
                 read_only=stream,
                 keep_vba=not stream and path.suffix.lower() in MACRO_SUFFIXES,
@@ -272,7 +281,8 @@ class Workspace:
                 cell_budget.check_workbook(path, budget)
             except Exception as error:
                 raise self._unreadable(path, error) from None
-            return self._load(path, data_only=False), None
+            with path.open("rb") as handle:
+                return self._load(path, handle, data_only=False), None
         try:
             return lazy_edit.load(path, budget)
         except Exception as error:
@@ -284,6 +294,14 @@ class Workspace:
                 f"{self.display(path)} is not an Excel workbook. Only .xlsx/.xlsm files are "
                 "supported; legacy .xls and CSV files must be converted first."
             )
+
+    @contextmanager
+    def _damage_as_error(self, path: Path) -> Iterator[None]:
+        """Parts are parsed as sheets are read, so damage surfaces after the workbook is open."""
+        try:
+            yield
+        except (ParseError, zipfile.BadZipFile, zlib.error) as error:
+            raise self._unreadable(path, error) from None
 
     def _unreadable(self, path: Path, error: Exception) -> ExcelMCPError:
         if isinstance(error, ExcelMCPError):

@@ -23,6 +23,7 @@ from openpyxl.xml.constants import WORKSHEET_TYPE
 
 from excel_mcp import lazy_rows, lazy_shared, shared_text
 from excel_mcp.cell_budget import CellBudget, spend_sheet
+from excel_mcp.errors import WorkbookError
 from excel_mcp.lazy_source import SheetSource, split_sheet
 
 BLOCK_ROWS = 128
@@ -312,6 +313,10 @@ class LazyCells(dict[CellKey, Any]):
         if super().__contains__((row, column)):
             return
         book: Any = self.sheet.parent
+        if style >= len(book._cell_styles):
+            raise WorkbookError(
+                f"The workbook is damaged: a cell uses style {style}, which is missing."
+            )
         cell = Cell(self.sheet, row=row, column=column, style_array=book._cell_styles[style])
         cell._value = value
         cell.data_type = data_type

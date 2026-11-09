@@ -53,6 +53,7 @@ from excel_mcp.calc.values import (
     UncalculableError,
     Value,
 )
+from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.lazy_workbook import extent
 from excel_mcp.refs import parse_range
 from excel_mcp.workspace import worksheets
@@ -80,6 +81,8 @@ class Engine:
         self.filename = filename
         self.sheets = {ws.title.casefold(): ws for ws in worksheets(formulas)}
         self.cached_sheets = {ws.title.casefold(): ws for ws in worksheets(cached)}
+        if not self.sheets:
+            raise InvalidArgumentError("The workbook has no worksheets.")
         self.stale: set[CellKey] = set()  # cells whose stored results no longer hold
         self.memo: dict[CellKey, Scalar | UncalculableError] = {}
         self.trees: dict[CellKey, Node] = {}
