@@ -75,7 +75,9 @@ def sort_range(
     key_offsets = [find_column(sheet, area, key.column, has_header) - area.min_col for key in keys]
 
     budget = TextBudget(
-        max_cells, "Sorting would compare more than {limit} characters of text. Sort fewer rows."
+        max_cells,
+        "Sorting would compare more than {limit} characters of text. Sort fewer rows, or raise "
+        "--max-cells.",
     )
     rows = [
         _snapshot(cells, key_offsets, budget)

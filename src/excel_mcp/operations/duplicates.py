@@ -39,7 +39,8 @@ def remove_duplicates(
     )
     budget = TextBudget(
         max_cells,
-        "Comparing rows would read more than {limit} characters of text. Use fewer rows.",
+        "Comparing rows would read more than {limit} characters of text. Use fewer rows, or "
+        "raise --max-cells.",
     )
     seen: set[tuple[object, ...]] = set()
     kept = []

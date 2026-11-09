@@ -196,7 +196,8 @@ def estimate_widths(sheet: Worksheet, letters: list[str], max_cells: int) -> dic
     cells however many columns are asked for."""
     budget = TextBudget(
         max_cells,
-        "Fitting columns would read more than {limit} characters of text. Fit fewer columns.",
+        "Fitting columns would read more than {limit} characters of text. Fit fewer columns, "
+        "or raise --max-cells.",
     )
     wanted = {column_index_from_string(letter): letter for letter in letters}
     longest = dict.fromkeys(wanted, 0)

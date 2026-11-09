@@ -46,7 +46,7 @@ def replace_cells(
     grown = TextBudget(
         limits.max_cells,
         "Replacing would add more than {limit} characters of text. Replace in one sheet at a "
-        "time, or with shorter text.",
+        "time, with shorter text, or raise --max-cells.",
     )
     # A workbook can hold one long text and point millions of cells at it: each text is worked
     # out once, and its result is shared by every cell that holds it.

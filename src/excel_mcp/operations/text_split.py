@@ -74,7 +74,9 @@ def _split_rows(
     """The pieces of each text cell. Both the text read and the pieces made are counted as they
     come, so a refusal costs no more than the limits allow, however much text the cells hold."""
     budget = TextBudget(
-        max_cells, "Splitting would read more than {limit} characters of text. Use fewer cells."
+        max_cells,
+        "Splitting would read more than {limit} characters of text. Use fewer cells, or raise "
+        "--max-cells.",
     )
     split = []
     pieces_made = 0
