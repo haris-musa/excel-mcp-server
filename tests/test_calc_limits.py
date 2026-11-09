@@ -2,7 +2,9 @@
 
 import re
 import time
+from collections.abc import Callable, Coroutine
 from pathlib import Path
+from typing import Any
 
 import pytest
 from openpyxl import Workbook
@@ -159,3 +161,44 @@ async def test_tables_spills_and_indirect_stay_within_limits(call: ToolCall, fil
     assert time.perf_counter() - started < 10
     assert data["values"][3] == [1225]
     assert set(data["uncalculated"]) >= {"F1", "F2", "F3", "F5", "F6"}
+
+
+async def test_the_longest_formula_chains_excel_accepts_calculate(
+    call: ToolCall, call_error: Callable[..., Coroutine[Any, Any, str]], files: Path
+) -> None:
+    make_workbook(files / "calc.xlsx", {"A1": 1})
+    chains = [
+        "=" + "+".join(["A1"] * 2048),  # the most references Excel calculates
+        "=" + "+".join(["1"] * 4096),  # 8,192 characters, Excel's limit
+        "=" + "-".join(["A1"] * 2048),
+        "=" + "&".join(["A1"] * 2048),
+        "=" + "^".join(["A1"] * 2048),
+        "=1" + "%" * 8000,
+    ]
+    await call("write_range", path="calc.xlsx", sheet="Data", at="B1", rows=[[c] for c in chains])
+
+    data = await read_values(call, "B1:B6")
+
+    assert data["values"][:5] == [[2048], [4096], [-2046], ["1" * 2048], [1]]
+    assert "nested more than 64 levels" in data["uncalculated"]["B6"]
+    traced = await call(
+        "trace_formula", path="calc.xlsx", sheet="Data", range="B1", direction="precedents"
+    )
+    assert traced["cells"] == {"Data": ["A1"]}
+    traced = await call(
+        "trace_formula",
+        path="calc.xlsx",
+        sheet="Data",
+        range="A1",
+        direction="dependents",
+        all_levels=True,
+    )
+    assert traced["cells"] == {"Data": ["B1", "B3:B5"]}
+    seek = await call(
+        "goal_seek", path="calc.xlsx", sheet="Data", cell="B1", target=4096, changing_cell="A1"
+    )
+    assert seek["converged"] and seek["value"] == pytest.approx(2)
+    message = await call_error(
+        "trace_formula", path="calc.xlsx", sheet="Data", range="B1", direction="evaluate"
+    )
+    assert "levels deep" in message

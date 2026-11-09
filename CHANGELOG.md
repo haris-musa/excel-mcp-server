@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- A formula with a long chain of operators (`=A1+A1+...` up to Excel's 8,192 characters)
+  overflowed the stack of the calculator: `read_range` reported the cell as uncalculated and
+  `trace_formula` and `goal_seek` failed with "Unexpected error". The calculator, the
+  dependency walks and the dynamic array check now loop over operator chains instead of
+  recursing, and calculate them. `trace_formula` with `evaluate` refuses a formula more than
+  150 levels deep with a clear message, and a run of more than 64 `%` operators counts toward
+  the 64 nesting levels like other nesting.
+
 ## [2.2.8] - 2026-11-09
 
 ### Security
