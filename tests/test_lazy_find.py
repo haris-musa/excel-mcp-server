@@ -12,6 +12,7 @@ import pytest
 
 from excel_mcp import lazy_edit
 from excel_mcp.cell_budget import CellBudget
+from excel_mcp.config import Limits
 from excel_mcp.operations import replace
 from tests.conftest import ToolCall, lazily
 from tests.package_support import read_parts, sheet_part
@@ -75,11 +76,18 @@ def test_only_the_blocks_that_may_hold_the_text_are_parsed(
             exact=False,
             case_sensitive=False,
             in_formulas=True,
+            limits=Limits(),
         )
         assert cells.loaded == opened
 
         done = replace.replace_cells(
-            [book["Data"]], "k7", "z", exact=False, case_sensitive=False, in_formulas=True
+            [book["Data"]],
+            "k7",
+            "z",
+            exact=False,
+            case_sensitive=False,
+            in_formulas=True,
+            limits=Limits(),
         )
         assert done.replaced == {"Data": 1}
         assert cells.loaded == opened | {8 // 4}
@@ -96,7 +104,13 @@ def test_text_that_only_the_cells_following_a_master_hold_is_found(
     with lazily(monkeypatch):
         book, _ = lazy_edit.load(files / "book.xlsx", CellBudget(3_000_000))
         done = replace.replace_cells(
-            [book["Data"]], "B30", "B31", exact=False, case_sensitive=False, in_formulas=True
+            [book["Data"]],
+            "B30",
+            "B31",
+            exact=False,
+            case_sensitive=False,
+            in_formulas=True,
+            limits=Limits(),
         )
         assert done.replaced == {"Data": 1}
         assert book["Data"]["D30"].value == "=B31*C30"

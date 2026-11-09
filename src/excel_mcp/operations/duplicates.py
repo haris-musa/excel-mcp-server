@@ -8,6 +8,7 @@ from excel_mcp.operations.columns import find_column
 from excel_mcp.operations.comparison import FormulaResults, as_number, cell_value
 from excel_mcp.operations.sorting import save_cells, write_rows
 from excel_mcp.refs import CellRange
+from excel_mcp.text_budget import TextBudget
 
 
 def remove_duplicates(
@@ -16,6 +17,7 @@ def remove_duplicates(
     columns: list[str] | None,
     has_header: bool,
     results: FormulaResults,
+    max_cells: int,
 ) -> int:
     """Move the rows to keep up, empty the rows left at the bottom, and return how many went.
 
@@ -35,12 +37,16 @@ def remove_duplicates(
         if columns
         else list(range(area.min_col, area.max_col + 1))
     )
+    budget = TextBudget(
+        max_cells,
+        "Comparing rows would read more than {limit} characters of text. Use fewer rows.",
+    )
     seen: set[tuple[object, ...]] = set()
     kept = []
     for cells in sheet.iter_rows(
         min_row=first_row, max_row=area.max_row, min_col=area.min_col, max_col=area.max_col
     ):
-        key = tuple(_comparable(cells[col - area.min_col], results) for col in chosen)
+        key = tuple(_comparable(cells[col - area.min_col], results, budget) for col in chosen)
         if key not in seen:
             seen.add(key)
             kept.append(save_cells(cells))
@@ -60,12 +66,15 @@ def remove_duplicates(
     return removed
 
 
-def _comparable(cell: Cell | MergedCell, results: FormulaResults) -> tuple[str, object]:
+def _comparable(
+    cell: Cell | MergedCell, results: FormulaResults, budget: TextBudget
+) -> tuple[str, object]:
     value = cell_value(cell, results)
     if isinstance(value, bool):
         return "boolean", value
     if (number := as_number(value)) is not None:
         return "number", number
     if isinstance(value, str):
+        budget.spend(len(value))
         return "text", value.casefold()
     return "blank", None

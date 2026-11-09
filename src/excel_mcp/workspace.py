@@ -33,7 +33,7 @@ from excel_mcp.lazy_edit import LazyEdit
 from excel_mcp.lazy_workbook import Parts, held_cells, load_lazy
 from excel_mcp.package import lazy_records
 from excel_mcp.paths import MACRO_SUFFIXES, TEMPLATE_SUFFIXES, PathPolicy
-from excel_mcp.zip_limits import check_expansion
+from excel_mcp.zip_limits import check_expansion, too_large
 
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
 # The cells loaded by the edit this call is part of, which reads it makes for results share.
@@ -184,6 +184,7 @@ class Workspace:
 
                 refresh_spills(workbook, self.limits.max_cells)
                 _pin_hyperlinks(workbook)
+                _check_text_size(workbook, self.limits)
                 save_atomically(workbook, path, self.limits.max_file_bytes, lazy)
             finally:
                 _edit_budget.reset(token)
@@ -308,6 +309,23 @@ def save_atomically(
             f"{max_bytes:,}. The file was not changed."
         )
     write_atomically(path, content)
+
+
+def _check_text_size(workbook: Workbook, limits: Limits) -> None:
+    """Refuse text that saving would write out beyond what the server can open again.
+
+    A file stores a text once however many cells hold it, but saving writes it in every cell,
+    so a copy, a fill or any edit of such a workbook can be far larger than the file. This is
+    counted before anything is written.
+    """
+    characters = sum(
+        len(cell.value)
+        for sheet in workbook.worksheets
+        for cell in held_cells(sheet).values()
+        if isinstance(cell.value, str)
+    )
+    if characters > limits.max_unpacked_bytes:
+        raise too_large(limits)
 
 
 def write_atomically(path: Path, content: bytes) -> None:

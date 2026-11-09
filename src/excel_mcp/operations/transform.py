@@ -73,7 +73,9 @@ def apply_transform(
     spec.reject_unused(_FIELDS[spec.operation] | {"operation"}, spec.operation)
     match spec.operation:
         case "remove_duplicates":
-            removed = remove_duplicates(sheet, area, spec.columns, spec.has_header, results)
+            removed = remove_duplicates(
+                sheet, area, spec.columns, spec.has_header, results, max_cells
+            )
             return area, f"Removed {removed} duplicate rows."
         case "text_to_columns":
             split = text_to_columns(

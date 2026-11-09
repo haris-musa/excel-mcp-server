@@ -1,12 +1,13 @@
 """Text to Columns: split the text of one column into the columns to its right."""
 
-from itertools import accumulate
+from collections.abc import Iterator
 
 from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.errors import InvalidArgumentError, LimitExceededError
 from excel_mcp.operations.cells import store_typed, writable_cell
 from excel_mcp.refs import MAX_COLUMN, CellRange
+from excel_mcp.text_budget import TextBudget
 from excel_mcp.workspace import sheet_names
 
 _NAMED_DELIMITERS = {"tab": "\t", "semicolon": ";", "comma": ",", "space": " "}
@@ -35,14 +36,15 @@ def text_to_columns(
         raise InvalidArgumentError(
             "Each delimiter is 'tab', 'semicolon', 'comma', 'space' or a single character."
         )
-    split = [
-        (row, _split(text, separators, fixed_widths_chars, qualifier, merge_delimiters))
-        for row in range(area.min_row, area.max_row + 1)
-        if isinstance(text := sheet.cell(row, area.min_col).value, str)
-        and sheet.cell(row, area.min_col).data_type == "s"
-    ]
-    if sum(len(pieces) for _, pieces in split) > max_cells:
-        raise LimitExceededError(f"Splitting would fill more than {max_cells:,} cells.")
+    if fixed_widths_chars and not (
+        len(fixed_widths_chars) < MAX_COLUMN and min(fixed_widths_chars) >= 1
+    ):
+        raise InvalidArgumentError(
+            f"fixed_widths_chars needs at most {MAX_COLUMN - 1:,} widths, each at least 1."
+        )
+    split = _split_rows(
+        sheet, area, separators, fixed_widths_chars, qualifier, merge_delimiters, max_cells
+    )
     names = sheet_names(sheet)
     for row, pieces in split:
         if area.min_col + len(pieces) - 1 > MAX_COLUMN:
@@ -60,23 +62,51 @@ def text_to_columns(
     return len(split)
 
 
-def _split(
+def _split_rows(
+    sheet: Worksheet,
+    area: CellRange,
+    separators: set[str],
+    fixed_widths_chars: list[int] | None,
+    qualifier: str,
+    merge_delimiters: bool,
+    max_cells: int,
+) -> list[tuple[int, list[str]]]:
+    """The pieces of each text cell. Both the text read and the pieces made are counted as they
+    come, so a refusal costs no more than the limits allow, however much text the cells hold."""
+    budget = TextBudget(
+        max_cells, "Splitting would read more than {limit} characters of text. Use fewer cells."
+    )
+    split = []
+    pieces_made = 0
+    for row in range(area.min_row, area.max_row + 1):
+        cell = sheet.cell(row, area.min_col)
+        if not isinstance(text := cell.value, str) or cell.data_type != "s":
+            continue
+        budget.spend(len(text))
+        pieces = []
+        for piece in _pieces(text, separators, fixed_widths_chars, qualifier, merge_delimiters):
+            pieces_made += 1
+            if pieces_made > max_cells:
+                raise LimitExceededError(f"Splitting would fill more than {max_cells:,} cells.")
+            pieces.append(piece)
+        split.append((row, pieces))
+    return split
+
+
+def _pieces(
     text: str,
     separators: set[str],
     fixed_widths_chars: list[int] | None,
     qualifier: str,
     merge_delimiters: bool,
-) -> list[str]:
+) -> Iterator[str]:
     if fixed_widths_chars:
-        edges = [0, *accumulate(fixed_widths_chars)]
-        pieces = [
-            text[start:end] for start, end in zip(edges, [*edges[1:], len(text)], strict=True)
-        ]
-        return [piece for piece in pieces if piece] or [text]
-    fields: list[str] = []
+        yield from _fixed_pieces(text, fixed_widths_chars)
+        return
     field = ""
     quoted = False
     at_start = True
+    first = True
     index = 0
     while index < len(text):
         char = text[index]
@@ -92,11 +122,24 @@ def _split(
             quoted = True
             at_start = False
         elif char in separators:
-            fields.append(field)
+            if field or first or not merge_delimiters:
+                yield field
+            first = False
             field, at_start = "", True
         else:
             field += char
             at_start = False
         index += 1
-    fields.append(field)
-    return [f for position, f in enumerate(fields) if f or position == 0 or not merge_delimiters]
+    if field or first or not merge_delimiters:
+        yield field
+
+
+def _fixed_pieces(text: str, widths: list[int]) -> Iterator[str]:
+    start = 0
+    for width in widths:
+        if start >= len(text):
+            return
+        yield text[start : start + width]
+        start += width
+    if start < len(text):
+        yield text[start:]

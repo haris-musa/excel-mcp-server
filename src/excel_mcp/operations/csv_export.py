@@ -14,6 +14,7 @@ from excel_mcp.errors import InvalidArgumentError, LimitExceededError
 from excel_mcp.operations.calculated import read_calculated
 from excel_mcp.operations.csv_format import DELIMITER_CHARACTERS, FORMULA_STARTS, Encoding
 from excel_mcp.refs import CellRange, cell_name, parse_range
+from excel_mcp.text_budget import CHARS_PER_CELL, TextBudget
 from excel_mcp.values import CellValue
 from excel_mcp.workspace import Workspace, get_streamed_sheet
 
@@ -42,9 +43,14 @@ def export_csv(
     data = read_calculated(workspace, path, sheet, ref, max_cells)
     if data.next_range:
         raise LimitExceededError(
-            f"The range has more than {max_cells:,} cells, the limit per call. Export a "
-            "smaller range or raise --max-cells."
+            f"The range has more than {max_cells:,} cells or {max_cells * CHARS_PER_CELL:,} "
+            "characters of text, the limit per call. Export a smaller range or raise --max-cells."
         )
+    budget = TextBudget(
+        max_cells,
+        "The range as displayed has more than {limit} characters of text, the limit per call. "
+        "Export a smaller range or raise --max-cells.",
+    )
     area = parse_range(data.range)
     formats = _formats(workspace, path, sheet, area) if formatted else None
     buffer = io.StringIO(newline="")
@@ -57,6 +63,7 @@ def export_csv(
             number_format = formats[row][column] if formats else None
             try:
                 fields.append(_field(value, number_format, escape_formulas))
+                budget.spend(len(fields[-1]))
             except UncalculableError as reason:
                 where = cell_name(area.min_row + row, area.min_col + column)
                 raise InvalidArgumentError(

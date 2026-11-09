@@ -32,7 +32,7 @@ from excel_mcp.operations.pivot_options import (
     PivotValue,
     ValuesIn,
 )
-from excel_mcp.operations.pivot_render import Shown, item_label, number_format, render
+from excel_mcp.operations.pivot_render import Shown, item_label, measure, number_format, render
 from excel_mcp.operations.pivot_showas import Figures
 from excel_mcp.operations.pivot_source import Results, Source, read_source, serial
 from excel_mcp.operations.pivot_specs import (
@@ -103,19 +103,22 @@ def create_pivot(
     rows, columns, aggregator = _axes(
         source, calculated, specs, on_rows, on_columns, [*pages, *hidden], request
     )
-    formats = [number_format(spec, _source_format(source, spec)) for spec in specs]
-    figures = Figures(aggregator, rows, columns, specs)
-    table = render(rows, columns, specs, figures, formats, request.layout)
+    # The table is as big as the items of its axes make it, which is not bounded by the source's
+    # cells (a few thousand records can make millions), so it is checked before it is built.
+    size = measure(rows, columns, request.layout)
     start_row, start_col = parse_cell(target_cell)
     filter_height = len(pages) + 1 if pages else 0
     body = CellRange(
         start_row + filter_height,
         start_col,
-        start_row + filter_height + table.header_rows + table.rows - 1,
-        start_col + table.label_columns + table.columns - 1,
+        start_row + filter_height + size.header_rows + size.rows - 1,
+        start_col + size.label_columns + size.columns - 1,
     )
     area = CellRange(start_row, start_col, body.max_row, body.max_col).within(limits.max_cells)
     _check_free(target_sheet, area, source_sheet, source.ref)
+    formats = [number_format(spec, _source_format(source, spec)) for spec in specs]
+    figures = Figures(aggregator, rows, columns, specs)
+    table = render(rows, columns, specs, figures, formats, request.layout)
 
     pivot_name = _pivot_name(workbook, request.name, copy_of_name)
     page_filters = [_page_filter(axis) for axis in pages]

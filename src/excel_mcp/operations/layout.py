@@ -19,6 +19,7 @@ from excel_mcp.operations.sheet_view import ViewOptions, apply_view, move_sheet
 from excel_mcp.operations.spans import MAX_ROW_SPAN, parse_span, to_spans
 from excel_mcp.package.lines import Axis
 from excel_mcp.refs import MAX_ROW, parse_cell
+from excel_mcp.text_budget import TextBudget
 
 MIN_AUTOFIT_WIDTH = 8
 MAX_AUTOFIT_WIDTH = 80
@@ -78,9 +79,12 @@ def apply_layout(
         if not 1 <= row <= MAX_ROW:
             raise InvalidArgumentError(f"Row {row} is outside 1 to {MAX_ROW}.")
         sheet.row_dimensions[row].height = height
-    for column in layout.autofit_columns or []:
-        letter = column_letter(column)
-        sheet.column_dimensions[letter].width = estimate_width(sheet, letter)
+    if layout.autofit_columns:
+        fitted = estimate_widths(
+            sheet, [column_letter(c) for c in layout.autofit_columns], max_cells
+        )
+        for letter, width in fitted.items():
+            sheet.column_dimensions[letter].width = width
     if layout.freeze_panes is not None:
         parse_cell(layout.freeze_panes)
         sheet.freeze_panes = layout.freeze_panes.upper()
@@ -187,14 +191,22 @@ def column_letter(column: str) -> str:
         ) from None
 
 
-def estimate_width(sheet: Worksheet, letter: str) -> float:
-    """Approximate a fitting width from the longest text line in the column."""
-    index = column_index_from_string(letter)
-    lines = [
-        line
-        for cell in stored_cells(sheet)
-        if cell.column == index
-        for line in str(cell.value).splitlines()
-    ]
-    longest = max((len(line) for line in lines), default=0)
-    return min(max(longest + 2, MIN_AUTOFIT_WIDTH), MAX_AUTOFIT_WIDTH)
+def estimate_widths(sheet: Worksheet, letters: list[str], max_cells: int) -> dict[str, float]:
+    """Approximate fitting widths from the longest text line in each column, in one pass over the
+    cells however many columns are asked for."""
+    budget = TextBudget(
+        max_cells,
+        "Fitting columns would read more than {limit} characters of text. Fit fewer columns.",
+    )
+    wanted = {column_index_from_string(letter): letter for letter in letters}
+    longest = dict.fromkeys(wanted, 0)
+    for cell in stored_cells(sheet):
+        if cell.column in wanted:
+            text = str(cell.value)
+            budget.spend(len(text))
+            lines = max(map(len, text.splitlines()), default=0)
+            longest[cell.column] = max(longest[cell.column], lines)
+    return {
+        letter: min(max(longest[index] + 2, MIN_AUTOFIT_WIDTH), MAX_AUTOFIT_WIDTH)
+        for index, letter in wanted.items()
+    }

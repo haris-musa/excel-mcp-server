@@ -212,7 +212,7 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 if sheet is None
                 else [get_streamed_sheet(workbook, sheet)]
             )
-            return cells.find_cells(targets, query, exact, case_sensitive, max_results)
+            return cells.find_cells(targets, query, exact, case_sensitive, max_results, limits)
 
     @tools.destroyer("Replace in cells")
     def replace_cells(
@@ -235,4 +235,5 @@ def register(tools: ToolRegistry, workspace: Workspace) -> None:
                 exact=exact,
                 case_sensitive=case_sensitive,
                 in_formulas=in_formulas,
+                limits=limits,
             )

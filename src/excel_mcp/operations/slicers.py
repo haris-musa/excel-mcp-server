@@ -80,7 +80,7 @@ def add_slicer(
             raise InvalidArgumentError(
                 "A table slicer connects to its table only, and tables have no timelines."
             )
-        return _table_slicer(workbook, sheet, owner, target, request, results), False
+        return _table_slicer(workbook, sheet, owner, target, request, limits, results), False
     pivots.share_caches(workbook)
     group = _connected(workbook, owner, target, request)
     if request.timeline:
@@ -94,6 +94,7 @@ def _table_slicer(
     owner: Worksheet,
     table: Table,
     request: SlicerRequest,
+    limits: Limits,
     results: Results,
 ) -> str:
     _check_style(request.style, "slicer")
@@ -101,6 +102,8 @@ def _table_slicer(
     _check_free_column(workbook, table, column.name)
     name, cache = _names(workbook, request, "Slicer_")
     if request.selected:
+        # The size of a table is whatever its file says, so it is checked like any range.
+        table_area(table).within(limits.max_cells)
         slicer_table.show_only(
             owner, table, column.name, request.selected, results(owner, table_area(table))
         )

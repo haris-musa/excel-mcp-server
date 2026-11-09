@@ -121,7 +121,7 @@ class Engine:
         if cell is None:
             return None
         if cell.data_type != "f":
-            return constant(cell)
+            return self.sized(constant(cell))
         key = (sheet.title, row, col)
         if key in self.memo:
             remembered = self.memo[key]

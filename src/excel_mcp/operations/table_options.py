@@ -12,7 +12,7 @@ from pydantic import Field, StringConstraints
 from excel_mcp.errors import InvalidArgumentError, LimitExceededError
 from excel_mcp.formulas import storable_formula
 from excel_mcp.inputs import InputModel
-from excel_mcp.operations.cells import store_value, writable_cell
+from excel_mcp.operations.cells import store_value, stored_cells_in, writable_cell
 from excel_mcp.operations.shifting import Mover
 from excel_mcp.refs import MAX_ROW, CellRange, cell_name, parse_range
 from excel_mcp.structured import StructuredRef, qualify_formula
@@ -168,8 +168,8 @@ def _set_totals_row(sheet: Worksheet, table: Table, shown: bool) -> None:
 def _is_numeric(sheet: Worksheet, table: Table, position: int) -> bool:
     """Whether Excel sums the column of a new totals row: it has numbers and nothing else."""
     first, last = _data_rows(table)
-    cells = [sheet.cell(row, position) for row in range(first, last + 1)]
-    values = [c for c in cells if c.value is not None]
+    # Only the cells that exist: the rows a file gives its table do not make cells.
+    values = list(stored_cells_in(sheet, CellRange(first, position, last, position)))
     return bool(values) and all(
         c.data_type == "f" or (isinstance(c.value, int | float) and not isinstance(c.value, bool))
         for c in values

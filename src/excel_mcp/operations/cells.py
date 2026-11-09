@@ -1,12 +1,14 @@
 """Reading, writing, clearing, copying and searching cell contents."""
 
 from collections.abc import Iterator
+from contextlib import closing
 
 from openpyxl.cell.cell import Cell, MergedCell
 from openpyxl.worksheet._read_only import ReadOnlyWorksheet
 from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
 
+from excel_mcp.config import Limits
 from excel_mcp.errors import InvalidArgumentError, LimitExceededError
 from excel_mcp.lazy_workbook import LazyCells, held_cells
 from excel_mcp.operations.date_width import FITTED_WIDTHS, widen_for_dates
@@ -22,6 +24,7 @@ from excel_mcp.refs import (
     parse_clamped_range,
     parse_range,
 )
+from excel_mcp.text_budget import CHARS_PER_CELL, TextBudget
 from excel_mcp.values import CellValue, date_number_format, to_cell, to_json, typed_value
 from excel_mcp.workspace import sheet_names
 from excel_mcp.xlfn import display_formula
@@ -192,7 +195,24 @@ def read_range(sheet: ReadOnlyWorksheet, ref: str | None, max_cells: int) -> Ran
         max_col=target.max_col,
         values_only=True,
     )
-    values = [[_displayed(to_json(value)) for value in row] for row in rows]
+    values = []
+    characters, limit, cut = 0, max_cells * CHARS_PER_CELL, False
+    with closing(rows):
+        for row in rows:
+            line = [_displayed(to_json(value)) for value in row]
+            size = sum(len(value) for value in line if isinstance(value, str))
+            if characters + size > limit:
+                if not values:
+                    raise LimitExceededError(
+                        f"Row {target.min_row} of {target} holds more than {limit:,} characters of "
+                        "text, the limit per page. Read fewer columns."
+                    )
+                cut = True
+                break
+            characters += size
+            values.append(line)
+    if cut:
+        last_row = target.min_row + len(values) - 1
     for row in values:
         while row and row[-1] is None:
             row.pop()
@@ -279,21 +299,35 @@ def find_cells(
     exact: bool,
     case_sensitive: bool,
     max_results: int,
+    limits: Limits,
 ) -> FindResult:
+    """Cells whose text contains (or equals) ``query``. The text searched and the text returned
+    are counted, so a workbook of many cells sharing one long text cannot make a search long or
+    its result large."""
+
     def normalize(text: str) -> str:
         return text if case_sensitive else text.casefold()
 
+    scanned = TextBudget(
+        limits.max_loaded_cells,
+        "Searching would read more than {limit} characters of text. Search one sheet at a "
+        "time, or raise --max-loaded-cells.",
+    )
+    page = limits.max_read_cells * CHARS_PER_CELL
     needle = normalize(query)
     matches: dict[str, dict[str, CellValue]] = {}
-    count = 0
+    count = returned = 0
     for sheet in sheets:
         for row, col, value in streamed_cells(sheet):
             shown = _displayed(to_json(value))
-            text = normalize(str(shown))
+            text = str(shown)
+            scanned.spend(len(text))
+            text = normalize(text)
             if not (text == needle if exact else needle in text):
                 continue
-            if count == max_results:
+            if count == max_results or (count and returned + len(text) > page):
                 return FindResult(matches=matches, truncated=True)
             matches.setdefault(sheet.title, {})[cell_name(row, col)] = shown
             count += 1
+            returned += len(text)
     return FindResult(matches=matches)

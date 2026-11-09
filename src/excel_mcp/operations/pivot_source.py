@@ -17,6 +17,7 @@ from excel_mcp.lazy_workbook import LazyCells
 from excel_mcp.operations.comparison import FormulaResults
 from excel_mcp.refs import CellRange, cell_name, parse_range
 from excel_mcp.text import quoted
+from excel_mcp.text_budget import TextBudget
 
 Value = str | int | float | bool | dt.datetime | ExcelError | None
 """A cell as a PivotTable sees it. Dates, times and durations are moments counted from `EPOCH`."""
@@ -95,9 +96,20 @@ def read_source(sheet: Worksheet, source_range: str, max_cells: int, results: Re
         )
     if area.rows < 2:
         raise InvalidArgumentError(f"source {area} needs a header row and at least one data row.")
+    # The cache stores a text once per record unless it is an item of an axis, so the text of the
+    # source is counted, not only its cells.
+    budget = TextBudget(
+        max_cells,
+        f"Source {area} has more than {{limit}} characters of text; PivotTables can read at most "
+        "that. Use a smaller source, or raise --max-pivot-cells (environment variable "
+        "EXCEL_MCP_MAX_PIVOT_CELLS).",
+    )
     if isinstance(sheet._cells, LazyCells) and (
         stored := sheet._cells.stored_rows(area.min_row, area.max_row)
     ):
+        budget.spend(
+            sum(len(c[1]) for row in stored for c in row.values() if isinstance(c[1], str))
+        )
         return _read_stored(sheet, area, stored)
     rows = [
         list(row)
@@ -105,6 +117,9 @@ def read_source(sheet: Worksheet, source_range: str, max_cells: int, results: Re
             min_row=area.min_row, max_row=area.max_row, min_col=area.min_col, max_col=area.max_col
         )
     ]
+    budget.spend(
+        sum(len(cell.value) for row in rows for cell in row if isinstance(cell.value, str))
+    )
     names = [_header(cell) for cell in rows[0]]
     folded = [name.strip().casefold() for name in names]
     if len(set(folded)) < len(folded):

@@ -20,6 +20,7 @@ from excel_mcp.formulas import storable_formula
 from excel_mcp.inputs import InputModel
 from excel_mcp.operations.columns import find_column
 from excel_mcp.refs import CellRange, parse_range
+from excel_mcp.text_budget import TextBudget
 from excel_mcp.workspace import sheet_names
 
 Order = Literal["ascending", "descending"]
@@ -73,8 +74,11 @@ def sort_range(
         raise InvalidArgumentError(f"{area} has fewer than two rows to sort.")
     key_offsets = [find_column(sheet, area, key.column, has_header) - area.min_col for key in keys]
 
+    budget = TextBudget(
+        max_cells, "Sorting would compare more than {limit} characters of text. Sort fewer rows."
+    )
     rows = [
-        _snapshot(cells, key_offsets)
+        _snapshot(cells, key_offsets, budget)
         for cells in sheet.iter_rows(
             min_row=first_row, max_row=area.max_row, min_col=area.min_col, max_col=area.max_col
         )
@@ -105,11 +109,13 @@ def save_cells(row: tuple[Cell | MergedCell, ...]) -> list[Saved]:
     ]
 
 
-def _snapshot(row: tuple[Cell | MergedCell, ...], key_offsets: list[int]) -> _Row:
-    return _Row(save_cells(row), [_sort_value(row[offset]) for offset in key_offsets])
+def _snapshot(
+    row: tuple[Cell | MergedCell, ...], key_offsets: list[int], budget: TextBudget
+) -> _Row:
+    return _Row(save_cells(row), [_sort_value(row[offset], budget) for offset in key_offsets])
 
 
-def _sort_value(cell: Cell | MergedCell) -> SortValue:
+def _sort_value(cell: Cell | MergedCell, budget: TextBudget) -> SortValue:
     if cell.data_type == "f":
         raise InvalidArgumentError(
             f"{cell.coordinate} is a formula, and its result is unknown until Excel "
@@ -126,7 +132,9 @@ def _sort_value(cell: Cell | MergedCell) -> SortValue:
         return _NUMBER, float(to_excel(value))
     if isinstance(value, int | float):
         return _NUMBER, value
-    return _TEXT, _text_key(str(value))
+    text = str(value)
+    budget.spend(len(text))
+    return _TEXT, _text_key(text)
 
 
 def _text_key(text: str) -> tuple[object, ...]:
@@ -134,12 +142,10 @@ def _text_key(text: str) -> tuple[object, ...]:
     how many hyphens and apostrophes there are. Symbols come before digits and letters."""
     decomposed = unicodedata.normalize("NFD", text.casefold())
     kept = "".join(c for c in decomposed if c not in "-'")
-    base = "".join(c for c in kept if not unicodedata.combining(c))
-    return (
-        [(c.isalnum(), c) for c in base],
-        kept,
-        len(decomposed) - len(kept),
-    )
+    # One flag character ahead of each character orders symbols first, as a tuple per character
+    # would, in a string rather than an object per character.
+    base = "".join(("1" if c.isalnum() else "0") + c for c in kept if not unicodedata.combining(c))
+    return base, kept, len(decomposed) - len(kept)
 
 
 def write_rows(sheet: Worksheet, first_col: int, first_row: int, rows: list[list[Saved]]) -> None:

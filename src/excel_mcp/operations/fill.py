@@ -134,9 +134,14 @@ def _values(
             raise InvalidArgumentError("A date series starts from a date cell.")
         if step != int(step):
             raise InvalidArgumentError("A date series needs a whole-number step.")
-        values: list[int | float | dt.date] = [
-            _add_dates(seed, unit, int(step) * index) for index in range(count)
-        ]
+        try:
+            values: list[int | float | dt.date] = [
+                _add_dates(seed, unit, int(step) * index) for index in range(count)
+            ]
+        except (OverflowError, ValueError):
+            raise InvalidArgumentError(
+                "The series goes past the last date a cell can hold."
+            ) from None
         numbers = [float(to_excel(value)) for value in values]
     else:
         if isinstance(seed, bool) or not isinstance(seed, int | float):
@@ -172,9 +177,16 @@ def _add_dates(seed: dt.date, unit: DateUnit, amount: int) -> dt.date:
 
 
 def _add_weekdays(seed: dt.date, amount: int) -> dt.date:
-    direction = 1 if amount >= 0 else -1
+    """``amount`` weekdays on from ``seed``: whole weeks at once, then the few days left."""
+    if amount == 0:
+        return seed
+    direction = 1 if amount > 0 else -1
     result = seed
-    for _ in range(abs(amount)):
+    while result.weekday() >= 5:  # a weekend seed counts from the weekday it follows
+        result -= dt.timedelta(days=direction)
+    weeks, days = divmod(abs(amount), 5)
+    result += dt.timedelta(days=7 * weeks * direction)
+    for _ in range(days):
         result += dt.timedelta(days=direction)
         while result.weekday() >= 5:
             result += dt.timedelta(days=direction)

@@ -6,6 +6,28 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Security
+
+- `transform_range` (text to columns) and the other tools that build something from what cells
+  hold now count it as they build it and refuse at the limit, so a refused call costs no more
+  than the limit allows (GHSA-g84x-r4rx-gp3v, reported by @arpitjain099). Text to columns
+  counts the pieces as it makes them instead of after splitting every row. One call reads,
+  sorts, compares, exports, searches or returns at most 256 characters of text per cell on
+  average (`--max-cells` times 256): `read_range` ends a page when its text reaches that,
+  `replace_cells` works out a text shared by many cells once and refuses results longer than a
+  cell, `import_csv` refuses a record with too many fields before reading it, and the
+  calculator counts the text of the cells it reads. PivotTables count the text of their source
+  and refuse a table that the items of its axes would make too large before building it. Table
+  slicers and totals rows no longer make a cell for every row a file declares for its table, and
+  saving refuses a workbook whose text would expand past what the server can open again.
+
+### Fixed
+
+- A weekday date series with a large step no longer takes time in proportion to the step, and
+  `fixed_widths_chars` widths must be positive. `autofit_columns` reads the sheet once however
+  many columns it lists.
+
+
 ## [2.2.6] - 2026-11-01
 
 ### Fixed
@@ -34,8 +56,6 @@ All notable changes to this project are documented here. The format follows
   hold (control characters other than tab and line break).
 
 ## [2.2.4] - 2026-10-31
-
-### Changed
 
 - Saving a workbook after a cell patch is fast again on huge sheets that have only a few cells
   to patch (dynamic array cells): a few cells are looked up by address instead of scanning
@@ -74,8 +94,6 @@ All notable changes to this project are documented here. The format follows
   memory-safety and denial-of-service issues in its image decoders (CVE-2026-112895 and
   others); 2.2.1 allowed only 12.x.
 
-### Changed
-
 - Sheets whose rows or cells carry no `r` attribute, as some writers make them, are edited
   through the large-sheet path like any other, instead of being loaded whole.
 - `describe_sheet` of a large sheet no longer parses every cell: it reads the notes, links, hidden
@@ -84,8 +102,6 @@ All notable changes to this project are documented here. The format follows
   memory to be calculated, says to open and save the workbook in Excel when it is over the limit.
 
 ## [2.2.1] - 2026-10-18
-
-### Changed
 
 - Edits that look at every cell of a large sheet no longer load it whole. On a 200,000-row
   sheet with four filled-down formula columns (Excel's file / one written by openpyxl):
@@ -157,8 +173,6 @@ All notable changes to this project are documented here. The format follows
   `Range.DirectPrecedents`, `Precedents`, `DirectDependents` and `Dependents` recorded from
   Excel (`tests/fixtures/audit_golden.json`).
 
-### Changed
-
 - Edits and descriptions of large workbooks are much faster. A sheet of 1 MB or more (of XML)
   is loaded without its rows: an edit parses only the blocks of 128 rows it touches, and the
   save writes those and copies the other rows as the file has them (their stored formula
@@ -193,8 +207,6 @@ All notable changes to this project are documented here. The format follows
   cells share, and a timeline needs a field of dates only. Grouping a mixed field is refused
   as in Excel ("Cannot group that selection"). Fixes #215.
 
-### Changed
-
 - Editing a workbook that holds a large PivotTable no longer parses its cache records: any tool
   on a 134,000 by 13 source now takes as long as on the same workbook without the PivotTable
   (`add_slicer` 93 s to 40 s, `write_range` 90 s to 36 s, `describe_sheet` 60 s to 19 s) and
@@ -209,8 +221,6 @@ All notable changes to this project are documented here. The format follows
   `--max-cells` (`EXCEL_MCP_MAX_CELLS`) the most cells one call may read, write or format.
   `--max-file-mb` now has `EXCEL_MCP_MAX_FILE_MB`. The error for an oversized source names the
   option that raises it (#210).
-
-### Changed
 
 - PivotTable sources may have up to 3,000,000 cells (was 100,000, the general range limit), so
   a sheet of 134,000 rows by 13 columns can be summarized. Creating a PivotTable from such a
@@ -306,8 +316,6 @@ consistent, which breaks 1.x clients; see "Upgrading from 1.x" at the end.
   slicer cache is removed, validation formulas become `#REF!`).
 - `Limits` gains `max_copy_cells` (`copy_sheet`), `max_unpack_factor` and
   `max_compression_ratio`.
-
-### Changed
 
 - Built on the MCP Python SDK 2.3, which supports the 2026-07-28 protocol revision. Tool
   schemas write unions as `anyOf` of single types instead of `"type": [...]` lists, which some
@@ -471,8 +479,6 @@ consistent, which breaks 1.x clients; see "Upgrading from 1.x" at the end.
 - `read_vba` hides procedure attributes such as `Attribute Macro1.VB_ProcData...`, as the
   VBA editor does.
 
-### Changed
-
 - The README setup instructions cover current clients: Claude Desktop, Claude Code,
   Cursor, VS Code, OpenAI Codex, Gemini CLI and Devin Desktop.
 
@@ -483,8 +489,6 @@ consistent, which breaks 1.x clients; see "Upgrading from 1.x" at the end.
 - `read_vba` shows the VBA macro code in `.xlsm` and `.xltm` workbooks, module by module,
   with each module's kind (standard, class, document or form). The code is only read,
   never run. `describe_workbook` reports `has_vba`.
-
-### Changed
 
 - The license names the author in full.
 
@@ -533,8 +537,6 @@ tool set, a security hardening pass and a test suite.
 - MCP Registry metadata (`server.json`), a Dockerfile, and an MCPB bundle that runs with uv.
 - CI on Linux, macOS and Windows for Python 3.11 to 3.14, with lint, type checks, tests
   and a dependency audit.
-
-### Changed
 
 - The tool set is redesigned. Old tools map to new ones as follows:
 

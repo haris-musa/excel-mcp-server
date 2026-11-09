@@ -1,8 +1,10 @@
 """Reading a CSV file into a worksheet."""
 
 import csv
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TextIO
 
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 from openpyxl.worksheet.worksheet import Worksheet
@@ -48,7 +50,8 @@ def import_csv(
         with file.open(encoding=codec, newline="") as stream:
             separator = _separator(stream.read(_SAMPLE_CHARACTERS), delimiter)
             stream.seek(0)
-            for offset, record in enumerate(csv.reader(stream, delimiter=separator), start=1):
+            lines = _lines_within(stream, separator, max_cells)
+            for offset, record in enumerate(csv.reader(lines, delimiter=separator), start=1):
                 row = first_row + offset - 1
                 if record and (row > MAX_ROW or first_col + len(record) - 1 > MAX_COLUMN):
                     raise InvalidArgumentError(
@@ -56,10 +59,7 @@ def import_csv(
                     )
                 cells += len(record)
                 if cells > max_cells:
-                    raise LimitExceededError(
-                        f"The file has more than {max_cells:,} cells, the limit per call. "
-                        "Split the file or raise --max-cells."
-                    )
+                    raise _too_many_cells(max_cells)
                 for index, text in enumerate(record):
                     column = first_col + index
                     if width := _store(sheet, row, column, text, offset, rules):
@@ -77,6 +77,23 @@ def import_csv(
     widen_for_dates(sheet, needed)
     written = CellRange(first_row, first_col, first_row + last_row - 1, first_col + last_col - 1)
     return WriteResult(sheet=sheet.title, range=str(written), cells_written=cells)
+
+
+def _too_many_cells(max_cells: int) -> LimitExceededError:
+    return LimitExceededError(
+        f"The file has more than {max_cells:,} cells, the limit per call. "
+        "Split the file or raise --max-cells."
+    )
+
+
+def _lines_within(stream: TextIO, separator: str, max_cells: int) -> Iterator[str]:
+    """The lines of the file, refusing one with more delimiters than the limit has cells before
+    the reader makes a field of each: a record is held whole, so its length is not bounded by
+    the count of cells made so far."""
+    for line in stream:
+        if line.count(separator) >= max_cells:
+            raise _too_many_cells(max_cells)
+        yield line
 
 
 def _separator(sample: str, delimiter: str) -> str:

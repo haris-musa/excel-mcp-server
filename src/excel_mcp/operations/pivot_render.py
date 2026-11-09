@@ -33,6 +33,13 @@ class Table:
     columns: int
 
 
+def measure(rows: Axis, columns: Axis, layout: Layout) -> Table:
+    """The size of the table the axes make, before any of its cells are."""
+    label_columns = 1 if layout == "compact" else len(rows.fields) + rows.value_levels
+    header_rows = 1 + len(columns.fields) + columns.value_levels
+    return Table({}, header_rows, label_columns, len(rows.lines), len(columns.lines))
+
+
 def render(
     rows: Axis,
     columns: Axis,
@@ -42,9 +49,8 @@ def render(
     layout: Layout,
 ) -> Table:
     """``formats`` holds each values field's number format."""
-    label_columns = 1 if layout == "compact" else len(rows.fields) + rows.value_levels
-    header_rows = 1 + len(columns.fields) + columns.value_levels
-    table = Table({}, header_rows, label_columns, len(rows.lines), len(columns.lines))
+    table = measure(rows, columns, layout)
+    header_rows, label_columns = table.header_rows, table.label_columns
     cells = table.cells
     _headers(cells, rows, columns, specs, layout, header_rows, label_columns)
     _column_labels(cells, columns, specs, label_columns)

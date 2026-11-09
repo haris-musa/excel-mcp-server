@@ -26,7 +26,7 @@ ESCAPES = str.maketrans(
         "\t": "&#9;",
     }
 )
-BATCH = 10_000
+BATCH_CHARACTERS = 1 << 20
 
 
 class SharedIndex(int):
@@ -57,9 +57,16 @@ class PivotRecords(RecordList):
 
 def _write_xml(stream: IO[bytes], rows: Sequence[Row]) -> None:
     stream.write(f'<pivotCacheRecords xmlns="{SHEET_MAIN_NS}" count="{len(rows)}">'.encode())
-    for start in range(0, len(rows), BATCH):
-        batch = rows[start : start + BATCH]
-        stream.write("".join(f"<r>{''.join(_items(row))}</r>" for row in batch).encode())
+    batch: list[str] = []
+    size = 0
+    for row in rows:
+        record = f"<r>{''.join(_items(row))}</r>"
+        batch.append(record)
+        size += len(record)
+        if size >= BATCH_CHARACTERS:
+            stream.write("".join(batch).encode())
+            batch, size = [], 0
+    stream.write("".join(batch).encode())
     stream.write(b"</pivotCacheRecords>")
 
 

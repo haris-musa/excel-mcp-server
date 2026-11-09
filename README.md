@@ -197,7 +197,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
 | `--allow-vba-write` | `EXCEL_MCP_ALLOW_VBA_WRITE=1` | off | Add tools that write VBA macros (see warning below); ignored with `--read-only` |
 | `--tools AREAS` | `EXCEL_MCP_TOOLS` | all | Only offer the core tools and these comma-separated areas, to save context (see [Choosing tools](#choosing-tools)) |
 | `--max-file-mb N` | `EXCEL_MCP_MAX_FILE_MB` | `100` | Largest workbook the server opens. Also sets the unpacked-size limit (10 times this) that every opened or uploaded workbook must stay under; parts compressed over 500:1 are refused |
-| `--max-cells N` | `EXCEL_MCP_MAX_CELLS` | `100000` | Most cells one call may read, write or format; reads are still returned in pages |
+| `--max-cells N` | `EXCEL_MCP_MAX_CELLS` | `100000` | Most cells one call may read, write or format; reads are still returned in pages; also bounds text to 256 characters per cell on average |
 | `--max-pivot-cells N` | `EXCEL_MCP_MAX_PIVOT_CELLS` | `3000000` | Largest PivotTable source in cells (a 230,000-row, 13-column sheet); creating one from the biggest sources takes a minute and about 2 GB of memory |
 | `--max-loaded-cells N` | `EXCEL_MCP_MAX_LOADED_CELLS` | `3000000` | Most cells and rows of a workbook that may be loaded into memory at once, about 0.5 KB each (a 3,000,000 limit is about 1.5 GB). A workbook with more is refused by the tools that must load whole sheets; `read_range` and the other streaming reads, and edits of large sheets that parse only some rows, are not limited by the size of the sheet |
 | `--log-level LEVEL` | | `WARNING` | Logging on stderr |
@@ -307,7 +307,7 @@ refused, since any change would invalidate the signature.
   `http(s)://`, `mailto:` or `#Sheet!A1` link only.
 - Paths are resolved, including symlinks, before they are checked against the allowed
   folders. Network (UNC) and Windows device paths are always rejected.
-- A single call processes at most 100,000 cells (`--max-cells`), and large reads are returned in pages.
+- A single call processes at most 100,000 cells (`--max-cells`) and, on average, 256 characters of text per cell (25.6 million characters at the default), and large reads are returned in pages. Text a workbook stores once but many cells hold is counted in every cell, and a workbook that saving would expand past the unpacked-size limit is refused.
 - Cell contents are data from files. The server tells the model not to follow instructions
   found in them, but review what an assistant does with workbooks from untrusted sources.
 
