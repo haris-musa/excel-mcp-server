@@ -230,14 +230,25 @@ _unary("IMLOG10", lambda z: _log(z) / math.log(10))
 _unary("IMLOG2", lambda z: _log(z) / math.log(2))
 _unary("IMSIN", _sin, trig=True)
 _unary("IMCOS", _cos, trig=True)
-_unary("IMTAN", lambda z: _sin(z) / _cos(z), trig=True)
-_unary("IMCOT", lambda z: _cos(z) / _sin(z), trig=True)
-_unary("IMSEC", lambda z: 1 / _cos(z), trig=True)
-_unary("IMCSC", lambda z: 1 / _sin(z), trig=True)
+_unary("IMTAN", lambda z: _divide(_sin(z), _cos(z)), trig=True)
+_unary("IMCOT", lambda z: _divide(_cos(z), _sin(z)), trig=True)
+_unary("IMSEC", lambda z: _divide(1, _cos(z)), trig=True)
+_unary("IMCSC", lambda z: _divide(1, _sin(z)), trig=True)
 _unary("IMSINH", _sinh_z, trig=True)
 _unary("IMCOSH", _cosh_z, trig=True)
-_unary("IMSECH", lambda z: 1 / _cosh_z(z), trig=True)
-_unary("IMCSCH", lambda z: 1 / _sinh_z(z), trig=True)
+_unary("IMSECH", lambda z: _divide(1, _cosh_z(z)), trig=True)
+_unary("IMCSCH", lambda z: _divide(1, _sinh_z(z)), trig=True)
+
+
+def _divide(a: complex, b: complex) -> complex:
+    """``a / b`` worked out from the parts, so that ``z / z`` is exactly 1 on every platform:
+    Python's complex division gives different last bits on different C libraries. Both are
+    first scaled by a power of two, which is exact and keeps the squares in range."""
+    exponent = -math.frexp(max(abs(b.real), abs(b.imag)))[1]
+    ar, ai = math.ldexp(a.real, exponent), math.ldexp(a.imag, exponent)
+    br, bi = math.ldexp(b.real, exponent), math.ldexp(b.imag, exponent)
+    scale = br * br + bi * bi
+    return complex((ar * br + ai * bi) / scale, (ai * br - ar * bi) / scale)
 
 
 @function("IMSUB", kind="scalar")
@@ -251,7 +262,7 @@ def imdiv(first: Scalar, second: Scalar) -> str:
     a, b = parse_complex(first), parse_complex(second)
     if b.value == 0:
         raise FormulaError(NUM)
-    return _finish(a.value / b.value, a, b, conflict=NUM)
+    return _finish(_divide(a.value, b.value), a, b, conflict=NUM)
 
 
 @function("IMPOWER", kind="scalar")
