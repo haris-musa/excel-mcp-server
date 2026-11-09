@@ -65,16 +65,25 @@ def countblank(cells: Value) -> float:
     return float(sum(v is None or v == "" for v in cells.flat()))
 
 
-def _all_values(args: tuple[Value, ...]) -> list[float]:
-    """Numbers as AVERAGEA reads them: text in ranges is 0 and TRUE is 1."""
+def a_values(args: tuple[Value, ...], text_in_arrays: bool = False) -> list[float]:
+    """Numbers as AVERAGEA reads them: in a range text is 0 and TRUE is 1; in an array
+    constant or result, booleans are skipped, and so is text unless AVERAGEA counts it as 0."""
     found: list[float] = []
     for arg in args:
-        if isinstance(arg, Grid):
+        if isinstance(arg, RefGrid):
             for v in arg.flat():
                 if isinstance(v, ExcelError):
                     raise FormulaError(v)
                 if v is not None:
                     found.append(float(v) if isinstance(v, bool | int | float) else 0.0)
+        elif isinstance(arg, Grid):
+            for v in arg.flat():
+                if isinstance(v, ExcelError):
+                    raise FormulaError(v)
+                if is_number(v):
+                    found.append(float(v))  # pyright: ignore[reportArgumentType]
+                elif text_in_arrays and isinstance(v, str):
+                    found.append(0.0)
         else:
             found.append(to_number(arg))
     return found
@@ -82,7 +91,7 @@ def _all_values(args: tuple[Value, ...]) -> list[float]:
 
 @function("AVERAGEA")
 def averagea(*args: Value) -> float:
-    values = _all_values(args)
+    values = a_values(args, text_in_arrays=True)
     if not values:
         raise FormulaError(DIV0)
     return naive_sum(values) / len(values)
@@ -90,12 +99,12 @@ def averagea(*args: Value) -> float:
 
 @function("MAXA")
 def maxa(*args: Value) -> float:
-    return max(_all_values(args), default=0.0)
+    return max(a_values(args), default=0.0)
 
 
 @function("MINA")
 def mina(*args: Value) -> float:
-    return min(_all_values(args), default=0.0)
+    return min(a_values(args), default=0.0)
 
 
 @function("MEDIAN")

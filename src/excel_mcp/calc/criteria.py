@@ -29,6 +29,9 @@ def criterion(raw: Scalar) -> Test:
     number = parse_number(operand)
     if number is not None:
         return lambda value: is_number(value) and _ordered(operator, compare(value, number))
+    if operand.upper() in ("TRUE", "FALSE"):
+        flag = operand.upper() == "TRUE"
+        return lambda value: isinstance(value, bool) and _ordered(operator, compare(value, flag))
     return lambda value: isinstance(value, str) and _ordered(operator, compare(value, operand))
 
 

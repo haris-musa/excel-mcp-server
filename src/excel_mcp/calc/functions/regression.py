@@ -2,14 +2,12 @@
 
 import math
 
-from excel_mcp.calc.functions.helpers import as_grid, pairs
+from excel_mcp.calc.functions.helpers import pairs
 from excel_mcp.calc.functions.math import naive_sum
 from excel_mcp.calc.registry import function
 from excel_mcp.calc.values import (
     DIV0,
     FormulaError,
-    Grid,
-    UncalculableError,
     Value,
     scalar,
     to_number,
@@ -85,21 +83,6 @@ def forecast(x: Value, known_y: Value, known_x: Value) -> float:
     if sxx == 0:
         raise FormulaError(DIV0)
     return mean_y + sxy / sxx * (to_number(scalar(x)) - mean_x)
-
-
-@function("TREND", array=True)
-def trend(known_y: Value, known_x: Value = None, new_x: Value = None) -> Grid:
-    ys = as_grid(known_y)
-    if known_x is None:
-        known_x = Grid([[float(i)] for i in range(1, ys.height * ys.width + 1)])
-    if as_grid(known_x).width != 1 or ys.width != 1:
-        raise UncalculableError("TREND with several columns")
-    sxx, _, sxy, mean_x, mean_y = _sums(known_y, known_x)
-    if sxx == 0:
-        raise FormulaError(DIV0)
-    points = as_grid(known_x if new_x is None else new_x)
-    rows = [[mean_y + sxy / sxx * (to_number(v) - mean_x) for v in row] for row in points.rows]
-    return Grid(rows)  # pyright: ignore[reportArgumentType]
 
 
 @function("PEARSON", array=True)
