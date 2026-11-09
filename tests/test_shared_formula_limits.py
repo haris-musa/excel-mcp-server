@@ -13,7 +13,7 @@ from tests.test_cell_budget import MAIN, call, write_workbook
 
 pytestmark = pytest.mark.anyio
 
-CELLS = 100  # allows 25,600 characters of formula text
+CELLS = 100  # allows 12,800 characters of formula text
 MASTER = "+".join(["A1"] * 400)  # 1,199 characters
 
 
@@ -59,7 +59,7 @@ async def test_formulas_that_expand_past_the_limit_are_refused_before_translatin
     monkeypatch.setattr(lazy_edit, "LAZY_SHEET_BYTES", 0 if lazy else 1 << 30)
     failed, message = await call(files, tool, CELLS, path="big.xlsx", sheet="Data", **arguments)
     assert failed
-    assert "more than 25,600 characters of formula text" in message
+    assert "more than 12,800 characters of formula text" in message
     assert "--max-loaded-cells" in message
     assert (files / "big.xlsx").read_bytes() == before
 
@@ -85,7 +85,7 @@ async def test_a_workbook_within_the_limit_is_opened(
     files: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.undo()  # translating is what this test is about
-    write_workbook(files / "big.xlsx", sheet_xml(15))  # 16 x 1,199 characters
+    write_workbook(files / "big.xlsx", sheet_xml(8))  # 9 x 1,199 characters
     for tool, arguments in READS:
         failed, message = await call(files, tool, CELLS, path="big.xlsx", sheet="Data", **arguments)
         assert not failed, (tool, message)

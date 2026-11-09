@@ -27,6 +27,8 @@ from openpyxl.utils import column_index_from_string
 from openpyxl.utils.datetime import from_excel, from_ISO8601
 from openpyxl.worksheet.formula import ArrayFormula, DataTableFormula
 
+from excel_mcp.shared_translator import SharedTranslator
+
 _ROW = re.compile(rb'<row\b[^>]*?\br="(\d+)"[^>]*?(?:/>|>(.*)</row>)', re.S)
 _CELL = re.compile(
     rb'<c r="(?P<column>[A-Z]+)(?P<row>\d+)"(?: s="(?P<style>\d+)")?(?: t="(?P<type>\w+)")?'
@@ -125,7 +127,7 @@ def _formula(cell: re.Match[bytes], coordinate: str, reading: Reading) -> str:
         if group in reading.shared:
             return reading.shared[group].translate_formula(coordinate)
         if value != "=":
-            reading.shared[group] = Translator(value, coordinate)
+            reading.shared[group] = SharedTranslator(value, coordinate)
     return value
 
 

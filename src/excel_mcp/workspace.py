@@ -17,7 +17,7 @@ from openpyxl.workbook.properties import CalcProperties
 from openpyxl.worksheet._read_only import ReadOnlyWorksheet
 from openpyxl.worksheet.worksheet import Worksheet
 
-from excel_mcp import cell_budget, chart_roundtrip, lazy_edit, macros, package
+from excel_mcp import cell_budget, chart_roundtrip, lazy_edit, macros, package, shared_translator
 from excel_mcp.cell_budget import CellBudget
 from excel_mcp.config import Limits
 from excel_mcp.errors import (
@@ -50,6 +50,7 @@ class Workspace:
 
     def __init__(self, paths: PathPolicy, limits: Limits, allow_macro_workbooks: bool) -> None:
         chart_roundtrip.install()
+        shared_translator.install()
         lazy_records.install()
         self.paths = paths
         self.limits = limits

@@ -26,6 +26,10 @@ _MERGED = f"{_NAMESPACE}mergeCell"
 _LINKED = f"{_NAMESPACE}hyperlink"
 # A cell that holds a link takes about three times the memory of one that does not.
 _LINK_COST = 3
+# Formula text that shared formulas expand to, per cell. Real sheets use a tenth of it; a
+# filled-down column of 300-character formulas on 200,000 rows, six columns wide, fits. The
+# text is kept in memory and saved again, about ten bytes of memory for each character.
+_FORMULA_CHARS_PER_CELL = 128
 
 
 class CellBudget:
@@ -40,6 +44,7 @@ class CellBudget:
             "The shared formulas of the workbook would expand to more than {limit} characters "
             "of formula text, which takes too long to load. Split it into smaller workbooks, "
             "or raise --max-loaded-cells.",
+            _FORMULA_CHARS_PER_CELL,
         )
 
     def spend(self, count: int) -> None:

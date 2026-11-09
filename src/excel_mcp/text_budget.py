@@ -15,10 +15,10 @@ CHARS_PER_CELL = 256
 class TextBudget:
     """The characters of text that may still be handled."""
 
-    def __init__(self, cells: int, refusal: str) -> None:
+    def __init__(self, cells: int, refusal: str, per_cell: int = CHARS_PER_CELL) -> None:
         """``cells`` is the cell limit the call works under; ``refusal`` is the error message,
         in which ``{limit}`` stands for the limit in characters."""
-        self.limit = cells * CHARS_PER_CELL
+        self.limit = cells * per_cell
         self.left = self.limit
         self.refusal = refusal
 
