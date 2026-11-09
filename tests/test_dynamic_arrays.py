@@ -144,7 +144,7 @@ async def test_a_blocked_spill_is_reported_and_leaves_the_cells_alone(
 async def test_a_result_the_calculator_cannot_size_is_left_to_excel(
     call: ToolCall, numbers: Path
 ) -> None:
-    await call("write_range", **BOOK, sheet="Out", at="A1", rows=[['=TEXTSPLIT("a,b",",")']])
+    await call("write_range", **BOOK, sheet="Out", at="A1", rows=[["=RANDARRAY(2)"]])
     anchor = _anchors(read_parts(numbers), "Out")["A1"]
 
     assert anchor.cm == "1"  # still a dynamic array formula

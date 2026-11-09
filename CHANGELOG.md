@@ -6,6 +6,24 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- The calculator computes `BASE`, `DECIMAL`, `FACTDOUBLE`, `COMBINA`, `PERMUTATIONA`,
+  `MULTINOMIAL`, `SERIESSUM`, `ARABIC`, `ROMAN` (all five forms), `ASINH`, `ACOSH`, `ATANH`,
+  `ACOT`, `ACOTH`, `COT`, `COTH`, `CSC`, `CSCH`, `SEC`, `SECH`, `GAMMA`, `GAMMALN`,
+  `GAMMALN.PRECISE`, `ERF`, `ERF.PRECISE`, `ERFC`, `ERFC.PRECISE`, `GAUSS`, `PHI`, `FISHER`,
+  `FISHERINV`, `DELTA`, `GESTEP`, `CEILING.PRECISE`, `FLOOR.PRECISE`, `ISO.CEILING`, the
+  conversions between binary, octal, decimal and hexadecimal (`BIN2DEC`, `DEC2HEX`, ...),
+  `BITAND`, `BITOR`, `BITXOR`, `BITLSHIFT`, `BITRSHIFT`, `MMULT`, `MDETERM`, `MINVERSE`,
+  `MUNIT`, `TRANSPOSE`, `TOCOL`, `TOROW`, `WRAPROWS`, `WRAPCOLS`, `EXPAND`, `TEXTBEFORE`,
+  `TEXTAFTER`, `TEXTSPLIT`, `VALUETOTEXT`, `ARRAYTOTEXT`, `ISREF`, `ISFORMULA`, `FORMULATEXT`,
+  `SHEET`, `SHEETS`, `AREAS`, `ADDRESS`, and the older names `NORMDIST`, `NORMINV`, `NORMSDIST`,
+  `NORMSINV`, `POISSON`, `EXPONDIST`, `BINOMDIST`, `CONFIDENCE` and `COVAR`. The range
+  intersection operator (a space) is calculated.
+- `TEXT` and the number formats of exported files support sections with conditions, colours,
+  scientific notation, fractions, elapsed time (`[h]:mm`), the text section, General, and the
+  1900 calendar's day 0 and 29 February.
+
 ### Fixed
 
 - `goal_seek` also limits the total calculation across its iterations (5 million cell
@@ -30,6 +48,24 @@ All notable changes to this project are documented here. The format follows
   before saving, instead of failing after the file was written; inserting rows or columns next
   to a cell without a format no longer fails.
 - `goal_seek` and `trace_formula` on a workbook without worksheets give a clear error.
+- Numbers typed in a formula or coerced from text keep their first 15 digits, as in Excel
+  (`=GCD(9007199254740993,3)` is 3). Multiplication, division and `^` give 0 for a result below
+  the smallest normal double; addition, subtraction and most functions keep it. A stored
+  number that small, or too large for a double, is read as Excel reads it.
+- `MATCH`, `XMATCH`, `VLOOKUP`, `HLOOKUP`, `LOOKUP` and `XLOOKUP` follow Excel's bisection on
+  unsorted data and data of mixed types, treat a blank lookup value as Excel does, and take
+  every search mode. `ROWS`, `COLUMNS` and `INDEX` know the true size of a whole row or
+  column, and `INDEX` returns a reference. An undefined name is `#NAME?`.
+- `SUBTOTAL` and `AGGREGATE` count manually hidden rows and leave out rows hidden by a filter
+  (any hidden row of a sheet with an active filter). `DATEDIF` gives `"MD"`, `"YD"` and
+  `#NUM!` for an unknown unit as Excel does. `PRICE`, `YIELD`, `DURATION` and `MDURATION`
+  with month-end maturities and Actual/Actual are calculated. `VDB` over fractional periods
+  is calculated where the result is certain. `ROW` and `COLUMN` of a name and of whole rows.
+- `YEAR`, `MONTH`, `DAY`, `WEEKDAY`, `HOUR`, `DAYS` and friends follow Excel for serial
+  numbers 0, 60 and 2958465 and give `#NUM!` beyond them; `MOD` of tiny divisors, `SMALL`
+  and `LARGE` with k below 1, `AND`/`OR`/`XOR` with typed-in text, `VALUE(TRUE)`, and the
+  text of numbers beyond 15 digits (rounded, not cut) match Excel. Text that Excel could read
+  as a date or time is left uncalculated rather than guessed.
 - Arithmetic that overflows a double now gives `#NUM!` as in Excel instead of an uncalculated
   cell or a wrong value. Whole numbers stored in cells are calculated as doubles, so a chain like
   `=A1^A1^...` with `A1` holding 3 no longer builds a huge exact integer. `COMBIN`, `PERMUT`,
