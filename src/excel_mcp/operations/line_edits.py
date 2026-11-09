@@ -58,6 +58,10 @@ def edit_lines(
 ) -> None:
     """Insert ``count`` rows or columns before ``at``, or delete them from ``at``."""
     edit = keep_table_row(sheet, LineEdit(sheet.title, axis, at, count, delete))
+    if at + count - 1 > edit.limit:
+        raise InvalidArgumentError(
+            f"The {axis} {at:,} to {at + count - 1:,} go past Excel's last of {edit.limit:,}."
+        )
     if not delete:
         _check_room(sheet, edit)
     _check_arrays(workbook, sheet, edit)
