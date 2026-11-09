@@ -34,6 +34,13 @@ def stored_in(
                 yield (row, col), cell
 
 
+def _double(number: int) -> float:
+    try:
+        return float(number)
+    except OverflowError:
+        raise UncalculableError("whole number beyond the largest double") from None
+
+
 def constant(cell: Any) -> Scalar:
     value = cell.value
     if cell.data_type == "e":
@@ -52,6 +59,8 @@ def constant(cell: Any) -> Scalar:
             return value.total_seconds() / 86400
         case Decimal():
             return float(value)
-        case bool() | int() | float() | str() | None:
+        case int() if not isinstance(value, bool):
+            return _double(value)
+        case bool() | float() | str() | None:
             return value
     raise UncalculableError("unsupported cell content")

@@ -401,6 +401,8 @@ class Engine:
             result = self.dispatch(spec, node.args, array)
         except FormulaError as error:
             return error.error
+        except OverflowError:
+            return NUM
         if isinstance(result, float) and not math.isfinite(result):
             return NUM
         if isinstance(result, str):
@@ -438,6 +440,8 @@ class Engine:
                 return self.sized(spec.call(*scalars))
             except FormulaError as error:
                 return error.error
+            except OverflowError:
+                return NUM
 
         return elementwise(apply, *values)
 
