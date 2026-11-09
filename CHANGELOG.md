@@ -8,6 +8,28 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- `goal_seek` also limits the total calculation across its iterations (5 million cell
+  calculations) and stops with a clear error, where each iteration was limited alone.
+- Number formats over 255 characters (Excel's limit) and formats that need more digits than the
+  calculator holds are left uncalculated instead of failing with "Unexpected error" in
+  `TEXT`, `FIXED`, `DOLLAR`, `export_csv` and PivotTable subtotal captions, and a hostile
+  format can no longer make every caption tens of kilobytes long.
+- `import_csv` counted delimiters inside quotes when refusing a line with too many cells; only
+  field separators count now.
+- `trace_formula` with `evaluate` steps through a run of operators (`=A1+A2+...`, up to
+  Excel's 8,192 characters) in a loop, instead of refusing a formula more than 150 levels deep:
+  nesting is bounded by the 64 levels the parser already accepts.
+- `describe_sheet` lists at most 200 entries of each list and cuts a note at 1,000 characters;
+  `more` counts what was left out.
+- A damaged sheet part (XML that is not well formed, a corrupt compressed part, a cell style
+  that does not exist) is reported as an unreadable workbook, not "Unexpected error", by
+  `describe_workbook`, `read_range`, `find_cells`, `export_csv`, `goal_seek` and the others
+  that read sheets while streaming them.
+- A workbook file opened by a tool that then failed to read it is closed again at once.
+- `insert_rows_or_columns` and `delete_rows_or_columns` refuse rows or columns past Excel's last
+  before saving, instead of failing after the file was written; inserting rows or columns next
+  to a cell without a format no longer fails.
+- `goal_seek` and `trace_formula` on a workbook without worksheets give a clear error.
 - Arithmetic that overflows a double now gives `#NUM!` as in Excel instead of an uncalculated
   cell or a wrong value. Whole numbers stored in cells are calculated as doubles, so a chain like
   `=A1^A1^...` with `A1` holding 3 no longer builds a huge exact integer. `COMBIN`, `PERMUT`,
