@@ -1,14 +1,18 @@
 """The value model of the calculator and Excel's coercion rules."""
 
 import datetime as dt
-import math
 import re
+import sys
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import ROUND_DOWN, Context, Decimal
 from typing import Any
+
+from excel_mcp.calc.dateparts import LAST_SERIAL, serial_day
+from excel_mcp.refs import MAX_COLUMN, MAX_ROW
 
 DATE_ORIGIN = dt.date(1899, 12, 30)
 _MAX_PLAIN_LENGTH = 20
+_FIRST_15_DIGITS = Context(prec=15, rounding=ROUND_DOWN)
 
 
 @dataclass(frozen=True)
@@ -73,13 +77,24 @@ class RefGrid(Grid):
         sheets: int,
         clipped_rows: bool = False,
         clipped_cols: bool = False,
+        sheet: str | None = None,
     ) -> None:
         super().__init__(rows)
+        self.sheet = sheet  # the title of the one sheet it was read from
         self.clipped_rows = clipped_rows
         self.clipped_cols = clipped_cols
         self.top = top
         self.left = left
         self.sheets = sheets
+
+    @property
+    def total_rows(self) -> int:
+        """The rows of the reference itself: a whole column has them all, used or not."""
+        return MAX_ROW if self.clipped_rows else self.height
+
+    @property
+    def total_cols(self) -> int:
+        return MAX_COLUMN if self.clipped_cols else self.width
 
 
 Value = Scalar | Grid
@@ -113,6 +128,30 @@ def check_array_size(height: int, width: int) -> None:
         raise UncalculableError("array too large")
 
 
+def number_literal(text: str) -> float:
+    """A number typed in a formula or coerced from text: Excel keeps its first 15 digits."""
+    return flush(float(_FIRST_15_DIGITS.create_decimal(text)))
+
+
+def plain_number(text: str) -> float | None:
+    """The number written in text such as ``-1.5E+3``; None where Excel reads no number.
+
+    Excel keeps the first 15 digits, and takes no text beyond these magnitudes for a number.
+    """
+    digits = _FIRST_15_DIGITS.create_decimal(text)
+    number = float(digits)
+    in_range = 1e-309 <= abs(number) < 1e308
+    if not in_range and (digits != 0 or not -309 <= digits.as_tuple().exponent <= 307):  # pyright: ignore[reportOperatorIssue]
+        return None
+    return flush(number)
+
+
+def flush(number: float) -> float:
+    """Excel's multiplication and division give 0 for a result below the smallest normal
+    double, and never -0. Addition, subtraction and most functions keep such results."""
+    return 0.0 if abs(number) < sys.float_info.min else number
+
+
 def is_number(value: object) -> bool:
     return isinstance(value, int | float) and not isinstance(value, bool)
 
@@ -127,14 +166,12 @@ def scalar(value: Value) -> Scalar:
 
 
 def serial_to_date(serial: float) -> dt.date:
-    days = int(serial // 1)
-    if days < 0:
+    days = serial_day(serial)
+    if days < 0 or days > LAST_SERIAL:
         raise FormulaError(NUM)
     if days < 61:
-        # Excel's 1900 leap-year bug: serial 60 is the non-existent 1900-02-29.
-        if days == 60:
-            raise UncalculableError("dates before 1900-03-01")
-        return dt.date(1899, 12, 31) + dt.timedelta(days=days)
+        # Excel's 1900 leap-year bug: serial 0 is "January 0" and 60 the non-existent 29 February.
+        raise UncalculableError("dates before 1900-03-01")
     return DATE_ORIGIN + dt.timedelta(days=days)
 
 
@@ -148,6 +185,11 @@ _PLAIN_NUMBER = re.compile(r"(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?")
 _THOUSANDS = re.compile(r"\d{1,3}(,\d{3})+(\.\d*)?")
 _ISO_DATE = re.compile(r"(\d{4})-(\d{1,2})-(\d{1,2})")
 _TIME = re.compile(r"(\d{1,2}):(\d{2})(?::(\d{2}))?")
+
+
+_DATE_TEXT = re.compile(
+    r"\d\s*[/-]\s*\d|\d\s*[AaPp][Mm]|(?i:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*\d|\d\s*(?i:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)"
+)
 
 
 def parse_number(text: str) -> float | None:
@@ -165,10 +207,12 @@ def parse_number(text: str) -> float | None:
     if _THOUSANDS.fullmatch(body):
         body = body.replace(",", "")
     if _PLAIN_NUMBER.fullmatch(body):
-        number = float(sign + body)
-        return number / 100 if percent else number
-    if not percent and not sign:
-        return _parse_date_time(body)
+        number = plain_number(sign + body)
+        return None if number is None else number / 100 if percent else number
+    if not percent and not sign and (moment := _parse_date_time(body)) is not None:
+        return moment
+    if _DATE_TEXT.search(text):
+        raise UncalculableError("text that Excel may read as a date")
     return None
 
 
@@ -232,12 +276,8 @@ def to_bool(value: Value) -> bool:
 
 def number_text(number: float) -> str:
     """Excel's General text for a number: 15 significant digits, in E notation when long."""
-    if number == 0:
+    if abs(number) < sys.float_info.min:
         return "0"
-    if abs(number) >= 1e15:
-        # Whole-number digits beyond the 15th are dropped, not rounded.
-        whole = str(int(abs(number)))
-        number = math.copysign(float(whole[:15] + "0" * (len(whole) - 15)), number)
     digits = Decimal(f"{number:.15g}")
     fixed = f"{abs(digits):f}"
     if "." in fixed:

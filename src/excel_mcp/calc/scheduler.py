@@ -167,7 +167,7 @@ class Scheduler:
                 scope = engine.sheets.get((node.sheet or "").casefold(), home)
                 try:
                     inner = parse(engine.lookup_name(scope, node.name))
-                except UncalculableError:
+                except (UncalculableError, FormulaError):
                     return
                 yield from self.rectangles(inner, home, depth + 1, dynamic)
             case Unary(_, operand) | Percent(operand):

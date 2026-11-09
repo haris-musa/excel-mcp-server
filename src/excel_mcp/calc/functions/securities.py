@@ -66,15 +66,13 @@ class Coupons:
             return self.days_remaining
         return _between(self.settlement, self.next, self.basis)
 
-    def require_regular_pricing(self) -> None:
-        """Refuse Actual/Actual pricing where Excel's month-end handling is not reproduced."""
-        step = 12 // self.frequency
-        regular = (
-            self.previous == self.plain_previous
-            and add_months(self.plain_previous, step) == self.next
-        )
-        if self.basis == 1 and not regular:
-            raise UncalculableError("Actual/Actual pricing with a month-end maturity")
+    @property
+    def pricing_period(self) -> float:
+        """The days in the period as pricing and duration count them: Actual/Actual measures
+        between the actual coupon dates, where COUPDAYS measures from the unadjusted one."""
+        if self.basis == 1:
+            return float((self.next - self.previous).days)
+        return self.days_in_period
 
     @property
     def days_remaining(self) -> float:
@@ -126,7 +124,7 @@ def coupons(settlement: Scalar, maturity: Scalar, frequency: Scalar, basis: Scal
         return _end_of_month(date) if month_end else date
 
     periods = 0
-    while add_months(end, -periods * step) > start:
+    while coupon_date(periods) > start:
         periods += 1
     plain_previous = add_months(end, -periods * step)
     return Coupons(
@@ -159,7 +157,11 @@ def coupdaybs(settlement: Scalar, maturity: Scalar, frequency: Scalar, basis: Sc
 
 @function("COUPDAYS", kind="scalar")
 def coupdays(settlement: Scalar, maturity: Scalar, frequency: Scalar, basis: Scalar = 0) -> float:
-    return coupons(settlement, maturity, frequency, basis).days_in_period
+    schedule = coupons(settlement, maturity, frequency, basis)
+    end = _date(maturity)
+    if schedule.basis == 1 and (end.day > 28 or end == _end_of_month(end)):
+        raise UncalculableError("COUPDAYS Actual/Actual with month-end coupon dates")
+    return schedule.days_in_period
 
 
 @function("COUPDAYSNC", kind="scalar")
@@ -169,7 +171,7 @@ def coupdaysnc(settlement: Scalar, maturity: Scalar, frequency: Scalar, basis: S
 
 def _price(schedule: Coupons, rate: float, yld: float, redemption: float) -> float:
     n, freq = schedule.count, schedule.frequency
-    a, e, dsc = schedule.days_since_previous, schedule.days_in_period, schedule.days_remaining
+    a, e, dsc = schedule.days_since_previous, schedule.pricing_period, schedule.days_remaining
     coupon = 100 * rate / freq
     if n == 1:
         discount = yld / freq * dsc / e + 1
@@ -195,7 +197,6 @@ def price(
     schedule = coupons(settlement, maturity, frequency, basis)
     r, y, redeem = to_number(rate), to_number(yld), to_number(redemption)
     _require(r >= 0 and y >= 0 and redeem > 0)
-    schedule.require_regular_pricing()
     return _price(schedule, r, y, redeem)
 
 
@@ -212,12 +213,16 @@ def yield_(
     schedule = coupons(settlement, maturity, frequency, basis)
     r, target, redeem = to_number(rate), to_number(pr), to_number(redemption)
     _require(r >= 0 and target > 0 and redeem > 0)
-    schedule.require_regular_pricing()
     if schedule.count == 1:
+        if schedule.basis in (0, 4) and (
+            _end_of_month(schedule.next) == schedule.next
+            or _end_of_month(schedule.previous) == schedule.previous
+        ):
+            raise UncalculableError("YIELD in the last period with month-end 30/360 dates")
         if schedule.basis in (2, 3):
             # In the last coupon period Excel counts days as it does for Actual/Actual.
             schedule = replace(schedule, basis=1)
-        a, e, dsr = schedule.days_since_previous, schedule.days_in_period, schedule.days_remaining
+        a, e, dsr = schedule.days_since_previous, schedule.pricing_period, schedule.days_remaining
         freq = schedule.frequency
         invested = target / 100 + a / e * r / freq
         return ((redeem / 100 + r / freq) - invested) / invested * freq * e / dsr
@@ -226,7 +231,7 @@ def yield_(
 
 def _macaulay(schedule: Coupons, rate: float, yld: float) -> float:
     n, freq = schedule.count, schedule.frequency
-    shift = schedule.days_remaining / schedule.days_in_period
+    shift = schedule.days_remaining / schedule.pricing_period
     values, weighted = 0.0, 0.0
     for k in range(1, n + 1):
         flow = 100 * rate / freq + (100 if k == n else 0)
@@ -248,7 +253,6 @@ def duration(
     schedule = coupons(settlement, maturity, frequency, basis)
     c, y = to_number(coupon), to_number(yld)
     _require(c >= 0 and y >= 0)
-    schedule.require_regular_pricing()
     return _macaulay(schedule, c, y)
 
 
@@ -264,7 +268,6 @@ def mduration(
     schedule = coupons(settlement, maturity, frequency, basis)
     c, y = to_number(coupon), to_number(yld)
     _require(c >= 0 and y >= 0)
-    schedule.require_regular_pricing()
     return _macaulay(schedule, c, y) / (1 + y / schedule.frequency)
 
 

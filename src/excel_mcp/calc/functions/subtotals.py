@@ -2,6 +2,9 @@
 
 from typing import TYPE_CHECKING
 
+from openpyxl.worksheet.filters import FilterColumn
+from openpyxl.worksheet.worksheet import Worksheet
+
 from excel_mcp.calc.parser import Node, Ref
 from excel_mcp.calc.registry import FUNCTIONS, function
 from excel_mcp.calc.values import (
@@ -35,8 +38,8 @@ def _cells(
 ) -> list[Scalar]:
     """The values of a reference, leaving out what the function ignores.
 
-    ``hidden`` is "skip" to leave out hidden rows, "keep" to include them and "unknown" when
-    Excel's treatment depends on whether the rows were hidden by hand or by a filter.
+    ``hidden`` is "skip" to leave out hidden rows, "keep" to include them and "manual" to
+    leave out only the rows a filter hid, which is all of them on a sheet with an active filter.
     """
     if not isinstance(node, Ref):
         raise UncalculableError("SUBTOTAL or AGGREGATE of something other than a reference")
@@ -52,8 +55,8 @@ def _cells(
             is_hidden = sheet.row_dimensions[row].hidden
             if is_hidden and hidden == "skip":
                 continue
-            if is_hidden and hidden == "unknown":
-                raise UncalculableError("hidden rows in SUBTOTAL")
+            if is_hidden and hidden == "manual" and _filtered(sheet):
+                continue
             for col in range(left, right + 1):
                 cell = sheet._cells.get((row, col))
                 if (
@@ -68,6 +71,31 @@ def _cells(
                     continue
                 found.append(value)
     return found
+
+
+def _has_criteria(column: FilterColumn) -> bool:
+    return any(
+        part is not None
+        for part in (
+            column.filters,
+            column.customFilters,
+            column.top10,
+            column.dynamicFilter,
+            column.colorFilter,
+            column.iconFilter,
+        )
+    )
+
+
+def _filtered(sheet: Worksheet) -> bool:
+    """Whether the sheet has a filter with criteria, which makes every hidden row a filtered one."""
+    filters = [sheet.auto_filter, *(table.autoFilter for table in sheet.tables.values())]
+    return any(
+        _has_criteria(column)
+        for found in filters
+        if found is not None
+        for column in found.filterColumn
+    )
 
 
 def _apply(name: str, values: list[Scalar], extra: tuple[Value, ...] = ()) -> Value:
@@ -91,7 +119,7 @@ def subtotal(engine: "Engine", function_num: Node, *references: Node) -> Value:
         values += _cells(
             engine,
             reference,
-            hidden="skip" if ignore_hidden else "unknown",
+            hidden="skip" if ignore_hidden else "manual",
             skip_nested=True,
             skip_errors=False,
         )

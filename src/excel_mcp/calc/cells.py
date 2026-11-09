@@ -1,13 +1,22 @@
 """Reading the cells of an openpyxl worksheet as calculator values."""
 
 import datetime as dt
+import math
 from collections.abc import Iterator
 from decimal import Decimal
 from typing import Any
 
 from openpyxl.worksheet.worksheet import Worksheet
 
-from excel_mcp.calc.values import ERRORS, VALUE, Scalar, UncalculableError, date_to_serial
+from excel_mcp.calc.values import (
+    ERRORS,
+    NULL,
+    VALUE,
+    Scalar,
+    UncalculableError,
+    date_to_serial,
+    flush,
+)
 from excel_mcp.lazy_workbook import LazyCells
 
 CellKey = tuple[str, int, int]
@@ -61,6 +70,8 @@ def constant(cell: Any) -> Scalar:
             return float(value)
         case int() if not isinstance(value, bool):
             return _double(value)
-        case bool() | float() | str() | None:
+        case float():
+            return flush(value) if math.isfinite(value) else NULL  # Excel reads 1E+309 as #NULL!
+        case bool() | str() | None:
             return value
     raise UncalculableError("unsupported cell content")

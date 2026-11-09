@@ -3,6 +3,7 @@
 import re
 
 from excel_mcp.calc.functions.helpers import flat
+from excel_mcp.calc.numberformat import format_value
 from excel_mcp.calc.registry import function
 from excel_mcp.calc.textformat import format_fixed, format_number
 from excel_mcp.calc.values import (
@@ -12,6 +13,7 @@ from excel_mcp.calc.values import (
     Scalar,
     Value,
     parse_number,
+    plain_number,
     to_bool,
     to_int,
     to_number,
@@ -163,6 +165,8 @@ def rept(text: Scalar, count: Scalar) -> str:
 
 @function("VALUE", kind="scalar")
 def value(text: Scalar) -> float:
+    if isinstance(text, bool):
+        raise FormulaError(VALUE)
     if isinstance(text, str):
         number = parse_number(text)
         if number is None:
@@ -185,21 +189,24 @@ def numbervalue(text: Scalar, decimal: Scalar = ".", group: Scalar = ",") -> flo
     cleaned = whole.replace(group_mark, "") + ("." + fraction if decimal_mark in body else "")
     if not cleaned:
         return 0.0
-    if not re.fullmatch(r"[+-]?(\d+\.?\d*|\.\d+)", cleaned):
+    if not re.fullmatch(r"[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?", cleaned):
         raise FormulaError(VALUE)
-    return float(cleaned) / 100**percents
+    number = plain_number(cleaned)
+    if number is None:
+        raise FormulaError(VALUE)
+    return number / 100**percents
 
 
 @function("TEXT", kind="scalar")
 def text_(number: Scalar, fmt: Scalar) -> str:
-    if isinstance(number, bool):
-        return to_text(number)
     if to_text(fmt) == "":
         return ""
+    if isinstance(number, bool):
+        return format_value(to_text(number), to_text(fmt))
     if isinstance(number, str):
         parsed = parse_number(number)
         if parsed is None:
-            return number
+            return format_value(number, to_text(fmt))
         number = parsed
     return format_number(to_number(number), to_text(fmt))
 

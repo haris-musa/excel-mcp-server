@@ -182,8 +182,9 @@ def harmean(*args: Value) -> float:
 @function("LARGE")
 def large(array: Value, k: Value) -> float:
     values = sorted(array_numbers(array), reverse=True)
-    position = math.ceil(to_number(scalar(k)))
-    if not 1 <= position <= len(values):
+    rank = to_number(scalar(k))
+    position = math.ceil(rank)
+    if rank < 1 or position > len(values):
         raise FormulaError(NUM)
     return values[position - 1]
 
@@ -191,8 +192,9 @@ def large(array: Value, k: Value) -> float:
 @function("SMALL")
 def small(array: Value, k: Value) -> float:
     values = sorted(array_numbers(array))
-    position = math.ceil(to_number(scalar(k)))
-    if not 1 <= position <= len(values):
+    rank = to_number(scalar(k))
+    position = math.ceil(rank)
+    if rank < 1 or position > len(values):
         raise FormulaError(NUM)
     return values[position - 1]
 

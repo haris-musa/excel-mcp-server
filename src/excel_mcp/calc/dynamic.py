@@ -127,7 +127,9 @@ class _Analysis:
                 base, chain = left_chain(node)
                 shape = self.array(base, scope)
                 for step in chain:
-                    shape = self._operator(shape, self.array(step.right, scope))
+                    right = self.array(step.right, scope)
+                    # The common cells of two ranges are a range, and need no array evaluation.
+                    shape = shape or right if step.op == " " else self._operator(shape, right)
                 return shape
             case Call():
                 return self._call(node, scope)

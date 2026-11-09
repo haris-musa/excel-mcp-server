@@ -1,9 +1,8 @@
 """Lookup and reference functions."""
 
-from itertools import pairwise
 from typing import TYPE_CHECKING
 
-from excel_mcp.calc.criteria import has_wildcard
+from excel_mcp.calc.functions import search
 from excel_mcp.calc.parser import Node, Ref
 from excel_mcp.calc.registry import function
 from excel_mcp.calc.values import (
@@ -17,13 +16,11 @@ from excel_mcp.calc.values import (
     Scalar,
     UncalculableError,
     Value,
-    compare,
     scalar,
     to_bool,
     to_int,
-    type_rank,
+    to_number,
 )
-from excel_mcp.calc.wildcard import Wildcard
 from excel_mcp.refs import MAX_COLUMN, MAX_ROW
 
 if TYPE_CHECKING:
@@ -46,47 +43,6 @@ def vector(value: Value) -> list[Scalar]:
     return grid.flat()  # pyright: ignore[reportReturnType]
 
 
-def _key(lookup: Scalar) -> Scalar:
-    if lookup is None:
-        raise UncalculableError("lookup of a blank cell")
-    return lookup
-
-
-def _same_type(value: Scalar, lookup: Scalar) -> bool:
-    return not isinstance(value, ExcelError) and type_rank(value) == type_rank(lookup)
-
-
-def _is_sorted(values: list[Scalar], lookup: Scalar, descending: bool) -> bool:
-    typed = [v for v in values if _same_type(v, lookup)]
-    return all(compare(a, b) >= 0 if descending else compare(a, b) <= 0 for a, b in pairwise(typed))
-
-
-def find_position(lookup: Scalar, values: list[Scalar], mode: int, wildcards: bool) -> int | None:
-    """0-based index of the match, or None. ``mode``: 0 exact, 1 next smaller, -1 next larger."""
-    key = _key(lookup)
-    if mode == 0:
-        if wildcards and isinstance(key, str) and has_wildcard(key):
-            pattern = Wildcard(key)
-            return next(
-                (i for i, v in enumerate(values) if isinstance(v, str) and pattern.fullmatch(v)),
-                None,
-            )
-        return next(
-            (i for i, v in enumerate(values) if _same_type(v, key) and compare(v, key) == 0), None
-        )
-    if not _is_sorted(values, key, descending=mode == -1):
-        raise UncalculableError("approximate match on an unsorted range")
-    best = None
-    for index, value in enumerate(values):
-        if not _same_type(value, key):
-            continue
-        if (compare(value, key) <= 0) if mode == 1 else (compare(value, key) >= 0):
-            best = index
-        else:
-            break
-    return best
-
-
 def _at(table: Grid, row: int, col: int) -> Scalar:
     value = table.rows[row][col]
     return 0.0 if value is None else value  # pyright: ignore[reportReturnType]
@@ -101,7 +57,11 @@ def _table_lookup(
     lines = table.rows[0] if by_row else [row[0] for row in table.rows]
     if position > (table.height if by_row else table.width):
         raise FormulaError(REF)
-    found = find_position(lookup, lines, 1 if to_bool(approximate) else 0, wildcards=True)  # pyright: ignore[reportArgumentType]
+    key = search.lookup_key(lookup)
+    if to_bool(approximate):
+        found = search.last_not_above(key, lines)  # pyright: ignore[reportArgumentType]
+    else:
+        found = search.exact(key, lines, wildcards=True)  # pyright: ignore[reportArgumentType]
     if found is None:
         raise FormulaError(NA)
     return _at(table, position - 1, found) if by_row else _at(table, found, position - 1)
@@ -131,10 +91,14 @@ def hlookup(lookup: Value, table: Value, row: Value, approximate: Value = True) 
 
 @function("MATCH")
 def match(lookup: Value, array: Value, kind: Value = 1) -> float:
-    mode = to_int(scalar(kind))
-    if mode not in (-1, 0, 1):
-        raise UncalculableError("MATCH type")
-    found = find_position(scalar(lookup), vector(array), mode, wildcards=True)
+    order = to_number(scalar(kind))
+    key, values = search.lookup_key(scalar(lookup)), vector(array)
+    if order > 0:
+        found = search.last_not_above(key, values)
+    elif order < 0:
+        found = search.first_not_below(key, values)
+    else:
+        found = search.exact(key, values, wildcards=True)
     if found is None:
         raise FormulaError(NA)
     return float(found + 1)
@@ -145,71 +109,58 @@ def index(array: Value, row: Value = None, column: Value = None) -> Value:
     grid = array if isinstance(array, Grid) else Grid([[array]])
     r, c = to_int(scalar(row)), to_int(scalar(column))
     if column is None and grid.height > 1 and grid.width > 1:
-        raise UncalculableError("INDEX of a two-dimensional range with only a row")
+        raise FormulaError(REF)
     if column is None and grid.height == 1:
         r, c = 0, r
     if r < 0 or c < 0:
         raise FormulaError(VALUE)
-    for position, size, clipped in (
-        (r, grid.height, isinstance(grid, RefGrid) and grid.clipped_rows),
-        (c, grid.width, isinstance(grid, RefGrid) and grid.clipped_cols),
-    ):
-        if position > size:
-            if clipped:
-                raise UncalculableError("INDEX beyond the used part of a whole row or column")
-            raise FormulaError(REF)
-    rows_ = grid.rows if r == 0 else [grid.rows[r - 1]]
-    picked = [line if c == 0 else [line[c - 1]] for line in rows_]
+    reference = grid if isinstance(grid, RefGrid) else None
+    total_rows = reference.total_rows if reference else grid.height
+    total_cols = reference.total_cols if reference else grid.width
+    if r > total_rows or c > total_cols:
+        raise FormulaError(REF)
+    blank_row: list[Scalar] = [None] * grid.width
+    rows_ = grid.rows if r == 0 else [grid.rows[r - 1] if r <= grid.height else blank_row]
+    picked: list[list[Value]] = [  # pyright: ignore[reportAssignmentType]
+        line if c == 0 else [line[c - 1] if c <= len(line) else None] for line in rows_
+    ]
+    if reference:
+        top = reference.top + max(r - 1, 0)
+        left = reference.left + max(c - 1, 0)
+        return RefGrid(
+            picked,
+            top,
+            left,
+            reference.sheets,
+            clipped_rows=reference.clipped_rows and r == 0,
+            clipped_cols=reference.clipped_cols and c == 0,
+            sheet=reference.sheet,
+        )
     if len(picked) == 1 and len(picked[0]) == 1:
         return picked[0][0]
-    if isinstance(grid, RefGrid):
-        top = grid.top + max(r - 1, 0)
-        left = grid.left + max(c - 1, 0)
-        return RefGrid(picked, top, left, grid.sheets)
     return Grid(picked)
 
 
-def _search_order(size: int, search_mode: int) -> range:
-    if search_mode == 1:
-        return range(size)
-    if search_mode == -1:
-        return range(size - 1, -1, -1)
-    raise UncalculableError("binary search mode")
-
-
-def _xmatch(lookup: Scalar, values: list[Scalar], match_mode: int, search_mode: int) -> int | None:
-    key = _key(lookup)
-    order = _search_order(len(values), search_mode)
+def _x_position(
+    lookup: Scalar, values: list[Scalar], match_mode: int, search_mode: int
+) -> int | None:
+    if match_mode not in (-1, 0, 1, 2) or search_mode not in (1, -1, 2, -2):
+        raise FormulaError(VALUE)
+    if abs(search_mode) == 2:
+        if match_mode == 2:
+            raise FormulaError(VALUE)
+        return search.bisect(lookup, values, nearest=match_mode, descending=search_mode == -2)
+    reverse = search_mode == -1
     if match_mode in (0, 2):
-        if match_mode == 2 and isinstance(key, str):
-            pattern = Wildcard(key)
-            matches = (
-                i for i in order if isinstance(text := values[i], str) and pattern.fullmatch(text)
-            )
-        else:
-            matches = (
-                i for i in order if _same_type(values[i], key) and compare(values[i], key) == 0
-            )
-        return next(matches, None)
-    if match_mode not in (-1, 1):
-        raise UncalculableError("match mode")
-    best = None
-    for i in order:
-        value = values[i]
-        if not _same_type(value, key):
-            continue
-        order_ = compare(value, key)
-        if order_ == 0:
-            return i
-        closer = order_ < 0 if match_mode == -1 else order_ > 0
-        if closer and (best is None or compare(value, values[best]) * match_mode < 0):
-            best = i
-    return best
+        return search.exact(
+            lookup, values, wildcards=match_mode == 2, from_end=reverse, blank_matches=True
+        )
+    return search.nearest(lookup, values, match_mode, from_end=reverse)
 
 
 @function("XMATCH", array=(1,))
 def xmatch(lookup: Value, array: Value, match_mode: Value = 0, search_mode: Value = 1) -> float:
-    found = _xmatch(
+    found = _x_position(
         scalar(lookup),
         vector(array),
         to_int(scalar(match_mode)),
@@ -238,9 +189,11 @@ def xlookup(
     by_row = keys.height == 1 and keys.width > 1
     if (results.width if by_row else results.height) != len(values):
         raise FormulaError(VALUE)
-    found = _xmatch(scalar(lookup), values, to_int(scalar(match_mode)), to_int(scalar(search_mode)))
+    found = _x_position(
+        scalar(lookup), values, to_int(scalar(match_mode)), to_int(scalar(search_mode))
+    )
     if found is None:
-        if if_not_found is ...:
+        if if_not_found is ... or if_not_found is None:
             raise FormulaError(NA)
         return if_not_found
     if by_row:
@@ -252,12 +205,14 @@ def xlookup(
 
 @function("ROWS")
 def rows(array: Value) -> float:
-    return float(exact_extent(array, cols=False).height)
+    grid = array if isinstance(array, Grid) else Grid([[array]])
+    return float(grid.total_rows if isinstance(grid, RefGrid) else grid.height)
 
 
 @function("COLUMNS")
 def columns(array: Value) -> float:
-    return float(exact_extent(array, rows=False).width)
+    grid = array if isinstance(array, Grid) else Grid([[array]])
+    return float(grid.total_cols if isinstance(grid, RefGrid) else grid.width)
 
 
 @function("LOOKUP")
@@ -265,7 +220,7 @@ def lookup(value: Value, lookup_vector: Value, result_vector: Value = None) -> S
     keys = exact_extent(lookup_vector)
     if result_vector is None and keys.height > 1 and keys.width > 1:
         raise UncalculableError("LOOKUP in array form")
-    found = find_position(scalar(value), vector(keys), 1, wildcards=False)
+    found = search.last_not_above(search.lookup_key(scalar(value)), vector(keys))
     if found is None:
         raise FormulaError(NA)
     results = vector(keys if result_vector is None else exact_extent(result_vector))
