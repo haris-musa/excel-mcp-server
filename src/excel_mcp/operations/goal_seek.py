@@ -10,9 +10,11 @@ from excel_mcp.calc.engine import Engine
 from excel_mcp.calc.solver import seek
 from excel_mcp.calc.steps import shown
 from excel_mcp.calc.values import Scalar, UncalculableError
-from excel_mcp.errors import InvalidArgumentError
+from excel_mcp.errors import InvalidArgumentError, LimitExceededError
 from excel_mcp.refs import CellRange, parse_cell
 from excel_mcp.workspace import Workspace, get_sheet
+
+MAX_TOTAL_WORK = 5_000_000  # cell calculations over all iterations: a few times one full pass
 
 
 class GoalSeekResult(BaseModel):
@@ -65,6 +67,7 @@ class _Problem:
         self.name = goal
         self.last: Scalar = None
         self.calls = 0
+        self.spent = 0
         formula = sheet._cells.get(self.goal)
         if formula is None or formula.data_type != "f":
             raise InvalidArgumentError(f"{goal} holds no formula to set to a value.")
@@ -82,14 +85,25 @@ class _Problem:
         try:
             self.last = self.engine.calculate(self.sheet, *self.goal)
         except UncalculableError as reason:
+            self._spend()
             if self.calls > 1:
                 return None  # too large or overflowing at this x; the search tries another
             raise InvalidArgumentError(
                 f"The formula in {self.name} cannot be calculated here: {reason}."
             ) from None
+        self._spend()
         if isinstance(self.last, bool) or not isinstance(self.last, int | float):
             return None
         return float(self.last)
+
+    def _spend(self) -> None:
+        self.spent += self.engine.work
+        if self.spent > MAX_TOTAL_WORK:
+            raise LimitExceededError(
+                f"Goal Seek stopped: the formula in {self.name} takes too long to recalculate "
+                f"(over {MAX_TOTAL_WORK:,} cell calculations across the iterations). "
+                "Point it at a smaller chain of formulas."
+            )
 
 
 def _input(sheet: Worksheet, row: int, col: int, name: str) -> tuple[Cell, float]:

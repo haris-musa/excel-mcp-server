@@ -33,6 +33,7 @@ from excel_mcp.paths import EXCEL_SUFFIXES
 from excel_mcp.workspace import streamed_worksheets
 from excel_mcp.xlfn import display_operand
 
+MAX_LISTED = 200
 _VISIBILITY: dict[str, Literal["visible", "hidden", "very_hidden"]] = {
     "visible": "visible",
     "hidden": "hidden",
@@ -111,6 +112,8 @@ class SheetDetails(BaseModel):
     print_area: str | None = None
     protected: bool = False
     view: ViewInfo = ViewInfo()
+    more: dict[str, int] = {}
+    """Entries left out of the lists that hold more than `MAX_LISTED`, by list name."""
 
 
 def describe_workbook(
@@ -138,6 +141,16 @@ def describe_workbook(
 
 
 def describe_sheet(sheet: Worksheet) -> SheetDetails:
+    details = _details(sheet)
+    for name in SheetDetails.model_fields:
+        listed = getattr(details, name)
+        if isinstance(listed, list) and len(listed) > MAX_LISTED:
+            details.more[name] = len(listed) - MAX_LISTED
+            setattr(details, name, listed[:MAX_LISTED])
+    return details
+
+
+def _details(sheet: Worksheet) -> SheetDetails:
     return SheetDetails(
         used_range=str(described_used_range(sheet)),
         freeze_panes=sheet.freeze_panes,

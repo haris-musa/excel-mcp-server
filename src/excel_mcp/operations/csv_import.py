@@ -87,13 +87,24 @@ def _too_many_cells(max_cells: int) -> LimitExceededError:
 
 
 def _lines_within(stream: TextIO, separator: str, max_cells: int) -> Iterator[str]:
-    """The lines of the file, refusing one with more delimiters than the limit has cells before
-    the reader makes a field of each: a record is held whole, so its length is not bounded by
-    the count of cells made so far."""
+    """The lines of the file, refusing one with more field separators than the limit has cells
+    before the reader makes a field of each: a record is held whole, so its length is not
+    bounded by the count of cells made so far. Separators inside quotes are not field separators;
+    whether a line starts inside quotes follows from the quotes before it."""
+    quoted = False
     for line in stream:
-        if line.count(separator) >= max_cells:
+        if line.count(separator) >= max_cells and _separators(line, separator, quoted) >= max_cells:
             raise _too_many_cells(max_cells)
+        quoted ^= line.count('"') % 2 == 1
         yield line
+
+
+def _separators(line: str, separator: str, quoted: bool) -> int:
+    """The separators of the line outside quotes, given whether it starts inside them."""
+    parts = line.split('"')
+    return sum(
+        part.count(separator) for index, part in enumerate(parts) if (index % 2 == 1) == quoted
+    )
 
 
 def _separator(sample: str, delimiter: str) -> str:

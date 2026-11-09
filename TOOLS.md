@@ -16,7 +16,7 @@ Cells use A1 notation and row and column numbers are 1-based.
 | [`import_workbook`](#import_workbook) | Upload a workbook to the server (remote editing). |
 | [`import_csv`](#import_csv) | Import a CSV file into a sheet from `at`, overwriting cells. |
 | [`export_csv`](#export_csv) | Export a range (formula results) as a CSV file, like Save As CSV. |
-| [`describe_sheet`](#describe_sheet) | Describe a sheet: used range, panes, merges and everything on it (tables, charts, PivotTables, slicers, images, notes, hyperlinks, validation, conditional formats, sparklines...) with names and cells. Slow on very large files. |
+| [`describe_sheet`](#describe_sheet) | Describe a sheet: used range, panes, merges and everything on it (tables, charts, PivotTables, slicers, images, notes, hyperlinks, validation, conditional formats, sparklines...) with names and cells. Lists stop at 200 entries (`more`: the rest). Slow on very large files. |
 | [`create_sheet`](#create_sheet) | Add an empty worksheet. |
 | [`rename_sheet`](#rename_sheet) | Rename a worksheet; references to it are updated as in Excel. |
 | [`copy_sheet`](#copy_sheet) | Copy a worksheet to a new last sheet, with everything on it, as Excel does. Self-references point at the copy; tables get new names (Sales2); PivotTables share the original's data. |
@@ -211,7 +211,8 @@ Text starting with = + - @ gets a ' prefix unless `escape_formulas` is false.
 
 Describe a sheet: used range, panes, merges and everything on it (tables, charts,
 PivotTables, slicers, images, notes, hyperlinks, validation, conditional formats,
-sparklines...) with names and cells. Slow on very large files.
+sparklines...) with names and cells. Lists stop at 200 entries (`more`: the rest).
+Slow on very large files.
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |

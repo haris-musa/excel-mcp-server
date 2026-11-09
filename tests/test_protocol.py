@@ -54,7 +54,7 @@ async def test_every_tool_is_documented_and_typed(client: Client) -> None:
 
 async def test_schema_budget(files: Path) -> None:
     """Every tool's description and schema is paid for in each client's context."""
-    for allow_vba_write, budget in ((False, 51_380), (True, 52_380)):
+    for allow_vba_write, budget in ((False, 51_420), (True, 52_420)):
         settings = Settings(allowed_dirs=[files], allow_vba_write=allow_vba_write)
         async with Client(create_server(settings)) as client:
             tools = (await client.list_tools()).tools
@@ -68,7 +68,7 @@ async def test_schema_budget(files: Path) -> None:
             for tool in tools
             if tool.output_schema
         )
-        assert outputs <= 8_745, f"{outputs} characters of output schemas; the budget is 8,745"
+        assert outputs <= 8_825, f"{outputs} characters of output schemas; the budget is 8,825"
 
 
 async def test_only_tools_that_return_data_advertise_an_output_schema(

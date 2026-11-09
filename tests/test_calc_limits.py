@@ -198,7 +198,11 @@ async def test_the_longest_formula_chains_excel_accepts_calculate(
         "goal_seek", path="calc.xlsx", sheet="Data", cell="B1", target=4096, changing_cell="A1"
     )
     assert seek["converged"] and seek["value"] == pytest.approx(2)
-    message = await call_error(
-        "trace_formula", path="calc.xlsx", sheet="Data", range="B1", direction="evaluate"
+    steps = await call(
+        "trace_formula", path="calc.xlsx", sheet="Data", range="B2", direction="evaluate"
     )
-    assert "levels deep" in message
+    assert steps["steps"][-1] == {"expr": "+".join(["1"] * 4096), "value": "4096"}
+    message = await call_error(
+        "trace_formula", path="calc.xlsx", sheet="Data", range="B6", direction="evaluate"
+    )
+    assert "nested more than 64 levels" in message

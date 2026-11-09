@@ -12,13 +12,23 @@ from excel_mcp.calc.values import UncalculableError, number_text, serial_to_date
 
 _DATE_TOKEN = re.compile(r"yyyy|yy|y|mmmm|mmm|mm|m|dddd|ddd|dd|d|hh|h|ss|s|AM/PM|A/P", re.I)
 _LITERALS = set("$-+/():!^&'~{}<>= ")
+MAX_FORMAT_LENGTH = 255  # Excel's limit; TEXT gives #VALUE! beyond it
 _MONTHS = [dt.date(2000, month, 1).strftime("%B") for month in range(1, 13)]
 _DAYS = [dt.date(2000, 1, 3 + day).strftime("%A") for day in range(7)]
 
 
 def format_number(value: float, fmt: str) -> str:
+    if len(fmt) > MAX_FORMAT_LENGTH:
+        raise UncalculableError(f"number format of more than {MAX_FORMAT_LENGTH} characters")
     if fmt.casefold() == "general":
         return number_text(value)
+    try:
+        return _format(value, fmt)
+    except ArithmeticError:  # more digits than the decimal context or a float can hold
+        raise UncalculableError("too many digits for the number format") from None
+
+
+def _format(value: float, fmt: str) -> str:
     sections = _split_sections(fmt)
     if len(sections) > 3:
         raise UncalculableError("text section in number format")
@@ -38,6 +48,13 @@ def format_number(value: float, fmt: str) -> str:
 
 def format_fixed(value: float, decimals: int, grouping: bool) -> str:
     """Round half away from zero and write with ``decimals`` places."""
+    try:
+        return _fixed(value, decimals, grouping)
+    except ArithmeticError:
+        raise UncalculableError("too many digits") from None
+
+
+def _fixed(value: float, decimals: int, grouping: bool) -> str:
     exact = Decimal(f"{abs(value):.15g}")
     quantum = Decimal(1).scaleb(-decimals)
     rounded = exact.quantize(quantum, rounding=ROUND_HALF_UP) if decimals >= 0 else None

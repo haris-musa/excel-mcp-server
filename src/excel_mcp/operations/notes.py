@@ -9,6 +9,8 @@ from excel_mcp.lazy_workbook import held_cells
 from excel_mcp.operations.cells import writable_cell
 from excel_mcp.refs import parse_cell
 
+MAX_LISTED_CHARACTERS = 1_000
+
 
 class NoteInfo(BaseModel):
     cell: str
@@ -18,10 +20,22 @@ class NoteInfo(BaseModel):
 
 def list_notes(sheet: Worksheet) -> list[NoteInfo]:
     return [
-        NoteInfo(cell=cell.coordinate, text=cell.comment.text, author=cell.comment.author or "")
+        NoteInfo(
+            cell=cell.coordinate,
+            text=_clipped(cell.comment.text),
+            author=cell.comment.author or "",
+        )
         for _, cell in sorted(held_cells(sheet).items())
         if cell.comment
     ]
+
+
+def _clipped(text: str) -> str:
+    if len(text) <= MAX_LISTED_CHARACTERS:
+        return text
+    return (
+        f"{text[:MAX_LISTED_CHARACTERS]}... ({len(text) - MAX_LISTED_CHARACTERS:,} more characters)"
+    )
 
 
 def set_note(sheet: Worksheet, ref: str, text: str, author: str) -> None:
