@@ -12,6 +12,8 @@ DATES = [
     "2024-06-30", "2024-07-04", "2024-08-31", "2024-12-31", "2025-01-15",
 ]  # fmt: skip
 
+from golden_more_cases import MORE  # noqa: E402
+
 INPUTS: dict[str, list[list[object]]] = {
     "Data": [
         # A       B         C   D     E          F              G          H     I     J
@@ -1247,3 +1249,5 @@ CASES += [
     "=1E-200*1E-100",
     "=1E-200*1E-200*1E200*1E200",
 ]
+
+CASES += MORE
