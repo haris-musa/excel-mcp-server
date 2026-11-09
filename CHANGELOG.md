@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.2.9] - 2026-11-09
+
 ### Fixed
 
 - A formula with a long chain of operators (`=A1+A1+...` up to Excel's 8,192 characters)
@@ -623,7 +625,8 @@ Ideas and fixes from these pull requests were reimplemented in this release: #78
 
 See the [GitHub releases](https://github.com/haris-musa/excel-mcp-server/releases).
 
-[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.8...HEAD
+[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.9...HEAD
+[2.2.9]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.8...v2.2.9
 [2.2.8]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.7...v2.2.8
 [2.2.7]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.6...v2.2.7
 [2.2.6]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.5...v2.2.6
