@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-11-09
+
+The formula calculator now covers 479 Excel functions (from about 366): statistical
+distributions, regression, database, engineering, complex-number, securities and LAMBDA helper
+functions, checked against more than 25,000 results recorded in Excel 16. Every tool was
+exercised with damaged workbooks and hostile arguments, and every crash that turned up was fixed.
+
 ### Added
 
 - The calculator computes `BASE`, `DECIMAL`, `FACTDOUBLE`, `COMBINA`, `PERMUTATIONA`,
@@ -733,7 +740,8 @@ Ideas and fixes from these pull requests were reimplemented in this release: #78
 
 See the [GitHub releases](https://github.com/haris-musa/excel-mcp-server/releases).
 
-[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.9...HEAD
+[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.9...v2.3.0
 [2.2.9]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.8...v2.2.9
 [2.2.8]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.7...v2.2.8
 [2.2.7]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.6...v2.2.7
