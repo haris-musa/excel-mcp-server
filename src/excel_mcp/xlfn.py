@@ -55,6 +55,7 @@ _XLFN = [
     "DAYS",
     "DECIMAL",
     "DROP",
+    "ENCODEURL",
     "ERF.PRECISE",
     "ERFC.PRECISE",
     "EXPAND",
@@ -64,9 +65,14 @@ _XLFN = [
     "F.INV",
     "F.INV.RT",
     "F.TEST",
+    "FIELDVALUE",
+    "FILTERXML",
     "FLOOR.MATH",
     "FLOOR.PRECISE",
     "FORECAST.ETS",
+    "FORECAST.ETS.CONFINT",
+    "FORECAST.ETS.SEASONALITY",
+    "FORECAST.ETS.STAT",
     "FORECAST.LINEAR",
     "FORMULATEXT",
     "GAMMA",
@@ -78,6 +84,15 @@ _XLFN = [
     "HYPGEOM.DIST",
     "IFNA",
     "IFS",
+    "IMAGE",
+    "IMCOSH",
+    "IMCOT",
+    "IMCSC",
+    "IMCSCH",
+    "IMSEC",
+    "IMSECH",
+    "IMSINH",
+    "IMTAN",
     "ISFORMULA",
     "ISOMITTED",
     "ISOWEEKNUM",
@@ -123,6 +138,7 @@ _XLFN = [
     "SORTBY",
     "STDEV.P",
     "STDEV.S",
+    "STOCKHISTORY",
     "SWITCH",
     "T.DIST",
     "T.DIST.2T",
@@ -144,6 +160,7 @@ _XLFN = [
     "VAR.P",
     "VAR.S",
     "VSTACK",
+    "WEBSERVICE",
     "WEIBULL.DIST",
     "WRAPCOLS",
     "WRAPROWS",
@@ -196,7 +213,7 @@ def add_prefixes(formula: str) -> str:
                 names.update(
                     position
                     for position in range(call.start, index)
-                    if _is_name(tokens[position]) and tokens[position].value.casefold() in declared
+                    if _declared_use(tokens[position]) in declared
                 )
         elif token.type == Token.SEP and token.subtype == Token.ARG and stack:
             stack[-1].args.append([])
@@ -215,6 +232,13 @@ def remove_prefixes(formula: str) -> str:
         if token.type == Token.FUNC or token.subtype == Token.RANGE:
             token.value = _PREFIXES.sub("", token.value)
     return tokenizer.render()
+
+
+def _declared_use(token: Token) -> str | None:
+    """The lower-case name a token uses, whether as a value or as a called function."""
+    if token.type == Token.FUNC and token.subtype == Token.OPEN:
+        return token.value.removesuffix("(").casefold()
+    return token.value.casefold() if _is_name(token) else None
 
 
 def _is_name(token: Token) -> bool:

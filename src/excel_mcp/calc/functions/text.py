@@ -266,3 +266,12 @@ def replace(text: Scalar, start: Scalar, count: Scalar, new: Scalar) -> str:
 @function("CLEAN", kind="scalar")
 def clean(text: Scalar) -> str:
     return "".join(c for c in to_text(text) if ord(c) >= 32)
+
+
+@function("ENCODEURL", kind="scalar")
+def encodeurl(text: Scalar) -> str:
+    """Percent-encode the UTF-8 bytes of the text, keeping letters, digits and "-_." only."""
+    safe = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_."
+    return _limited(
+        "".join(c if c in safe else "".join(f"%{b:02X}" for b in c.encode()) for c in to_text(text))
+    )

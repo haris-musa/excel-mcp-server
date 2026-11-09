@@ -206,7 +206,7 @@ def year_fraction(start: dt.date, end: dt.date, basis: int) -> float:
         case 0:
             return days360(start, end, european=False) / 360
         case 1:
-            return span / _actual_year_length(start, end)
+            return span / actual_year_length(start, end)
         case 2:
             return span / 360
         case 3:
@@ -216,7 +216,7 @@ def year_fraction(start: dt.date, end: dt.date, basis: int) -> float:
     raise FormulaError(NUM)
 
 
-def _actual_year_length(start: dt.date, end: dt.date) -> float:
+def actual_year_length(start: dt.date, end: dt.date) -> float:
     if start.year == end.year:
         return 366 if _leap(start.year) else 365
     anniversary = (

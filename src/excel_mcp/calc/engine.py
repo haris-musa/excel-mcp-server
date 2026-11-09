@@ -16,6 +16,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.calc import functions as functions
 from excel_mcp.calc.cells import CellKey, constant
+from excel_mcp.calc.functions.lambdas import Lambda, run
 from excel_mcp.calc.operators import (
     apply_binary,
     apply_percent,
@@ -41,6 +42,7 @@ from excel_mcp.calc.registry import FUNCTIONS, Function
 from excel_mcp.calc.scheduler import MAX_NAME_DEPTH, Scheduler, TooDeepError
 from excel_mcp.calc.tablerefs import bind
 from excel_mcp.calc.values import (
+    CALC,
     ERRORS,
     NAME,
     NULL,
@@ -94,7 +96,7 @@ class Engine:
         self.depth = 0
         self.name_depth = 0
         self.array_mode = False  # whether the lazy function being called is in an array context
-        self.scopes: list[dict[str, Value]] = []
+        self.scopes: list[dict[str, Any]] = []
         self.here = Position(next(iter(self.sheets.values())), 1, 1)
         self.scheduler = Scheduler(self)
 
@@ -233,6 +235,18 @@ class Engine:
         rows = value.rows if isinstance(value, Grid) else [[value]]
         return Grid([[0 if item is None else item for item in line] for line in rows])
 
+    def evaluate_formula(self, sheet: Worksheet, row: int, col: int, formula: str) -> Scalar:
+        """The value of a formula as if it were written in this cell, which it does not replace."""
+        tree = bind(parse(formula), self.workbook, sheet, row, col)
+        outer = self.here
+        self.here = Position(sheet, row, col)
+        try:
+            self.scheduler.calculate_precedents(tree, sheet)
+            value = self.intersect(self.eval(tree, array=False))
+        finally:
+            self.here = outer
+        return value if not isinstance(value, Grid) else value.rows[0][0]
+
     def sized(self, value: Scalar) -> Scalar:
         """Count produced text against the work limit, so arrays of long text stop."""
         if isinstance(value, str):
@@ -311,10 +325,15 @@ class Engine:
             return None
         return VALUE
 
+    def scope_of(self, name: str) -> dict[str, Any] | None:
+        """The innermost LET or LAMBDA scope that declares the name."""
+        return next((s for s in reversed(self.scopes) if name.casefold() in s), None)
+
     def name(self, node: Name, array: bool) -> Value:
-        for scope in reversed(self.scopes):
-            if node.name.casefold() in scope:
-                return scope[node.name.casefold()]
+        scope = self.scope_of(node.name)
+        if scope is not None:
+            found = scope[node.name.casefold()]
+            return CALC if isinstance(found, Lambda) else found
         if self.name_depth >= MAX_NAME_DEPTH:
             raise UncalculableError("names nested too deeply")
         scope = self.find_sheet(node.sheet) if node.sheet else self.here.sheet
@@ -423,6 +442,10 @@ class Engine:
     def call(self, node: Call, array: bool) -> Value:
         spec = FUNCTIONS.get(node.name)
         if spec is None:
+            scope = self.scope_of(node.name)
+            lam = scope[node.name.casefold()] if scope else None
+            if isinstance(lam, Lambda):
+                return run(self, lam, *(self.eval(arg, True) for arg in node.args))
             raise UncalculableError(node.name)
         if node.name in FUTURE_FUNCTIONS and not node.prefixed:
             raise UncalculableError(f"{node.name} needs the {FUTURE_FUNCTIONS[node.name]} prefix")

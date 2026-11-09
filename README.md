@@ -40,8 +40,8 @@ Excel**, and runs on Windows, macOS and Linux.
 - Sparklines (line, column, win/loss)
 
 **Formulas and dynamic arrays**
-- Formulas are calculated without Excel by a built-in engine (about 260 functions, checked
-  against more than 2,500 formulas recorded from real Excel), so `read_range` returns values
+- Formulas are calculated without Excel by a built-in engine (479 functions, checked
+  against more than 25,000 formulas recorded from real Excel), so `read_range` returns values
   for files that were never opened in Excel
 - Dynamic arrays (`FILTER`, `SORT`, `UNIQUE`, `SEQUENCE`, `LET`) are stored as Excel stores
   them and spill into the cells next to them
@@ -317,8 +317,9 @@ Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
 
 - Formulas are stored in the file, and Excel calculates them when it opens it. So that
   `read_range` is useful before that, `values` mode calculates formulas that have no saved
-  result with a built-in calculator (about 260 functions: math, statistics, financial and
-  bond, dates, text, lookup, logical, LET, sorting and filtering). Results Excel saved are
+  result with a built-in calculator (479 functions: math, statistics and distributions,
+  regression, database, engineering, financial and bond, dates, text, lookup, logical, LET and
+  LAMBDA, sorting and filtering). Results Excel saved are
   always preferred. A formula the calculator cannot reproduce exactly as Excel does (an
   unsupported function, a circular reference, or an Excel quirk it does not replicate) is
   returned as null and listed in `uncalculated` with the reason; it is never guessed.

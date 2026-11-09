@@ -16,6 +16,13 @@ from excel_mcp.calc.values import (
 )
 
 
+class Omitted:
+    """The default of an optional argument, to tell it from a blank cell given for it."""
+
+
+OMITTED = Omitted()
+
+
 def numbers(args: Iterable[Value]) -> list[float]:
     """Numbers as SUM reads them: text and booleans in ranges are skipped, typed-in ones count."""
     found: list[float] = []

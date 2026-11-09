@@ -1,9 +1,10 @@
 """Logical functions."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
+from excel_mcp.calc.functions.lambdas import lambda_of
 from excel_mcp.calc.operators import elementwise
-from excel_mcp.calc.parser import Name, Node
+from excel_mcp.calc.parser import Call, Name, Node
 from excel_mcp.calc.registry import function
 from excel_mcp.calc.values import (
     NA,
@@ -158,13 +159,16 @@ def false() -> bool:
 def let(engine: "Engine", *args: Node) -> Value:
     if len(args) < 3 or len(args) % 2 == 0:
         raise UncalculableError("LET: wrong number of arguments")
-    scope: dict[str, Value] = {}
+    scope: dict[str, Any] = {}
     engine.scopes.append(scope)
     try:
         for name, value in zip(args[:-1:2], args[1:-1:2], strict=True):
             if not isinstance(name, Name):
                 raise UncalculableError("LET: not a name")
-            scope[name.name.casefold()] = engine.eval(value)
+            is_lambda = isinstance(value, Call) and value.name == "LAMBDA"
+            scope[name.name.casefold()] = (
+                lambda_of(engine, value) if is_lambda else engine.eval(value)
+            )
         return engine.eval(args[-1])
     finally:
         engine.scopes.pop()

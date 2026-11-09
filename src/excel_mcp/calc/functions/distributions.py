@@ -35,15 +35,15 @@ def norm_dist(x: Scalar, mean: Scalar, sd: Scalar, cumulative: Scalar) -> float:
 
 @function("NORM.S.INV", kind="scalar")
 def norm_s_inv(p: Scalar) -> float:
-    return _normal(0, 1).inv_cdf(_probability(p))
+    return _normal(0, 1).inv_cdf(probability(p))
 
 
 @function("NORM.INV", kind="scalar")
 def norm_inv(p: Scalar, mean: Scalar, sd: Scalar) -> float:
-    return _normal(to_number(mean), to_number(sd)).inv_cdf(_probability(p))
+    return _normal(to_number(mean), to_number(sd)).inv_cdf(probability(p))
 
 
-def _probability(p: Scalar) -> float:
+def probability(p: Scalar) -> float:
     value = to_number(p)
     if not 0 < value < 1:
         raise FormulaError(NUM)

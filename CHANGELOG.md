@@ -23,9 +23,48 @@ All notable changes to this project are documented here. The format follows
 - `TEXT` and the number formats of exported files support sections with conditions, colours,
   scientific notation, fractions, elapsed time (`[h]:mm`), the text section, General, and the
   1900 calendar's day 0 and 29 February.
+- The calculator computes the probability distributions with their inverses (`BETA.DIST`,
+  `BETA.INV`, `CHISQ.DIST`, `CHISQ.DIST.RT`, `CHISQ.INV`, `CHISQ.INV.RT`, `CHISQ.TEST`,
+  `F.DIST`, `F.DIST.RT`, `F.INV`, `F.INV.RT`, `F.TEST`, `T.DIST`, `T.DIST.2T`, `T.DIST.RT`,
+  `T.INV`, `T.INV.2T`, `T.TEST`, `GAMMA.DIST`, `GAMMA.INV`, `WEIBULL.DIST`, `LOGNORM.DIST`,
+  `LOGNORM.INV`, `HYPGEOM.DIST`, `NEGBINOM.DIST`, `BINOM.INV`, `BINOM.DIST.RANGE`,
+  `CONFIDENCE.T`, `Z.TEST`, `PROB`, and the older `BETADIST`, `BETAINV`, `CHIDIST`, `CHIINV`,
+  `CHITEST`, `FDIST`, `FINV`, `FTEST`, `TDIST`, `TINV`, `TTEST`, `GAMMADIST`, `GAMMAINV`,
+  `WEIBULL`, `LOGNORMDIST`, `LOGINV`, `HYPGEOMDIST`, `NEGBINOMDIST`, `CRITBINOM`, `ZTEST`),
+  regression (`LINEST` and `LOGEST` with statistics, several variables and Excel's removal of
+  repeated columns; `TREND` and `GROWTH` with several variables), `FREQUENCY`, `MODE.MULT`,
+  `SKEW.P`, `TRIMMEAN`, `STEYX`, `STDEVA`, `STDEVPA`, `VARA`, `VARPA`, `ECMA.CEILING`, and the
+  twelve database functions (`DSUM`, `DAVERAGE`, `DCOUNT`, `DCOUNTA`, `DGET`, `DMAX`, `DMIN`,
+  `DPRODUCT`, `DSTDEV`, `DSTDEVP`, `DVAR`, `DVARP`) with AND across a row, OR across rows,
+  wildcards, comparison operators and computed criteria.
+- The calculator computes the complex-number functions (`COMPLEX`, `IMREAL`, `IMAGINARY`,
+  `IMABS`, `IMARGUMENT`, `IMCONJUGATE`, `IMSUM`, `IMSUB`, `IMPRODUCT`, `IMDIV`, `IMPOWER`,
+  `IMSQRT`, `IMEXP`, `IMLN`, `IMLOG10`, `IMLOG2` and the trigonometric and hyperbolic
+  functions `IMSIN` to `IMCSCH`), `CONVERT` (every unit and prefix Excel has), `BESSELI`,
+  `BESSELJ`, `BESSELK`, `BESSELY` and `ENCODEURL`.
+- The calculator computes `ACCRINT`, `ACCRINTM`, `PRICEMAT`, `YIELDMAT`, `ODDFPRICE`,
+  `ODDFYIELD`, `ODDLPRICE`, `ODDLYIELD`, `AMORLINC` and `AMORDEGRC`, and `LAMBDA` with `BYROW`,
+  `BYCOL`, `MAP`, `REDUCE`, `SCAN`, `MAKEARRAY` and `ISOMITTED`, also for a LAMBDA called by the
+  name a `LET` gave it. `COUPDAYS` on an actual basis now follows Excel at month-end maturities
+  (found by bisecting 11,500 recorded settlements) and `YIELD` and the other bond functions at
+  month-ends; where Excel's result cannot be reproduced (`ACCRINT` and the odd-coupon
+  functions with coupon dates at the end of a month, `ACCRINT` counted from the first interest
+  date on an actual basis, the statistics of a perfect `LINEST` fit, which are rounding noise in
+  Excel) the cell is left uncalculated and listed, never guessed.
+- `tests/fixtures/formula_golden.json` records more than 25,000 formulas from Excel 16 for the
+  calculator to match.
 
 ### Fixed
 
+- `ENCODEURL`, `FILTERXML`, `WEBSERVICE`, `FORECAST.ETS.CONFINT`, `FORECAST.ETS.SEASONALITY`,
+  `FORECAST.ETS.STAT`, `STOCKHISTORY`, `IMAGE`, `FIELDVALUE` and the complex-number functions
+  `IMCOSH`, `IMCOT`, `IMCSC`, `IMCSCH`, `IMSEC`, `IMSECH`, `IMSINH` and `IMTAN` were stored
+  without the prefix Excel needs and showed `#NAME?` when the file was opened. A LAMBDA called
+  by the name a `LET` gave it (`f(5)`) is stored with the prefix too.
+- `YIELD` in the last coupon period counted the days to maturity from the coupon period, not
+  from the dates, so it differed from Excel at the end of a month on a 30/360 basis.
+- `COUNTIF` and the functions that share its criteria compared `"<=TRUE"` as text.
+- `function_arguments.json` lists the argument counts of the functions added above.
 - `goal_seek` also limits the total calculation across its iterations (5 million cell
   calculations) and stops with a clear error, where each iteration was limited alone.
 - Number formats over 255 characters (Excel's limit) and formats that need more digits than the

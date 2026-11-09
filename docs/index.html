@@ -539,7 +539,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
                     </div>
                     <div class="card">
                         <h3>Formulas without Excel</h3>
-                        <p>Formulas are calculated by a built-in engine (about 260 functions, checked against results recorded from Excel), so values can be read back without opening Excel. Dynamic arrays (<code>FILTER</code>, <code>SORT</code>, <code>UNIQUE</code>, <code>SEQUENCE</code>, <code>LET</code>) are supported. Trace what a formula uses and what uses a cell, evaluate a formula step by step, and run Goal Seek.</p>
+                        <p>Formulas are calculated by a built-in engine (479 functions, checked against results recorded from Excel), so values can be read back without opening Excel. Dynamic arrays (<code>FILTER</code>, <code>SORT</code>, <code>UNIQUE</code>, <code>SEQUENCE</code>, <code>LET</code>) are supported. Trace what a formula uses and what uses a cell, evaluate a formula step by step, and run Goal Seek.</p>
                     </div>
                     <div class="card">
                         <h3>Large files</h3>
@@ -637,7 +637,7 @@ docker run -p 8017:8017 -v "$PWD/workbooks:/data" -e EXCEL_MCP_AUTH_TOKEN=change
                 </details>
                 <details>
                     <summary>Does it calculate formulas?</summary>
-                    <p>Yes, for reading. Excel calculates formulas when it opens a file, so the server uses a built-in calculator (about 260 functions) to return values for formulas that have no saved result. A formula it cannot reproduce exactly is returned empty and listed, never guessed.</p>
+                    <p>Yes, for reading. Excel calculates formulas when it opens a file, so the server uses a built-in calculator (479 functions) to return values for formulas that have no saved result. A formula it cannot reproduce exactly is returned empty and listed, never guessed.</p>
                 </details>
                 <details>
                     <summary>How do I upgrade from 1.x?</summary>
