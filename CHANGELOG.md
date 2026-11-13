@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Text shaped like an ISO date but written with digits of another script, such as Arabic-Indic
+  or fullwidth digits, is stored as text. It was rejected as an invalid date.
+
 ## [2.3.0] - 2026-11-09
 
 The formula calculator now covers 479 Excel functions (from about 366): statistical

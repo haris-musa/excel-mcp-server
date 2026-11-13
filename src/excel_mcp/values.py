@@ -18,8 +18,9 @@ from excel_mcp.formulas import storable_formula
 
 CellValue = str | int | float | bool | None
 
-_ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
-_ISO_DATETIME = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?")
+# ASCII only, like date.fromisoformat: other digits must stay text, not fail as a bad date.
+_ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}", re.ASCII)
+_ISO_DATETIME = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?", re.ASCII)
 _NUMBER = re.compile(r"[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?")
 _THOUSANDS = re.compile(r"[+-]?\d{1,3}(,\d{3})+(\.\d+)?")
 _PERCENT = re.compile(r"[+-]?(\d+(\.\d*)?|\.\d+)%")

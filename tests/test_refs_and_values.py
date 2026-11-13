@@ -4,7 +4,7 @@ import pytest
 
 from excel_mcp.errors import InvalidArgumentError, UnsafeFormulaError
 from excel_mcp.refs import CellRange, parse_cell, parse_range
-from excel_mcp.values import to_cell, to_json
+from excel_mcp.values import parse_iso_date, to_cell, to_json, typed_value
 
 
 @pytest.mark.parametrize(
@@ -47,6 +47,25 @@ def test_dates_round_trip_as_iso_strings() -> None:
 def test_invalid_date_is_an_argument_error() -> None:
     with pytest.raises(InvalidArgumentError, match="date"):
         to_cell("2026-13-45", ["Sheet1"])
+
+
+ARABIC_INDIC = str.maketrans("0123456789", "".join(chr(0x0660 + i) for i in range(10)))
+FULLWIDTH = str.maketrans("0123456789", "".join(chr(0xFF10 + i) for i in range(10)))
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "2026-01-31".translate(ARABIC_INDIC),
+        "2026-01-31".translate(FULLWIDTH),
+        "2026-01-31T10:30".translate(ARABIC_INDIC),
+        "2026-" + "01".translate(ARABIC_INDIC) + "-31",
+    ],
+)
+def test_dates_in_other_digits_stay_text(text: str) -> None:
+    assert to_cell(text, ["Sheet1"]) == text
+    assert typed_value(text, ["Sheet1"]) == (text, None)
+    assert parse_iso_date(text) is None
 
 
 def test_plain_values_pass_through() -> None:
