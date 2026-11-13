@@ -10,6 +10,8 @@ All notable changes to this project are documented here. The format follows
 
 - Threaded comments on more than one sheet are kept when a workbook is saved. The threads of
   one sheet could be replaced by those of another and then dropped by a later edit (#259).
+- Text shaped like an ISO date but written with digits of another script, such as Arabic-Indic
+  or fullwidth digits, is stored as text. It was rejected as an invalid date.
 
 ## [2.3.0] - 2026-11-09
 
