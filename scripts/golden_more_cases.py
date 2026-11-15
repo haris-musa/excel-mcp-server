@@ -3527,3 +3527,43 @@ MORE: list[str | tuple[str, float]] = [
     "=ROW(Cases!A201)",
     "=Cases!A202",
 ]
+
+
+def _digits(text: str, zero: int) -> str:
+    """``text`` with its digits written in the script whose digit zero is ``zero``."""
+    return text.translate({ord("0") + d: zero + d for d in range(10)})
+
+
+# Arabic-Indic and Thai digits are digits to Excel; fullwidth ones are not.
+_AR, _TH, _FW = (_digits("123", zero) for zero in (0x0660, 0x0E50, 0xFF10))
+_AR_DATE, _FW_DATE = (_digits("2026-01-31", zero) for zero in (0x0660, 0xFF10))
+_AR_SUM, _AR_TIME = _digits("$1,234", 0x0660), _digits("12:30", 0x0660)
+_AR_GROUPED, _TH_DECIMAL = _digits("1,234.5", 0x0660), _digits("1.5", 0x0E50)
+_AR_COMPLEX, _FW_COMPLEX = (_digits("1+2i", zero) for zero in (0x0660, 0xFF10))
+_AR_CELL, _FW_CELL = (_digits("2", zero) for zero in (0x0660, 0xFF10))
+
+MORE += [
+    f'=VALUE("{_AR}")',
+    f'=VALUE("{_TH}")',
+    f'=VALUE("{_TH_DECIMAL}")',
+    f'=VALUE("{_FW}")',
+    f'="{_AR}"+1',
+    f'="{_FW}"+1',
+    f'=--"{_AR}%"',
+    f'=--"{_AR_SUM}"',
+    f'=SUM("{_AR}",1)',
+    f'=COUNT("{_AR}","{_FW}",1)',
+    f'=DATEVALUE("{_AR_DATE}")',
+    f'=DATEVALUE("{_FW_DATE}")',
+    f'=TIMEVALUE("{_AR_TIME}")',
+    f'=NUMBERVALUE("{_AR}")',
+    f'=NUMBERVALUE("{_FW}")',
+    f'=NUMBERVALUE("{_AR_GROUPED}")',
+    f'=IMREAL("{_AR_COMPLEX}")',
+    f'=IMAGINARY("{_AR_COMPLEX}")',
+    f'=IMREAL("{_FW_COMPLEX}")',
+    f'=COUNTIF(Data!C2:C11,">{_AR_CELL}")',
+    f'=COUNTIF(Data!C2:C11,"{_FW_CELL}")',
+    f'=INDIRECT("Data!C{_AR_CELL}")',
+    f'=INDIRECT("Data!C{_FW_CELL}")',
+]

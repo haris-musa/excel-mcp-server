@@ -123,9 +123,9 @@ _PRECEDENCE = {
     " ": 6,
 }  # fmt: skip
 _CELL = r"(\$?)([A-Za-z]{1,3})(\$?)(\d+)"
-_RANGE = re.compile(rf"{_CELL}(:{_CELL})?")
+_RANGE = re.compile(rf"{_CELL}(:{_CELL})?", re.ASCII)
 _COLUMNS = re.compile(r"(\$?)([A-Za-z]{1,3}):(\$?)([A-Za-z]{1,3})")
-_ROWS = re.compile(r"(\$?)(\d+):(\$?)(\d+)")
+_ROWS = re.compile(r"(\$?)(\d+):(\$?)(\d+)", re.ASCII)
 _FUNCTION_PREFIXES = ("_xlfn.", "_xlws.", "_xlpm.", "_xludf.", "_xleta.")
 
 

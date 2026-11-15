@@ -13,17 +13,18 @@ from decimal import Decimal
 from openpyxl.cell.cell import Cell
 from openpyxl.worksheet.formula import ArrayFormula
 
+from excel_mcp.digits import ascii_digits
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.formulas import storable_formula
 
 CellValue = str | int | float | bool | None
 
-# ASCII only, like date.fromisoformat: other digits must stay text, not fail as a bad date.
+# ASCII digits only: Python's \d also matches digits that Excel and fromisoformat do not read.
 _ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}", re.ASCII)
 _ISO_DATETIME = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?", re.ASCII)
-_NUMBER = re.compile(r"[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?")
-_THOUSANDS = re.compile(r"[+-]?\d{1,3}(,\d{3})+(\.\d+)?")
-_PERCENT = re.compile(r"[+-]?(\d+(\.\d*)?|\.\d+)%")
+_NUMBER = re.compile(r"[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?", re.ASCII)
+_THOUSANDS = re.compile(r"[+-]?\d{1,3}(,\d{3})+(\.\d+)?", re.ASCII)
+_PERCENT = re.compile(r"[+-]?(\d+(\.\d*)?|\.\d+)%", re.ASCII)
 
 DATE_FORMAT = "yyyy-mm-dd"
 DATETIME_FORMAT = "yyyy-mm-dd hh:mm:ss"
@@ -100,9 +101,13 @@ def typed_value(
     """What Excel stores when ``text`` is typed into a General cell, and the format it applies.
 
     Numbers (also with thousands separators or a percent sign), TRUE/FALSE, ISO dates and
-    formulas become values; anything else stays text.
+    formulas become values; anything else stays text. Like Excel, it reads the native digits
+    of scripts such as Arabic or Devanagari as digits.
     """
-    stripped = text.strip()
+    if text.startswith("="):
+        return to_cell(text, sheet_names), None
+    folded = ascii_digits(text)
+    stripped = folded.strip()
     if stripped.upper() in ("TRUE", "FALSE"):
         return stripped.upper() == "TRUE", None
     if _NUMBER.fullmatch(stripped):
@@ -111,8 +116,8 @@ def typed_value(
         return _number(stripped.replace(",", "")), "#,##0" + _decimals(stripped)
     if _PERCENT.fullmatch(stripped):
         return _number(stripped[:-1]) / 100, "0" + _decimals(stripped[:-1]) + "%"
-    value = to_cell(text, sheet_names)
-    return value, date_number_format(value)
+    value = to_cell(folded, sheet_names)
+    return (text, None) if value == folded else (value, date_number_format(value))
 
 
 def _number(text: str) -> int | float:

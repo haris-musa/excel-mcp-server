@@ -7,13 +7,14 @@ from dataclasses import dataclass, replace
 from openpyxl.utils.cell import column_index_from_string, get_column_letter, range_boundaries
 from openpyxl.worksheet.cell_range import CellRange as SheetRange
 
+from excel_mcp.digits import ascii_digits
 from excel_mcp.errors import InvalidArgumentError, LimitExceededError
 
 MAX_ROW = 1_048_576
 MAX_COLUMN = 16_384
 
 _COLUMN_SPAN = re.compile(r"([A-Za-z]{1,3}):([A-Za-z]{1,3})")
-_ROW_SPAN = re.compile(r"(\d+):(\d+)")
+_ROW_SPAN = re.compile(r"(\d+):(\d+)", re.ASCII)
 
 
 @dataclass(frozen=True)
@@ -98,12 +99,16 @@ def cell_name(row: int, col: int) -> str:
 
 def parse_range(ref: str) -> CellRange:
     """Parse a bounded range such as ``B2`` or ``A1:C10`` (``$`` markers allowed)."""
+    text = ascii_digits(ref.strip())
+    invalid = InvalidArgumentError(
+        f"Invalid range {ref!r}. Use A1 notation such as 'B2' or 'A1:C10'."
+    )
+    if not text.isascii():  # openpyxl reads any Unicode digit, Excel only the ones folded here
+        raise invalid
     try:
-        min_col, min_row, max_col, max_row = range_boundaries(ref.strip())
+        min_col, min_row, max_col, max_row = range_boundaries(text)
     except (ValueError, TypeError):
-        raise InvalidArgumentError(
-            f"Invalid range {ref!r}. Use A1 notation such as 'B2' or 'A1:C10'."
-        ) from None
+        raise invalid from None
     if min_col is None or min_row is None or max_col is None or max_row is None:
         raise InvalidArgumentError(
             f"Range {ref!r} must have explicit rows and columns, such as 'A1:C10'."
@@ -126,7 +131,7 @@ def parse_range(ref: str) -> CellRange:
 def parse_clamped_range(ref: str, used: Callable[[], CellRange]) -> CellRange:
     """`parse_range`, also accepting whole columns ('B:D') or rows ('2:3') limited to the
     used range, which is only looked up for those."""
-    text = ref.strip().replace("$", "")
+    text = ascii_digits(ref.strip().replace("$", ""))
     column_span = _COLUMN_SPAN.fullmatch(text)
     if column_span:
         first, last = sorted(_column_number(letters) for letters in column_span.groups())

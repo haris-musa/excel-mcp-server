@@ -8,6 +8,7 @@ from decimal import ROUND_DOWN, Context, Decimal
 from typing import Any
 
 from excel_mcp.calc.dateparts import LAST_SERIAL, serial_day
+from excel_mcp.digits import ascii_digits
 from excel_mcp.refs import MAX_COLUMN, MAX_ROW
 
 DATE_ORIGIN = dt.date(1899, 12, 30)
@@ -181,19 +182,21 @@ def date_to_serial(date: dt.date) -> int:
     return (date - DATE_ORIGIN).days
 
 
-_PLAIN_NUMBER = re.compile(r"(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?")
-_THOUSANDS = re.compile(r"\d{1,3}(,\d{3})+(\.\d*)?")
-_ISO_DATE = re.compile(r"(\d{4})-(\d{1,2})-(\d{1,2})")
-_TIME = re.compile(r"(\d{1,2}):(\d{2})(?::(\d{2}))?")
+_PLAIN_NUMBER = re.compile(r"(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?", re.ASCII)
+_THOUSANDS = re.compile(r"\d{1,3}(,\d{3})+(\.\d*)?", re.ASCII)
+_ISO_DATE = re.compile(r"(\d{4})-(\d{1,2})-(\d{1,2})", re.ASCII)
+_TIME = re.compile(r"(\d{1,2}):(\d{2})(?::(\d{2}))?", re.ASCII)
 
 
 _DATE_TEXT = re.compile(
-    r"\d\s*[/-]\s*\d|\d\s*[AaPp][Mm]|(?i:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*\d|\d\s*(?i:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)"
+    r"\d\s*[/-]\s*\d|\d\s*[AaPp][Mm]|(?i:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*\d|\d\s*(?i:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)",
+    re.ASCII,
 )
 
 
 def parse_number(text: str) -> float | None:
     """Excel's conversion of text to a number, or None when it is not one."""
+    text = ascii_digits(text)
     body = text.strip()
     if not body:
         return None

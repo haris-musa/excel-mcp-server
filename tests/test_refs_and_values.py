@@ -3,6 +3,7 @@ import datetime as dt
 import pytest
 
 from excel_mcp.errors import InvalidArgumentError, UnsafeFormulaError
+from excel_mcp.operations.csv_values import typed_field
 from excel_mcp.refs import CellRange, parse_cell, parse_range
 from excel_mcp.values import parse_iso_date, to_cell, to_json, typed_value
 
@@ -51,6 +52,7 @@ def test_invalid_date_is_an_argument_error() -> None:
 
 ARABIC_INDIC = str.maketrans("0123456789", "".join(chr(0x0660 + i) for i in range(10)))
 FULLWIDTH = str.maketrans("0123456789", "".join(chr(0xFF10 + i) for i in range(10)))
+THAI = str.maketrans("0123456789", "".join(chr(0x0E50 + i) for i in range(10)))
 
 
 @pytest.mark.parametrize(
@@ -64,8 +66,44 @@ FULLWIDTH = str.maketrans("0123456789", "".join(chr(0xFF10 + i) for i in range(1
 )
 def test_dates_in_other_digits_stay_text(text: str) -> None:
     assert to_cell(text, ["Sheet1"]) == text
-    assert typed_value(text, ["Sheet1"]) == (text, None)
     assert parse_iso_date(text) is None
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("123".translate(ARABIC_INDIC), (123, None)),
+        ("1,234.5".translate(ARABIC_INDIC), (1234.5, "#,##0.0")),
+        ("50%".translate(ARABIC_INDIC), (0.5, "0%")),
+        ("2026-01-31".translate(ARABIC_INDIC), (dt.date(2026, 1, 31), "yyyy-mm-dd")),
+        ("1" + "5".translate(THAI), (15, None)),
+        ("123".translate(FULLWIDTH), ("123".translate(FULLWIDTH), None)),
+        ("50%".translate(FULLWIDTH), ("50%".translate(FULLWIDTH), None)),
+        ("2026-01-31".translate(FULLWIDTH), ("2026-01-31".translate(FULLWIDTH), None)),
+        (" x" + "1".translate(ARABIC_INDIC), (" x" + "1".translate(ARABIC_INDIC), None)),
+    ],
+)
+def test_typing_reads_the_digits_excel_reads(text: str, expected: tuple[object, object]) -> None:
+    assert typed_value(text, ["Sheet1"]) == expected
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("123".translate(ARABIC_INDIC), (123, None)),
+        ("2026-01-31".translate(ARABIC_INDIC), (dt.date(2026, 1, 31), "yyyy-mm-dd")),
+        ("123".translate(FULLWIDTH), ("123".translate(FULLWIDTH), None)),
+    ],
+)
+def test_csv_fields_read_the_digits_excel_reads(text: str, expected: tuple[object, object]) -> None:
+    assert typed_field(text, ".", "ymd") == expected
+
+
+def test_references_read_the_digits_excel_reads() -> None:
+    assert parse_cell("B" + "12".translate(ARABIC_INDIC)) == (12, 2)
+    assert parse_range("A1:C" + "3".translate(THAI)) == CellRange(1, 1, 3, 3)
+    with pytest.raises(InvalidArgumentError, match="Invalid range"):
+        parse_cell("B" + "12".translate(FULLWIDTH))
 
 
 def test_plain_values_pass_through() -> None:
