@@ -25,6 +25,7 @@ from excel_mcp.calc.values import (
     to_bool,
     to_text,
 )
+from excel_mcp.digits import ascii_digits
 from excel_mcp.refs import MAX_COLUMN, MAX_ROW
 
 if TYPE_CHECKING:
@@ -52,6 +53,7 @@ def indirect_target(engine: "Engine", ref_text: Node, a1: Node | None = None) ->
     """The reference (or defined name) that INDIRECT's text stands for."""
     text = _text(engine, ref_text)
     qualifier, body = split_sheet(text)
+    body = ascii_digits(body)
     if a1 is not None and not to_bool(engine.scalar(a1)):
         body = to_a1(body, engine.here.row, engine.here.col)
     target = parse_reference(body if qualifier is None else f"{qualifier}!{body}")

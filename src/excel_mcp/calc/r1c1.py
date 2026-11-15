@@ -9,9 +9,9 @@ from excel_mcp.refs import MAX_COLUMN, MAX_ROW
 
 # A coordinate is absolute ("5") or relative to the formula cell ("[-2]"); none means "same".
 _NUMBER = r"(?:\[(-?\d+)\]|(\d+))?"
-_CELL = re.compile(rf"R{_NUMBER}C{_NUMBER}", re.IGNORECASE)
-_ROW = re.compile(rf"R{_NUMBER}", re.IGNORECASE)
-_COLUMN = re.compile(rf"C{_NUMBER}", re.IGNORECASE)
+_CELL = re.compile(rf"R{_NUMBER}C{_NUMBER}", re.IGNORECASE | re.ASCII)
+_ROW = re.compile(rf"R{_NUMBER}", re.IGNORECASE | re.ASCII)
+_COLUMN = re.compile(rf"C{_NUMBER}", re.IGNORECASE | re.ASCII)
 
 
 def to_a1(text: str, row: int, col: int) -> str:

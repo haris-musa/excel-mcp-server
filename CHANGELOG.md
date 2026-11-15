@@ -12,6 +12,11 @@ All notable changes to this project are documented here. The format follows
   one sheet could be replaced by those of another and then dropped by a later edit (#259).
 - Text shaped like an ISO date but written with digits of another script, such as Arabic-Indic
   or fullwidth digits, is stored as text. It was rejected as an invalid date.
+- Digits of other scripts are read as Excel reads them. The native digits Excel treats as 0-9
+  (Arabic, Persian, Indic, Thai and a few more) count as digits in typed text (`replace_cells`,
+  text to columns, filter values), CSV imports, cell references and the calculator (`VALUE`,
+  `NUMBERVALUE`, `DATEVALUE`, criteria and others). Fullwidth and other digits that Excel keeps
+  as text are no longer read as numbers or references.
 
 ## [2.3.0] - 2026-11-09
 

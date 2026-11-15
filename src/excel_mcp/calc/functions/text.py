@@ -20,6 +20,7 @@ from excel_mcp.calc.values import (
     to_text,
 )
 from excel_mcp.calc.wildcard import Wildcard
+from excel_mcp.digits import ascii_digits
 
 
 def _count(value: Scalar) -> int:
@@ -177,7 +178,7 @@ def value(text: Scalar) -> float:
 
 @function("NUMBERVALUE", kind="scalar")
 def numbervalue(text: Scalar, decimal: Scalar = ".", group: Scalar = ",") -> float:
-    body = re.sub(r"\s", "", to_text(text))
+    body = re.sub(r"\s", "", ascii_digits(to_text(text)))
     decimal_mark, group_mark = to_text(decimal), to_text(group)
     if len(decimal_mark) != 1 or len(group_mark) != 1 or decimal_mark == group_mark:
         raise FormulaError(VALUE)
@@ -189,7 +190,7 @@ def numbervalue(text: Scalar, decimal: Scalar = ".", group: Scalar = ",") -> flo
     cleaned = whole.replace(group_mark, "") + ("." + fraction if decimal_mark in body else "")
     if not cleaned:
         return 0.0
-    if not re.fullmatch(r"[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?", cleaned):
+    if not re.fullmatch(r"[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?", cleaned, re.ASCII):
         raise FormulaError(VALUE)
     number = plain_number(cleaned)
     if number is None:

@@ -10,14 +10,15 @@ import re
 from functools import cache
 from typing import Literal
 
+from excel_mcp.digits import ascii_digits
 from excel_mcp.values import CellValue, date_number_format
 
 DateOrder = Literal["ymd", "dmy", "mdy"]
 
-_ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
-_ISO_DATETIME = re.compile(r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?")
-_NUMERIC_DATE = re.compile(r"(\d{1,2})([/.-])(\d{1,2})\2(\d{4})")
-_LEADING_ZERO = re.compile(r"-?0\d")
+_ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}", re.ASCII)
+_ISO_DATETIME = re.compile(r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?", re.ASCII)
+_NUMERIC_DATE = re.compile(r"(\d{1,2})([/.-])(\d{1,2})\2(\d{4})", re.ASCII)
+_LEADING_ZERO = re.compile(r"-?0\d", re.ASCII)
 _EXCEL_PRECISION = 15
 
 Typed = tuple[CellValue | dt.date | dt.datetime, str | None]
@@ -25,7 +26,7 @@ Typed = tuple[CellValue | dt.date | dt.datetime, str | None]
 
 def typed_field(text: str, decimal: str, date_order: DateOrder) -> Typed:
     """The value and number format for ``text``; other text is returned as it is."""
-    stripped = text.strip()
+    stripped = ascii_digits(text).strip()
     if stripped.upper() in ("TRUE", "FALSE"):
         return stripped.upper() == "TRUE", None
     if (number := _number(stripped, decimal)) is not None:
@@ -41,9 +42,9 @@ def _patterns(decimal: str) -> tuple[re.Pattern[str], re.Pattern[str], re.Patter
     group = re.escape("," if decimal == "." else ".")
     unsigned = rf"(\d+({point}\d*)?|{point}\d+)"
     return (
-        re.compile(rf"-?{unsigned}([eE][+-]?\d+)?"),
-        re.compile(rf"-?\d{{1,3}}({group}\d{{3}})+({point}\d+)?"),
-        re.compile(rf"-?{unsigned}%"),
+        re.compile(rf"-?{unsigned}([eE][+-]?\d+)?", re.ASCII),
+        re.compile(rf"-?\d{{1,3}}({group}\d{{3}})+({point}\d+)?", re.ASCII),
+        re.compile(rf"-?{unsigned}%", re.ASCII),
     )
 
 
