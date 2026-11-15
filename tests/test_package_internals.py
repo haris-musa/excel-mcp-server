@@ -13,6 +13,7 @@ from excel_mcp.package import extensions as ext
 from excel_mcp.package.metadata import Metadata
 from excel_mcp.package.opc import ContentTypes, Rel, parse_rels, resolve, write_rels
 from excel_mcp.package.patch import insertions, splice
+from excel_mcp.package.restore import Restorer
 from excel_mcp.package.scan import (
     relationship_ids,
     remap_relationship_ids,
@@ -221,3 +222,15 @@ def test_features_can_add_parts_and_extensions_through_the_state(files: Path) ->
     assert sheet_xml.rindex("<extLst>") > sheet_xml.index("<pageMargins")
     assert "<extLst><ext/></extLst>" in text(parts, "xl/workbook.xml")
     assert_package_is_consistent(parts)
+
+
+def test_parts_made_while_saving_get_names_of_their_own(tmp_path: Path) -> None:
+    """A part dropped after it is placed must not lend its name to the next one."""
+    workbook = Workbook()
+    workbook.save(tmp_path / "book.xlsx")
+    restorer = Restorer(workbook, state_of(workbook), (tmp_path / "book.xlsx").read_bytes())
+    names = {
+        restorer.place(Part("xl/extra/part1.xml", "application/xml", str(n).encode()))
+        for n in range(20)
+    }
+    assert len(names) == 20

@@ -47,7 +47,7 @@ class Restorer:
         self.workbook = workbook
         self.state = state
         self.package = Package(written)
-        self.placed: dict[int, str] = {}
+        self.placed: dict[Part, str] = {}
         numbers = {sheet: number for number, sheet in enumerate(workbook_sheets(workbook), 1)}
         self.sheet_ids = {old: numbers[s] for s, old in state.sheet_ids.items() if s in numbers}
         self.table_ids = {old: table.id for table, old in state.table_ids.items()}
@@ -74,8 +74,8 @@ class Restorer:
 
     def place(self, part: Part) -> str:
         """Add a part, and the parts it refers to, to the package; its name may change."""
-        if id(part) in self.placed:
-            return self.placed[id(part)]
+        if part in self.placed:
+            return self.placed[part]
         data = self._with_current_ids(part)
         same = (
             not part.unique
@@ -83,7 +83,7 @@ class Restorer:
             and self.package.read(part.name) == data
         )
         name = part.name if same else self.package.unique_name(part.name)
-        self.placed[id(part)] = name
+        self.placed[part] = name
         if not same:
             self.package.write(name, data)
             self.package.content_types.declare(name, part.content_type, part.by_default)

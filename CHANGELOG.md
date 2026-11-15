@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Threaded comments on more than one sheet are kept when a workbook is saved. The threads of
+  one sheet could be replaced by those of another and then dropped by a later edit (#259).
+
 ## [2.3.0] - 2026-11-09
 
 The formula calculator now covers 479 Excel functions (from about 366): statistical
