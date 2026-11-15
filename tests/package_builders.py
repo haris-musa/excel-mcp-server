@@ -95,6 +95,52 @@ def threaded_workbook(path: Path) -> None:
     plain.unlink()
 
 
+def threaded_sheets_workbook(path: Path) -> None:
+    """Sheets "One" and "Two", each with one threaded comment in a part of its own."""
+    workbook = Workbook()
+    first = workbook.active
+    assert first is not None
+    first.title = "One"
+    second = workbook.create_sheet("Two")
+    first["B2"].comment = Comment(LEGACY.format("First"), f"tc={ROOT}")
+    second["C3"].comment = Comment(LEGACY.format("Second"), f"tc={SECOND}")
+    plain = path.with_name("plain.xlsx")
+    workbook.save(plain)
+    stamp = f'dT="2026-10-08T10:00:00.00" personId="{PERSON}"'
+    ct = "application/vnd.ms-excel"
+    rel = "http://schemas.microsoft.com/office/2017/10/relationships"
+    extra = {
+        "xl/persons/person.xml": (
+            f'{XML}<personList xmlns="{THREADS}"><person displayName="Test User" id="{PERSON}" '
+            'userId="test@example.com" providerId="None"/></personList>'
+        )
+    }
+    overrides = f'<Override PartName="/xl/persons/person.xml" ContentType="{ct}.person+xml"/>'
+    edits = {}
+    for number, (cell, thread, words) in enumerate(
+        [("B2", ROOT, "First"), ("C3", SECOND, "Second")], 1
+    ):
+        name = f"xl/threadedComments/threadedComment{number}.xml"
+        extra[name] = (
+            f'{XML}<ThreadedComments xmlns="{THREADS}"><threadedComment ref="{cell}" {stamp} '
+            f'id="{thread}"><text>{words}</text></threadedComment></ThreadedComments>'
+        )
+        overrides += f'<Override PartName="/{name}" ContentType="{ct}.threadedcomments+xml"/>'
+        edits[f"xl/worksheets/_rels/sheet{number}.xml.rels"] = (
+            "</Relationships>",
+            f'<Relationship Id="rIdTC" Type="{rel}/threadedComment" Target="/{name}"/>'
+            "</Relationships>",
+        )
+    edits["[Content_Types].xml"] = ("</Types>", overrides + "</Types>")
+    edits["xl/_rels/workbook.xml.rels"] = (
+        "</Relationships>",
+        f'<Relationship Id="rIdPerson" Type="{rel}/person" Target="/xl/persons/person.xml"/>'
+        "</Relationships>",
+    )
+    _rewrite(plain, path, extra, edits)
+    plain.unlink()
+
+
 def value_metadata_workbook(path: Path) -> None:
     """A workbook whose cells A1 and B1 carry ``vm="1"``, as linked data types do."""
     workbook = Workbook()

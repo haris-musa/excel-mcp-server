@@ -10,7 +10,11 @@ import pytest
 from openpyxl import load_workbook
 
 from tests.conftest import ToolCall
-from tests.package_builders import threaded_workbook, value_metadata_workbook
+from tests.package_builders import (
+    threaded_sheets_workbook,
+    threaded_workbook,
+    value_metadata_workbook,
+)
 from tests.package_support import (
     assert_package_is_consistent,
     copy_fixture,
@@ -165,6 +169,22 @@ async def test_threaded_comments_follow_their_notes(call: ToolCall, files: Path)
     parts = read_parts(files / "book.xlsx")
     assert not [n for n in parts if "threadedComments/" in n]
     assert "xl/persons/person.xml" in parts
+
+
+async def test_threaded_comments_of_each_sheet_stay_with_it(call: ToolCall, files: Path) -> None:
+    threaded_sheets_workbook(files / "book.xlsx")
+    for cell in ("H30", "H31"):
+        await call("write_range", **BOOK, sheet="One", at=cell, rows=[["x"]])
+        parts = read_parts(files / "book.xlsx")
+        for sheet, thread in (("One", "First"), ("Two", "Second")):
+            targets = [
+                t
+                for k, t in relationships(parts, sheet_part(parts, sheet)).values()
+                if k == "threadedComment"
+            ]
+            assert len(targets) == 1
+            assert f"<text>{thread}</text>" in text(parts, targets[0])
+        assert_package_is_consistent(parts)
 
 
 async def test_cell_metadata_follows_the_values_it_describes(call: ToolCall, files: Path) -> None:
