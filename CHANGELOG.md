@@ -12,6 +12,10 @@ All notable changes to this project are documented here. The format follows
   the right cells when rows or columns are inserted or deleted more than once (#265).
 - A table loaded from Power Query keeps its query table part when the workbook is saved.
   Without it Excel could not open the file (#264).
+- Inserting, deleting or resizing the columns of a table loaded from Power Query keeps its
+  query table part and its data range in step with the table, as Excel does, so the file still
+  opens and refreshes. A copied sheet gets a plain table with the same data, since Excel's copy
+  would also duplicate the query itself.
 
 ## [2.3.1] - 2026-11-16
 

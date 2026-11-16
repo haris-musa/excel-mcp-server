@@ -86,6 +86,12 @@ def _copy_tables(workbook: Workbook, source: Worksheet, target: Worksheet) -> di
         renamed[table.displayName.casefold()] = new_name
         clone = deepcopy(table)
         clone.name = clone.displayName = new_name
+        if clone.tableType == "queryTable":
+            # Excel copies the query as well, inside the Power Query package this server leaves
+            # alone; the copy here is a plain table of the same data.
+            clone.tableType = None
+            for column in clone.tableColumns:
+                column.queryTableFieldId = None
         target.add_table(clone)
     return renamed
 

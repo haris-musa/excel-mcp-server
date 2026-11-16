@@ -16,6 +16,7 @@ Workbooks that tests cannot build in code.
 | `excel_controls.xlsx` | Created in Microsoft Excel (COM) for this project | Same as the project |
 | `excel_dynamic_arrays.xlsx` | Created in Microsoft Excel (COM) for this project | Same as the project |
 | `excel_pivot_source.xlsx` | Created in Microsoft Excel (COM) for this project | Same as the project |
+| `excel_query_table.xlsx` | Created in Microsoft Excel (COM) for this project | Same as the project |
 | `pivot_golden.json` | Cells recorded from Microsoft Excel by `scripts/pivot_golden.py` | Same as the project |
 | `formula_golden.json` | Results recorded from Microsoft Excel by `scripts/excel_golden.py` | Same as the project |
 | `audit_golden.json` | Precedents, dependents and Goal Seek results recorded from Microsoft Excel by `scripts/audit_golden.py` | Same as the project |
@@ -29,6 +30,9 @@ formats and data validation; a waterfall, histogram, treemap and funnel chart wi
 shape and picture; shapes, a text box, a connector, a group and a picture fill; an embedded object, a protected range and an ignored error; table, PivotTable and timeline slicers; form controls with a note; and the
 dynamic array formulas `FILTER`, `SORT`, `SEQUENCE`, `UNIQUE` and `SUM(range*2)`. The local
 path and user name that Excel records were removed.
+
+`excel_query_table.xlsx` holds a Power Query (a literal `#table`, no outside source) loaded to
+the table `Stock`, with its connection and query table part.
 
 `excel_pivot_source.xlsx` holds formulas with the results Excel stored (text, numbers, a date,
 booleans and errors, and a host-dependent `INFO` result the calculator cannot reproduce), as a

@@ -8,7 +8,7 @@ from openpyxl.worksheet.formula import ArrayFormula
 from openpyxl.worksheet.worksheet import Worksheet
 
 from excel_mcp.lazy_workbook import held_cells
-from excel_mcp.package import consistency, pivots, vml
+from excel_mcp.package import consistency, pivots, query_tables, vml
 from excel_mcp.package import extensions as extensions_module
 from excel_mcp.package.model import CellMark, Link, Part, SheetPackage
 from excel_mcp.package.opc import REL_BASE, XML_DECLARATION, Rel, free_id
@@ -65,7 +65,7 @@ def restore_sheet(restorer: "Restorer", sheet: Worksheet, package: SheetPackage,
     if extensions:
         new.append(("extLst", f"<extLst>{''.join(texts[len(names) :])}</extLst>"))
     _pivot_extensions(restorer, part, package)
-    _table_links(restorer, part, package)
+    _table_links(restorer, sheet, part, package)
     end = sheet_data_end(data)
     edits += insertions(document, new, SHEET_ORDER)
     head = patch_cells(data[:end], _cell_edits(restorer, sheet, package))
@@ -202,7 +202,9 @@ def _pivot_extensions(restorer: "Restorer", sheet_part: str, package: SheetPacka
         restorer.package.write(rel.target, data)
 
 
-def _table_links(restorer: "Restorer", sheet_part: str, package: SheetPackage) -> None:
+def _table_links(
+    restorer: "Restorer", sheet: Worksheet, sheet_part: str, package: SheetPackage
+) -> None:
     if not package.table_links:
         return
     for rel in restorer.package.rels(sheet_part):
@@ -213,7 +215,24 @@ def _table_links(restorer: "Restorer", sheet_part: str, package: SheetPackage) -
         attrs = attributes(data[document.root_tag[0] : document.root_tag[1]].decode("utf-8"))
         name = attrs.get("name") or attrs.get("displayName", "")
         if links := package.table_links.get(name):
-            restorer.attach(rel.target, links, [], {})
+            restorer.attach(rel.target, _query_tables(restorer, sheet, rel.target, links), [], {})
+
+
+def _query_tables(
+    restorer: "Restorer", sheet: Worksheet, table_part: str, links: list[Link]
+) -> list[Link]:
+    """The table's links, with query tables matched to the columns the table has now."""
+    kept = []
+    for link in links:
+        target = link.target
+        if isinstance(target, Part) and target.content_type == query_tables.QUERY_TABLE:
+            found = query_tables.reconcile(target, restorer.package.read(table_part))
+            if found is not None:
+                restorer.package.write(table_part, found.table)
+                restorer.query_areas[restorer.sheet_index(sheet), found.name] = found.area
+                link = Link(link.id, link.type, found.part)
+        kept.append(link)
+    return kept
 
 
 def _shifted(edits: list[Edit], offset: int) -> list[Edit]:
