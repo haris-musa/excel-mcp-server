@@ -270,3 +270,26 @@ def test_drawing_anchors_follow_their_setting(
     for at in (2, 5):
         update_anchors(sheet, LineEdit(sheet.title, "rows", at, 1, delete=False))
     assert (anchor._from.row, anchor.to.row) == expected
+
+
+async def test_multi_range_conditional_format_keeps_anchor_across_repeated_row_edits(
+    call: Call, sample: Path
+) -> None:
+    from openpyxl import load_workbook
+    from openpyxl.formatting.rule import FormulaRule
+
+    wb = Workbook()
+    ws = wb.active
+    assert ws is not None
+    ws.title = "Sheet1"
+    ws.conditional_formatting.add("A8:D12 A14:D18 B13:D13", FormulaRule(formula=['$A8="x"']))
+    wb.save(sample)
+
+    await call("insert_rows_or_columns", path="sales.xlsx", sheet="Sheet1", axis="rows", start=2, count=1)
+    await call("insert_rows_or_columns", path="sales.xlsx", sheet="Sheet1", axis="rows", start=2, count=1)
+    cf = list(load_workbook(sample)["Sheet1"].conditional_formatting)[0]
+    assert cf.rules[0].formula == ['$A10="x"']
+
+    await call("delete_rows_or_columns", path="sales.xlsx", sheet="Sheet1", axis="rows", start=2, count=1)
+    cf_after_delete = list(load_workbook(sample)["Sheet1"].conditional_formatting)[0]
+    assert cf_after_delete.rules[0].formula == ['$A9="x"']
