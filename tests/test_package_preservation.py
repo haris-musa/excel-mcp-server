@@ -244,3 +244,59 @@ async def test_a_table_slicer_follows_its_table_when_tables_are_renumbered(
 
     assert ids == {"Extra": "1", "Sales": "2"}
     assert f'tableId="{ids["Sales"]}"' in table_slicer
+
+
+async def test_query_table_part_and_table_rels_survive_edits(call: ToolCall, files: Path) -> None:
+    import zipfile
+    from openpyxl import Workbook
+    from openpyxl.worksheet.table import Table
+
+    wb = Workbook()
+    ws = wb.active
+    assert ws is not None
+    ws.title = "Query"
+    ws.append(["ColA", "ColB"])
+    ws.append([1, 2])
+    ws.add_table(Table(displayName="qBig", ref="A1:B2"))
+    book_path = files / "book.xlsx"
+    wb.save(book_path)
+
+    with zipfile.ZipFile(book_path, "r") as src:
+        entries = {name: src.read(name) for name in src.namelist()}
+
+    entries["xl/tables/table1.xml"] = entries["xl/tables/table1.xml"].replace(
+        b'displayName="qBig"', b'displayName="qBig" tableType="queryTable"'
+    )
+    entries["xl/tables/_rels/table1.xml.rels"] = (
+        b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        b'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        b'<Relationship Id="rId1" '
+        b'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/queryTable" '
+        b'Target="../queryTables/queryTable1.xml"/>'
+        b"</Relationships>"
+    )
+    entries["xl/queryTables/queryTable1.xml"] = (
+        b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        b'<queryTable xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+        b'name="qBig" connectionId="1"/>'
+    )
+    entries["[Content_Types].xml"] = entries["[Content_Types].xml"].replace(
+        b"</Types>",
+        b'<Override PartName="/xl/queryTables/queryTable1.xml" '
+        b'ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.queryTable+xml"/>'
+        b"</Types>",
+    )
+    with zipfile.ZipFile(book_path, "w") as dst:
+        for name, data in entries.items():
+            dst.writestr(name, data)
+
+    await call("write_range", **BOOK, sheet="Query", at="D1", rows=[["x"]])
+    parts = read_parts(book_path)
+
+    assert "xl/queryTables/queryTable1.xml" in parts
+    assert "xl/tables/_rels/table1.xml.rels" in parts
+    assert any(
+        kind == "queryTable" and target == "xl/queryTables/queryTable1.xml"
+        for kind, target in relationships(parts, "xl/tables/table1.xml").values()
+    )
+    assert_package_is_consistent(parts)

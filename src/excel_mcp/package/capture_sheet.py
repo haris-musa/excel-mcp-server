@@ -97,6 +97,8 @@ def capture_sheet(reader: Reader, name: str, sheet: Worksheet, keep_vml: bool) -
             _drawing(reader, rel.target, package, sheet)
         elif rel.type == REL_BASE + "pivotTable" and rel.target in reader.names:
             _pivot(reader.archive.read(rel.target), package)
+        elif rel.type == REL_BASE + "table" and rel.target in reader.names:
+            _table(reader, rel.target, package)
     return package
 
 
@@ -210,6 +212,18 @@ def _pivot(data: bytes, package: SheetPackage) -> None:
             if extension := _EXTENSION_LIST.search(field):
                 text = with_namespaces(extension[0], document.namespaces)
                 package.pivot_fields[name, kind, position] = text
+
+
+def _table(reader: Reader, name: str, package: SheetPackage) -> None:
+    links = reader.links(name, lambda _: True)
+    if not links:
+        return
+    data = reader.archive.read(name)
+    document = scan(data)
+    attrs = attributes(data[document.root_tag[0] : document.root_tag[1]].decode("utf-8"))
+    table_name = attrs.get("name") or attrs.get("displayName", "")
+    if table_name:
+        package.table_links[table_name] = links
 
 
 def entries(extension_list: str, namespaces: dict[str, str]) -> dict[str, str]:
