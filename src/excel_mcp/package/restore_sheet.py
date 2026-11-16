@@ -23,7 +23,7 @@ from excel_mcp.package.patch import (
     sheet_data_end,
     splice,
 )
-from excel_mcp.package.scan import REL_NS, Scan, relationship_ids, scan, with_namespaces
+from excel_mcp.package.scan import REL_NS, Scan, attributes, relationship_ids, scan, with_namespaces
 
 if TYPE_CHECKING:
     from excel_mcp.package.restore import Restorer
@@ -65,6 +65,7 @@ def restore_sheet(restorer: "Restorer", sheet: Worksheet, package: SheetPackage,
     if extensions:
         new.append(("extLst", f"<extLst>{''.join(texts[len(names) :])}</extLst>"))
     _pivot_extensions(restorer, part, package)
+    _table_links(restorer, part, package)
     end = sheet_data_end(data)
     edits += insertions(document, new, SHEET_ORDER)
     head = patch_cells(data[:end], _cell_edits(restorer, sheet, package))
@@ -199,6 +200,20 @@ def _pivot_extensions(restorer: "Restorer", sheet_part: str, package: SheetPacka
         if extension := package.pivot_extensions.get(name):
             data = append_to_root(data, extension)
         restorer.package.write(rel.target, data)
+
+
+def _table_links(restorer: "Restorer", sheet_part: str, package: SheetPackage) -> None:
+    if not package.table_links:
+        return
+    for rel in restorer.package.rels(sheet_part):
+        if rel.type != REL_BASE + "table":
+            continue
+        data = restorer.package.read(rel.target)
+        document = scan(data)
+        attrs = attributes(data[document.root_tag[0] : document.root_tag[1]].decode("utf-8"))
+        name = attrs.get("name") or attrs.get("displayName", "")
+        if links := package.table_links.get(name):
+            restorer.attach(rel.target, links, [], {})
 
 
 def _shifted(edits: list[Edit], offset: int) -> list[Edit]:

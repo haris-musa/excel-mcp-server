@@ -94,6 +94,7 @@ class SheetPackage:
     rule_extensions: dict[tuple[str, str], str] = field(default_factory=dict)
     pivot_extensions: dict[str, str] = field(default_factory=dict)
     pivot_fields: dict[tuple[str, str, int], str] = field(default_factory=dict)
+    table_links: dict[str, list[Link]] = field(default_factory=dict)
     marks: list[CellMark] = field(default_factory=list)
     namespaces: dict[str, str] = field(default_factory=dict)
     drawing_namespaces: dict[str, str] = field(default_factory=dict)
