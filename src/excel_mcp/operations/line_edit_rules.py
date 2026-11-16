@@ -131,6 +131,7 @@ def _group(pieces: list[tuple[CellRange, list[str]]], host: str) -> list[_Group]
     result: list[_Group] = []
     for group_corner, group in groups:
         merged = _merge(group.areas)
+        # Excel anchors a rule's formulas at the top-left of all its ranges together.
         target_corner = (min(a.min_row for a in merged), min(a.min_col for a in merged))
         formulas = (
             group.formulas
