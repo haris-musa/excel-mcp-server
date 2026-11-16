@@ -4,10 +4,12 @@ The fixtures were saved by Microsoft Excel; see tests/fixtures/README.md.
 """
 
 import re
+import zipfile
 from pathlib import Path
 
 import pytest
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
+from openpyxl.worksheet.table import Table
 
 from tests.conftest import ToolCall
 from tests.package_builders import (
@@ -247,10 +249,6 @@ async def test_a_table_slicer_follows_its_table_when_tables_are_renumbered(
 
 
 async def test_query_table_part_and_table_rels_survive_edits(call: ToolCall, files: Path) -> None:
-    import zipfile
-    from openpyxl import Workbook
-    from openpyxl.worksheet.table import Table
-
     wb = Workbook()
     ws = wb.active
     assert ws is not None
