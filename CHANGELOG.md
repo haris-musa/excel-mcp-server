@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- A conditional format or data validation rule with several ranges keeps its formula pointing at
+  the right cells when rows or columns are inserted or deleted more than once (#265).
+
 ## [2.3.1] - 2026-11-16
 
 ### Fixed

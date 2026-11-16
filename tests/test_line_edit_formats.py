@@ -5,6 +5,7 @@ from typing import Literal
 import pytest
 from openpyxl import Workbook, load_workbook
 from openpyxl.drawing.spreadsheet_drawing import TwoCellAnchor
+from openpyxl.formatting.rule import FormulaRule
 from openpyxl.worksheet.table import TableFormula
 
 from excel_mcp.operations.line_edit_objects import update_anchors
@@ -272,24 +273,24 @@ def test_drawing_anchors_follow_their_setting(
     assert (anchor._from.row, anchor.to.row) == expected
 
 
-async def test_multi_range_conditional_format_keeps_anchor_across_repeated_row_edits(
-    call: Call, sample: Path
+async def test_a_multi_range_rule_keeps_its_anchor_over_repeated_edits(
+    call: ToolCall, sample: Path
 ) -> None:
-    from openpyxl import load_workbook
-    from openpyxl.formatting.rule import FormulaRule
+    """Excel anchors the formula at the top-left of all the ranges together, not the first."""
+    workbook = load_workbook(sample)
+    workbook["Data"].conditional_formatting.add(
+        "A8:D12 A14:D18 B13:D13", FormulaRule(formula=['$A8="x"'])
+    )
+    workbook.save(sample)
 
-    wb = Workbook()
-    ws = wb.active
-    assert ws is not None
-    ws.title = "Sheet1"
-    ws.conditional_formatting.add("A8:D12 A14:D18 B13:D13", FormulaRule(formula=['$A8="x"']))
-    wb.save(sample)
+    def rule() -> tuple[str, list[str]]:
+        entry = next(iter(load_workbook(sample)["Data"].conditional_formatting))
+        return str(entry.sqref), entry.rules[0].formula
 
-    await call("insert_rows_or_columns", path="sales.xlsx", sheet="Sheet1", axis="rows", start=2, count=1)
-    await call("insert_rows_or_columns", path="sales.xlsx", sheet="Sheet1", axis="rows", start=2, count=1)
-    cf = list(load_workbook(sample)["Sheet1"].conditional_formatting)[0]
-    assert cf.rules[0].formula == ['$A10="x"']
-
-    await call("delete_rows_or_columns", path="sales.xlsx", sheet="Sheet1", axis="rows", start=2, count=1)
-    cf_after_delete = list(load_workbook(sample)["Sheet1"].conditional_formatting)[0]
-    assert cf_after_delete.rules[0].formula == ['$A9="x"']
+    await insert(call, "Data", "rows", 2)
+    await insert(call, "Data", "rows", 2)
+    assert rule() == ("A10:D14 A16:D20 B15:D15", ['$A10="x"'])
+    await call(
+        "delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="rows", start=2, count=1
+    )
+    assert rule() == ("A9:D13 A15:D19 B14:D14", ['$A9="x"'])
