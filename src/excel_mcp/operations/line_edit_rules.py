@@ -128,7 +128,17 @@ def _group(pieces: list[tuple[CellRange, list[str]]], host: str) -> list[_Group]
                 break
         else:
             groups.append((corner, _Group([area], formulas)))
-    return [_Group(_merge(group.areas), group.formulas) for _, group in groups]
+    result: list[_Group] = []
+    for group_corner, group in groups:
+        merged = _merge(group.areas)
+        target_corner = (min(a.min_row for a in merged), min(a.min_col for a in merged))
+        formulas = (
+            group.formulas
+            if target_corner == group_corner
+            else [_retarget(f, group_corner, target_corner, host) for f in group.formulas]
+        )
+        result.append(_Group(merged, formulas))
+    return result
 
 
 def _merge(areas: list[CellRange]) -> list[CellRange]:
