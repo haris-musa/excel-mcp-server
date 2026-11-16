@@ -5,7 +5,7 @@ import re
 from openpyxl import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
-from excel_mcp.package import consistency, metadata, properties
+from excel_mcp.package import consistency, metadata, properties, query_tables
 from excel_mcp.package.extensions import in_excel_order
 from excel_mcp.package.model import (
     Link,
@@ -19,6 +19,7 @@ from excel_mcp.package.opc import Package, Rel, free_ids
 from excel_mcp.package.patch import WORKBOOK_ORDER, append_to_root, insertions, splice
 from excel_mcp.package.restore_sheet import restore_sheet
 from excel_mcp.package.scan import attributes, rel_id, remap_relationship_ids, scan, tags
+from excel_mcp.refs import CellRange
 
 MAIN = "xl/workbook.xml"
 _TAB_ID = re.compile(r'(<(?:[\w.-]+:)?pivotTable\b[^>]*?\btabId=")(\d+)(")')
@@ -55,6 +56,7 @@ class Restorer:
         self.orphans = consistency.orphaned_caches(workbook, state)
         self.gone = {name for sheet, name in state.sheet_names.items() if sheet not in numbers}
         self.dynamic_array = 0
+        self.query_areas: dict[tuple[int, str], CellRange] = {}
 
     def run(self) -> bytes:
         links = list(self.state.workbook.links)
@@ -66,6 +68,10 @@ class Restorer:
         self._workbook(links)
         self._company(self.state.workbook.company)
         return self.package.to_bytes()
+
+    def sheet_index(self, sheet: Sheet) -> int:
+        """The position of ``sheet``, by which sheet-level names refer to it."""
+        return workbook_sheets(self.workbook).index(sheet)
 
     def sheet_parts(self) -> dict[Sheet, str]:
         return {self.workbook[name]: part for name, part in sheet_parts(self.package).items()}
@@ -163,7 +169,10 @@ class Restorer:
             new.append(("extLst", f"<extLst>{''.join(remapped[len(names) :])}</extLst>"))
         self._cache_extensions(package.cache_extensions)
         data = self.package.read(MAIN)
-        self.package.write(MAIN, splice(data, insertions(scan(data), new, WORKBOOK_ORDER)))
+        data = splice(data, insertions(scan(data), new, WORKBOOK_ORDER))
+        if self.query_areas:
+            data = query_tables.with_areas(data.decode("utf-8"), self.query_areas).encode("utf-8")
+        self.package.write(MAIN, data)
         self.attach("", package.root_links, [], {})
 
     def _cache_extensions(self, extensions: dict[str, str]) -> None:
