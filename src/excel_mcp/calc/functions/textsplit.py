@@ -1,9 +1,12 @@
 """TEXTBEFORE, TEXTAFTER, TEXTSPLIT, VALUETOTEXT and ARRAYTOTEXT."""
 
+from excel_mcp.calc.costs import STEPS_PER_UNIT, cells, text_length
 from excel_mcp.calc.functions.helpers import as_grid
+from excel_mcp.calc.functions.text import joined_length
 from excel_mcp.calc.registry import function
 from excel_mcp.calc.values import (
     CALC,
+    MAX_TEXT,
     NA,
     VALUE,
     ExcelError,
@@ -80,7 +83,12 @@ def _cut(
     return source[:start] if before else source[end:]
 
 
-@function("TEXTBEFORE", kind="raw", array=(1,))
+def _split_steps(text: Value, *delimiters: Value) -> int:
+    tried = sum(cells(value) for value in delimiters[:2] if value is not None)
+    return text_length(text) * tried // STEPS_PER_UNIT
+
+
+@function("TEXTBEFORE", kind="raw", array=(1,), cost=_split_steps)
 def textbefore(
     text: Value,
     delimiter: Value,
@@ -93,7 +101,7 @@ def textbefore(
     return _cut(text, delimiter, instance, match_mode, match_end, if_not_found, before=True)
 
 
-@function("TEXTAFTER", kind="raw", array=(1,))
+@function("TEXTAFTER", kind="raw", array=(1,), cost=_split_steps)
 def textafter(
     text: Value,
     delimiter: Value,
@@ -121,7 +129,7 @@ def _split(text: str, delimiters: list[str], ignore_case: bool, ignore_empty: bo
     return [p for p in pieces if p] if ignore_empty else pieces
 
 
-@function("TEXTSPLIT", kind="raw", array=(1, 2))
+@function("TEXTSPLIT", kind="raw", array=(1, 2), cost=_split_steps)
 def textsplit(
     text: Value,
     column_delimiter: Value,
@@ -176,5 +184,14 @@ def arraytotext(array: Value, form: Scalar = 0) -> str:
     grid = as_grid(array)
     strict = mode == 1
     joiner = "," if strict else ", "
-    lines = [joiner.join(_shown(item, strict) for item in row) for row in grid.rows]  # pyright: ignore[reportArgumentType]
-    return ("{" + ";".join(lines) + "}") if strict else ", ".join(lines)
+    rows, length = [], 0
+    for row in grid.rows:
+        items = [_shown(item, strict) for item in row]  # pyright: ignore[reportArgumentType]
+        length += joined_length(joiner, items)
+        if length > MAX_TEXT:
+            raise FormulaError(VALUE)  # refused before a text longer than a cell is built
+        rows.append(joiner.join(items))
+    text = ("{" + ";".join(rows) + "}") if strict else ", ".join(rows)
+    if len(text) > MAX_TEXT:
+        raise FormulaError(VALUE)
+    return text

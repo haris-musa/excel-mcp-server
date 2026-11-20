@@ -1,5 +1,6 @@
 """Matrix functions: MMULT, MDETERM, MINVERSE, MUNIT."""
 
+from excel_mcp.calc.costs import STEPS_PER_UNIT, shape
 from excel_mcp.calc.functions.helpers import as_grid
 from excel_mcp.calc.functions.math import naive_sum
 from excel_mcp.calc.registry import function
@@ -31,7 +32,16 @@ def _square(value: Value) -> Matrix:
     return matrix
 
 
-@function("MMULT", array=True)
+def _product_steps(first: Value, second: Value) -> int:
+    height, inner = shape(first)
+    return height * inner * shape(second)[1] // STEPS_PER_UNIT
+
+
+def _elimination_steps(array: Value) -> int:
+    return shape(array)[0] ** 3 // STEPS_PER_UNIT
+
+
+@function("MMULT", array=True, cost=_product_steps)
 def mmult(first: Value, second: Value) -> Grid:
     left, right = _numbers(first), _numbers(second)
     if len(left[0]) != len(right):
@@ -46,7 +56,7 @@ def mmult(first: Value, second: Value) -> Grid:
     )
 
 
-@function("MDETERM", array=True)
+@function("MDETERM", array=True, cost=_elimination_steps)
 def mdeterm(array: Value) -> float:
     matrix = _square(array)
     size = len(matrix)
@@ -66,7 +76,7 @@ def mdeterm(array: Value) -> float:
     return determinant
 
 
-@function("MINVERSE", array=True)
+@function("MINVERSE", array=True, cost=_elimination_steps)
 def minverse(array: Value) -> Grid:
     matrix = _square(array)
     size = len(matrix)

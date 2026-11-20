@@ -3,6 +3,7 @@
 import datetime as dt
 from dataclasses import dataclass
 
+from excel_mcp.calc.costs import per_coupon
 from excel_mcp.calc.functions.accrual import coupon_periods, grid_date
 from excel_mcp.calc.functions.financial import newton
 from excel_mcp.calc.functions.securities import as_basis, as_date, require
@@ -66,7 +67,7 @@ def _odd_first(
     return OddFirst(dates[0], dates[1], dates[2], dates[3], r, redeem, freq, base)
 
 
-@function("ODDFPRICE", kind="scalar")
+@function("ODDFPRICE", kind="scalar", cost=per_coupon((0, 1, 2, 3), 7, 4))
 def oddfprice(
     settlement: Scalar,
     maturity: Scalar,
@@ -86,7 +87,7 @@ def oddfprice(
     return security.price(y)
 
 
-@function("ODDFYIELD", kind="scalar")
+@function("ODDFYIELD", kind="scalar", cost=per_coupon((0, 1, 2, 3), 7, 4))
 def oddfyield(
     settlement: Scalar,
     maturity: Scalar,
@@ -162,7 +163,7 @@ def _odd_last(
     return OddLast(dates[0], dates[1], dates[2], r, redeem, freq, base)
 
 
-@function("ODDLPRICE", kind="scalar")
+@function("ODDLPRICE", kind="scalar", cost=per_coupon((0, 1, 2), 6, 4))
 def oddlprice(
     settlement: Scalar,
     maturity: Scalar,
@@ -179,7 +180,7 @@ def oddlprice(
     return security.price(y)
 
 
-@function("ODDLYIELD", kind="scalar")
+@function("ODDLYIELD", kind="scalar", cost=per_coupon((0, 1, 2), 6, 4))
 def oddlyield(
     settlement: Scalar,
     maturity: Scalar,

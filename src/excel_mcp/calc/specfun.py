@@ -2,12 +2,25 @@
 
 import math
 from collections.abc import Callable
+from contextvars import ContextVar
 
 _EPSILON = 1e-15
 _TINY = 1e-300
 _MAX_TERMS = 100_000
 _STIRLING_FROM = 1e6
 _NEAR_ZERO = 1e-6
+# Terms summed so far in this context: the calculator charges them against its work limit,
+# because how many a distribution needs depends on its arguments.
+_terms: ContextVar[int] = ContextVar("terms", default=0)
+
+
+def terms() -> int:
+    """How many series terms, fraction terms and search steps this context has done."""
+    return _terms.get()
+
+
+def _done(count: int) -> None:
+    _terms.set(_terms.get() + count)
 
 
 def gamma_p(a: float, x: float) -> float:
@@ -35,20 +48,24 @@ def _gamma_prefactor(a: float, x: float) -> float:
 def _gamma_series(a: float, x: float) -> float:
     term = total = 1 / a
     n = a
+    count = 0
     for _ in range(_MAX_TERMS):
+        count += 1
         n += 1
         term *= x / n
         total += term
         if abs(term) < abs(total) * _EPSILON:
             break
+    _done(count)
     return total * _gamma_prefactor(a, x)
 
 
 def _gamma_fraction(a: float, x: float) -> float:
     b = x + 1 - a
     c = 1 / _TINY
-    d = 1 / b
+    d = 1 / (_TINY if abs(b) < _TINY else b)  # b is 0 where a is too large for x + 1 to differ
     h = d
+    i = 0
     for i in range(1, _MAX_TERMS):
         an = -i * (i - a)
         b += 2
@@ -61,6 +78,7 @@ def _gamma_fraction(a: float, x: float) -> float:
         h *= delta
         if abs(delta - 1) < _EPSILON:
             break
+    _done(i)
     return h * _gamma_prefactor(a, x)
 
 
@@ -115,6 +133,7 @@ def _beta_fraction(a: float, b: float, x: float) -> float:
     d = _TINY if abs(d) < _TINY else d
     d = 1 / d
     h = d
+    m = 0
     for m in range(1, _MAX_TERMS):
         m2 = 2 * m
         aa = m * (b - m) * x / ((qam + m2) * (a + m2))
@@ -134,6 +153,7 @@ def _beta_fraction(a: float, b: float, x: float) -> float:
         h *= delta
         if abs(delta - 1) < _EPSILON:
             break
+    _done(2 * m)
     return h
 
 
@@ -145,6 +165,7 @@ def solve_increasing(
         middle = (low + high) / 2
         if middle in (low, high):
             break
+        _done(1)
         if function(middle) < target:
             low = middle
         else:

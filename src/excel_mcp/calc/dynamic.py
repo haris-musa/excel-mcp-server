@@ -107,6 +107,9 @@ class _Analysis:
         self.resolve = resolve
         self.needs_arrays = False
         self.depth = 0
+        # Per name and depth: its shape and whether it needs array evaluation. Names built
+        # from names would otherwise be analysed once per use, exponentially often.
+        self.names: dict[tuple[str | None, str, int], tuple[bool, bool]] = {}
 
     def array(self, node: Node, scope: dict[str, bool]) -> bool:
         """Whether the node can hold several values; notes where that requires array evaluation."""
@@ -143,6 +146,18 @@ class _Analysis:
     def _name(self, node: Name, scope: dict[str, bool]) -> bool:
         if node.name.casefold() in scope:
             return scope[node.name.casefold()]
+        known = (node.sheet, node.name.casefold(), self.depth)
+        if known in self.names:
+            shape, needs = self.names[known]
+            self.needs_arrays = self.needs_arrays or needs
+            return shape
+        outer, self.needs_arrays = self.needs_arrays, False
+        shape = self._analysed(node)
+        self.names[known] = (shape, self.needs_arrays)
+        self.needs_arrays = outer or self.needs_arrays
+        return shape
+
+    def _analysed(self, node: Name) -> bool:
         text = self.resolve(node)
         if text is None or self.depth >= 4:
             return False

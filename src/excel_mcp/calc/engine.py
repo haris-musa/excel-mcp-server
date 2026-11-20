@@ -37,9 +37,11 @@ from excel_mcp.calc.parser import (
     Unary,
     left_chain,
     parse,
+    size,
 )
 from excel_mcp.calc.registry import FUNCTIONS, Function
 from excel_mcp.calc.scheduler import MAX_NAME_DEPTH, Scheduler, TooDeepError
+from excel_mcp.calc.specfun import terms
 from excel_mcp.calc.tablerefs import bind
 from excel_mcp.calc.values import (
     CALC,
@@ -65,8 +67,9 @@ from excel_mcp.xlfn import FUTURE_FUNCTIONS
 
 logger = logging.getLogger(__name__)
 
-MAX_WORK = 1_000_000
+MAX_WORK = 4_000_000  # units of about a microsecond: cells read, built or walked, steps
 TEXT_PER_UNIT = 16
+TERMS_PER_UNIT = 8  # terms of the distributions' series and fractions
 MAX_DEPTH = 30
 
 
@@ -90,6 +93,7 @@ class Engine:
         self.stale: set[CellKey] = set()  # cells whose stored results no longer hold
         self.memo: dict[CellKey, Scalar | UncalculableError] = {}
         self.trees: dict[CellKey, Node] = {}
+        self.names: dict[tuple[str, str, str, int, int], tuple[Node, int]] = {}
         self.spills: dict[CellKey, Grid] = {}
         self.active: set[CellKey] = set()
         self.work = 0
@@ -253,6 +257,13 @@ class Engine:
             self.charge(len(value) // TEXT_PER_UNIT)
         return value
 
+    def counted(self, value: Value) -> Value:
+        """Count an array against the work limit each time an operation hands it on, since
+        whatever takes it next goes through its cells."""
+        if isinstance(value, Grid):
+            self.charge(value.height * value.width)
+        return value
+
     def charge(self, units: int) -> None:
         # A request that is too big is refused without using up what is left for other cells.
         if self.work + units > MAX_WORK:
@@ -333,19 +344,31 @@ class Engine:
         scope = self.scope_of(node.name)
         if scope is not None:
             found = scope[node.name.casefold()]
-            return CALC if isinstance(found, Lambda) else found
+            return CALC if isinstance(found, Lambda) else self.counted(found)
         if self.name_depth >= MAX_NAME_DEPTH:
             raise UncalculableError("names nested too deeply")
         scope = self.find_sheet(node.sheet) if node.sheet else self.here.sheet
-        defined = self.lookup_name(scope, node.name)
-        tree = bind(parse(defined), self.workbook, self.here.sheet, self.here.row, self.here.col)
-        if _has_relative_reference(tree):
-            raise UncalculableError(f"name {node.name} uses relative references")
+        tree, units = self.defined_tree(scope, node.name)
+        # A name used many times, or names built from names, is evaluated every time it is
+        # used, so each use counts what it evaluates.
+        self.charge(units)
         self.name_depth += 1
         try:
             return self.eval(tree, array)
         finally:
             self.name_depth -= 1
+
+    def defined_tree(self, scope: Worksheet, name: str) -> tuple[Node, int]:
+        """The bound formula of a defined name used in the current cell, and its size."""
+        here = self.here
+        key = (scope.title, name.casefold(), here.sheet.title, here.row, here.col)
+        if key not in self.names:
+            defined = self.lookup_name(scope, name)
+            tree = bind(parse(defined), self.workbook, here.sheet, here.row, here.col)
+            if _has_relative_reference(tree):
+                raise UncalculableError(f"name {name} uses relative references")
+            self.names[key] = (tree, size(tree))
+        return self.names[key]
 
     def is_defined(self, node: Name) -> bool:
         scope = self.find_sheet(node.sheet) if node.sheet else self.here.sheet
@@ -385,9 +408,11 @@ class Engine:
                 except FormulaError as error:
                     return error.error
             case Unary(op, operand):
-                return elementwise(lambda v: apply_unary(op, v), self.operand(operand, array))
+                return self.counted(
+                    elementwise(lambda v: apply_unary(op, v), self.operand(operand, array))
+                )
             case Percent(operand):
-                return elementwise(apply_percent, self.operand(operand, array))
+                return self.counted(elementwise(apply_percent, self.operand(operand, array)))
             case Binary():
                 base, chain = left_chain(node)
                 value = self.eval(base, array)
@@ -401,7 +426,7 @@ class Engine:
             case Call():
                 return self.call(node, array)
             case ArrayLiteral(rows):
-                return Grid([[self.scalar(item) for item in row] for row in rows])
+                return self.counted(Grid([[self.scalar(item) for item in row] for row in rows]))
         raise UncalculableError("unsupported syntax")
 
     def common_cells(self, left: Value, right: Value) -> Value:
@@ -426,7 +451,9 @@ class Engine:
         return RefGrid(rows, top, left_edge, 1, sheet=left.sheet)
 
     def binary(self, op: str, left: Value, right: Value) -> Value:
-        return elementwise(lambda a, b: self.sized(apply_binary(op, a, b)), left, right)
+        return self.counted(
+            elementwise(lambda a, b: self.sized(apply_binary(op, a, b)), left, right)
+        )
 
     def operand(self, node: Node, array: bool) -> Value:
         value = self.eval(node, array)
@@ -445,7 +472,7 @@ class Engine:
             scope = self.scope_of(node.name)
             lam = scope[node.name.casefold()] if scope else None
             if isinstance(lam, Lambda):
-                return run(self, lam, *(self.eval(arg, True) for arg in node.args))
+                return self.counted(run(self, lam, *(self.eval(arg, True) for arg in node.args)))
             raise UncalculableError(node.name)
         if node.name in FUTURE_FUNCTIONS and not node.prefixed:
             raise UncalculableError(f"{node.name} needs the {FUTURE_FUNCTIONS[node.name]} prefix")
@@ -462,7 +489,7 @@ class Engine:
             return NUM
         if isinstance(result, str):
             self.sized(result)
-        return result
+        return self.counted(result)
 
     def dispatch(self, spec: Function, args: tuple[Node, ...], array: bool) -> Value:
         if spec.kind == "lazy":
@@ -474,11 +501,17 @@ class Engine:
         values = [self.eval(arg, array or spec.array_at(index)) for index, arg in enumerate(args)]
         if spec.kind in ("scalar", "check"):
             return self.call_scalar(spec, values, array)
+        if spec.cost is not None:
+            self.charge(spec.cost(*values))
         if spec.kind == "eager":
             for value in values:
                 if isinstance(value, ExcelError):
                     return value
-        return spec.call(*values)
+        before = terms()
+        try:
+            return spec.call(*values)
+        finally:
+            self.charge((terms() - before) // TERMS_PER_UNIT)
 
     def call_scalar(self, spec: Function, values: list[Value], array: bool) -> Value:
         if not array:
@@ -491,12 +524,17 @@ class Engine:
                 for value in scalars:
                     if isinstance(value, ExcelError):
                         return value
+            if spec.cost is not None:
+                self.charge(spec.cost(*scalars))
+            before = terms()
             try:
                 return self.sized(spec.call(*scalars))
             except FormulaError as error:
                 return error.error
             except OverflowError:
                 return NUM
+            finally:
+                self.charge((terms() - before) // TERMS_PER_UNIT)
 
         return elementwise(apply, *values)
 

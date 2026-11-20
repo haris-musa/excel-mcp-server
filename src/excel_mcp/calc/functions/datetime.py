@@ -3,6 +3,7 @@
 import calendar
 import datetime as dt
 
+from excel_mcp.calc.costs import per_count, per_day
 from excel_mcp.calc.dateparts import LAST_SERIAL, month_day_year, serial_day
 from excel_mcp.calc.functions.helpers import flat
 from excel_mcp.calc.registry import function
@@ -377,24 +378,24 @@ def _workday(start: Scalar, count: Scalar, mask: str, holidays: Value) -> float:
     return float(current)
 
 
-@function("NETWORKDAYS")
+@function("NETWORKDAYS", cost=per_day(0, 1, 0.5))
 def networkdays(start: Scalar, end: Scalar, holidays: Value = None) -> float:
     return _networkdays(start, end, _WEEKENDS[1], holidays)
 
 
-@function("NETWORKDAYS.INTL")
+@function("NETWORKDAYS.INTL", cost=per_day(0, 1, 0.5))
 def networkdays_intl(
     start: Scalar, end: Scalar, weekend: Scalar = 1, holidays: Value = None
 ) -> float:
     return _networkdays(start, end, _weekend_mask(weekend), holidays)
 
 
-@function("WORKDAY")
+@function("WORKDAY", cost=per_count(1, 0.5))
 def workday(start: Scalar, count: Scalar, holidays: Value = None) -> float:
     return _workday(start, count, _WEEKENDS[1], holidays)
 
 
-@function("WORKDAY.INTL")
+@function("WORKDAY.INTL", cost=per_count(1, 0.5))
 def workday_intl(
     start: Scalar, count: Scalar, weekend: Scalar = 1, holidays: Value = None
 ) -> float:

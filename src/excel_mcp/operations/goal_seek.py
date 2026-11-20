@@ -14,7 +14,7 @@ from excel_mcp.errors import InvalidArgumentError, LimitExceededError
 from excel_mcp.refs import CellRange, parse_cell
 from excel_mcp.workspace import Workspace, get_sheet
 
-MAX_TOTAL_WORK = 5_000_000  # cell calculations over all iterations: a few times one full pass
+MAX_TOTAL_WORK = 20_000_000  # work over all iterations: a few times one full pass
 
 
 class GoalSeekResult(BaseModel):
@@ -101,7 +101,7 @@ class _Problem:
         if self.spent > MAX_TOTAL_WORK:
             raise LimitExceededError(
                 f"Goal Seek stopped: the formula in {self.name} takes too long to recalculate "
-                f"(over {MAX_TOTAL_WORK:,} cell calculations across the iterations). "
+                f"(over {MAX_TOTAL_WORK:,} units of work across the iterations). "
                 "Point it at a smaller chain of formulas."
             )
 

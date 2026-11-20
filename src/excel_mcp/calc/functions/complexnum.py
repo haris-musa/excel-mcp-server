@@ -23,9 +23,11 @@ from excel_mcp.calc.values import (
 )
 from excel_mcp.digits import ascii_digits
 
-_NUMBER = r"(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?"
+_NUMBER = r"(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?"
+# The imaginary coefficient follows its sign, so no run of digits can be split two ways and a
+# failed match takes linear time.
 _COMPLEX = re.compile(
-    rf"(?P<real>[+-]?{_NUMBER})?(?P<sign>[+-]{{1,2}})?(?P<imag>{_NUMBER})?(?P<unit>[ij])?",
+    rf"(?P<real>[+-]?{_NUMBER})?(?:(?P<sign>[+-]{{1,2}})(?P<imag>{_NUMBER})?)?(?P<unit>[ij])?",
     re.ASCII,
 )
 _MAX_PLAIN = 21

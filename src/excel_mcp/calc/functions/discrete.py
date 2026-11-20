@@ -1,7 +1,9 @@
 """Discrete distributions: hypergeometric, negative binomial, binomial inverse and range."""
 
 import math
+from collections.abc import Iterator
 
+from excel_mcp.calc.costs import magnitude, per_count
 from excel_mcp.calc.functions.continuous import require
 from excel_mcp.calc.functions.helpers import OMITTED, Omitted, as_grid
 from excel_mcp.calc.functions.math import naive_sum
@@ -27,7 +29,7 @@ def _binomial_mass(k: int, n: int, p: float) -> float:
     return math.comb(n, k) * p**k * (1 - p) ** (n - k)
 
 
-@function("HYPGEOM.DIST", kind="scalar")
+@function("HYPGEOM.DIST", kind="scalar", cost=per_count(1, 4))
 def hypgeom_dist(
     sample_successes: Scalar,
     sample_size: Scalar,
@@ -44,15 +46,26 @@ def hypgeom_dist(
         raise UncalculableError("HYPGEOM.DIST of a large population")
     first, last = max(0, n - big_n + big_s), min(n, big_s)
 
-    def mass(i: int) -> float:
-        return math.comb(big_s, i) * math.comb(big_n - big_s, n - i) / math.comb(big_n, n)
-
+    total = math.comb(big_n, n)
     if not cdf:
-        return mass(s) if first <= s <= last else 0.0
-    return naive_sum(mass(i) for i in range(first, min(s, last) + 1))
+        if not first <= s <= last:
+            return 0.0
+        return math.comb(big_s, s) * math.comb(big_n - big_s, n - s) / total
+    return naive_sum(_masses(big_n, big_s, n, first, min(s, last), total))
 
 
-@function("HYPGEOMDIST", kind="scalar")
+def _masses(big_n: int, big_s: int, n: int, first: int, last: int, total: int) -> Iterator[float]:
+    """The probabilities of first..last successes, with the binomial coefficients updated by
+    one exact step each instead of computed afresh."""
+    others = big_n - big_s
+    chosen, rest = math.comb(big_s, first), math.comb(others, n - first)
+    for i in range(first, last + 1):
+        yield chosen * rest / total
+        chosen = chosen * (big_s - i) // (i + 1)
+        rest = rest * (n - i) // (others - n + i + 1)
+
+
+@function("HYPGEOMDIST", kind="scalar", cost=per_count(1, 4))
 def hypgeomdist(
     sample_successes: Scalar,
     sample_size: Scalar,
@@ -62,7 +75,11 @@ def hypgeomdist(
     return hypgeom_dist(sample_successes, sample_size, population_successes, population_size, False)
 
 
-@function("NEGBINOM.DIST", kind="scalar")
+def _negative_binomial_steps(failures: Scalar, successes: Scalar, *_: Scalar) -> int:
+    return 1 + int(magnitude(failures) + magnitude(successes))
+
+
+@function("NEGBINOM.DIST", kind="scalar", cost=_negative_binomial_steps)
 def negbinom_dist(failures: Scalar, successes: Scalar, p: Scalar, cumulative: Scalar) -> float:
     f, s, probability = to_int(failures), to_int(successes), to_number(p)
     cdf = to_bool(cumulative)
@@ -75,12 +92,12 @@ def negbinom_dist(failures: Scalar, successes: Scalar, p: Scalar, cumulative: Sc
     return naive_sum(mass(i) for i in range(f + 1)) if cdf else mass(f)
 
 
-@function("NEGBINOMDIST", kind="scalar")
+@function("NEGBINOMDIST", kind="scalar", cost=_negative_binomial_steps)
 def negbinomdist(failures: Scalar, successes: Scalar, p: Scalar) -> float:
     return negbinom_dist(failures, successes, p, False)
 
 
-@function("BINOM.INV", "CRITBINOM", kind="scalar")
+@function("BINOM.INV", "CRITBINOM", kind="scalar", cost=per_count(0, 2))
 def binom_inv(trials: Scalar, p: Scalar, alpha: Scalar) -> float:
     n, probability, target = to_int(trials), to_number(p), to_number(alpha)
     require(n >= 0 and 0 < probability < 1 and 0 < target < 1)
@@ -93,7 +110,7 @@ def binom_inv(trials: Scalar, p: Scalar, alpha: Scalar) -> float:
     return float(n)
 
 
-@function("BINOM.DIST.RANGE", kind="scalar")
+@function("BINOM.DIST.RANGE", kind="scalar", cost=per_count(0, 2))
 def binom_dist_range(
     trials: Scalar, p: Scalar, low: Scalar, high: Scalar | Omitted = OMITTED
 ) -> float:

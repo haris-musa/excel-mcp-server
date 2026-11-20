@@ -182,7 +182,8 @@ def date_to_serial(date: dt.date) -> int:
     return (date - DATE_ORIGIN).days
 
 
-_PLAIN_NUMBER = re.compile(r"(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?", re.ASCII)
+# Each pattern reads a run of digits one way only, so a failed match takes linear time.
+_PLAIN_NUMBER = re.compile(r"(\d+(?:\.\d*)?|\.\d+)([eE][+-]?\d+)?", re.ASCII)
 _THOUSANDS = re.compile(r"\d{1,3}(,\d{3})+(\.\d*)?", re.ASCII)
 _ISO_DATE = re.compile(r"(\d{4})-(\d{1,2})-(\d{1,2})", re.ASCII)
 _TIME = re.compile(r"(\d{1,2}):(\d{2})(?::(\d{2}))?", re.ASCII)
@@ -192,6 +193,9 @@ _DATE_TEXT = re.compile(
     r"\d\s*[/-]\s*\d|\d\s*[AaPp][Mm]|(?i:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*\d|\d\s*(?i:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)",
     re.ASCII,
 )
+
+
+MAX_DATE_TEXT = 255  # Excel reads no longer text as a date
 
 
 def parse_number(text: str) -> float | None:
@@ -214,7 +218,7 @@ def parse_number(text: str) -> float | None:
         return None if number is None else number / 100 if percent else number
     if not percent and not sign and (moment := _parse_date_time(body)) is not None:
         return moment
-    if _DATE_TEXT.search(text):
+    if len(text) <= MAX_DATE_TEXT and _DATE_TEXT.search(text):
         raise UncalculableError("text that Excel may read as a date")
     return None
 

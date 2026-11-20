@@ -8,8 +8,8 @@ class Wildcard:
 
     Split at each "*" into segments of literal characters and "?" (None), each
     segment is placed at its leftmost position after the previous one, which is
-    always enough. Matching therefore takes time proportional to the text length
-    times the pattern length, however many stars the pattern has.
+    always enough. Segments are found with a bit-parallel scan, so matching reads
+    the text once, however long the pattern is and however many stars it has.
     """
 
     def __init__(self, pattern: str) -> None:
@@ -62,6 +62,22 @@ def _fits(segment: Segment, chars: list[str], at: int) -> bool:
 
 
 def _find(segment: Segment, chars: list[str], start: int, end: int) -> int | None:
-    return next(
-        (at for at in range(start, end - len(segment) + 1) if _fits(segment, chars, at)), None
-    )
+    """The first position from ``start`` where the segment fits before ``end``.
+
+    Bit i of ``state`` says whether the first i + 1 characters of the segment end at the
+    current character (the Shift-And algorithm), so each character costs one step.
+    """
+    if not segment:
+        return start if start <= end else None
+    anything = sum(1 << i for i, want in enumerate(segment) if want is None)
+    masks: dict[str, int] = {}
+    for i, want in enumerate(segment):
+        if want is not None:
+            masks[want] = masks.get(want, anything) | 1 << i
+    done = 1 << (len(segment) - 1)
+    state = 0
+    for at in range(start, end):
+        state = ((state << 1) | 1) & masks.get(chars[at], anything)
+        if state & done:
+            return at - len(segment) + 1
+    return None

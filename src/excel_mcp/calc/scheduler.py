@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from openpyxl.worksheet.formula import ArrayFormula
 from openpyxl.worksheet.worksheet import Worksheet
 
-from excel_mcp.calc.cells import key, stored_in
+from excel_mcp.calc.cells import key, scan_size, stored_in
 from excel_mcp.calc.functions.arrays import anchor_target
 from excel_mcp.calc.functions.indirect import indirect_target
 from excel_mcp.calc.functions.lookup import offset_target
@@ -101,7 +101,7 @@ class Scheduler:
         """Calculate the cells a formula uses. A failure is remembered, and the formula
         reports it if it needs the cell."""
         for target, top, left, bottom, right in list(self._references(tree, sheet, 0)):
-            self.engine.charge(1)
+            self.engine.charge(scan_size(target, top, left, bottom, right))
             for position, other in stored_in(target, top, left, bottom, right):
                 if other.data_type == "f" and self._is_unfinished(target, *position):
                     with suppress(UncalculableError):
@@ -124,7 +124,7 @@ class Scheduler:
             return []
         found = []
         for target, top, left, bottom, right in references:
-            engine.charge(1)
+            engine.charge(scan_size(target, top, left, bottom, right))
             for position, other in stored_in(target, top, left, bottom, right):
                 if other.data_type == "f" and self._is_unfinished(target, *position):
                     found.append((target, *position))

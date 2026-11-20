@@ -278,9 +278,15 @@ def gcd(*args: Value) -> float:
 
 @function("LCM")
 def lcm(*args: Value) -> float:
-    result = math.lcm(*_integers(args))
-    if result > _WHOLE_LIMIT:
-        raise fail(NUM)
+    values = _integers(args)
+    if 0 in values:
+        return 0.0
+    result = 1
+    for value in values:
+        # Stopping at the limit keeps the result small; a huge product takes quadratic time.
+        result = math.lcm(result, value)
+        if result > _WHOLE_LIMIT:
+            raise fail(NUM)
     return float(result)
 
 

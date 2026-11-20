@@ -191,13 +191,16 @@ def _positions(indexes: tuple[Value, ...], size: int) -> list[int]:
 @function("CHOOSEROWS", array=(0,))
 def chooserows(array: Value, *indexes: Value) -> Grid:
     grid = exact_extent(array)
-    return Grid([list(grid.rows[i]) for i in _positions(indexes, grid.height)])
+    rows = _positions(indexes, grid.height)
+    check_array_size(len(rows), grid.width)
+    return Grid([list(grid.rows[i]) for i in rows])
 
 
 @function("CHOOSECOLS", array=(0,))
 def choosecols(array: Value, *indexes: Value) -> Grid:
     grid = exact_extent(array)
     columns = _positions(indexes, grid.width)
+    check_array_size(grid.height, len(columns))
     return Grid([[line[i] for i in columns] for line in grid.rows])
 
 

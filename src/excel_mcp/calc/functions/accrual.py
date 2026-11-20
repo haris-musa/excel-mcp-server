@@ -4,6 +4,7 @@ import calendar
 import datetime as dt
 import math
 
+from excel_mcp.calc.costs import per_coupon
 from excel_mcp.calc.functions.datetime import actual_year_length, add_months, days360
 from excel_mcp.calc.functions.securities import (
     as_basis,
@@ -13,7 +14,14 @@ from excel_mcp.calc.functions.securities import (
     years_between,
 )
 from excel_mcp.calc.registry import function
-from excel_mcp.calc.values import Scalar, UncalculableError, to_bool, to_int, to_number
+from excel_mcp.calc.values import (
+    Scalar,
+    UncalculableError,
+    check_periods,
+    to_bool,
+    to_int,
+    to_number,
+)
 
 
 @function("ACCRINTM", kind="scalar")
@@ -138,7 +146,7 @@ def coupon_periods(
     return total
 
 
-@function("ACCRINT", kind="scalar")
+@function("ACCRINT", kind="scalar", cost=per_coupon((0, 1, 2), 5, 2))
 def accrint(
     issue: Scalar,
     first_interest: Scalar,
@@ -226,6 +234,9 @@ def amordegrc(
     left = c - rest  # what may still be depreciated; the period that passes it is paid in full
     if per == 0:
         return float(depreciation)
+    if per > last_two + 1:
+        return 0.0  # every period after the last two depreciates nothing
+    check_periods(per)
     half = 0
     for period in range(1, per + 1):
         if left < 0:

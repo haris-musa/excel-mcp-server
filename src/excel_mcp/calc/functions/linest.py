@@ -3,6 +3,7 @@
 import math
 from dataclasses import dataclass
 
+from excel_mcp.calc.costs import STEPS_PER_UNIT, cells
 from excel_mcp.calc.functions.helpers import as_grid
 from excel_mcp.calc.leastsquares import Fit, least_squares
 from excel_mcp.calc.registry import function
@@ -30,6 +31,13 @@ class Data:
     @property
     def count(self) -> int:
         return len(self.y)
+
+
+def _fit_steps(known_y: Value, known_x: Value = None, *_: Value) -> int:
+    """The least squares fit takes about n k^3 steps for n observations of k variables."""
+    n = max(cells(known_y), 1)
+    k = (1 if known_x is None else max(cells(known_x) // n, 1)) + 1
+    return (n + k) * k**3 // STEPS_PER_UNIT
 
 
 def _numbers(grid: Grid) -> list[list[float]]:
@@ -135,7 +143,7 @@ def _flags(const: Scalar, stats: Scalar) -> tuple[bool, bool]:
     return (True if const is None else to_bool(const)), to_bool(stats)
 
 
-@function("LINEST", array=True)
+@function("LINEST", array=True, cost=_fit_steps)
 def linest(
     known_y: Value, known_x: Value = None, const: Scalar = True, stats: Scalar = False
 ) -> Grid:
@@ -149,7 +157,7 @@ def _log_data(data: Data) -> Data:
     return Data([math.log(y) for y in data.y], data.columns, data.by_row)
 
 
-@function("LOGEST", array=True)
+@function("LOGEST", array=True, cost=_fit_steps)
 def logest(
     known_y: Value, known_x: Value = None, const: Scalar = True, stats: Scalar = False
 ) -> Grid:
@@ -183,13 +191,13 @@ def _predict(data: Data, new_x: Value | None, const: bool, grow: bool) -> Grid:
     return Grid([values]) if data.by_row else Grid([[v] for v in values])
 
 
-@function("TREND", array=True)
+@function("TREND", array=True, cost=_fit_steps)
 def trend(known_y: Value, known_x: Value = None, new_x: Value = None, const: Scalar = True) -> Grid:
     use_const, _ = _flags(const, False)
     return _predict(read_data(known_y, known_x), new_x, use_const, grow=False)
 
 
-@function("GROWTH", array=True)
+@function("GROWTH", array=True, cost=_fit_steps)
 def growth(
     known_y: Value, known_x: Value = None, new_x: Value = None, const: Scalar = True
 ) -> Grid:

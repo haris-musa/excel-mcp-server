@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from excel_mcp.calc.parser import Call, Name, Node
+from excel_mcp.calc.parser import MAX_NESTING, Call, Name, Node, size
 from excel_mcp.calc.registry import function
 from excel_mcp.calc.values import (
     CALC,
@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 class Lambda:
     parameters: tuple[str, ...]
     body: Node
+    size: int  # nodes in the body: each call evaluates them, including the scalar operators
 
 
 def lambda_of(engine: "Engine", node: Node) -> Lambda:
@@ -37,7 +38,7 @@ def lambda_of(engine: "Engine", node: Node) -> Lambda:
         *names, body = node.args
         if not names or not all(isinstance(name, Name) for name in names):
             raise UncalculableError("LAMBDA with parameters that are not names")
-        return Lambda(tuple(name.name.casefold() for name in names), body)  # pyright: ignore[reportAttributeAccessIssue]
+        return Lambda(tuple(name.name.casefold() for name in names), body, size(body))  # pyright: ignore[reportAttributeAccessIssue]
     if isinstance(node, Name):
         scope = engine.scope_of(node.name)
         found = scope[node.name.casefold()] if scope else None
@@ -51,6 +52,9 @@ def lambda_of(engine: "Engine", node: Node) -> Lambda:
 def run(engine: "Engine", lam: Lambda, *arguments: Value) -> Value:
     if len(arguments) != len(lam.parameters):
         raise FormulaError(VALUE)
+    if len(engine.scopes) >= MAX_NESTING:
+        raise UncalculableError("LAMBDA calls nested too deeply")  # a LAMBDA calling itself
+    engine.charge(lam.size)
     engine.scopes.append(dict(zip(lam.parameters, arguments, strict=True)))
     try:
         return engine.eval(lam.body, True)
@@ -99,6 +103,7 @@ def map_(engine: "Engine", *args: Node) -> Value:
     sources = [_grid(engine, array) for array in arrays]
     lam = lambda_of(engine, function_)
     height, width = max(s.height for s in sources), max(s.width for s in sources)
+    check_array_size(height, width)
 
     def element(grid: Grid, r: int, c: int) -> Scalar:
         return (

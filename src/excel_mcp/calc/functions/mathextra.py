@@ -25,6 +25,7 @@ from excel_mcp.calc.values import (
 _ANGLE_LIMIT = 2**27
 _MAX_WHOLE = 2**53
 _EXP_LIMIT = 709.78  # beyond it EXP overflows and the reciprocal of SINH or COSH is 0
+_COMB_OVERFLOW = 712  # the log of a coefficient clearly beyond the largest double
 
 
 def _unary(
@@ -137,6 +138,8 @@ def combina(number: Scalar, chosen: Scalar) -> float:
         raise FormulaError(NUM)
     if n == 0:
         return 1.0
+    if math.lgamma(n + k) - math.lgamma(k + 1) - math.lgamma(n) > _COMB_OVERFLOW:
+        raise FormulaError(NUM)  # decided before building an integer of n + k bits
     return float(math.comb(n + k - 1, k))
 
 

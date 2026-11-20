@@ -86,7 +86,7 @@ def exact(first: Scalar, second: Scalar) -> bool:
 
 @function("CONCAT")
 def concat(*args: Value) -> str:
-    return _limited("".join(to_text(v) for v in flat(args)))
+    return _joined("", [to_text(v) for v in flat(args)])
 
 
 @function("CONCATENATE", kind="scalar")
@@ -99,7 +99,18 @@ def textjoin(delimiter: Value, ignore_empty: Value, *args: Value) -> str:
     separator = to_text(delimiter)
     skip = to_bool(ignore_empty)
     items = [to_text(v) for v in flat(args)]
-    return _limited(separator.join(i for i in items if i or not skip))
+    return _joined(separator, [i for i in items if i or not skip])
+
+
+def joined_length(separator: str, items: list[str]) -> int:
+    return sum(map(len, items)) + len(separator) * max(len(items) - 1, 0)
+
+
+def _joined(separator: str, items: list[str]) -> str:
+    """The items joined, refused before a result longer than a cell is built."""
+    if joined_length(separator, items) > MAX_TEXT:
+        raise FormulaError(VALUE)
+    return separator.join(items)
 
 
 def _limited(text: str) -> str:
@@ -198,7 +209,15 @@ def numbervalue(text: Scalar, decimal: Scalar = ".", group: Scalar = ",") -> flo
     return number / 100**percents
 
 
-@function("TEXT", kind="scalar")
+_FRACTION = re.compile(r"[0#?]\s*/\s*[0-9#?]")
+_FRACTION_UNITS = 64  # a fraction format searches the denominators for the closest one
+
+
+def _format_steps(number: Scalar, fmt: Scalar) -> int:
+    return _FRACTION_UNITS if isinstance(fmt, str) and _FRACTION.search(fmt) else 1
+
+
+@function("TEXT", kind="scalar", cost=_format_steps)
 def text_(number: Scalar, fmt: Scalar) -> str:
     if to_text(fmt) == "":
         return ""

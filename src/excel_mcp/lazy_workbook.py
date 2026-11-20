@@ -237,8 +237,15 @@ class LazyCells(dict[CellKey, Any]):
     ) -> Iterator[tuple[CellKey, Any]]:
         for row in self.source.row_numbers[self.source.between(top, bottom)]:
             self.load(row)
-            for col in sorted(self.columns.get(row, ())):
-                if left <= col <= right:
+            columns = self.columns.get(row, ())
+            # Walk whichever is fewer, the rectangle's columns or the row's cells, so a narrow
+            # rectangle over wide rows costs its own size.
+            if right - left + 1 < len(columns):
+                for col in range(left, right + 1):
+                    if (cell := dict.get(self, (row, col))) is not None:
+                        yield (row, col), cell
+            else:
+                for col in sorted(c for c in columns if left <= c <= right):
                     yield (row, col), super().__getitem__((row, col))
 
     def load_all(self) -> None:

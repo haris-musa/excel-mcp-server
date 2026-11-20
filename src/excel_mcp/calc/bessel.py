@@ -16,6 +16,8 @@ SERIES_LIMIT = 60  # beyond this J and Y use the asymptotic expansion
 SERIES_LIMIT_HIGH_ORDER = 2000  # where the order is too high for the expansion
 _TERMS = 100_000
 _UNDERFLOW = -744.4  # log of the smallest float
+_OVERFLOW = 709.79  # log of the largest float
+_MARGIN = 20  # keeps the shortcuts clear of results that round to a double
 MAX_GROWTH = 800  # exp(x) overflows beyond about 710
 
 
@@ -34,13 +36,46 @@ def bessel_j(x: float, n: int) -> float:
         return (-1) ** n * bessel_j(-x, n)
     if x > SERIES_LIMIT and x > n * n:
         return _hankel(x, n)[0]
+    if j_vanishes(x, n):
+        return 0.0
     return float(_series(x, n)[0])
 
 
 def bessel_y(x: float, n: int) -> float:
     if x > SERIES_LIMIT and x > n * n:
         return _hankel(x, n)[1]
+    if y_overflows(x, n):
+        raise OverflowError
     return float(_series(x, n)[1])
+
+
+def _log_bound(x: float, n: int) -> float:
+    """The log of |x/2|^n / n!, which bounds |J_n(x)| for every real x."""
+    return n * math.log(abs(x) / 2) - math.lgamma(n + 1)
+
+
+def j_vanishes(x: float, n: int) -> bool:
+    """Whether J_n(x) is certainly below the smallest double, so the series is not needed."""
+    return n > 0 and _log_bound(x, n) < _UNDERFLOW - _MARGIN
+
+
+def y_overflows(x: float, n: int) -> bool:
+    """Whether |Y_n(x)| is certainly beyond the largest double, for 0 < x.
+
+    The Wronskian J_n Y_(n-1) - J_(n-1) Y_n = 2 / (pi x) gives |Y_n| >= 2 / (pi x J_(n-1))
+    where J is positive and Y negative, which holds while J_(n-1) is this small.
+    """
+    return n > 0 and _log_bound(x, n - 1) < -(_OVERFLOW + math.log(math.pi * x / 2) + _MARGIN)
+
+
+def series_steps(x: float, n: int, y: bool) -> int:
+    """About how many decimal steps J or Y take for these arguments."""
+    x = abs(x)
+    if x > SERIES_LIMIT_HIGH_ORDER or (x > SERIES_LIMIT and x > n * n) or x == 0:
+        return 0
+    if y_overflows(x, n) if y else j_vanishes(x, n):
+        return 0
+    return (n + int(x)) * _digits(x) + n * n
 
 
 def _series(x: float, n: int) -> tuple[Decimal, Decimal]:

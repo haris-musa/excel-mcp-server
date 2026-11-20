@@ -52,7 +52,9 @@ def _cells(
         right = node.right or max(last_column, left)
         engine.charge((bottom - top + 1) * (right - left + 1))
         for row in range(top, bottom + 1):
-            is_hidden = sheet.row_dimensions[row].hidden
+            # get() leaves the sheet as it is; indexing would add a dimension for every row.
+            dimension = sheet.row_dimensions.get(row)
+            is_hidden = dimension is not None and dimension.hidden
             if is_hidden and hidden == "skip":
                 continue
             if is_hidden and hidden == "manual" and _filtered(sheet):

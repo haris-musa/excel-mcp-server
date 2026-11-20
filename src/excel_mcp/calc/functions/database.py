@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from excel_mcp.calc.engine import Engine
 
 _OPERATORS = ("<", ">", "=")
+COMPUTED_CRITERION_UNITS = 100  # tokenizing, moving and parsing the formula for one record
 _CELL = re.compile(
     r"(?:(?P<sheet>'(?:[^']|'')+'|[^'!]+)!)?\$?(?P<col>[A-Za-z]{1,3})\$?(?P<row>\d+)"
 )
@@ -82,6 +83,11 @@ class Database:
             [(c, targets[c], _test(cell)) for c, cell in enumerate(row) if not _blank(cell)]  # pyright: ignore[reportArgumentType]
             for row in self.criteria.rows[1:]
         ]
+        # Every record is tested against every criteria cell; a computed criterion is a
+        # formula evaluated afresh for each record.
+        tests = sum(len(row) for row in alternatives)
+        computed = sum(target is None for row in alternatives for _, target, _ in row)
+        self.engine.charge(len(self.records) * (tests + computed * COMPUTED_CRITERION_UNITS))
         return [
             record  # pyright: ignore[reportReturnType]
             for offset, record in enumerate(self.records)

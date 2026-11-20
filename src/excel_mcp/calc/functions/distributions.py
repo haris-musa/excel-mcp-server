@@ -3,6 +3,7 @@
 import math
 import statistics
 
+from excel_mcp.calc.costs import per_count
 from excel_mcp.calc.functions.math import naive_sum
 from excel_mcp.calc.registry import function
 from excel_mcp.calc.values import (
@@ -58,7 +59,7 @@ def standardize(x: Scalar, mean: Scalar, sd: Scalar) -> float:
     return (to_number(x) - to_number(mean)) / deviation
 
 
-@function("BINOM.DIST", kind="scalar")
+@function("BINOM.DIST", kind="scalar", cost=per_count(1, 2))
 def binom_dist(successes: Scalar, trials: Scalar, p: Scalar, cumulative: Scalar) -> float:
     k, n, probability = to_int(successes), to_int(trials), to_number(p)
     if not (0 <= k <= n and 0 <= probability <= 1):

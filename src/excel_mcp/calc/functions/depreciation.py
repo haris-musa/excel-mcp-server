@@ -2,6 +2,7 @@
 
 import math
 
+from excel_mcp.calc.costs import per_count
 from excel_mcp.calc.registry import function
 from excel_mcp.calc.values import (
     DIV0,
@@ -30,7 +31,7 @@ def syd(cost: Scalar, salvage: Scalar, life: Scalar, per: Scalar) -> float:
     return (c - s) * (n - p + 1) * 2 / (n * (n + 1))
 
 
-@function("DB", kind="scalar")
+@function("DB", kind="scalar", cost=per_count(2, 0.5))
 def db(cost: Scalar, salvage: Scalar, life: Scalar, period: Scalar, month: Scalar = 12) -> float:
     c, s, n, p, m = (to_number(v) for v in (cost, salvage, life, period, month))
     if c < 0 or s < 0 or n <= 0 or p <= 0 or not 1 <= m <= 12 or p > n + (m < 12):
@@ -76,7 +77,7 @@ def _declining(
     return taken
 
 
-@function("DDB", kind="scalar")
+@function("DDB", kind="scalar", cost=per_count(2, 0.5))
 def ddb(cost: Scalar, salvage: Scalar, life: Scalar, period: Scalar, factor: Scalar = 2) -> float:
     c, s, n, p, f = (to_number(v) for v in (cost, salvage, life, period, factor))
     if c < 0 or s < 0 or n <= 0 or p <= 0 or p > n or f <= 0:
@@ -84,7 +85,7 @@ def ddb(cost: Scalar, salvage: Scalar, life: Scalar, period: Scalar, factor: Sca
     return _declining(c, s, n, p - 1, p, f, switch=False)
 
 
-@function("VDB", kind="scalar")
+@function("VDB", kind="scalar", cost=per_count(2, 0.5))
 def vdb(
     cost: Scalar,
     salvage: Scalar,

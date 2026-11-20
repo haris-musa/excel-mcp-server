@@ -4,6 +4,7 @@ import calendar
 import datetime as dt
 from dataclasses import dataclass, replace
 
+from excel_mcp.calc.costs import per_coupon
 from excel_mcp.calc.functions.datetime import add_months, days360, year_fraction
 from excel_mcp.calc.functions.financial import newton
 from excel_mcp.calc.functions.math import naive_sum
@@ -135,25 +136,25 @@ def coupons(settlement: Scalar, maturity: Scalar, frequency: Scalar, basis: Scal
     )
 
 
-@function("COUPNCD", kind="scalar")
+@function("COUPNCD", kind="scalar", cost=per_coupon((0, 1), 2, 1))
 def coupncd(settlement: Scalar, maturity: Scalar, frequency: Scalar, basis: Scalar = 0) -> float:
     return float(
         (coupons(settlement, maturity, frequency, basis).next - dt.date(1899, 12, 30)).days
     )
 
 
-@function("COUPPCD", kind="scalar")
+@function("COUPPCD", kind="scalar", cost=per_coupon((0, 1), 2, 1))
 def couppcd(settlement: Scalar, maturity: Scalar, frequency: Scalar, basis: Scalar = 0) -> float:
     schedule = coupons(settlement, maturity, frequency, basis)
     return float((schedule.previous - dt.date(1899, 12, 30)).days)
 
 
-@function("COUPNUM", kind="scalar")
+@function("COUPNUM", kind="scalar", cost=per_coupon((0, 1), 2, 1))
 def coupnum(settlement: Scalar, maturity: Scalar, frequency: Scalar, basis: Scalar = 0) -> float:
     return float(coupons(settlement, maturity, frequency, basis).count)
 
 
-@function("COUPDAYBS", kind="scalar")
+@function("COUPDAYBS", kind="scalar", cost=per_coupon((0, 1), 2, 1))
 def coupdaybs(settlement: Scalar, maturity: Scalar, frequency: Scalar, basis: Scalar = 0) -> float:
     return coupons(settlement, maturity, frequency, basis).days_since_previous
 
@@ -167,7 +168,7 @@ def _iterated_period(maturity: dt.date, settlement: dt.date, step: int) -> tuple
     return date, following
 
 
-@function("COUPDAYS", kind="scalar")
+@function("COUPDAYS", kind="scalar", cost=per_coupon((0, 1), 2, 1))
 def coupdays(settlement: Scalar, maturity: Scalar, frequency: Scalar, basis: Scalar = 0) -> float:
     schedule = coupons(settlement, maturity, frequency, basis)
     end = as_date(maturity)
@@ -190,7 +191,7 @@ def coupdays(settlement: Scalar, maturity: Scalar, frequency: Scalar, basis: Sca
     return float(plain)
 
 
-@function("COUPDAYSNC", kind="scalar")
+@function("COUPDAYSNC", kind="scalar", cost=per_coupon((0, 1), 2, 1))
 def coupdaysnc(settlement: Scalar, maturity: Scalar, frequency: Scalar, basis: Scalar = 0) -> float:
     return coupons(settlement, maturity, frequency, basis).days_to_next
 
@@ -210,7 +211,7 @@ def _price(schedule: Coupons, rate: float, yld: float, redemption: float) -> flo
     )
 
 
-@function("PRICE", kind="scalar")
+@function("PRICE", kind="scalar", cost=per_coupon((0, 1), 5, 1))
 def price(
     settlement: Scalar,
     maturity: Scalar,
@@ -226,7 +227,7 @@ def price(
     return _price(schedule, r, y, redeem)
 
 
-@function("YIELD", kind="scalar")
+@function("YIELD", kind="scalar", cost=per_coupon((0, 1), 5, 2))
 def yield_(
     settlement: Scalar,
     maturity: Scalar,
@@ -263,7 +264,7 @@ def _macaulay(schedule: Coupons, rate: float, yld: float) -> float:
     return weighted / values
 
 
-@function("DURATION", kind="scalar")
+@function("DURATION", kind="scalar", cost=per_coupon((0, 1), 4, 1))
 def duration(
     settlement: Scalar,
     maturity: Scalar,
@@ -278,7 +279,7 @@ def duration(
     return _macaulay(schedule, c, y)
 
 
-@function("MDURATION", kind="scalar")
+@function("MDURATION", kind="scalar", cost=per_coupon((0, 1), 4, 1))
 def mduration(
     settlement: Scalar,
     maturity: Scalar,

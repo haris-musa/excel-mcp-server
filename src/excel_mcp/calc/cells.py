@@ -17,7 +17,7 @@ from excel_mcp.calc.values import (
     date_to_serial,
     flush,
 )
-from excel_mcp.lazy_workbook import LazyCells
+from excel_mcp.lazy_workbook import LazyCells, extent
 
 CellKey = tuple[str, int, int]
 
@@ -41,6 +41,16 @@ def stored_in(
         for (row, col), cell in sheet._cells.items():
             if top <= row <= bottom and left <= col <= right:
                 yield (row, col), cell
+
+
+def scan_size(sheet: Worksheet, top: int, left: int, bottom: int, right: int) -> int:
+    """About how many cells ``stored_in`` walks for the rectangle; at least 1."""
+    if isinstance(sheet._cells, LazyCells):
+        last_row, last_column = extent(sheet)
+        rows = max(0, min(bottom, last_row) - top + 1)
+        columns = max(1, min(right, last_column) - left + 1)
+        return max(1, rows * columns)
+    return max(1, min((bottom - top + 1) * (right - left + 1), len(sheet._cells)))
 
 
 def _double(number: int) -> float:

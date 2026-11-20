@@ -4,6 +4,7 @@ import math
 from collections.abc import Callable
 from itertools import pairwise
 
+from excel_mcp.calc.costs import STEPS_PER_UNIT, cells, per_count
 from excel_mcp.calc.functions.helpers import array_numbers, numbers
 from excel_mcp.calc.functions.math import naive_sum
 from excel_mcp.calc.registry import function
@@ -183,14 +184,14 @@ def _cumulative(
     return naive_sum(portion(r, p, n, present, 0.0, int(kind)) for p in range(first, last + 1))
 
 
-@function("CUMIPMT", kind="scalar")
+@function("CUMIPMT", kind="scalar", cost=per_count(1, 0.5))
 def cumipmt(
     rate: Scalar, nper: Scalar, pv: Scalar, start: Scalar, end: Scalar, type_: Scalar
 ) -> float:
     return _cumulative(rate, nper, pv, start, end, type_, _interest)
 
 
-@function("CUMPRINC", kind="scalar")
+@function("CUMPRINC", kind="scalar", cost=per_count(1, 0.5))
 def cumprinc(
     rate: Scalar, nper: Scalar, pv: Scalar, start: Scalar, end: Scalar, type_: Scalar
 ) -> float:
@@ -254,7 +255,12 @@ def _dated_flows(values: Value, dates: Value) -> tuple[list[float], list[float]]
     return flows, [(int(s) - int(serials[0])) / 365 for s in serials]
 
 
-@function("XIRR")
+def _xirr_steps(values: Value, *_: Value) -> int:
+    """The search evaluates the cash flows some hundreds of times."""
+    return cells(values) * STEPS_PER_UNIT
+
+
+@function("XIRR", cost=_xirr_steps)
 def xirr(values: Value, dates: Value, guess: Value = 0.1) -> float:
     flows, times = _dated_flows(values, dates)
     scalar(guess)

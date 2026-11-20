@@ -6,6 +6,33 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Security
+
+- The calculator's work limit now counts the work a formula really does, so one `read_range`,
+  `trace_formula` or `goal_seek` call can no longer keep the server busy far beyond it
+  (GHSA-v993-rc79-g9xf, reported by @arpitjain099). Arrays are counted each time an operation
+  builds or passes them on, every LAMBDA call counts the formula it evaluates, and defined
+  names count each use. Functions whose work grows faster than their arguments are counted
+  for that work: matrix products and inverses, regressions, text splitting, database
+  criteria, coupon schedules, distribution searches, workday ranges and Bessel series. The
+  scan for the cells a formula depends on counts the cells it walks. Since the work is now
+  counted in full, the limit is raised so workbooks that calculated before still do.
+- Some formulas took quadratic or worse time in the calculator however little they were
+  charged, and now take linear time: wildcard patterns with long segments, text that almost
+  reads as a number, a complex number or a date, `LCM` of many large numbers, `COMBINA` and
+  `HYPGEOM.DIST` with large arguments, `AMORDEGRC` far past the asset's life, `BESSELJ` and
+  `BESSELY` of high orders, and defined names built from other names in the dynamic array
+  check. `TEXTJOIN`, `CONCAT` and `ARRAYTOTEXT` refuse a result longer than a cell before
+  building it, `CHOOSEROWS`, `CHOOSECOLS` and `MAP` refuse arrays beyond the array limit
+  before building them, and `SUBTOTAL` no longer adds a row record to the sheet for every row
+  it reads.
+
+### Fixed
+
+- `GAMMA.INV` calculates for shape parameters of 1E16 and more instead of failing with an
+  internal error, and a LAMBDA that calls itself through `LET` stops at Excel's nesting limit
+  instead of running into Python's recursion limit.
+
 ## [2.3.2] - 2026-11-16
 
 ### Fixed

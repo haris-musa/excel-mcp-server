@@ -99,6 +99,15 @@ def children(node: Node) -> tuple[Node, ...]:
     return ()
 
 
+def size(node: Node) -> int:
+    """How many nodes a tree has, counted without recursion."""
+    count, pending = 0, [node]
+    while pending:
+        count += 1
+        pending.extend(children(pending.pop()))
+    return count
+
+
 def left_chain(node: Binary) -> tuple[Node, list[Binary]]:
     """The innermost left operand of a run of operators, and the operators from there out.
 

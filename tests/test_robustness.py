@@ -38,7 +38,7 @@ async def test_goal_seek_stops_when_all_iterations_together_take_too_long(
         "goal_seek", path="book.xlsx", sheet="Data", cell="B1", target=-1, changing_cell="A1"
     )
 
-    assert "Goal Seek stopped" in message and "20 cell calculations" in message
+    assert "Goal Seek stopped" in message and "20 units of work" in message
     assert path.read_bytes() == before
 
 
