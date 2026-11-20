@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.3.3] - 2026-11-20
+
 ### Security
 
 - The calculator's work limit now counts the work a formula really does, so one `read_range`,
@@ -794,7 +796,8 @@ Ideas and fixes from these pull requests were reimplemented in this release: #78
 
 See the [GitHub releases](https://github.com/haris-musa/excel-mcp-server/releases).
 
-[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.2...HEAD
+[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.3...HEAD
+[2.3.3]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.2...v2.3.3
 [2.3.2]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.1...v2.3.2
 [2.3.1]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/haris-musa/excel-mcp-server/compare/v2.2.9...v2.3.0
