@@ -123,8 +123,9 @@ def newton(function_: Callable[[float], float], start: float) -> float:
         if slope == 0:
             raise FormulaError(NUM)
         shifted = x - y / slope
-        if shifted <= -1:
-            shifted = (x - 1) / 2
+        if shifted <= -1:  # past the lowest possible rate: halve the way, which is no root yet
+            x = (x - 1) / 2
+            continue
         if abs(shifted - x) < 1e-14 * max(1.0, abs(x)):
             return shifted
         x = shifted
