@@ -277,3 +277,10 @@ def test_lambda_helpers_apply_a_lambda_to_rows_columns_and_elements() -> None:
     assert calculate("=LET(f,LAMBDA(x,x),f)") == "#CALC!"
     assert calculate("=INDEX(MAP({1,2},{1,2,3},LAMBDA(a,b,a+b)),1,3)") == "#N/A"
     assert calculate("=INDEX(MAP({1,2,3},LAMBDA(x,{1,2})),1,1)") == "#CALC!"
+
+
+def test_rate_does_not_settle_on_a_value_that_is_no_rate() -> None:
+    # The search used to stop at -100%, which is no rate. A true rate of about 26% needs a guess.
+    assert calculate("=RATE(12,2800,-10000)") == "#NUM!"
+    assert calculate("=RATE(12,2800,-10000,0,0,25%)") == pytest.approx(0.2630061188573828)
+    assert calculate("=RATE(36,-5000,100000)") == pytest.approx(0.0360068534584775)

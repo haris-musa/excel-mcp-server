@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- `RATE`, `YIELD` and `ODDFYIELD` return `#NUM!` instead of -100% when the search steps below
+  -100% and finds no rate. For example `=RATE(12,2800,-10000)` gave -0.99999999999999 and now
+  gives `#NUM!`. A guess such as `=RATE(12,2800,-10000,0,0,25%)` still finds the rate.
+
 ## [2.3.3] - 2026-11-20
 
 ### Security
