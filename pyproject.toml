@@ -76,7 +76,7 @@ line-length = 100
 target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF", "N", "PTH", "C4", "PIE", "RET", "TID"]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF", "N", "PTH", "C4", "PIE", "RET", "TID", "PLE"]
 
 [tool.pyright]
 include = ["src", "tests"]
