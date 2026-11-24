@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Text such as `5pm` is recognised as a possible date again: the pattern for it ended in a backspace
+  character instead of a word boundary.
+
 ## [2.3.4] - 2026-11-24
 
 ### Fixed

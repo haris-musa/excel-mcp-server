@@ -12,7 +12,7 @@ from openpyxl.worksheet.formula import ArrayFormula
 from openpyxl.worksheet.table import Table
 
 from excel_mcp.calc.parser import MAX_NESTING, parse
-from excel_mcp.calc.values import UncalculableError
+from excel_mcp.calc.values import UncalculableError, parse_number
 from excel_mcp.calc.wildcard import Wildcard
 from tests.conftest import ToolCall
 from tests.test_calc import make_workbook, read_values
@@ -206,3 +206,14 @@ async def test_the_longest_formula_chains_excel_accepts_calculate(
         "trace_formula", path="calc.xlsx", sheet="Data", range="B6", direction="evaluate"
     )
     assert "nested more than 64 levels" in message
+
+
+@pytest.mark.parametrize("text", ["5pm", "5 PM", "Jan 5", "5 jan", "1/2"])
+def test_text_excel_may_read_as_a_date_is_uncalculable(text: str) -> None:
+    with pytest.raises(UncalculableError, match="date"):
+        parse_number(text)
+
+
+@pytest.mark.parametrize("text", ["5pmx", "abc"])
+def test_other_text_is_not_a_number(text: str) -> None:
+    assert parse_number(text) is None

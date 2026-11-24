@@ -190,7 +190,7 @@ _TIME = re.compile(r"(\d{1,2}):(\d{2})(?::(\d{2}))?", re.ASCII)
 
 
 _DATE_TEXT = re.compile(
-    r"\d\s*[/-]\s*\d|\d\s*[AaPp][Mm]|(?i:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*\d|\d\s*(?i:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)",
+    r"\d\s*[/-]\s*\d|\d\s*[AaPp][Mm]\b|(?i:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*\d|\d\s*(?i:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)",
     re.ASCII,
 )
 
