@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Applying a stored filter again, which happens when a column with its own criteria is deleted,
+  read an escaped `*` at the start or end of a text pattern as a wildcard. A filter that
+  excludes cells containing `*` (stored as `*~**`) then matched nothing, and the rows it hides
+  were shown. A literal `~` before a `*` was read the same way.
+
 ## [2.3.5] - 2026-11-24
 
 ### Security

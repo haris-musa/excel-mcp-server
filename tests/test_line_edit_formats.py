@@ -240,6 +240,31 @@ async def test_deleting_one_of_several_filtered_columns_applies_the_rest_again(
     assert [column.colId for column in saved.filterColumn] == [0]
 
 
+async def test_applying_a_stored_filter_again_keeps_an_escaped_asterisk(
+    call: ToolCall, sample: Path
+) -> None:
+    await call("write_range", path="sales.xlsx", sheet="Data", at="B4", rows=[["Pears*"]])
+    filters = [
+        {"column": "Region", "type": "values", "values": ["North"]},
+        {
+            "column": "Product",
+            "type": "compare",
+            "conditions": [{"operator": "not_contains", "value": "*"}],
+        },
+    ]
+    await call(
+        "set_sheet_layout",
+        path="sales.xlsx",
+        sheet="Data",
+        layout={"auto_filter": {"range": "A1:D5", "filters": filters}},
+    )
+    stored = load_workbook(sample)["Data"].auto_filter.filterColumn[1].customFilters
+    assert [(c.operator, c.val) for c in stored.customFilter] == [("notEqual", "*~**")]
+    await call("delete_rows_or_columns", path="sales.xlsx", sheet="Data", axis="columns", start=1)
+    rows = load_workbook(sample)["Data"].row_dimensions
+    assert {row for row, dimension in rows.items() if dimension.hidden} == {4}
+
+
 async def test_an_intersection_with_a_deleted_reference_is_kept_like_excel(
     call: ToolCall, sample: Path
 ) -> None:
