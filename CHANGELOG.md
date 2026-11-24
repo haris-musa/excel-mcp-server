@@ -8,9 +8,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
-- `RATE`, `YIELD` and `ODDFYIELD` return `#NUM!` instead of -100% when the search steps below
-  -100% and finds no rate. For example `=RATE(12,2800,-10000)` gave -0.99999999999999 and now
-  gives `#NUM!`. A guess such as `=RATE(12,2800,-10000,0,0,25%)` still finds the rate.
+- `RATE` returns `#NUM!` instead of -100% when the search steps below -100% and finds no rate,
+  as Excel does. For example `=RATE(12,2800,-10000)` gave -0.99999999999999 and now gives
+  `#NUM!`. A guess such as `=RATE(12,2800,-10000,0,0,25%)` still finds the rate (#272, reported
+  and fixed by @goranai).
+- `YIELD` and `ODDFYIELD` find yields below -100% a year, which Excel returns for bonds priced
+  far above par; only the yield per coupon period has to stay above -100%. For example
+  `=ODDFYIELD(DATE(2024,3,10),DATE(2025,1,15),DATE(2024,1,5),DATE(2024,7,15),0,250,80,4,0)`
+  gave -100% and now gives -114.2%, like Excel.
+- A guess of -100% or less is `#VALUE!` in `RATE` and `IRR` and `#NUM!` in `XIRR`, as in Excel,
+  instead of being ignored.
+- `BETA.INV`, `CHISQ.INV`, `T.INV` and `T.INV.2T` at extreme probabilities return Excel's answer
+  instead of the end of the search range: `=BETA.INV(1E-300,1,1)` gave 3.1E-61 and now gives
+  1E-300, `=T.INV(1E-300,1)` gave -1.3E+154 and now gives -3.2E+299. `BETA.INV` is `#NUM!` where
+  the answer rounds to 0 or 1, as in Excel, and an inverse whose answer is too large for a
+  number is `#NUM!`.
 
 ## [2.3.3] - 2026-11-20
 

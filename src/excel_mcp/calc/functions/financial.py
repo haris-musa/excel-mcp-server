@@ -11,6 +11,7 @@ from excel_mcp.calc.registry import function
 from excel_mcp.calc.values import (
     DIV0,
     NUM,
+    VALUE,
     FormulaError,
     Scalar,
     UncalculableError,
@@ -103,6 +104,9 @@ def rate_(
         to_number(fv),
         _type(type_),
     )
+    start = to_number(guess)
+    if start <= -1:
+        raise FormulaError(VALUE)
 
     def balance(r: float) -> float:
         if r == 0:
@@ -110,11 +114,11 @@ def rate_(
         growth = (1 + r) ** n
         return present * growth + payment * (1 + r * due) * (growth - 1) / r + future
 
-    return newton(balance, to_number(guess))
+    return newton(balance, start)
 
 
-def newton(function_: Callable[[float], float], start: float) -> float:
-    """A root of ``function_`` by Newton's method; no convergence is #NUM! like in Excel."""
+def newton(function_: Callable[[float], float], start: float, lowest: float = -1) -> float:
+    """A root of ``function_`` above ``lowest`` by Newton's method; no convergence is #NUM!."""
     x = start
     for _ in range(100):
         step = 1e-7 * max(1.0, abs(x))
@@ -123,8 +127,8 @@ def newton(function_: Callable[[float], float], start: float) -> float:
         if slope == 0:
             raise FormulaError(NUM)
         shifted = x - y / slope
-        if shifted <= -1:  # past the lowest possible rate: halve the way, which is no root yet
-            x = (x - 1) / 2
+        if shifted <= lowest:  # past the lowest possible rate: halve the way, which is no root yet
+            x = (x + lowest) / 2
             continue
         if abs(shifted - x) < 1e-14 * max(1.0, abs(x)):
             return shifted
@@ -240,7 +244,8 @@ def _discount_root(flows: list[float], times: list[float]) -> float:
 @function("IRR", array=(0,))
 def irr(values: Value, guess: Value = 0.1) -> float:
     flows = array_numbers(values)
-    scalar(guess)
+    if to_number(scalar(guess)) <= -1:
+        raise FormulaError(VALUE)
     if not flows or not (any(f > 0 for f in flows) and any(f < 0 for f in flows)):
         raise FormulaError(NUM)
     return _discount_root(flows, [float(i) for i in range(len(flows))])
@@ -264,7 +269,8 @@ def _xirr_steps(values: Value, *_: Value) -> int:
 @function("XIRR", cost=_xirr_steps)
 def xirr(values: Value, dates: Value, guess: Value = 0.1) -> float:
     flows, times = _dated_flows(values, dates)
-    scalar(guess)
+    if to_number(scalar(guess)) <= -1:
+        raise FormulaError(NUM)
     if not (any(f > 0 for f in flows) and any(f < 0 for f in flows)):
         raise FormulaError(NUM)
     order = sorted(range(len(times)), key=lambda i: times[i])

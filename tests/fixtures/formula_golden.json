@@ -41493,6 +41493,341 @@
    "expected": "#REF!"
   },
   {
+   "formula": "=RATE(12,2800,-10000)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RATE(12,-2800,10000)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RATE(12,2800,-10000,0,1)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RATE(12,2800,-10000,0,0,-0.5)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RATE(12,2800,-10000,0,0,-0.99)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RATE(12,2800,-10000,0,0,-0.999999)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RATE(12,2800,-10000,0,0,-1)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=RATE(12,2800,-10000,0,0,-1.5)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=RATE(12,-100,1000,0,0,-1.0000001)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=RATE(60,-200,10000,0,0,-0.99)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RATE(60,-200,10000,0,1,-0.5)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RATE(60,200,10000,1000)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RATE(360,-1500,250000,0,0,-0.9)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RATE(5,-1,100,0,0,-0.9)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RATE(5,-5000,10000,0,1)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RATE(1,-110,100,0,1)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RATE(12,-100,0,0)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RATE(10000,-1,100)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RATE(100000,-1,100)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RATE(1000000,-1,100)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RATE(0,-100,1000)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RATE(-12,-100,1000)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=RATE(12,2800,-10000,0,0,25%)",
+   "expected": 0.2630061188573746,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(12,2800,-10000,0,0,0.15)",
+   "expected": 0.2630061188573813,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(12,2800,-10000,0,0,1)",
+   "expected": 0.26300611885738606,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(36,-5000,100000)",
+   "expected": 0.036006853458477664,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(12,700,-10000)",
+   "expected": -0.025855000808132394,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(1,0,-100,50)",
+   "expected": -0.5,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(10,0,-100,1)",
+   "expected": -0.3690426555154135,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(10,0,-100,0.0001)",
+   "expected": -0.7488113568490294,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(5,-1,100)",
+   "expected": -0.553500302130925,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(5,-1,100,0,0,-0.5)",
+   "expected": -0.5535003021309179,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(2,-1,100)",
+   "expected": -0.8948750780268259,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(2,-1,100,0,0,-0.9)",
+   "expected": -0.8948750780274811,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(60,-200,10000,-1000)",
+   "expected": 0.008403502487984296,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(60,-200,10000,1000)",
+   "expected": 0.0034847086855715587,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(60,200,-10000,1000)",
+   "expected": 0.008403502488118336,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(60,200,-10000,-1000)",
+   "expected": 0.0034847086855701423,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(1000,-50,10000)",
+   "expected": 0.004964667287803172,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(48,-300,10000)",
+   "expected": 0.01599092374347101,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(48,300,-10000)",
+   "expected": 0.01599092374361151,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(48,-300,10000,0,1)",
+   "expected": 0.016780869471954132,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(48,-300,10000,-2000)",
+   "expected": 0.019888461307879076,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(48,-300,10000,2000,1)",
+   "expected": 0.011445966947651215,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(120,-1500,100000,0,0,0.5)",
+   "expected": 0.010930603939676813,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(5,-5000,10000)",
+   "expected": 0.41041496500941815,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(5,-5000,10000,0,0,0.5)",
+   "expected": 0.4104149650094183,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=RATE(12,-1000,10000,5000)",
+   "expected": "#NUM!",
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=ODDFYIELD(DATE(2024,3,10),DATE(2025,1,15),DATE(2024,1,5),DATE(2024,7,15),0,250,80,4,0)",
+   "expected": -1.1421549798244186,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=ODDFYIELD(DATE(2024,3,10),DATE(2025,1,15),DATE(2024,1,5),DATE(2024,7,15),0,250,80,2,0)",
+   "expected": -0.97909023021153,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=ODDFYIELD(DATE(2024,3,10),DATE(2025,1,15),DATE(2024,1,5),DATE(2024,7,15),0,250,80,1,0)",
+   "expected": "#NUM!",
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=ODDFYIELD(DATE(2024,3,10),DATE(2025,1,15),DATE(2024,1,5),DATE(2024,7,15),0.05,1000,100,2,0)",
+   "expected": -1.4767802863573614,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=ODDFYIELD(DATE(2024,3,10),DATE(2025,1,15),DATE(2024,1,5),DATE(2024,7,15),0.05,300,100,4,0)",
+   "expected": -1.0800275991024424,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=ODDFYIELD(DATE(2024,3,10),DATE(2025,1,15),DATE(2024,1,5),DATE(2024,7,15),0.05,3000,100,4,0)",
+   "expected": -2.5250581235953,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=YIELD(DATE(2024,1,1),DATE(2025,1,1),0.05,1000,100,2,0)",
+   "expected": -1.3571826958906543,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=YIELD(DATE(2024,1,1),DATE(2025,1,1),0.05,1000,100,4,0)",
+   "expected": -1.7362405080372532,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=YIELD(DATE(2024,1,1),DATE(2030,1,1),0.05,2000,100,2,0)",
+   "expected": -0.4282008586393392,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=YIELD(DATE(2024,1,1),DATE(2030,1,1),0.05,1E4,100,2,0)",
+   "expected": -0.628790828929696,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=IRR({-100,1,1,1},-1)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=IRR({-100,1,1,1},-2)",
+   "expected": "#VALUE!"
+  },
+  {
+   "formula": "=IRR({-100,1,1,1},-0.9)",
+   "expected": -0.7655020703115499,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=IRR({-100,0.001})",
+   "expected": -0.99999,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=XIRR({-100,110},{45000,45365},-1)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=XIRR({-100,110},{45000,45365},-2)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=XIRR({-100,1E-3},{45000,45365})",
+   "expected": -0.9999899999998888,
+   "tolerance": 1e-08
+  },
+  {
+   "formula": "=BETA.INV(1E-300,1,1)",
+   "expected": 1.0000000000000237e-300
+  },
+  {
+   "formula": "=BETA.INV(1E-300,0.01,1)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=BETA.INV(0.9999999999999999,1,0.01)",
+   "expected": "#NUM!"
+  },
+  {
+   "formula": "=CHISQ.INV(1E-300,1)",
+   "expected": 0.0
+  },
+  {
+   "formula": "=T.INV(1E-300,1)",
+   "expected": -3.183098861837907e+299,
+   "tolerance": 1e-09
+  },
+  {
+   "formula": "=T.INV.2T(1E-300,1)",
+   "expected": 6.366197723675814e+299,
+   "tolerance": 1e-09
+  },
+  {
+   "formula": "=T.INV(1E-300,10)",
+   "expected": -2.5645257189482104e+30,
+   "tolerance": 1e-09
+  },
+  {
+   "formula": "=T.INV.2T(1E-300,30)",
+   "expected": 51351443961.53361,
+   "tolerance": 1e-09
+  },
+  {
    "formula": "=BETA.DIST(0.5,2,3,TRUE)",
    "expected": 0.6875,
    "tolerance": 1e-09
@@ -80512,12 +80847,12 @@
    "expected": 0.10413475537237532
   },
   {
-   "formula": "=CONVERT(7.25,\"sg\",\"lbm\")",
-   "expected": 233.2618520341207
-  },
-  {
    "formula": "=CONVERT(7.25,\"sg\",\"g\")",
    "expected": 105805.79629474613
+  },
+  {
+   "formula": "=CONVERT(7.25,\"sg\",\"lbm\")",
+   "expected": 233.2618520341207
   },
   {
    "formula": "=CONVERT(-3,\"sg\",\"g\")",
@@ -80528,12 +80863,12 @@
    "expected": 1.9804082374632547e+27
   },
   {
-   "formula": "=CONVERT(7.25,\"lbm\",\"brton\")",
-   "expected": 0.0032366071428571426
-  },
-  {
    "formula": "=CONVERT(7.25,\"lbm\",\"g\")",
    "expected": 3288.5446825
+  },
+  {
+   "formula": "=CONVERT(7.25,\"lbm\",\"brton\")",
+   "expected": 0.0032366071428571426
   },
   {
    "formula": "=CONVERT(7.25,\"lbm\",\"sg\")",
@@ -80548,16 +80883,16 @@
    "expected": 1.1848770037318971e-29
   },
   {
-   "formula": "=CONVERT(7.25,\"u\",\"lbm\")",
-   "expected": 2.654124488359449e-26
-  },
-  {
    "formula": "=CONVERT(7.25,\"u\",\"g\")",
    "expected": 1.20389061695e-23
   },
   {
    "formula": "=CONVERT(7.25,\"u\",\"ozm\")",
    "expected": 4.246599181375119e-25
+  },
+  {
+   "formula": "=CONVERT(7.25,\"u\",\"lbm\")",
+   "expected": 2.654124488359449e-26
   },
   {
    "formula": "=CONVERT(-3,\"u\",\"g\")",
@@ -80568,12 +80903,12 @@
    "expected": 1.2377551484145342e+26
   },
   {
-   "formula": "=CONVERT(7.25,\"ozm\",\"brton\")",
-   "expected": 0.00020228794642857141
-  },
-  {
    "formula": "=CONVERT(7.25,\"ozm\",\"g\")",
    "expected": 205.53404265625
+  },
+  {
+   "formula": "=CONVERT(7.25,\"ozm\",\"brton\")",
+   "expected": 0.00020228794642857141
   },
   {
    "formula": "=CONVERT(7.25,\"ozm\",\"grain\")",
@@ -80582,10 +80917,6 @@
   {
    "formula": "=CONVERT(-3,\"ozm\",\"g\")",
    "expected": -85.048569375
-  },
-  {
-   "formula": "=CONVERT(7.25,\"grain\",\"cwt\")",
-   "expected": 1.0357142857142857e-05
   },
   {
    "formula": "=CONVERT(7.25,\"grain\",\"brton\")",
@@ -80600,6 +80931,10 @@
    "expected": 0.01657142857142857
   },
   {
+   "formula": "=CONVERT(7.25,\"grain\",\"cwt\")",
+   "expected": 1.0357142857142857e-05
+  },
+  {
    "formula": "=CONVERT(-3,\"grain\",\"g\")",
    "expected": -0.19439673000000002
   },
@@ -80608,12 +80943,12 @@
    "expected": 0.3236607142857143
   },
   {
-   "formula": "=CONVERT(7.25,\"cwt\",\"shweight\")",
-   "expected": 7.250000000000001
-  },
-  {
    "formula": "=CONVERT(7.25,\"cwt\",\"g\")",
    "expected": 328854.46825000003
+  },
+  {
+   "formula": "=CONVERT(7.25,\"cwt\",\"shweight\")",
+   "expected": 7.250000000000001
   },
   {
    "formula": "=CONVERT(7.25,\"cwt\",\"grain\")",
@@ -80624,20 +80959,20 @@
    "expected": -136077.711
   },
   {
-   "formula": "=CONVERT(7.25,\"shweight\",\"cwt\")",
-   "expected": 7.250000000000001
-  },
-  {
    "formula": "=CONVERT(7.25,\"shweight\",\"brton\")",
    "expected": 0.3236607142857143
+  },
+  {
+   "formula": "=CONVERT(7.25,\"shweight\",\"g\")",
+   "expected": 328854.46825000003
   },
   {
    "formula": "=CONVERT(7.25,\"shweight\",\"uk_cwt\")",
    "expected": 6.4732142857142865
   },
   {
-   "formula": "=CONVERT(7.25,\"shweight\",\"g\")",
-   "expected": 328854.46825000003
+   "formula": "=CONVERT(7.25,\"shweight\",\"cwt\")",
+   "expected": 7.250000000000001
   },
   {
    "formula": "=CONVERT(-3,\"shweight\",\"g\")",
@@ -80648,10 +80983,6 @@
    "expected": 0.3625
   },
   {
-   "formula": "=CONVERT(7.25,\"uk_cwt\",\"shweight\")",
-   "expected": 8.12
-  },
-  {
    "formula": "=CONVERT(7.25,\"uk_cwt\",\"g\")",
    "expected": 368317.00444
   },
@@ -80660,8 +80991,20 @@
    "expected": 7.25
   },
   {
+   "formula": "=CONVERT(7.25,\"uk_cwt\",\"shweight\")",
+   "expected": 8.12
+  },
+  {
    "formula": "=CONVERT(-3,\"uk_cwt\",\"g\")",
    "expected": -152407.03631999998
+  },
+  {
+   "formula": "=CONVERT(7.25,\"lcwt\",\"brton\")",
+   "expected": 0.3625
+  },
+  {
+   "formula": "=CONVERT(7.25,\"lcwt\",\"g\")",
+   "expected": 368317.00444
   },
   {
    "formula": "=CONVERT(7.25,\"lcwt\",\"uk_cwt\")",
@@ -80670,14 +81013,6 @@
   {
    "formula": "=CONVERT(7.25,\"lcwt\",\"hweight\")",
    "expected": 7.25
-  },
-  {
-   "formula": "=CONVERT(7.25,\"lcwt\",\"g\")",
-   "expected": 368317.00444
-  },
-  {
-   "formula": "=CONVERT(7.25,\"lcwt\",\"brton\")",
-   "expected": 0.3625
   },
   {
    "formula": "=CONVERT(-3,\"lcwt\",\"g\")",
@@ -80708,24 +81043,20 @@
    "expected": 0.0453125
   },
   {
-   "formula": "=CONVERT(7.25,\"stone\",\"hweight\")",
-   "expected": 0.90625
+   "formula": "=CONVERT(7.25,\"stone\",\"g\")",
+   "expected": 46039.625555
   },
   {
    "formula": "=CONVERT(7.25,\"stone\",\"ton\")",
    "expected": 0.050749999999999997
   },
   {
-   "formula": "=CONVERT(7.25,\"stone\",\"g\")",
-   "expected": 46039.625555
+   "formula": "=CONVERT(7.25,\"stone\",\"hweight\")",
+   "expected": 0.90625
   },
   {
    "formula": "=CONVERT(-3,\"stone\",\"g\")",
    "expected": -19050.879539999998
-  },
-  {
-   "formula": "=CONVERT(7.25,\"ton\",\"uk_ton\")",
-   "expected": 6.4732142857142865
   },
   {
    "formula": "=CONVERT(7.25,\"ton\",\"brton\")",
@@ -80740,32 +81071,32 @@
    "expected": 1035.7142857142858
   },
   {
-   "formula": "=CONVERT(-3,\"ton\",\"g\")",
-   "expected": -2721554.2199999997
+   "formula": "=CONVERT(7.25,\"ton\",\"uk_ton\")",
+   "expected": 6.4732142857142865
   },
   {
-   "formula": "=CONVERT(7.25,\"uk_ton\",\"LTON\")",
-   "expected": 7.25
+   "formula": "=CONVERT(-3,\"ton\",\"g\")",
+   "expected": -2721554.2199999997
   },
   {
    "formula": "=CONVERT(7.25,\"uk_ton\",\"brton\")",
    "expected": 7.25
   },
   {
-   "formula": "=CONVERT(7.25,\"uk_ton\",\"ton\")",
-   "expected": 8.120000000000001
-  },
-  {
    "formula": "=CONVERT(7.25,\"uk_ton\",\"g\")",
    "expected": 7366340.0888
   },
   {
-   "formula": "=CONVERT(-3,\"uk_ton\",\"g\")",
-   "expected": -3048140.7264
+   "formula": "=CONVERT(7.25,\"uk_ton\",\"ton\")",
+   "expected": 8.120000000000001
   },
   {
-   "formula": "=CONVERT(7.25,\"LTON\",\"uk_ton\")",
+   "formula": "=CONVERT(7.25,\"uk_ton\",\"LTON\")",
    "expected": 7.25
+  },
+  {
+   "formula": "=CONVERT(-3,\"uk_ton\",\"g\")",
+   "expected": -3048140.7264
   },
   {
    "formula": "=CONVERT(7.25,\"LTON\",\"brton\")",
@@ -80776,12 +81107,12 @@
    "expected": 7366340.0888
   },
   {
-   "formula": "=CONVERT(-3,\"LTON\",\"g\")",
-   "expected": -3048140.7264
+   "formula": "=CONVERT(7.25,\"LTON\",\"uk_ton\")",
+   "expected": 7.25
   },
   {
-   "formula": "=CONVERT(7.25,\"brton\",\"LTON\")",
-   "expected": 7.25
+   "formula": "=CONVERT(-3,\"LTON\",\"g\")",
+   "expected": -3048140.7264
   },
   {
    "formula": "=CONVERT(7.25,\"brton\",\"brton\")",
@@ -80792,16 +81123,20 @@
    "expected": 7366340.0888
   },
   {
+   "formula": "=CONVERT(7.25,\"brton\",\"LTON\")",
+   "expected": 7.25
+  },
+  {
    "formula": "=CONVERT(-3,\"brton\",\"g\")",
    "expected": -3048140.7264
   },
   {
-   "formula": "=CONVERT(7.25,\"m\",\"m\")",
-   "expected": 7.25
-  },
-  {
    "formula": "=CONVERT(7.25,\"m\",\"survey_mi\")",
    "expected": 0.0045049321338383845
+  },
+  {
+   "formula": "=CONVERT(7.25,\"m\",\"m\")",
+   "expected": 7.25
   },
   {
    "formula": "=CONVERT(7.25,\"m\",\"mi\")",
@@ -80812,60 +81147,68 @@
    "expected": -3.0
   },
   {
-   "formula": "=CONVERT(7.25,\"mi\",\"Nmi\")",
-   "expected": 6.300077753779697
+   "formula": "=CONVERT(7.25,\"mi\",\"survey_mi\")",
+   "expected": 7.2499855
   },
   {
    "formula": "=CONVERT(7.25,\"mi\",\"m\")",
    "expected": 11667.744
   },
   {
-   "formula": "=CONVERT(7.25,\"mi\",\"survey_mi\")",
-   "expected": 7.2499855
+   "formula": "=CONVERT(7.25,\"mi\",\"Nmi\")",
+   "expected": 6.300077753779697
   },
   {
    "formula": "=CONVERT(-3,\"mi\",\"m\")",
    "expected": -4828.032
   },
   {
-   "formula": "=CONVERT(7.25,\"Nmi\",\"in\")",
-   "expected": 528622.0472440945
+   "formula": "=CONVERT(7.25,\"Nmi\",\"survey_mi\")",
+   "expected": 8.343134311868686
   },
   {
    "formula": "=CONVERT(7.25,\"Nmi\",\"m\")",
    "expected": 13427.0
   },
   {
-   "formula": "=CONVERT(7.25,\"Nmi\",\"survey_mi\")",
-   "expected": 8.343134311868686
-  },
-  {
    "formula": "=CONVERT(7.25,\"Nmi\",\"mi\")",
    "expected": 8.343150998170684
+  },
+  {
+   "formula": "=CONVERT(7.25,\"Nmi\",\"in\")",
+   "expected": 528622.0472440945
   },
   {
    "formula": "=CONVERT(-3,\"Nmi\",\"m\")",
    "expected": -5556.0
   },
   {
-   "formula": "=CONVERT(7.25,\"in\",\"Nmi\")",
-   "expected": 9.943304535637149e-05
+   "formula": "=CONVERT(7.25,\"in\",\"survey_mi\")",
+   "expected": 0.00011442527619949496
   },
   {
    "formula": "=CONVERT(7.25,\"in\",\"m\")",
    "expected": 0.18415
   },
   {
+   "formula": "=CONVERT(7.25,\"in\",\"Nmi\")",
+   "expected": 9.943304535637149e-05
+  },
+  {
    "formula": "=CONVERT(7.25,\"in\",\"ft\")",
    "expected": 0.6041666666666666
   },
   {
-   "formula": "=CONVERT(7.25,\"in\",\"survey_mi\")",
-   "expected": 0.00011442527619949496
-  },
-  {
    "formula": "=CONVERT(-3,\"in\",\"m\")",
    "expected": -0.0762
+  },
+  {
+   "formula": "=CONVERT(7.25,\"ft\",\"survey_mi\")",
+   "expected": 0.0013731033143939396
+  },
+  {
+   "formula": "=CONVERT(7.25,\"ft\",\"m\")",
+   "expected": 2.2098
   },
   {
    "formula": "=CONVERT(7.25,\"ft\",\"yd\")",
@@ -80876,48 +81219,40 @@
    "expected": 87.0
   },
   {
-   "formula": "=CONVERT(7.25,\"ft\",\"m\")",
-   "expected": 2.2098
-  },
-  {
-   "formula": "=CONVERT(7.25,\"ft\",\"survey_mi\")",
-   "expected": 0.0013731033143939396
-  },
-  {
    "formula": "=CONVERT(-3,\"ft\",\"m\")",
    "expected": -0.9144
-  },
-  {
-   "formula": "=CONVERT(7.25,\"yd\",\"m\")",
-   "expected": 6.6294
-  },
-  {
-   "formula": "=CONVERT(7.25,\"yd\",\"ft\")",
-   "expected": 21.75
-  },
-  {
-   "formula": "=CONVERT(7.25,\"yd\",\"ang\")",
-   "expected": 66294000000.0
   },
   {
    "formula": "=CONVERT(7.25,\"yd\",\"survey_mi\")",
    "expected": 0.004119309943181818
   },
   {
+   "formula": "=CONVERT(7.25,\"yd\",\"m\")",
+   "expected": 6.6294
+  },
+  {
+   "formula": "=CONVERT(7.25,\"yd\",\"ang\")",
+   "expected": 66294000000.0
+  },
+  {
+   "formula": "=CONVERT(7.25,\"yd\",\"ft\")",
+   "expected": 21.75
+  },
+  {
    "formula": "=CONVERT(-3,\"yd\",\"m\")",
    "expected": -2.7432
   },
   {
-   "formula": "=CONVERT(7.25,\"ang\",\"yd\")",
-   "expected": 7.928696412948382e-10
+   "formula": "=CONVERT(7.25,\"ang\",\"survey_mi\")",
+   "expected": 4.504932133838384e-13
   },
   {
    "formula": "=CONVERT(7.25,\"ang\",\"m\")",
    "expected": 7.25e-10
   },
   {
-   "formula": "=CONVERT(7.25,\"ang\",\"survey_mi\")",
-   "expected": 4.504932133838384e-13
+   "formula": "=CONVERT(7.25,\"ang\",\"yd\")",
+   "expected": 7.928696412948382e-10
   },
   {
    "formula": "=CONVERT(7.25,\"ang\",\"ell\")",
@@ -80928,12 +81263,12 @@
    "expected": -3e-10
   },
   {
-   "formula": "=CONVERT(7.25,\"ell\",\"m\")",
-   "expected": 8.28675
-  },
-  {
    "formula": "=CONVERT(7.25,\"ell\",\"ly\")",
    "expected": 8.759101661353482e-16
+  },
+  {
+   "formula": "=CONVERT(7.25,\"ell\",\"m\")",
+   "expected": 8.28675
   },
   {
    "formula": "=CONVERT(7.25,\"ell\",\"survey_mi\")",
@@ -80948,72 +81283,72 @@
    "expected": -3.429
   },
   {
-   "formula": "=CONVERT(7.25,\"ly\",\"m\")",
-   "expected": 6.85902959262108e+16
-  },
-  {
    "formula": "=CONVERT(7.25,\"ly\",\"survey_mi\")",
    "expected": 42619948715513.25
   },
   {
-   "formula": "=CONVERT(7.25,\"ly\",\"parsec\")",
-   "expected": 2.2228601050963874
+   "formula": "=CONVERT(7.25,\"ly\",\"m\")",
+   "expected": 6.85902959262108e+16
   },
   {
    "formula": "=CONVERT(7.25,\"ly\",\"ell\")",
    "expected": 6.000900780945827e+16
   },
   {
-   "formula": "=CONVERT(-3,\"ly\",\"m\")",
-   "expected": -2.83821914177424e+16
+   "formula": "=CONVERT(7.25,\"ly\",\"parsec\")",
+   "expected": 2.2228601050963874
   },
   {
-   "formula": "=CONVERT(7.25,\"parsec\",\"m\")",
-   "expected": 2.237116246429126e+17
+   "formula": "=CONVERT(-3,\"ly\",\"m\")",
+   "expected": -2.83821914177424e+16
   },
   {
    "formula": "=CONVERT(7.25,\"parsec\",\"ly\")",
    "expected": 23.646337382856036
   },
   {
-   "formula": "=CONVERT(7.25,\"parsec\",\"pc\")",
-   "expected": 7.25
+   "formula": "=CONVERT(7.25,\"parsec\",\"m\")",
+   "expected": 2.237116246429126e+17
   },
   {
    "formula": "=CONVERT(7.25,\"parsec\",\"survey_mi\")",
    "expected": 139007680905799.72
   },
   {
+   "formula": "=CONVERT(7.25,\"parsec\",\"pc\")",
+   "expected": 7.25
+  },
+  {
    "formula": "=CONVERT(-3,\"parsec\",\"m\")",
    "expected": -9.25703274384466e+16
-  },
-  {
-   "formula": "=CONVERT(7.25,\"pc\",\"Pica\")",
-   "expected": 6.341431879641617e+20
-  },
-  {
-   "formula": "=CONVERT(7.25,\"pc\",\"m\")",
-   "expected": 2.237116246429126e+17
   },
   {
    "formula": "=CONVERT(7.25,\"pc\",\"survey_mi\")",
    "expected": 139007680905799.72
   },
   {
+   "formula": "=CONVERT(7.25,\"pc\",\"m\")",
+   "expected": 2.237116246429126e+17
+  },
+  {
    "formula": "=CONVERT(7.25,\"pc\",\"parsec\")",
    "expected": 7.25
+  },
+  {
+   "formula": "=CONVERT(7.25,\"pc\",\"Pica\")",
+   "expected": 6.341431879641617e+20
   },
   {
    "formula": "=CONVERT(-3,\"pc\",\"m\")",
    "expected": -9.25703274384466e+16
   },
   {
-   "formula": "=CONVERT(7.25,\"Pica\",\"m\")",
-   "expected": 0.0025576388888888892
-  },
-  {
    "formula": "=CONVERT(7.25,\"Pica\",\"pc\")",
    "expected": 8.288743141552211e-20
+  },
+  {
+   "formula": "=CONVERT(7.25,\"Pica\",\"m\")",
+   "expected": 0.0025576388888888892
   },
   {
    "formula": "=CONVERT(7.25,\"Pica\",\"survey_mi\")",
@@ -81028,8 +81363,8 @@
    "expected": -0.0010583333333333334
   },
   {
-   "formula": "=CONVERT(7.25,\"pica\",\"Pica\")",
-   "expected": 87.0
+   "formula": "=CONVERT(7.25,\"pica\",\"survey_mi\")",
+   "expected": 1.9070879366582493e-05
   },
   {
    "formula": "=CONVERT(7.25,\"pica\",\"m\")",
@@ -81040,20 +81375,20 @@
    "expected": 87.0
   },
   {
-   "formula": "=CONVERT(7.25,\"pica\",\"survey_mi\")",
-   "expected": 1.9070879366582493e-05
+   "formula": "=CONVERT(7.25,\"pica\",\"Pica\")",
+   "expected": 87.0
   },
   {
    "formula": "=CONVERT(-3,\"pica\",\"m\")",
    "expected": -0.0127
   },
   {
-   "formula": "=CONVERT(7.25,\"Picapt\",\"m\")",
-   "expected": 0.0025576388888888892
-  },
-  {
    "formula": "=CONVERT(7.25,\"Picapt\",\"survey_mi\")",
    "expected": 1.589239947215208e-06
+  },
+  {
+   "formula": "=CONVERT(7.25,\"Picapt\",\"m\")",
+   "expected": 0.0025576388888888892
   },
   {
    "formula": "=CONVERT(7.25,\"Picapt\",\"pica\")",
@@ -81064,16 +81399,16 @@
    "expected": -0.0010583333333333334
   },
   {
-   "formula": "=CONVERT(7.25,\"survey_mi\",\"Picapt\")",
-   "expected": 33073986.147972293
+   "formula": "=CONVERT(7.25,\"survey_mi\",\"survey_mi\")",
+   "expected": 7.25
   },
   {
    "formula": "=CONVERT(7.25,\"survey_mi\",\"m\")",
    "expected": 11667.76733553467
   },
   {
-   "formula": "=CONVERT(7.25,\"survey_mi\",\"survey_mi\")",
-   "expected": 7.25
+   "formula": "=CONVERT(7.25,\"survey_mi\",\"Picapt\")",
+   "expected": 33073986.147972293
   },
   {
    "formula": "=CONVERT(-3,\"survey_mi\",\"m\")",
@@ -81100,20 +81435,16 @@
    "expected": 626400.0
   },
   {
-   "formula": "=CONVERT(7.25,\"day\",\"yr\")",
-   "expected": 0.019849418206707735
-  },
-  {
    "formula": "=CONVERT(7.25,\"day\",\"d\")",
    "expected": 7.25
   },
   {
-   "formula": "=CONVERT(-3,\"day\",\"yr\")",
-   "expected": -0.008213552361396304
+   "formula": "=CONVERT(7.25,\"day\",\"yr\")",
+   "expected": 0.019849418206707735
   },
   {
-   "formula": "=CONVERT(7.25,\"d\",\"hr\")",
-   "expected": 174.0
+   "formula": "=CONVERT(-3,\"day\",\"yr\")",
+   "expected": -0.008213552361396304
   },
   {
    "formula": "=CONVERT(7.25,\"d\",\"day\")",
@@ -81124,6 +81455,10 @@
    "expected": 626400.0
   },
   {
+   "formula": "=CONVERT(7.25,\"d\",\"hr\")",
+   "expected": 174.0
+  },
+  {
    "formula": "=CONVERT(7.25,\"d\",\"yr\")",
    "expected": 0.019849418206707735
   },
@@ -81132,20 +81467,20 @@
    "expected": -0.008213552361396304
   },
   {
-   "formula": "=CONVERT(7.25,\"hr\",\"mn\")",
-   "expected": 435.0
-  },
-  {
    "formula": "=CONVERT(7.25,\"hr\",\"s\")",
    "expected": 26100.0
   },
   {
-   "formula": "=CONVERT(7.25,\"hr\",\"yr\")",
-   "expected": 0.0008270590919461555
-  },
-  {
    "formula": "=CONVERT(7.25,\"hr\",\"d\")",
    "expected": 0.3020833333333333
+  },
+  {
+   "formula": "=CONVERT(7.25,\"hr\",\"mn\")",
+   "expected": 435.0
+  },
+  {
+   "formula": "=CONVERT(7.25,\"hr\",\"yr\")",
+   "expected": 0.0008270590919461555
   },
   {
    "formula": "=CONVERT(-3,\"hr\",\"yr\")",
@@ -81156,12 +81491,12 @@
    "expected": 0.12083333333333333
   },
   {
-   "formula": "=CONVERT(7.25,\"mn\",\"min\")",
-   "expected": 7.25
-  },
-  {
    "formula": "=CONVERT(7.25,\"mn\",\"s\")",
    "expected": 435.0
+  },
+  {
+   "formula": "=CONVERT(7.25,\"mn\",\"min\")",
+   "expected": 7.25
   },
   {
    "formula": "=CONVERT(7.25,\"mn\",\"yr\")",
@@ -81172,16 +81507,16 @@
    "expected": -5.703855806525211e-06
   },
   {
-   "formula": "=CONVERT(7.25,\"min\",\"mn\")",
-   "expected": 7.25
+   "formula": "=CONVERT(7.25,\"min\",\"sec\")",
+   "expected": 435.0
   },
   {
    "formula": "=CONVERT(7.25,\"min\",\"s\")",
    "expected": 435.0
   },
   {
-   "formula": "=CONVERT(7.25,\"min\",\"sec\")",
-   "expected": 435.0
+   "formula": "=CONVERT(7.25,\"min\",\"mn\")",
+   "expected": 7.25
   },
   {
    "formula": "=CONVERT(7.25,\"min\",\"yr\")",
@@ -81192,12 +81527,12 @@
    "expected": -5.703855806525211e-06
   },
   {
-   "formula": "=CONVERT(7.25,\"sec\",\"min\")",
-   "expected": 0.12083333333333333
-  },
-  {
    "formula": "=CONVERT(7.25,\"sec\",\"s\")",
    "expected": 7.25
+  },
+  {
+   "formula": "=CONVERT(7.25,\"sec\",\"min\")",
+   "expected": 0.12083333333333333
   },
   {
    "formula": "=CONVERT(7.25,\"sec\",\"yr\")",
@@ -81208,11 +81543,11 @@
    "expected": -9.506426344208685e-08
   },
   {
-   "formula": "=CONVERT(7.25,\"s\",\"s\")",
+   "formula": "=CONVERT(7.25,\"s\",\"sec\")",
    "expected": 7.25
   },
   {
-   "formula": "=CONVERT(7.25,\"s\",\"sec\")",
+   "formula": "=CONVERT(7.25,\"s\",\"s\")",
    "expected": 7.25
   },
   {
@@ -81224,6 +81559,10 @@
    "expected": -9.506426344208685e-08
   },
   {
+   "formula": "=CONVERT(7.25,\"Pa\",\"p\")",
+   "expected": 7.25
+  },
+  {
    "formula": "=CONVERT(7.25,\"Pa\",\"Torr\")",
    "expected": 0.05437947199605231
   },
@@ -81232,12 +81571,12 @@
    "expected": 7.25
   },
   {
-   "formula": "=CONVERT(7.25,\"Pa\",\"p\")",
-   "expected": 7.25
-  },
-  {
    "formula": "=CONVERT(-3,\"Pa\",\"Pa\")",
    "expected": -3.0
+  },
+  {
+   "formula": "=CONVERT(7.25,\"p\",\"atm\")",
+   "expected": 7.155193683691092e-05
   },
   {
    "formula": "=CONVERT(7.25,\"p\",\"Torr\")",
@@ -81248,28 +81587,24 @@
    "expected": 7.25
   },
   {
-   "formula": "=CONVERT(7.25,\"p\",\"atm\")",
-   "expected": 7.155193683691092e-05
-  },
-  {
    "formula": "=CONVERT(-3,\"p\",\"Pa\")",
    "expected": -3.0
-  },
-  {
-   "formula": "=CONVERT(7.25,\"atm\",\"at\")",
-   "expected": 7.25
   },
   {
    "formula": "=CONVERT(7.25,\"atm\",\"p\")",
    "expected": 734606.25
   },
   {
-   "formula": "=CONVERT(7.25,\"atm\",\"Pa\")",
-   "expected": 734606.25
+   "formula": "=CONVERT(7.25,\"atm\",\"at\")",
+   "expected": 7.25
   },
   {
    "formula": "=CONVERT(7.25,\"atm\",\"Torr\")",
    "expected": 5510.0
+  },
+  {
+   "formula": "=CONVERT(7.25,\"atm\",\"Pa\")",
+   "expected": 734606.25
   },
   {
    "formula": "=CONVERT(-3,\"atm\",\"Pa\")",
@@ -81280,6 +81615,10 @@
    "expected": 5510.015226294235
   },
   {
+   "formula": "=CONVERT(7.25,\"at\",\"atm\")",
+   "expected": 7.25
+  },
+  {
    "formula": "=CONVERT(7.25,\"at\",\"Torr\")",
    "expected": 5510.0
   },
@@ -81288,12 +81627,12 @@
    "expected": 734606.25
   },
   {
-   "formula": "=CONVERT(7.25,\"at\",\"atm\")",
-   "expected": 7.25
-  },
-  {
    "formula": "=CONVERT(-3,\"at\",\"Pa\")",
    "expected": -303975.0
+  },
+  {
+   "formula": "=CONVERT(7.25,\"mmHg\",\"psi\")",
+   "expected": 0.14019122920508542
   },
   {
    "formula": "=CONVERT(7.25,\"mmHg\",\"at\")",
@@ -81306,10 +81645,6 @@
   {
    "formula": "=CONVERT(7.25,\"mmHg\",\"Pa\")",
    "expected": 966.5845
-  },
-  {
-   "formula": "=CONVERT(7.25,\"mmHg\",\"psi\")",
-   "expected": 0.14019122920508542
   },
   {
    "formula": "=CONVERT(-3,\"mmHg\",\"Pa\")",
@@ -81332,16 +81667,16 @@
    "expected": -20684.271879505086
   },
   {
+   "formula": "=CONVERT(7.25,\"Torr\",\"psi\")",
+   "expected": 0.14019161660851645
+  },
+  {
    "formula": "=CONVERT(7.25,\"Torr\",\"Torr\")",
    "expected": 7.25
   },
   {
    "formula": "=CONVERT(7.25,\"Torr\",\"Pa\")",
    "expected": 966.5871710526316
-  },
-  {
-   "formula": "=CONVERT(7.25,\"Torr\",\"psi\")",
-   "expected": 0.14019161660851645
   },
   {
    "formula": "=CONVERT(-3,\"Torr\",\"Pa\")",
@@ -81380,20 +81715,20 @@
    "expected": -3e-05
   },
   {
-   "formula": "=CONVERT(7.25,\"dy\",\"N\")",
-   "expected": 7.25e-05
-  },
-  {
-   "formula": "=CONVERT(7.25,\"dy\",\"dyn\")",
-   "expected": 7.25
-  },
-  {
    "formula": "=CONVERT(7.25,\"dy\",\"lbf\")",
    "expected": 1.629864837472901e-05
   },
   {
+   "formula": "=CONVERT(7.25,\"dy\",\"N\")",
+   "expected": 7.25e-05
+  },
+  {
    "formula": "=CONVERT(7.25,\"dy\",\"pond\")",
    "expected": 0.00739294254408998
+  },
+  {
+   "formula": "=CONVERT(7.25,\"dy\",\"dyn\")",
+   "expected": 7.25
   },
   {
    "formula": "=CONVERT(-3,\"dy\",\"N\")",
@@ -81420,12 +81755,12 @@
    "expected": 0.0710982125
   },
   {
-   "formula": "=CONVERT(7.25,\"pond\",\"lbf\")",
-   "expected": 0.015983514008403626
-  },
-  {
    "formula": "=CONVERT(7.25,\"pond\",\"pond\")",
    "expected": 7.25
+  },
+  {
+   "formula": "=CONVERT(7.25,\"pond\",\"lbf\")",
+   "expected": 0.015983514008403626
   },
   {
    "formula": "=CONVERT(-3,\"pond\",\"N\")",
@@ -81436,20 +81771,16 @@
    "expected": 0.006871674122271549
   },
   {
-   "formula": "=CONVERT(7.25,\"J\",\"e\")",
-   "expected": 72500000.0
-  },
-  {
    "formula": "=CONVERT(7.25,\"J\",\"J\")",
    "expected": 7.25
   },
   {
-   "formula": "=CONVERT(-3,\"J\",\"J\")",
-   "expected": -3.0
+   "formula": "=CONVERT(7.25,\"J\",\"e\")",
+   "expected": 72500000.0
   },
   {
-   "formula": "=CONVERT(7.25,\"e\",\"c\")",
-   "expected": 1.732791586998088e-07
+   "formula": "=CONVERT(-3,\"J\",\"J\")",
+   "expected": -3.0
   },
   {
    "formula": "=CONVERT(7.25,\"e\",\"btu\")",
@@ -81460,36 +81791,32 @@
    "expected": 7.25e-07
   },
   {
-   "formula": "=CONVERT(-3,\"e\",\"J\")",
-   "expected": -3e-07
+   "formula": "=CONVERT(7.25,\"e\",\"c\")",
+   "expected": 1.732791586998088e-07
   },
   {
-   "formula": "=CONVERT(7.25,\"c\",\"cal\")",
-   "expected": 7.2451514282984615
+   "formula": "=CONVERT(-3,\"e\",\"J\")",
+   "expected": -3e-07
   },
   {
    "formula": "=CONVERT(7.25,\"c\",\"btu\")",
    "expected": 0.028751084527584164
   },
   {
-   "formula": "=CONVERT(7.25,\"c\",\"e\")",
-   "expected": 303340000.0
-  },
-  {
    "formula": "=CONVERT(7.25,\"c\",\"J\")",
    "expected": 30.334
   },
   {
+   "formula": "=CONVERT(7.25,\"c\",\"cal\")",
+   "expected": 7.2451514282984615
+  },
+  {
+   "formula": "=CONVERT(7.25,\"c\",\"e\")",
+   "expected": 303340000.0
+  },
+  {
    "formula": "=CONVERT(-3,\"c\",\"J\")",
    "expected": -12.552
-  },
-  {
-   "formula": "=CONVERT(7.25,\"cal\",\"eV\")",
-   "expected": 1.894566562815873e+20
-  },
-  {
-   "formula": "=CONVERT(7.25,\"cal\",\"c\")",
-   "expected": 7.254851816443595
   },
   {
    "formula": "=CONVERT(7.25,\"cal\",\"btu\")",
@@ -81500,16 +81827,16 @@
    "expected": 30.3543
   },
   {
+   "formula": "=CONVERT(7.25,\"cal\",\"c\")",
+   "expected": 7.254851816443595
+  },
+  {
+   "formula": "=CONVERT(7.25,\"cal\",\"eV\")",
+   "expected": 1.894566562815873e+20
+  },
+  {
    "formula": "=CONVERT(-3,\"cal\",\"J\")",
    "expected": -12.5604
-  },
-  {
-   "formula": "=CONVERT(7.25,\"eV\",\"cal\")",
-   "expected": 2.7743812770492974e-19
-  },
-  {
-   "formula": "=CONVERT(7.25,\"eV\",\"ev\")",
-   "expected": 7.25
   },
   {
    "formula": "=CONVERT(7.25,\"eV\",\"btu\")",
@@ -81520,16 +81847,16 @@
    "expected": 1.1615779530749998e-18
   },
   {
-   "formula": "=CONVERT(-3,\"eV\",\"J\")",
-   "expected": -4.806529461e-19
-  },
-  {
-   "formula": "=CONVERT(7.25,\"ev\",\"eV\")",
+   "formula": "=CONVERT(7.25,\"eV\",\"ev\")",
    "expected": 7.25
   },
   {
-   "formula": "=CONVERT(7.25,\"ev\",\"btu\")",
-   "expected": 1.1009634705029838e-21
+   "formula": "=CONVERT(7.25,\"eV\",\"cal\")",
+   "expected": 2.7743812770492974e-19
+  },
+  {
+   "formula": "=CONVERT(-3,\"eV\",\"J\")",
+   "expected": -4.806529461e-19
   },
   {
    "formula": "=CONVERT(7.25,\"ev\",\"HPh\")",
@@ -81540,16 +81867,16 @@
    "expected": 1.1615779530749998e-18
   },
   {
+   "formula": "=CONVERT(7.25,\"ev\",\"eV\")",
+   "expected": 7.25
+  },
+  {
+   "formula": "=CONVERT(7.25,\"ev\",\"btu\")",
+   "expected": 1.1009634705029838e-21
+  },
+  {
    "formula": "=CONVERT(-3,\"ev\",\"J\")",
    "expected": -4.806529461e-19
-  },
-  {
-   "formula": "=CONVERT(7.25,\"HPh\",\"ev\")",
-   "expected": 1.2147704579500083e+26
-  },
-  {
-   "formula": "=CONVERT(7.25,\"HPh\",\"hh\")",
-   "expected": 7.249999999999999
   },
   {
    "formula": "=CONVERT(7.25,\"HPh\",\"btu\")",
@@ -81560,36 +81887,36 @@
    "expected": 19462766.648297254
   },
   {
-   "formula": "=CONVERT(-3,\"HPh\",\"J\")",
-   "expected": -8053558.613088518
+   "formula": "=CONVERT(7.25,\"HPh\",\"ev\")",
+   "expected": 1.2147704579500083e+26
   },
   {
-   "formula": "=CONVERT(7.25,\"hh\",\"btu\")",
-   "expected": 18447.143437919174
+   "formula": "=CONVERT(7.25,\"HPh\",\"hh\")",
+   "expected": 7.249999999999999
+  },
+  {
+   "formula": "=CONVERT(-3,\"HPh\",\"J\")",
+   "expected": -8053558.613088518
   },
   {
    "formula": "=CONVERT(7.25,\"hh\",\"HPh\")",
    "expected": 7.249999999999999
   },
   {
-   "formula": "=CONVERT(7.25,\"hh\",\"Wh\")",
-   "expected": 5406.324068971459
-  },
-  {
    "formula": "=CONVERT(7.25,\"hh\",\"J\")",
    "expected": 19462766.648297254
   },
   {
+   "formula": "=CONVERT(7.25,\"hh\",\"Wh\")",
+   "expected": 5406.324068971459
+  },
+  {
+   "formula": "=CONVERT(7.25,\"hh\",\"btu\")",
+   "expected": 18447.143437919174
+  },
+  {
    "formula": "=CONVERT(-3,\"hh\",\"J\")",
    "expected": -8053558.613088518
-  },
-  {
-   "formula": "=CONVERT(7.25,\"Wh\",\"wh\")",
-   "expected": 7.25
-  },
-  {
-   "formula": "=CONVERT(7.25,\"Wh\",\"hh\")",
-   "expected": 0.009722410149563952
   },
   {
    "formula": "=CONVERT(7.25,\"Wh\",\"btu\")",
@@ -81600,39 +81927,39 @@
    "expected": 26100.0
   },
   {
-   "formula": "=CONVERT(-3,\"Wh\",\"J\")",
-   "expected": -10800.0
+   "formula": "=CONVERT(7.25,\"Wh\",\"hh\")",
+   "expected": 0.009722410149563952
   },
   {
-   "formula": "=CONVERT(7.25,\"wh\",\"flb\")",
-   "expected": 19250.372096136627
+   "formula": "=CONVERT(7.25,\"Wh\",\"wh\")",
+   "expected": 7.25
+  },
+  {
+   "formula": "=CONVERT(-3,\"Wh\",\"J\")",
+   "expected": -10800.0
   },
   {
    "formula": "=CONVERT(7.25,\"wh\",\"btu\")",
    "expected": 24.73802684017758
   },
   {
+   "formula": "=CONVERT(7.25,\"wh\",\"J\")",
+   "expected": 26100.0
+  },
+  {
    "formula": "=CONVERT(7.25,\"wh\",\"Wh\")",
    "expected": 7.25
   },
   {
-   "formula": "=CONVERT(7.25,\"wh\",\"J\")",
-   "expected": 26100.0
+   "formula": "=CONVERT(7.25,\"wh\",\"flb\")",
+   "expected": 19250.372096136627
   },
   {
    "formula": "=CONVERT(-3,\"wh\",\"J\")",
    "expected": -10800.0
   },
   {
-   "formula": "=CONVERT(7.25,\"flb\",\"wh\")",
-   "expected": 0.002730466701500737
-  },
-  {
    "formula": "=CONVERT(7.25,\"flb\",\"btu\")",
-   "expected": 0.00931673911006019
-  },
-  {
-   "formula": "=CONVERT(7.25,\"flb\",\"BTU\")",
    "expected": 0.00931673911006019
   },
   {
@@ -81640,12 +81967,16 @@
    "expected": 9.829680125402653
   },
   {
-   "formula": "=CONVERT(-3,\"flb\",\"J\")",
-   "expected": -4.0674538449942
+   "formula": "=CONVERT(7.25,\"flb\",\"BTU\")",
+   "expected": 0.00931673911006019
   },
   {
-   "formula": "=CONVERT(7.25,\"BTU\",\"flb\")",
-   "expected": 5641.7271514282465
+   "formula": "=CONVERT(7.25,\"flb\",\"wh\")",
+   "expected": 0.002730466701500737
+  },
+  {
+   "formula": "=CONVERT(-3,\"flb\",\"J\")",
+   "expected": -4.0674538449942
   },
   {
    "formula": "=CONVERT(7.25,\"BTU\",\"btu\")",
@@ -81656,6 +81987,10 @@
    "expected": 7649.154931495002
   },
   {
+   "formula": "=CONVERT(7.25,\"BTU\",\"flb\")",
+   "expected": 5641.7271514282465
+  },
+  {
    "formula": "=CONVERT(-3,\"BTU\",\"J\")",
    "expected": -3165.16755786
   },
@@ -81664,24 +81999,24 @@
    "expected": 7.250000000000001
   },
   {
-   "formula": "=CONVERT(7.25,\"btu\",\"BTU\")",
-   "expected": 7.250000000000001
-  },
-  {
    "formula": "=CONVERT(7.25,\"btu\",\"J\")",
    "expected": 7649.154931495002
+  },
+  {
+   "formula": "=CONVERT(7.25,\"btu\",\"BTU\")",
+   "expected": 7.250000000000001
   },
   {
    "formula": "=CONVERT(-3,\"btu\",\"J\")",
    "expected": -3165.16755786
   },
   {
-   "formula": "=CONVERT(7.25,\"HP\",\"w\")",
-   "expected": 5406.324068971459
-  },
-  {
    "formula": "=CONVERT(7.25,\"HP\",\"HP\")",
    "expected": 7.25
+  },
+  {
+   "formula": "=CONVERT(7.25,\"HP\",\"w\")",
+   "expected": 5406.324068971459
   },
   {
    "formula": "=CONVERT(7.25,\"HP\",\"h\")",
@@ -81692,16 +82027,16 @@
    "expected": -3.0
   },
   {
+   "formula": "=CONVERT(7.25,\"h\",\"HP\")",
+   "expected": 7.25
+  },
+  {
    "formula": "=CONVERT(7.25,\"h\",\"w\")",
    "expected": 5406.324068971459
   },
   {
    "formula": "=CONVERT(7.25,\"h\",\"PS\")",
    "expected": 7.350555074324
-  },
-  {
-   "formula": "=CONVERT(7.25,\"h\",\"HP\")",
-   "expected": 7.25
   },
   {
    "formula": "=CONVERT(-3,\"h\",\"HP\")",
@@ -81728,16 +82063,16 @@
    "expected": -2.958960211858593
   },
   {
+   "formula": "=CONVERT(7.25,\"W\",\"HP\")",
+   "expected": 0.009722410149563952
+  },
+  {
    "formula": "=CONVERT(7.25,\"W\",\"w\")",
    "expected": 7.25
   },
   {
    "formula": "=CONVERT(7.25,\"W\",\"PS\")",
    "expected": 0.009857256725453307
-  },
-  {
-   "formula": "=CONVERT(7.25,\"W\",\"HP\")",
-   "expected": 0.009722410149563952
   },
   {
    "formula": "=CONVERT(-3,\"W\",\"HP\")",
@@ -81760,24 +82095,24 @@
    "expected": -0.004023066268785083
   },
   {
-   "formula": "=CONVERT(7.25,\"T\",\"T\")",
-   "expected": 7.25
-  },
-  {
    "formula": "=CONVERT(7.25,\"T\",\"ga\")",
    "expected": 72500.0
+  },
+  {
+   "formula": "=CONVERT(7.25,\"T\",\"T\")",
+   "expected": 7.25
   },
   {
    "formula": "=CONVERT(-3,\"T\",\"T\")",
    "expected": -3.0
   },
   {
-   "formula": "=CONVERT(7.25,\"ga\",\"T\")",
-   "expected": 0.000725
-  },
-  {
    "formula": "=CONVERT(7.25,\"ga\",\"ga\")",
    "expected": 7.25
+  },
+  {
+   "formula": "=CONVERT(7.25,\"ga\",\"T\")",
+   "expected": 0.000725
   },
   {
    "formula": "=CONVERT(-3,\"ga\",\"T\")",
@@ -81816,20 +82151,20 @@
    "expected": -3.0
   },
   {
-   "formula": "=CONVERT(7.25,\"F\",\"fah\")",
-   "expected": 7.25
-  },
-  {
-   "formula": "=CONVERT(7.25,\"F\",\"Reau\")",
-   "expected": -11.0
+   "formula": "=CONVERT(7.25,\"F\",\"cel\")",
+   "expected": -13.75
   },
   {
    "formula": "=CONVERT(7.25,\"F\",\"C\")",
    "expected": -13.75
   },
   {
-   "formula": "=CONVERT(7.25,\"F\",\"cel\")",
-   "expected": -13.75
+   "formula": "=CONVERT(7.25,\"F\",\"Reau\")",
+   "expected": -11.0
+  },
+  {
+   "formula": "=CONVERT(7.25,\"F\",\"fah\")",
+   "expected": 7.25
   },
   {
    "formula": "=CONVERT(-3,\"F\",\"C\")",
@@ -81844,32 +82179,32 @@
    "expected": -13.75
   },
   {
-   "formula": "=CONVERT(7.25,\"fah\",\"K\")",
-   "expected": 259.4
-  },
-  {
    "formula": "=CONVERT(7.25,\"fah\",\"F\")",
    "expected": 7.25
+  },
+  {
+   "formula": "=CONVERT(7.25,\"fah\",\"K\")",
+   "expected": 259.4
   },
   {
    "formula": "=CONVERT(-3,\"fah\",\"C\")",
    "expected": -19.444444444444443
   },
   {
-   "formula": "=CONVERT(7.25,\"K\",\"fah\")",
-   "expected": -446.61999999999995
-  },
-  {
    "formula": "=CONVERT(7.25,\"K\",\"Reau\")",
    "expected": -212.72
+  },
+  {
+   "formula": "=CONVERT(7.25,\"K\",\"C\")",
+   "expected": -265.9
   },
   {
    "formula": "=CONVERT(7.25,\"K\",\"kel\")",
    "expected": 7.25
   },
   {
-   "formula": "=CONVERT(7.25,\"K\",\"C\")",
-   "expected": -265.9
+   "formula": "=CONVERT(7.25,\"K\",\"fah\")",
+   "expected": -446.61999999999995
   },
   {
    "formula": "=CONVERT(-3,\"K\",\"C\")",
@@ -81880,12 +82215,12 @@
    "expected": -212.72
   },
   {
-   "formula": "=CONVERT(7.25,\"kel\",\"Rank\")",
-   "expected": 13.05
-  },
-  {
    "formula": "=CONVERT(7.25,\"kel\",\"C\")",
    "expected": -265.9
+  },
+  {
+   "formula": "=CONVERT(7.25,\"kel\",\"Rank\")",
+   "expected": 13.05
   },
   {
    "formula": "=CONVERT(7.25,\"kel\",\"K\")",
@@ -81900,12 +82235,12 @@
    "expected": -215.29777777777778
   },
   {
-   "formula": "=CONVERT(7.25,\"Rank\",\"kel\")",
-   "expected": 4.027777777777778
-  },
-  {
    "formula": "=CONVERT(7.25,\"Rank\",\"C\")",
    "expected": -269.1222222222222
+  },
+  {
+   "formula": "=CONVERT(7.25,\"Rank\",\"kel\")",
+   "expected": 4.027777777777778
   },
   {
    "formula": "=CONVERT(-3,\"Rank\",\"C\")",
@@ -81928,6 +82263,10 @@
    "expected": -3.75
   },
   {
+   "formula": "=CONVERT(7.25,\"tsp\",\"tsp\")",
+   "expected": 7.250000000000001
+  },
+  {
    "formula": "=CONVERT(7.25,\"tsp\",\"MTON\")",
    "expected": 3.154895923755787e-05
   },
@@ -81936,12 +82275,12 @@
    "expected": 7.1469363109375
   },
   {
-   "formula": "=CONVERT(7.25,\"tsp\",\"tsp\")",
-   "expected": 7.250000000000001
-  },
-  {
    "formula": "=CONVERT(-3,\"tsp\",\"tsp\")",
    "expected": -3.0
+  },
+  {
+   "formula": "=CONVERT(7.25,\"tspm\",\"tsp\")",
+   "expected": 7.354549937650852
   },
   {
    "formula": "=CONVERT(7.25,\"tspm\",\"MTON\")",
@@ -81952,56 +82291,48 @@
    "expected": 2.451516645883617
   },
   {
-   "formula": "=CONVERT(7.25,\"tspm\",\"tsp\")",
-   "expected": 7.354549937650852
-  },
-  {
    "formula": "=CONVERT(-3,\"tspm\",\"tsp\")",
    "expected": -3.04326204316587
-  },
-  {
-   "formula": "=CONVERT(7.25,\"tbs\",\"tspm\")",
-   "expected": 21.440808932812498
   },
   {
    "formula": "=CONVERT(7.25,\"tbs\",\"oz\")",
    "expected": 3.625
   },
   {
-   "formula": "=CONVERT(7.25,\"tbs\",\"MTON\")",
-   "expected": 9.464687771267361e-05
-  },
-  {
    "formula": "=CONVERT(7.25,\"tbs\",\"tsp\")",
    "expected": 21.75
+  },
+  {
+   "formula": "=CONVERT(7.25,\"tbs\",\"tspm\")",
+   "expected": 21.440808932812498
+  },
+  {
+   "formula": "=CONVERT(7.25,\"tbs\",\"MTON\")",
+   "expected": 9.464687771267361e-05
   },
   {
    "formula": "=CONVERT(-3,\"tbs\",\"tsp\")",
    "expected": -9.0
   },
   {
-   "formula": "=CONVERT(7.25,\"oz\",\"MTON\")",
-   "expected": 0.00018929375542534721
+   "formula": "=CONVERT(7.25,\"oz\",\"tsp\")",
+   "expected": 43.5
   },
   {
-   "formula": "=CONVERT(7.25,\"oz\",\"tbs\")",
-   "expected": 14.5
+   "formula": "=CONVERT(7.25,\"oz\",\"MTON\")",
+   "expected": 0.00018929375542534721
   },
   {
    "formula": "=CONVERT(7.25,\"oz\",\"cup\")",
    "expected": 0.90625
   },
   {
-   "formula": "=CONVERT(7.25,\"oz\",\"tsp\")",
-   "expected": 43.5
+   "formula": "=CONVERT(7.25,\"oz\",\"tbs\")",
+   "expected": 14.5
   },
   {
    "formula": "=CONVERT(-3,\"oz\",\"tsp\")",
    "expected": -18.0
-  },
-  {
-   "formula": "=CONVERT(7.25,\"cup\",\"MTON\")",
-   "expected": 0.0015143500434027777
   },
   {
    "formula": "=CONVERT(7.25,\"cup\",\"oz\")",
@@ -82016,16 +82347,12 @@
    "expected": 348.0
   },
   {
+   "formula": "=CONVERT(7.25,\"cup\",\"MTON\")",
+   "expected": 0.0015143500434027777
+  },
+  {
    "formula": "=CONVERT(-3,\"cup\",\"tsp\")",
    "expected": -144.0
-  },
-  {
-   "formula": "=CONVERT(7.25,\"pt\",\"MTON\")",
-   "expected": 0.0030287000868055554
-  },
-  {
-   "formula": "=CONVERT(7.25,\"pt\",\"cup\")",
-   "expected": 14.5
   },
   {
    "formula": "=CONVERT(7.25,\"pt\",\"us_pt\")",
@@ -82036,16 +82363,16 @@
    "expected": 696.0
   },
   {
-   "formula": "=CONVERT(-3,\"pt\",\"tsp\")",
-   "expected": -288.0
-  },
-  {
-   "formula": "=CONVERT(7.25,\"us_pt\",\"MTON\")",
+   "formula": "=CONVERT(7.25,\"pt\",\"MTON\")",
    "expected": 0.0030287000868055554
   },
   {
-   "formula": "=CONVERT(7.25,\"us_pt\",\"uk_pt\")",
-   "expected": 6.036887838560169
+   "formula": "=CONVERT(7.25,\"pt\",\"cup\")",
+   "expected": 14.5
+  },
+  {
+   "formula": "=CONVERT(-3,\"pt\",\"tsp\")",
+   "expected": -288.0
   },
   {
    "formula": "=CONVERT(7.25,\"us_pt\",\"pt\")",
@@ -82056,28 +82383,40 @@
    "expected": 696.0
   },
   {
-   "formula": "=CONVERT(-3,\"us_pt\",\"tsp\")",
-   "expected": -288.0
+   "formula": "=CONVERT(7.25,\"us_pt\",\"MTON\")",
+   "expected": 0.0030287000868055554
   },
   {
-   "formula": "=CONVERT(7.25,\"uk_pt\",\"MTON\")",
-   "expected": 0.0036373171436256796
+   "formula": "=CONVERT(7.25,\"us_pt\",\"uk_pt\")",
+   "expected": 6.036887838560169
+  },
+  {
+   "formula": "=CONVERT(-3,\"us_pt\",\"tsp\")",
+   "expected": -288.0
   },
   {
    "formula": "=CONVERT(7.25,\"uk_pt\",\"qt\")",
    "expected": 4.353443479955099
   },
   {
-   "formula": "=CONVERT(7.25,\"uk_pt\",\"us_pt\")",
-   "expected": 8.706886959910198
-  },
-  {
    "formula": "=CONVERT(7.25,\"uk_pt\",\"tsp\")",
    "expected": 835.8611481513791
   },
   {
+   "formula": "=CONVERT(7.25,\"uk_pt\",\"MTON\")",
+   "expected": 0.0036373171436256796
+  },
+  {
+   "formula": "=CONVERT(7.25,\"uk_pt\",\"us_pt\")",
+   "expected": 8.706886959910198
+  },
+  {
    "formula": "=CONVERT(-3,\"uk_pt\",\"tsp\")",
    "expected": -345.8735785453983
+  },
+  {
+   "formula": "=CONVERT(7.25,\"qt\",\"tsp\")",
+   "expected": 1392.0
   },
   {
    "formula": "=CONVERT(7.25,\"qt\",\"MTON\")",
@@ -82092,48 +82431,44 @@
    "expected": 12.073775677120338
   },
   {
-   "formula": "=CONVERT(7.25,\"qt\",\"tsp\")",
-   "expected": 1392.0
-  },
-  {
    "formula": "=CONVERT(-3,\"qt\",\"tsp\")",
    "expected": -576.0
-  },
-  {
-   "formula": "=CONVERT(7.25,\"uk_qt\",\"MTON\")",
-   "expected": 0.007274634287251359
   },
   {
    "formula": "=CONVERT(7.25,\"uk_qt\",\"qt\")",
    "expected": 8.706886959910198
   },
   {
-   "formula": "=CONVERT(7.25,\"uk_qt\",\"gal\")",
-   "expected": 2.1767217399775496
-  },
-  {
    "formula": "=CONVERT(7.25,\"uk_qt\",\"tsp\")",
    "expected": 1671.7222963027582
+  },
+  {
+   "formula": "=CONVERT(7.25,\"uk_qt\",\"MTON\")",
+   "expected": 0.007274634287251359
+  },
+  {
+   "formula": "=CONVERT(7.25,\"uk_qt\",\"gal\")",
+   "expected": 2.1767217399775496
   },
   {
    "formula": "=CONVERT(-3,\"uk_qt\",\"tsp\")",
    "expected": -691.7471570907966
   },
   {
-   "formula": "=CONVERT(7.25,\"gal\",\"MTON\")",
-   "expected": 0.024229600694444443
+   "formula": "=CONVERT(7.25,\"gal\",\"tsp\")",
+   "expected": 5568.0
   },
   {
    "formula": "=CONVERT(7.25,\"gal\",\"uk_gal\")",
    "expected": 6.036887838560169
   },
   {
-   "formula": "=CONVERT(7.25,\"gal\",\"uk_qt\")",
-   "expected": 24.147551354240676
+   "formula": "=CONVERT(7.25,\"gal\",\"MTON\")",
+   "expected": 0.024229600694444443
   },
   {
-   "formula": "=CONVERT(7.25,\"gal\",\"tsp\")",
-   "expected": 5568.0
+   "formula": "=CONVERT(7.25,\"gal\",\"uk_qt\")",
+   "expected": 24.147551354240676
   },
   {
    "formula": "=CONVERT(-3,\"gal\",\"tsp\")",
@@ -82144,16 +82479,16 @@
    "expected": 0.029098537149005437
   },
   {
-   "formula": "=CONVERT(7.25,\"uk_gal\",\"gal\")",
-   "expected": 8.706886959910198
+   "formula": "=CONVERT(7.25,\"uk_gal\",\"tsp\")",
+   "expected": 6686.889185211033
   },
   {
    "formula": "=CONVERT(7.25,\"uk_gal\",\"l\")",
    "expected": 32.9591525
   },
   {
-   "formula": "=CONVERT(7.25,\"uk_gal\",\"tsp\")",
-   "expected": 6686.889185211033
+   "formula": "=CONVERT(7.25,\"uk_gal\",\"gal\")",
+   "expected": 8.706886959910198
   },
   {
    "formula": "=CONVERT(-3,\"uk_gal\",\"tsp\")",
@@ -82164,31 +82499,23 @@
    "expected": 7.25
   },
   {
-   "formula": "=CONVERT(7.25,\"l\",\"uk_gal\")",
-   "expected": 1.5947770501683862
+   "formula": "=CONVERT(7.25,\"l\",\"tsp\")",
+   "expected": 1470.9099875301704
   },
   {
    "formula": "=CONVERT(7.25,\"l\",\"MTON\")",
    "expected": 0.006400783343269807
   },
   {
-   "formula": "=CONVERT(7.25,\"l\",\"tsp\")",
-   "expected": 1470.9099875301704
+   "formula": "=CONVERT(7.25,\"l\",\"uk_gal\")",
+   "expected": 1.5947770501683862
   },
   {
    "formula": "=CONVERT(-3,\"l\",\"tsp\")",
    "expected": -608.652408633174
   },
   {
-   "formula": "=CONVERT(7.25,\"L\",\"MTON\")",
-   "expected": 0.006400783343269807
-  },
-  {
    "formula": "=CONVERT(7.25,\"L\",\"lt\")",
-   "expected": 7.25
-  },
-  {
-   "formula": "=CONVERT(7.25,\"L\",\"l\")",
    "expected": 7.25
   },
   {
@@ -82196,52 +82523,56 @@
    "expected": 1470.9099875301704
   },
   {
-   "formula": "=CONVERT(-3,\"L\",\"tsp\")",
-   "expected": -608.652408633174
+   "formula": "=CONVERT(7.25,\"L\",\"MTON\")",
+   "expected": 0.006400783343269807
   },
   {
-   "formula": "=CONVERT(7.25,\"lt\",\"L\")",
+   "formula": "=CONVERT(7.25,\"L\",\"l\")",
    "expected": 7.25
+  },
+  {
+   "formula": "=CONVERT(-3,\"L\",\"tsp\")",
+   "expected": -608.652408633174
   },
   {
    "formula": "=CONVERT(7.25,\"lt\",\"ang3\")",
    "expected": 7.249999999999999e+27
   },
   {
+   "formula": "=CONVERT(7.25,\"lt\",\"tsp\")",
+   "expected": 1470.9099875301704
+  },
+  {
    "formula": "=CONVERT(7.25,\"lt\",\"MTON\")",
    "expected": 0.006400783343269807
   },
   {
-   "formula": "=CONVERT(7.25,\"lt\",\"tsp\")",
-   "expected": 1470.9099875301704
+   "formula": "=CONVERT(7.25,\"lt\",\"L\")",
+   "expected": 7.25
   },
   {
    "formula": "=CONVERT(-3,\"lt\",\"tsp\")",
    "expected": -608.652408633174
   },
   {
-   "formula": "=CONVERT(7.25,\"ang3\",\"ang^3\")",
-   "expected": 7.249999999999999
-  },
-  {
    "formula": "=CONVERT(7.25,\"ang3\",\"lt\")",
    "expected": 7.25e-27
-  },
-  {
-   "formula": "=CONVERT(7.25,\"ang3\",\"MTON\")",
-   "expected": 6.400783343269806e-30
   },
   {
    "formula": "=CONVERT(7.25,\"ang3\",\"tsp\")",
    "expected": 1.4709099875301703e-24
   },
   {
-   "formula": "=CONVERT(-3,\"ang3\",\"tsp\")",
-   "expected": -6.08652408633174e-25
+   "formula": "=CONVERT(7.25,\"ang3\",\"MTON\")",
+   "expected": 6.400783343269806e-30
   },
   {
-   "formula": "=CONVERT(7.25,\"ang^3\",\"MTON\")",
-   "expected": 6.400783343269806e-30
+   "formula": "=CONVERT(7.25,\"ang3\",\"ang^3\")",
+   "expected": 7.249999999999999
+  },
+  {
+   "formula": "=CONVERT(-3,\"ang3\",\"tsp\")",
+   "expected": -6.08652408633174e-25
   },
   {
    "formula": "=CONVERT(7.25,\"ang^3\",\"ft3\")",
@@ -82256,56 +82587,52 @@
    "expected": 1.4709099875301703e-24
   },
   {
+   "formula": "=CONVERT(7.25,\"ang^3\",\"MTON\")",
+   "expected": 6.400783343269806e-30
+  },
+  {
    "formula": "=CONVERT(-3,\"ang^3\",\"tsp\")",
    "expected": -6.08652408633174e-25
-  },
-  {
-   "formula": "=CONVERT(7.25,\"ft3\",\"ang^3\")",
-   "expected": 2.05297137792e+29
-  },
-  {
-   "formula": "=CONVERT(7.25,\"ft3\",\"ft^3\")",
-   "expected": 7.25
-  },
-  {
-   "formula": "=CONVERT(7.25,\"ft3\",\"MTON\")",
-   "expected": 0.18125
   },
   {
    "formula": "=CONVERT(7.25,\"ft3\",\"tsp\")",
    "expected": 41651.53246753247
   },
   {
-   "formula": "=CONVERT(-3,\"ft3\",\"tsp\")",
-   "expected": -17235.116883116883
+   "formula": "=CONVERT(7.25,\"ft3\",\"MTON\")",
+   "expected": 0.18125
   },
   {
-   "formula": "=CONVERT(7.25,\"ft^3\",\"MTON\")",
-   "expected": 0.18125
+   "formula": "=CONVERT(7.25,\"ft3\",\"ft^3\")",
+   "expected": 7.25
+  },
+  {
+   "formula": "=CONVERT(7.25,\"ft3\",\"ang^3\")",
+   "expected": 2.05297137792e+29
+  },
+  {
+   "formula": "=CONVERT(-3,\"ft3\",\"tsp\")",
+   "expected": -17235.116883116883
   },
   {
    "formula": "=CONVERT(7.25,\"ft^3\",\"ft3\")",
    "expected": 7.25
   },
   {
-   "formula": "=CONVERT(7.25,\"ft^3\",\"in3\")",
-   "expected": 12528.0
-  },
-  {
    "formula": "=CONVERT(7.25,\"ft^3\",\"tsp\")",
    "expected": 41651.53246753247
   },
   {
+   "formula": "=CONVERT(7.25,\"ft^3\",\"MTON\")",
+   "expected": 0.18125
+  },
+  {
+   "formula": "=CONVERT(7.25,\"ft^3\",\"in3\")",
+   "expected": 12528.0
+  },
+  {
    "formula": "=CONVERT(-3,\"ft^3\",\"tsp\")",
    "expected": -17235.116883116883
-  },
-  {
-   "formula": "=CONVERT(7.25,\"in3\",\"MTON\")",
-   "expected": 0.00010489004629629629
-  },
-  {
-   "formula": "=CONVERT(7.25,\"in3\",\"ft^3\")",
-   "expected": 0.004195601851851851
   },
   {
    "formula": "=CONVERT(7.25,\"in3\",\"in^3\")",
@@ -82316,76 +82643,76 @@
    "expected": 24.103896103896105
   },
   {
-   "formula": "=CONVERT(-3,\"in3\",\"tsp\")",
-   "expected": -9.974025974025974
-  },
-  {
-   "formula": "=CONVERT(7.25,\"in^3\",\"MTON\")",
+   "formula": "=CONVERT(7.25,\"in3\",\"MTON\")",
    "expected": 0.00010489004629629629
   },
   {
-   "formula": "=CONVERT(7.25,\"in^3\",\"ly3\")",
-   "expected": 1.4030241495689313e-52
+   "formula": "=CONVERT(7.25,\"in3\",\"ft^3\")",
+   "expected": 0.004195601851851851
+  },
+  {
+   "formula": "=CONVERT(-3,\"in3\",\"tsp\")",
+   "expected": -9.974025974025974
   },
   {
    "formula": "=CONVERT(7.25,\"in^3\",\"in3\")",
    "expected": 7.25
   },
   {
+   "formula": "=CONVERT(7.25,\"in^3\",\"ly3\")",
+   "expected": 1.4030241495689313e-52
+  },
+  {
    "formula": "=CONVERT(7.25,\"in^3\",\"tsp\")",
    "expected": 24.103896103896105
+  },
+  {
+   "formula": "=CONVERT(7.25,\"in^3\",\"MTON\")",
+   "expected": 0.00010489004629629629
   },
   {
    "formula": "=CONVERT(-3,\"in^3\",\"tsp\")",
    "expected": -9.974025974025974
   },
   {
-   "formula": "=CONVERT(7.25,\"ly3\",\"MTON\")",
-   "expected": 5.420097978226472e+48
+   "formula": "=CONVERT(7.25,\"ly3\",\"ly^3\")",
+   "expected": 7.249999999999999
   },
   {
    "formula": "=CONVERT(7.25,\"ly3\",\"in^3\")",
    "expected": 3.7463717225501376e+53
   },
   {
-   "formula": "=CONVERT(7.25,\"ly3\",\"ly^3\")",
-   "expected": 7.249999999999999
-  },
-  {
    "formula": "=CONVERT(7.25,\"ly3\",\"tsp\")",
    "expected": 1.2455469623023834e+54
+  },
+  {
+   "formula": "=CONVERT(7.25,\"ly3\",\"MTON\")",
+   "expected": 5.420097978226472e+48
   },
   {
    "formula": "=CONVERT(-3,\"ly3\",\"tsp\")",
    "expected": -5.15398743021676e+53
   },
   {
-   "formula": "=CONVERT(7.25,\"ly^3\",\"MTON\")",
-   "expected": 5.420097978226472e+48
-  },
-  {
    "formula": "=CONVERT(7.25,\"ly^3\",\"ly3\")",
    "expected": 7.249999999999999
-  },
-  {
-   "formula": "=CONVERT(7.25,\"ly^3\",\"m3\")",
-   "expected": 6.139203318521935e+48
   },
   {
    "formula": "=CONVERT(7.25,\"ly^3\",\"tsp\")",
    "expected": 1.2455469623023834e+54
   },
   {
+   "formula": "=CONVERT(7.25,\"ly^3\",\"MTON\")",
+   "expected": 5.420097978226472e+48
+  },
+  {
+   "formula": "=CONVERT(7.25,\"ly^3\",\"m3\")",
+   "expected": 6.139203318521935e+48
+  },
+  {
    "formula": "=CONVERT(-3,\"ly^3\",\"tsp\")",
    "expected": -5.15398743021676e+53
-  },
-  {
-   "formula": "=CONVERT(7.25,\"m3\",\"MTON\")",
-   "expected": 6.400783343269807
-  },
-  {
-   "formula": "=CONVERT(7.25,\"m3\",\"m^3\")",
-   "expected": 7.25
   },
   {
    "formula": "=CONVERT(7.25,\"m3\",\"ly^3\")",
@@ -82396,16 +82723,16 @@
    "expected": 1470909.9875301705
   },
   {
-   "formula": "=CONVERT(-3,\"m3\",\"tsp\")",
-   "expected": -608652.4086331739
+   "formula": "=CONVERT(7.25,\"m3\",\"m^3\")",
+   "expected": 7.25
   },
   {
-   "formula": "=CONVERT(7.25,\"m^3\",\"MTON\")",
+   "formula": "=CONVERT(7.25,\"m3\",\"MTON\")",
    "expected": 6.400783343269807
   },
   {
-   "formula": "=CONVERT(7.25,\"m^3\",\"m3\")",
-   "expected": 7.25
+   "formula": "=CONVERT(-3,\"m3\",\"tsp\")",
+   "expected": -608652.4086331739
   },
   {
    "formula": "=CONVERT(7.25,\"m^3\",\"mi3\")",
@@ -82416,16 +82743,16 @@
    "expected": 1470909.9875301705
   },
   {
+   "formula": "=CONVERT(7.25,\"m^3\",\"MTON\")",
+   "expected": 6.400783343269807
+  },
+  {
+   "formula": "=CONVERT(7.25,\"m^3\",\"m3\")",
+   "expected": 7.25
+  },
+  {
    "formula": "=CONVERT(-3,\"m^3\",\"tsp\")",
    "expected": -608652.4086331739
-  },
-  {
-   "formula": "=CONVERT(7.25,\"mi3\",\"MTON\")",
-   "expected": 26679628800.0
-  },
-  {
-   "formula": "=CONVERT(7.25,\"mi3\",\"m^3\")",
-   "expected": 30219318234.444202
   },
   {
    "formula": "=CONVERT(7.25,\"mi3\",\"mi^3\")",
@@ -82436,44 +82763,52 @@
    "expected": 6131020276882286.0
   },
   {
-   "formula": "=CONVERT(-3,\"mi3\",\"tsp\")",
-   "expected": -2536973907675428.5
+   "formula": "=CONVERT(7.25,\"mi3\",\"m^3\")",
+   "expected": 30219318234.444202
   },
   {
-   "formula": "=CONVERT(7.25,\"mi^3\",\"MTON\")",
+   "formula": "=CONVERT(7.25,\"mi3\",\"MTON\")",
    "expected": 26679628800.0
   },
   {
-   "formula": "=CONVERT(7.25,\"mi^3\",\"mi3\")",
-   "expected": 7.25
+   "formula": "=CONVERT(-3,\"mi3\",\"tsp\")",
+   "expected": -2536973907675428.5
   },
   {
    "formula": "=CONVERT(7.25,\"mi^3\",\"yd3\")",
    "expected": 39525376000.0
   },
   {
+   "formula": "=CONVERT(7.25,\"mi^3\",\"mi3\")",
+   "expected": 7.25
+  },
+  {
    "formula": "=CONVERT(7.25,\"mi^3\",\"tsp\")",
    "expected": 6131020276882286.0
+  },
+  {
+   "formula": "=CONVERT(7.25,\"mi^3\",\"MTON\")",
+   "expected": 26679628800.0
   },
   {
    "formula": "=CONVERT(-3,\"mi^3\",\"tsp\")",
    "expected": -2536973907675428.5
   },
   {
-   "formula": "=CONVERT(7.25,\"yd3\",\"MTON\")",
-   "expected": 4.89375
-  },
-  {
    "formula": "=CONVERT(7.25,\"yd3\",\"mi^3\")",
    "expected": 1.3298418717129979e-09
   },
   {
-   "formula": "=CONVERT(7.25,\"yd3\",\"yd^3\")",
-   "expected": 7.25
-  },
-  {
    "formula": "=CONVERT(7.25,\"yd3\",\"tsp\")",
    "expected": 1124591.3766233767
+  },
+  {
+   "formula": "=CONVERT(7.25,\"yd3\",\"MTON\")",
+   "expected": 4.89375
+  },
+  {
+   "formula": "=CONVERT(7.25,\"yd3\",\"yd^3\")",
+   "expected": 7.25
   },
   {
    "formula": "=CONVERT(-3,\"yd3\",\"tsp\")",
@@ -82488,16 +82823,20 @@
    "expected": 7.25
   },
   {
-   "formula": "=CONVERT(7.25,\"yd^3\",\"MTON\")",
-   "expected": 4.89375
-  },
-  {
    "formula": "=CONVERT(7.25,\"yd^3\",\"tsp\")",
    "expected": 1124591.3766233767
   },
   {
+   "formula": "=CONVERT(7.25,\"yd^3\",\"MTON\")",
+   "expected": 4.89375
+  },
+  {
    "formula": "=CONVERT(-3,\"yd^3\",\"tsp\")",
    "expected": -465348.1558441559
+  },
+  {
+   "formula": "=CONVERT(7.25,\"Nmi3\",\"tsp\")",
+   "expected": 9343488252358650.0
   },
   {
    "formula": "=CONVERT(7.25,\"Nmi3\",\"MTON\")",
@@ -82512,28 +82851,24 @@
    "expected": 60235469733.89811
   },
   {
-   "formula": "=CONVERT(7.25,\"Nmi3\",\"tsp\")",
-   "expected": 9343488252358650.0
-  },
-  {
    "formula": "=CONVERT(-3,\"Nmi3\",\"tsp\")",
    "expected": -3866271000975993.5
-  },
-  {
-   "formula": "=CONVERT(7.25,\"Nmi^3\",\"Nmi3\")",
-   "expected": 7.25
   },
   {
    "formula": "=CONVERT(7.25,\"Nmi^3\",\"Pica3\")",
    "expected": 1.048956052139296e+21
   },
   {
-   "formula": "=CONVERT(7.25,\"Nmi^3\",\"MTON\")",
-   "expected": 40658942070.381226
+   "formula": "=CONVERT(7.25,\"Nmi^3\",\"Nmi3\")",
+   "expected": 7.25
   },
   {
    "formula": "=CONVERT(7.25,\"Nmi^3\",\"tsp\")",
    "expected": 9343488252358650.0
+  },
+  {
+   "formula": "=CONVERT(7.25,\"Nmi^3\",\"MTON\")",
+   "expected": 40658942070.381226
   },
   {
    "formula": "=CONVERT(-3,\"Nmi^3\",\"tsp\")",
@@ -82544,6 +82879,10 @@
    "expected": 2.810197142283316e-10
   },
   {
+   "formula": "=CONVERT(7.25,\"Pica3\",\"tsp\")",
+   "expected": 6.4578768282472e-05
+  },
+  {
    "formula": "=CONVERT(7.25,\"Pica3\",\"Picapt3\")",
    "expected": 7.25
   },
@@ -82552,23 +82891,15 @@
    "expected": 5.010934432648658e-20
   },
   {
-   "formula": "=CONVERT(7.25,\"Pica3\",\"tsp\")",
-   "expected": 6.4578768282472e-05
-  },
-  {
    "formula": "=CONVERT(-3,\"Pica3\",\"tsp\")",
    "expected": -2.672224894447117e-05
   },
   {
-   "formula": "=CONVERT(7.25,\"Picapt3\",\"MTON\")",
-   "expected": 2.810197142283316e-10
-  },
-  {
-   "formula": "=CONVERT(7.25,\"Picapt3\",\"Pica^3\")",
+   "formula": "=CONVERT(7.25,\"Picapt3\",\"Pica3\")",
    "expected": 7.25
   },
   {
-   "formula": "=CONVERT(7.25,\"Picapt3\",\"Pica3\")",
+   "formula": "=CONVERT(7.25,\"Picapt3\",\"Pica^3\")",
    "expected": 7.25
   },
   {
@@ -82576,19 +82907,15 @@
    "expected": 6.4578768282472e-05
   },
   {
+   "formula": "=CONVERT(7.25,\"Picapt3\",\"MTON\")",
+   "expected": 2.810197142283316e-10
+  },
+  {
    "formula": "=CONVERT(-3,\"Picapt3\",\"tsp\")",
    "expected": -2.672224894447117e-05
   },
   {
-   "formula": "=CONVERT(7.25,\"Pica^3\",\"MTON\")",
-   "expected": 2.810197142283316e-10
-  },
-  {
    "formula": "=CONVERT(7.25,\"Pica^3\",\"Picapt^3\")",
-   "expected": 7.25
-  },
-  {
-   "formula": "=CONVERT(7.25,\"Pica^3\",\"Picapt3\")",
    "expected": 7.25
   },
   {
@@ -82596,52 +82923,56 @@
    "expected": 6.4578768282472e-05
   },
   {
-   "formula": "=CONVERT(-3,\"Pica^3\",\"tsp\")",
-   "expected": -2.672224894447117e-05
+   "formula": "=CONVERT(7.25,\"Pica^3\",\"Picapt3\")",
+   "expected": 7.25
   },
   {
-   "formula": "=CONVERT(7.25,\"Picapt^3\",\"MTON\")",
+   "formula": "=CONVERT(7.25,\"Pica^3\",\"MTON\")",
    "expected": 2.810197142283316e-10
+  },
+  {
+   "formula": "=CONVERT(-3,\"Pica^3\",\"tsp\")",
+   "expected": -2.672224894447117e-05
   },
   {
    "formula": "=CONVERT(7.25,\"Picapt^3\",\"Pica^3\")",
    "expected": 7.25
   },
   {
+   "formula": "=CONVERT(7.25,\"Picapt^3\",\"tsp\")",
+   "expected": 6.4578768282472e-05
+  },
+  {
    "formula": "=CONVERT(7.25,\"Picapt^3\",\"GRT\")",
    "expected": 1.1240788569133263e-10
   },
   {
-   "formula": "=CONVERT(7.25,\"Picapt^3\",\"tsp\")",
-   "expected": 6.4578768282472e-05
+   "formula": "=CONVERT(7.25,\"Picapt^3\",\"MTON\")",
+   "expected": 2.810197142283316e-10
   },
   {
    "formula": "=CONVERT(-3,\"Picapt^3\",\"tsp\")",
    "expected": -2.672224894447117e-05
   },
   {
-   "formula": "=CONVERT(7.25,\"GRT\",\"MTON\")",
-   "expected": 18.125
+   "formula": "=CONVERT(7.25,\"GRT\",\"tsp\")",
+   "expected": 4165153.2467532465
   },
   {
    "formula": "=CONVERT(7.25,\"GRT\",\"Picapt^3\")",
    "expected": 467605094399.99994
   },
   {
+   "formula": "=CONVERT(7.25,\"GRT\",\"MTON\")",
+   "expected": 18.125
+  },
+  {
    "formula": "=CONVERT(7.25,\"GRT\",\"regton\")",
    "expected": 7.249999999999999
   },
   {
-   "formula": "=CONVERT(7.25,\"GRT\",\"tsp\")",
-   "expected": 4165153.2467532465
-  },
-  {
    "formula": "=CONVERT(-3,\"GRT\",\"tsp\")",
    "expected": -1723511.6883116884
-  },
-  {
-   "formula": "=CONVERT(7.25,\"regton\",\"MTON\")",
-   "expected": 18.125
   },
   {
    "formula": "=CONVERT(7.25,\"regton\",\"GRT\")",
@@ -82652,8 +82983,16 @@
    "expected": 4165153.2467532465
   },
   {
+   "formula": "=CONVERT(7.25,\"regton\",\"MTON\")",
+   "expected": 18.125
+  },
+  {
    "formula": "=CONVERT(-3,\"regton\",\"tsp\")",
    "expected": -1723511.6883116884
+  },
+  {
+   "formula": "=CONVERT(7.25,\"MTON\",\"tsp\")",
+   "expected": 1666061.298701299
   },
   {
    "formula": "=CONVERT(7.25,\"MTON\",\"MTON\")",
@@ -82664,10 +83003,6 @@
    "expected": 2.9
   },
   {
-   "formula": "=CONVERT(7.25,\"MTON\",\"tsp\")",
-   "expected": 1666061.298701299
-  },
-  {
    "formula": "=CONVERT(-3,\"MTON\",\"tsp\")",
    "expected": -689404.6753246754
   },
@@ -82676,20 +83011,16 @@
    "expected": 7.249971000029
   },
   {
-   "formula": "=CONVERT(7.25,\"uk_acre\",\"yd^2\")",
-   "expected": 35090.0
-  },
-  {
    "formula": "=CONVERT(7.25,\"uk_acre\",\"uk_acre\")",
    "expected": 7.25
   },
   {
-   "formula": "=CONVERT(-3,\"uk_acre\",\"uk_acre\")",
-   "expected": -3.0
+   "formula": "=CONVERT(7.25,\"uk_acre\",\"yd^2\")",
+   "expected": 35090.0
   },
   {
-   "formula": "=CONVERT(7.25,\"us_acre\",\"ang2\")",
-   "expected": 2.933982642158833e+24
+   "formula": "=CONVERT(-3,\"uk_acre\",\"uk_acre\")",
+   "expected": -3.0
   },
   {
    "formula": "=CONVERT(7.25,\"us_acre\",\"uk_acre\")",
@@ -82700,36 +83031,32 @@
    "expected": 35090.14036042109
   },
   {
-   "formula": "=CONVERT(-3,\"us_acre\",\"uk_acre\")",
-   "expected": -3.000012000036
+   "formula": "=CONVERT(7.25,\"us_acre\",\"ang2\")",
+   "expected": 2.933982642158833e+24
   },
   {
-   "formula": "=CONVERT(7.25,\"ang2\",\"us_acre\")",
-   "expected": 1.7915068495880522e-23
+   "formula": "=CONVERT(-3,\"us_acre\",\"uk_acre\")",
+   "expected": -3.000012000036
   },
   {
    "formula": "=CONVERT(7.25,\"ang2\",\"ang^2\")",
    "expected": 7.25
   },
   {
-   "formula": "=CONVERT(7.25,\"ang2\",\"yd^2\")",
-   "expected": 8.670927835682832e-20
-  },
-  {
    "formula": "=CONVERT(7.25,\"ang2\",\"uk_acre\")",
    "expected": 1.7915140156369488e-23
   },
   {
-   "formula": "=CONVERT(-3,\"ang2\",\"uk_acre\")",
-   "expected": -7.41316144401496e-24
+   "formula": "=CONVERT(7.25,\"ang2\",\"us_acre\")",
+   "expected": 1.7915068495880522e-23
   },
   {
-   "formula": "=CONVERT(7.25,\"ang^2\",\"yd^2\")",
+   "formula": "=CONVERT(7.25,\"ang2\",\"yd^2\")",
    "expected": 8.670927835682832e-20
   },
   {
-   "formula": "=CONVERT(7.25,\"ang^2\",\"ang2\")",
-   "expected": 7.25
+   "formula": "=CONVERT(-3,\"ang2\",\"uk_acre\")",
+   "expected": -7.41316144401496e-24
   },
   {
    "formula": "=CONVERT(7.25,\"ang^2\",\"uk_acre\")",
@@ -82740,12 +83067,24 @@
    "expected": 7.25e-22
   },
   {
+   "formula": "=CONVERT(7.25,\"ang^2\",\"yd^2\")",
+   "expected": 8.670927835682832e-20
+  },
+  {
+   "formula": "=CONVERT(7.25,\"ang^2\",\"ang2\")",
+   "expected": 7.25
+  },
+  {
    "formula": "=CONVERT(-3,\"ang^2\",\"uk_acre\")",
    "expected": -7.41316144401496e-24
   },
   {
    "formula": "=CONVERT(7.25,\"ar\",\"ang^2\")",
    "expected": 7.25e+22
+  },
+  {
+   "formula": "=CONVERT(7.25,\"ar\",\"uk_acre\")",
+   "expected": 0.17915140156369488
   },
   {
    "formula": "=CONVERT(7.25,\"ar\",\"ft2\")",
@@ -82756,20 +83095,8 @@
    "expected": 867.0927835682833
   },
   {
-   "formula": "=CONVERT(7.25,\"ar\",\"uk_acre\")",
-   "expected": 0.17915140156369488
-  },
-  {
    "formula": "=CONVERT(-3,\"ar\",\"uk_acre\")",
    "expected": -0.0741316144401496
-  },
-  {
-   "formula": "=CONVERT(7.25,\"ft2\",\"ft^2\")",
-   "expected": 7.25
-  },
-  {
-   "formula": "=CONVERT(7.25,\"ft2\",\"yd^2\")",
-   "expected": 0.8055555555555556
   },
   {
    "formula": "=CONVERT(7.25,\"ft2\",\"uk_acre\")",
@@ -82780,32 +83107,36 @@
    "expected": 0.0067354704
   },
   {
-   "formula": "=CONVERT(-3,\"ft2\",\"uk_acre\")",
-   "expected": -6.887052341597796e-05
-  },
-  {
-   "formula": "=CONVERT(7.25,\"ft^2\",\"ft2\")",
+   "formula": "=CONVERT(7.25,\"ft2\",\"ft^2\")",
    "expected": 7.25
   },
   {
-   "formula": "=CONVERT(7.25,\"ft^2\",\"yd^2\")",
+   "formula": "=CONVERT(7.25,\"ft2\",\"yd^2\")",
    "expected": 0.8055555555555556
+  },
+  {
+   "formula": "=CONVERT(-3,\"ft2\",\"uk_acre\")",
+   "expected": -6.887052341597796e-05
   },
   {
    "formula": "=CONVERT(7.25,\"ft^2\",\"uk_acre\")",
    "expected": 0.00016643709825528007
   },
   {
+   "formula": "=CONVERT(7.25,\"ft^2\",\"ft2\")",
+   "expected": 7.25
+  },
+  {
    "formula": "=CONVERT(7.25,\"ft^2\",\"ha\")",
    "expected": 6.7354704e-05
   },
   {
-   "formula": "=CONVERT(-3,\"ft^2\",\"uk_acre\")",
-   "expected": -6.887052341597796e-05
+   "formula": "=CONVERT(7.25,\"ft^2\",\"yd^2\")",
+   "expected": 0.8055555555555556
   },
   {
-   "formula": "=CONVERT(7.25,\"ha\",\"ft^2\")",
-   "expected": 780383.5052114548
+   "formula": "=CONVERT(-3,\"ft^2\",\"uk_acre\")",
+   "expected": -6.887052341597796e-05
   },
   {
    "formula": "=CONVERT(7.25,\"ha\",\"yd^2\")",
@@ -82816,6 +83147,10 @@
    "expected": 17.915140156369485
   },
   {
+   "formula": "=CONVERT(7.25,\"ha\",\"ft^2\")",
+   "expected": 780383.5052114548
+  },
+  {
    "formula": "=CONVERT(7.25,\"ha\",\"in2\")",
    "expected": 112375224.7504495
   },
@@ -82824,12 +83159,12 @@
    "expected": -7.4131614440149605
   },
   {
-   "formula": "=CONVERT(7.25,\"in2\",\"yd^2\")",
-   "expected": 0.0055941358024691355
-  },
-  {
    "formula": "=CONVERT(7.25,\"in2\",\"uk_acre\")",
    "expected": 1.1558131823283339e-06
+  },
+  {
+   "formula": "=CONVERT(7.25,\"in2\",\"yd^2\")",
+   "expected": 0.0055941358024691355
   },
   {
    "formula": "=CONVERT(7.25,\"in2\",\"ha\")",
@@ -82844,16 +83179,16 @@
    "expected": -4.782675237220692e-07
   },
   {
-   "formula": "=CONVERT(7.25,\"in^2\",\"yd^2\")",
-   "expected": 0.0055941358024691355
+   "formula": "=CONVERT(7.25,\"in^2\",\"uk_acre\")",
+   "expected": 1.1558131823283339e-06
   },
   {
    "formula": "=CONVERT(7.25,\"in^2\",\"ly2\")",
    "expected": 5.225839891965967e-35
   },
   {
-   "formula": "=CONVERT(7.25,\"in^2\",\"uk_acre\")",
-   "expected": 1.1558131823283339e-06
+   "formula": "=CONVERT(7.25,\"in^2\",\"yd^2\")",
+   "expected": 0.0055941358024691355
   },
   {
    "formula": "=CONVERT(7.25,\"in^2\",\"in2\")",
@@ -82872,28 +83207,28 @@
    "expected": 1.603502163310248e+29
   },
   {
-   "formula": "=CONVERT(7.25,\"ly2\",\"in^2\")",
-   "expected": 1.0058191809666394e+36
-  },
-  {
    "formula": "=CONVERT(7.25,\"ly2\",\"ly^2\")",
    "expected": 7.250000000000001
+  },
+  {
+   "formula": "=CONVERT(7.25,\"ly2\",\"in^2\")",
+   "expected": 1.0058191809666394e+36
   },
   {
    "formula": "=CONVERT(-3,\"ly2\",\"uk_acre\")",
    "expected": -6.635181365421715e+28
   },
   {
-   "formula": "=CONVERT(7.25,\"ly^2\",\"yd^2\")",
-   "expected": 7.7609504704216e+32
+   "formula": "=CONVERT(7.25,\"ly^2\",\"uk_acre\")",
+   "expected": 1.603502163310248e+29
   },
   {
    "formula": "=CONVERT(7.25,\"ly^2\",\"ly2\")",
    "expected": 7.250000000000001
   },
   {
-   "formula": "=CONVERT(7.25,\"ly^2\",\"uk_acre\")",
-   "expected": 1.603502163310248e+29
+   "formula": "=CONVERT(7.25,\"ly^2\",\"yd^2\")",
+   "expected": 7.7609504704216e+32
   },
   {
    "formula": "=CONVERT(7.25,\"ly^2\",\"m2\")",
@@ -82908,10 +83243,6 @@
    "expected": 8.670927835682832
   },
   {
-   "formula": "=CONVERT(7.25,\"m2\",\"m^2\")",
-   "expected": 7.25
-  },
-  {
    "formula": "=CONVERT(7.25,\"m2\",\"uk_acre\")",
    "expected": 0.0017915140156369487
   },
@@ -82920,40 +83251,44 @@
    "expected": 8.100068032683314e-32
   },
   {
+   "formula": "=CONVERT(7.25,\"m2\",\"m^2\")",
+   "expected": 7.25
+  },
+  {
    "formula": "=CONVERT(-3,\"m2\",\"uk_acre\")",
    "expected": -0.000741316144401496
-  },
-  {
-   "formula": "=CONVERT(7.25,\"m^2\",\"yd^2\")",
-   "expected": 8.670927835682832
-  },
-  {
-   "formula": "=CONVERT(7.25,\"m^2\",\"uk_acre\")",
-   "expected": 0.0017915140156369487
-  },
-  {
-   "formula": "=CONVERT(7.25,\"m^2\",\"m2\")",
-   "expected": 7.25
   },
   {
    "formula": "=CONVERT(7.25,\"m^2\",\"Morgen\")",
    "expected": 0.0029000000000000002
   },
   {
+   "formula": "=CONVERT(7.25,\"m^2\",\"uk_acre\")",
+   "expected": 0.0017915140156369487
+  },
+  {
+   "formula": "=CONVERT(7.25,\"m^2\",\"yd^2\")",
+   "expected": 8.670927835682832
+  },
+  {
+   "formula": "=CONVERT(7.25,\"m^2\",\"m2\")",
+   "expected": 7.25
+  },
+  {
    "formula": "=CONVERT(-3,\"m^2\",\"uk_acre\")",
    "expected": -0.000741316144401496
   },
   {
-   "formula": "=CONVERT(7.25,\"Morgen\",\"mi2\")",
-   "expected": 0.006998101623581831
+   "formula": "=CONVERT(7.25,\"Morgen\",\"uk_acre\")",
+   "expected": 4.478785039092371
   },
   {
    "formula": "=CONVERT(7.25,\"Morgen\",\"m^2\")",
    "expected": 18125.0
   },
   {
-   "formula": "=CONVERT(7.25,\"Morgen\",\"uk_acre\")",
-   "expected": 4.478785039092371
+   "formula": "=CONVERT(7.25,\"Morgen\",\"mi2\")",
+   "expected": 0.006998101623581831
   },
   {
    "formula": "=CONVERT(7.25,\"Morgen\",\"yd^2\")",
@@ -82964,16 +83299,16 @@
    "expected": -1.8532903610037401
   },
   {
-   "formula": "=CONVERT(7.25,\"mi2\",\"yd^2\")",
-   "expected": 22457600.0
-  },
-  {
    "formula": "=CONVERT(7.25,\"mi2\",\"uk_acre\")",
    "expected": 4640.0
   },
   {
    "formula": "=CONVERT(7.25,\"mi2\",\"mi^2\")",
    "expected": 7.25
+  },
+  {
+   "formula": "=CONVERT(7.25,\"mi2\",\"yd^2\")",
+   "expected": 22457600.0
   },
   {
    "formula": "=CONVERT(7.25,\"mi2\",\"Morgen\")",
@@ -82984,16 +83319,16 @@
    "expected": -1920.0
   },
   {
+   "formula": "=CONVERT(7.25,\"mi^2\",\"uk_acre\")",
+   "expected": 4640.0
+  },
+  {
    "formula": "=CONVERT(7.25,\"mi^2\",\"mi2\")",
    "expected": 7.25
   },
   {
    "formula": "=CONVERT(7.25,\"mi^2\",\"Nmi2\")",
    "expected": 5.474617890161357
-  },
-  {
-   "formula": "=CONVERT(7.25,\"mi^2\",\"uk_acre\")",
-   "expected": 4640.0
   },
   {
    "formula": "=CONVERT(7.25,\"mi^2\",\"yd^2\")",
@@ -83004,24 +83339,28 @@
    "expected": -1920.0
   },
   {
-   "formula": "=CONVERT(7.25,\"Nmi2\",\"yd^2\")",
-   "expected": 29740450.06731989
-  },
-  {
    "formula": "=CONVERT(7.25,\"Nmi2\",\"uk_acre\")",
    "expected": 6144.721088289233
-  },
-  {
-   "formula": "=CONVERT(7.25,\"Nmi2\",\"Nmi^2\")",
-   "expected": 7.25
   },
   {
    "formula": "=CONVERT(7.25,\"Nmi2\",\"mi^2\")",
    "expected": 9.601126700451927
   },
   {
+   "formula": "=CONVERT(7.25,\"Nmi2\",\"yd^2\")",
+   "expected": 29740450.06731989
+  },
+  {
+   "formula": "=CONVERT(7.25,\"Nmi2\",\"Nmi^2\")",
+   "expected": 7.25
+  },
+  {
    "formula": "=CONVERT(-3,\"Nmi2\",\"uk_acre\")",
    "expected": -2542.6432089472687
+  },
+  {
+   "formula": "=CONVERT(7.25,\"Nmi^2\",\"uk_acre\")",
+   "expected": 6144.721088289233
   },
   {
    "formula": "=CONVERT(7.25,\"Nmi^2\",\"Pica2\")",
@@ -83032,10 +83371,6 @@
    "expected": 7.25
   },
   {
-   "formula": "=CONVERT(7.25,\"Nmi^2\",\"uk_acre\")",
-   "expected": 6144.721088289233
-  },
-  {
    "formula": "=CONVERT(7.25,\"Nmi^2\",\"yd^2\")",
    "expected": 29740450.06731989
   },
@@ -83044,24 +83379,32 @@
    "expected": -2542.6432089472687
   },
   {
-   "formula": "=CONVERT(7.25,\"Pica2\",\"yd^2\")",
-   "expected": 1.0791157026367932e-06
+   "formula": "=CONVERT(7.25,\"Pica2\",\"Picapt2\")",
+   "expected": 7.25
   },
   {
    "formula": "=CONVERT(7.25,\"Pica2\",\"uk_acre\")",
    "expected": 2.2295778980099032e-10
   },
   {
+   "formula": "=CONVERT(7.25,\"Pica2\",\"yd^2\")",
+   "expected": 1.0791157026367932e-06
+  },
+  {
    "formula": "=CONVERT(7.25,\"Pica2\",\"Nmi^2\")",
    "expected": 2.63062220861064e-13
   },
   {
-   "formula": "=CONVERT(7.25,\"Pica2\",\"Picapt2\")",
+   "formula": "=CONVERT(-3,\"Pica2\",\"uk_acre\")",
+   "expected": -9.225839577972011e-11
+  },
+  {
+   "formula": "=CONVERT(7.25,\"Picapt2\",\"Pica^2\")",
    "expected": 7.25
   },
   {
-   "formula": "=CONVERT(-3,\"Pica2\",\"uk_acre\")",
-   "expected": -9.225839577972011e-11
+   "formula": "=CONVERT(7.25,\"Picapt2\",\"uk_acre\")",
+   "expected": 2.2295778980099032e-10
   },
   {
    "formula": "=CONVERT(7.25,\"Picapt2\",\"Pica2\")",
@@ -83072,19 +83415,11 @@
    "expected": 1.0791157026367932e-06
   },
   {
-   "formula": "=CONVERT(7.25,\"Picapt2\",\"uk_acre\")",
-   "expected": 2.2295778980099032e-10
-  },
-  {
-   "formula": "=CONVERT(7.25,\"Picapt2\",\"Pica^2\")",
-   "expected": 7.25
-  },
-  {
    "formula": "=CONVERT(-3,\"Picapt2\",\"uk_acre\")",
    "expected": -9.225839577972011e-11
   },
   {
-   "formula": "=CONVERT(7.25,\"Pica^2\",\"Picapt^2\")",
+   "formula": "=CONVERT(7.25,\"Pica^2\",\"Picapt2\")",
    "expected": 7.25
   },
   {
@@ -83096,7 +83431,7 @@
    "expected": 1.0791157026367932e-06
   },
   {
-   "formula": "=CONVERT(7.25,\"Pica^2\",\"Picapt2\")",
+   "formula": "=CONVERT(7.25,\"Pica^2\",\"Picapt^2\")",
    "expected": 7.25
   },
   {
@@ -83104,28 +83439,24 @@
    "expected": -9.225839577972011e-11
   },
   {
-   "formula": "=CONVERT(7.25,\"Picapt^2\",\"yd^2\")",
-   "expected": 1.0791157026367932e-06
+   "formula": "=CONVERT(7.25,\"Picapt^2\",\"Pica^2\")",
+   "expected": 7.25
   },
   {
    "formula": "=CONVERT(7.25,\"Picapt^2\",\"uk_acre\")",
    "expected": 2.2295778980099032e-10
   },
   {
+   "formula": "=CONVERT(7.25,\"Picapt^2\",\"yd^2\")",
+   "expected": 1.0791157026367932e-06
+  },
+  {
    "formula": "=CONVERT(7.25,\"Picapt^2\",\"yd2\")",
    "expected": 1.0791157026367932e-06
   },
   {
-   "formula": "=CONVERT(7.25,\"Picapt^2\",\"Pica^2\")",
-   "expected": 7.25
-  },
-  {
    "formula": "=CONVERT(-3,\"Picapt^2\",\"uk_acre\")",
    "expected": -9.225839577972011e-11
-  },
-  {
-   "formula": "=CONVERT(7.25,\"yd2\",\"Picapt^2\")",
-   "expected": 48708864.0
   },
   {
    "formula": "=CONVERT(7.25,\"yd2\",\"uk_acre\")",
@@ -83136,16 +83467,20 @@
    "expected": 7.249999999999999
   },
   {
+   "formula": "=CONVERT(7.25,\"yd2\",\"Picapt^2\")",
+   "expected": 48708864.0
+  },
+  {
    "formula": "=CONVERT(-3,\"yd2\",\"uk_acre\")",
    "expected": -0.0006198347107438017
   },
   {
-   "formula": "=CONVERT(7.25,\"yd^2\",\"yd^2\")",
-   "expected": 7.249999999999999
-  },
-  {
    "formula": "=CONVERT(7.25,\"yd^2\",\"uk_acre\")",
    "expected": 0.0014979338842975205
+  },
+  {
+   "formula": "=CONVERT(7.25,\"yd^2\",\"yd^2\")",
+   "expected": 7.249999999999999
   },
   {
    "formula": "=CONVERT(7.25,\"yd^2\",\"yd2\")",
@@ -83180,16 +83515,16 @@
    "expected": -24.0
   },
   {
-   "formula": "=CONVERT(7.25,\"admkn\",\"mph\")",
-   "expected": 8.34848484848485
+   "formula": "=CONVERT(7.25,\"admkn\",\"kn\")",
+   "expected": 7.254634989200864
   },
   {
    "formula": "=CONVERT(7.25,\"admkn\",\"admkn\")",
    "expected": 7.25
   },
   {
-   "formula": "=CONVERT(7.25,\"admkn\",\"kn\")",
-   "expected": 7.254634989200864
+   "formula": "=CONVERT(7.25,\"admkn\",\"mph\")",
+   "expected": 8.34848484848485
   },
   {
    "formula": "=CONVERT(-3,\"admkn\",\"admkn\")",
@@ -83200,32 +83535,32 @@
    "expected": 13427.000000000002
   },
   {
-   "formula": "=CONVERT(7.25,\"kn\",\"mph\")",
-   "expected": 8.343150998170684
-  },
-  {
    "formula": "=CONVERT(7.25,\"kn\",\"admkn\")",
    "expected": 7.245367972095594
+  },
+  {
+   "formula": "=CONVERT(7.25,\"kn\",\"mph\")",
+   "expected": 8.343150998170684
   },
   {
    "formula": "=CONVERT(-3,\"kn\",\"admkn\")",
    "expected": -2.998083298798177
   },
   {
-   "formula": "=CONVERT(7.25,\"m/h\",\"mph\")",
-   "expected": 0.004504941143720671
-  },
-  {
    "formula": "=CONVERT(7.25,\"m/h\",\"m/hr\")",
    "expected": 7.25
+  },
+  {
+   "formula": "=CONVERT(7.25,\"m/h\",\"kn\")",
+   "expected": 0.003914686825053995
   },
   {
    "formula": "=CONVERT(7.25,\"m/h\",\"admkn\")",
    "expected": 0.003912185730073215
   },
   {
-   "formula": "=CONVERT(7.25,\"m/h\",\"kn\")",
-   "expected": 0.003914686825053995
+   "formula": "=CONVERT(7.25,\"m/h\",\"mph\")",
+   "expected": 0.004504941143720671
   },
   {
    "formula": "=CONVERT(-3,\"m/h\",\"admkn\")",
@@ -83236,6 +83571,10 @@
    "expected": 7.25
   },
   {
+   "formula": "=CONVERT(7.25,\"m/hr\",\"admkn\")",
+   "expected": 0.003912185730073215
+  },
+  {
    "formula": "=CONVERT(7.25,\"m/hr\",\"m/s\")",
    "expected": 0.002013888888888889
   },
@@ -83244,32 +83583,32 @@
    "expected": 0.004504941143720671
   },
   {
-   "formula": "=CONVERT(7.25,\"m/hr\",\"admkn\")",
-   "expected": 0.003912185730073215
-  },
-  {
    "formula": "=CONVERT(-3,\"m/hr\",\"admkn\")",
    "expected": -0.0016188354745130542
-  },
-  {
-   "formula": "=CONVERT(7.25,\"m/s\",\"mph\")",
-   "expected": 16.217788117394417
   },
   {
    "formula": "=CONVERT(7.25,\"m/s\",\"m/hr\")",
    "expected": 26100.0
   },
   {
-   "formula": "=CONVERT(7.25,\"m/s\",\"admkn\")",
-   "expected": 14.083868628263573
-  },
-  {
    "formula": "=CONVERT(7.25,\"m/s\",\"m/sec\")",
    "expected": 7.25
   },
   {
+   "formula": "=CONVERT(7.25,\"m/s\",\"admkn\")",
+   "expected": 14.083868628263573
+  },
+  {
+   "formula": "=CONVERT(7.25,\"m/s\",\"mph\")",
+   "expected": 16.217788117394417
+  },
+  {
    "formula": "=CONVERT(-3,\"m/s\",\"admkn\")",
    "expected": -5.827807708246996
+  },
+  {
+   "formula": "=CONVERT(7.25,\"m/sec\",\"admkn\")",
+   "expected": 14.083868628263573
   },
   {
    "formula": "=CONVERT(7.25,\"m/sec\",\"m/s\")",
@@ -83280,24 +83619,20 @@
    "expected": 16.217788117394417
   },
   {
-   "formula": "=CONVERT(7.25,\"m/sec\",\"admkn\")",
-   "expected": 14.083868628263573
-  },
-  {
    "formula": "=CONVERT(-3,\"m/sec\",\"admkn\")",
    "expected": -5.827807708246996
   },
   {
-   "formula": "=CONVERT(7.25,\"mph\",\"mph\")",
-   "expected": 7.25
+   "formula": "=CONVERT(7.25,\"mph\",\"m/sec\")",
+   "expected": 3.24104
   },
   {
    "formula": "=CONVERT(7.25,\"mph\",\"admkn\")",
    "expected": 6.296052631578948
   },
   {
-   "formula": "=CONVERT(7.25,\"mph\",\"m/sec\")",
-   "expected": 3.24104
+   "formula": "=CONVERT(7.25,\"mph\",\"mph\")",
+   "expected": 7.25
   },
   {
    "formula": "=CONVERT(-3,\"mph\",\"admkn\")",

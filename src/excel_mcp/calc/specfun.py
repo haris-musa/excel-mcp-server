@@ -4,6 +4,8 @@ import math
 from collections.abc import Callable
 from contextvars import ContextVar
 
+from excel_mcp.calc.values import NUM, FormulaError
+
 _EPSILON = 1e-15
 _TINY = 1e-300
 _MAX_TERMS = 100_000
@@ -160,8 +162,12 @@ def _beta_fraction(a: float, b: float, x: float) -> float:
 def solve_increasing(
     function: Callable[[float], float], target: float, low: float, high: float
 ) -> float:
-    """The x in [low, high] where an increasing function reaches target, by bisection."""
-    for _ in range(200):
+    """The x in [low, high] where an increasing function reaches target, by bisection.
+
+    It halves until no float lies between the ends, which takes over 1000 steps for an x
+    near the smallest floats.
+    """
+    for _ in range(1100):
         middle = (low + high) / 2
         if middle in (low, high):
             break
@@ -174,14 +180,17 @@ def solve_increasing(
 
 
 def solve_unbounded(function: Callable[[float], float], target: float, start: float = 1.0) -> float:
-    """The x > 0 where an increasing function reaches target, bracketed by doubling."""
+    """The x >= 0 where an increasing function reaches target, bracketed by doubling.
+
+    An x too small for a float is 0, and one too large is #NUM!.
+    """
     low = high = start
     if function(start) < target:
         while function(high) < target:
             low, high = high, high * 2
-            if high > 1e300:
-                break
+            if math.isinf(high):
+                raise FormulaError(NUM)
     else:
-        while function(low) >= target and low > _TINY:
+        while low > 0 and function(low) >= target:
             high, low = low, low / 2
     return solve_increasing(function, target, low, high)

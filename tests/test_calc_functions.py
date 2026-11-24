@@ -284,3 +284,29 @@ def test_rate_does_not_settle_on_a_value_that_is_no_rate() -> None:
     assert calculate("=RATE(12,2800,-10000)") == "#NUM!"
     assert calculate("=RATE(12,2800,-10000,0,0,25%)") == pytest.approx(0.2630061188573828)
     assert calculate("=RATE(36,-5000,100000)") == pytest.approx(0.0360068534584775)
+
+
+def test_guesses_at_or_below_minus_one_are_errors_like_in_excel() -> None:
+    assert calculate("=RATE(12,-100,1000,0,0,-1)") == "#VALUE!"
+    assert calculate("=IRR({-100,1,1,1},-1)") == "#VALUE!"
+    assert calculate("=XIRR({-100,110},{45000,45365},-1)") == "#NUM!"
+
+
+def test_bond_yields_only_keep_the_yield_per_period_above_minus_one() -> None:
+    dates = "DATE(2024,3,10),DATE(2025,1,15),DATE(2024,1,5),DATE(2024,7,15)"
+    assert calculate(f"=ODDFYIELD({dates},0,250,80,4,0)") == pytest.approx(-1.1421549798244186)
+    assert calculate(f"=ODDFYIELD({dates},0.05,1000,100,2,0)") == pytest.approx(-1.47678028635736)
+    assert calculate("=YIELD(DATE(2024,1,1),DATE(2025,1,1),0.05,1000,100,4,0)") == pytest.approx(
+        -1.7362405080372532
+    )
+
+
+def test_distribution_inverses_reach_the_ends_of_the_float_range() -> None:
+    assert calculate("=BETA.INV(1E-300,1,1)") == pytest.approx(1e-300, rel=1e-9)
+    assert calculate("=BETA.INV(1E-300,0.01,1)") == "#NUM!"
+    assert calculate("=BETA.INV(0.9999999999999999,1,0.01)") == "#NUM!"
+    assert calculate("=CHISQ.INV(1E-300,1)") == 0
+    assert calculate("=T.INV(1E-300,1)") == pytest.approx(-3.183098861837907e299, rel=1e-9)
+    assert calculate("=T.INV.2T(1E-300,1)") == pytest.approx(6.366197723675814e299, rel=1e-9)
+    # About 4e599, beyond the largest float.
+    assert calculate("=F.INV.RT(1E-300,1,1)") == "#NUM!"

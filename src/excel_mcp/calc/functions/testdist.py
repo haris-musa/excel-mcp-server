@@ -24,7 +24,14 @@ from excel_mcp.calc.values import (
 
 def t_tail(x: float, df: float) -> float:
     """P(T > x) for x >= 0."""
-    return beta_i(df / 2, 0.5, df / (df + x * x), x * x / (df + x * x)) / 2
+    square = x * x
+    if math.isinf(square):
+        # Beyond 1e154 the beta argument df / x^2 underflows, but the series' first term is
+        # exact there: I_z(a, 1/2) = z^a / (a B(a, 1/2)), taken in logs.
+        a = df / 2
+        log_z = math.log(df) - 2 * math.log(x)
+        return math.exp(a * log_z - math.log(a) - log_beta(a, 0.5)) / 2
+    return beta_i(df / 2, 0.5, df / (df + square), square / (df + square)) / 2
 
 
 def _t_right(x: float, df: float) -> float:

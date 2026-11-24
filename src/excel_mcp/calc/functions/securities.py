@@ -249,7 +249,11 @@ def yield_(
         freq = schedule.frequency
         invested = target / 100 + a / e * r / freq
         return ((redeem / 100 + r / freq) - invested) / invested * freq * e / dsr
-    return newton(lambda y: _price(schedule, r, y, redeem) - target, r if r > 0 else 0.05)
+    return newton(
+        lambda y: _price(schedule, r, y, redeem) - target,
+        r if r > 0 else 0.05,
+        -schedule.frequency,
+    )
 
 
 def _macaulay(schedule: Coupons, rate: float, yld: float) -> float:
