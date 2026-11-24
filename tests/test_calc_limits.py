@@ -208,12 +208,12 @@ async def test_the_longest_formula_chains_excel_accepts_calculate(
     assert "nested more than 64 levels" in message
 
 
-@pytest.mark.parametrize("text", ["5pm", "5 PM", "Jan 5", "5 jan", "1/2"])
+@pytest.mark.parametrize("text", ["5 PM", "5 a", "5:30 p", "Jan 5", "5 jan", "1/2"])
 def test_text_excel_may_read_as_a_date_is_uncalculable(text: str) -> None:
     with pytest.raises(UncalculableError, match="date"):
         parse_number(text)
 
 
-@pytest.mark.parametrize("text", ["5pmx", "abc"])
+@pytest.mark.parametrize("text", ["5pmx", "5 ax", "5 apples", "abc"])
 def test_other_text_is_not_a_number(text: str) -> None:
     assert parse_number(text) is None

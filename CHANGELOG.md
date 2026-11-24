@@ -8,8 +8,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
-- Text such as `5pm` is recognised as a possible date again: the pattern for it ended in a backspace
-  character instead of a word boundary.
+- Text that Excel reads as a time of day, such as `5 PM`, `5 a` or `5:30 p`, is no longer
+  converted to `#VALUE!`: the calculator now leaves formulas that turn such text into a number
+  uncalculated, as it does for date text. The pattern for it ended in a backspace character instead
+  of a word boundary and missed the one-letter forms (#277, reported and fixed by @kayaal34).
 
 ## [2.3.4] - 2026-11-24
 
