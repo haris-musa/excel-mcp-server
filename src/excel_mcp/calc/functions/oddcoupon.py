@@ -105,7 +105,9 @@ def oddfyield(
     target = to_number(pr)
     require(target > 0)
     return newton(
-        lambda y: security.price(y) - target, security.rate if security.rate > 0 else 0.05
+        lambda y: security.price(y) - target,
+        security.rate if security.rate > 0 else 0.05,
+        -security.frequency,
     )
 
 

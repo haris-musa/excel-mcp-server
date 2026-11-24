@@ -61,7 +61,9 @@ def beta_inv(p: Scalar, alpha: Scalar, beta: Scalar, low: Scalar = 0, high: Scal
     target, a, b = to_number(p), to_number(alpha), to_number(beta)
     lower, upper = _bounds(low, high)
     require(0 < target < 1 and a > 0 and b > 0)
-    return lower + solve_increasing(lambda x: beta_i(a, b, x), target, 0, 1) * (upper - lower)
+    scaled = solve_increasing(lambda x: beta_i(a, b, x), target, 0, 1)
+    require(0 < scaled < 1)  # Excel has no answer where the root rounds to an end
+    return lower + scaled * (upper - lower)
 
 
 @function("BETADIST", kind="scalar")
