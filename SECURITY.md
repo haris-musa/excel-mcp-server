@@ -56,11 +56,12 @@ or anyone who can reach the HTTP endpoint. Its defences are:
   stored as text with Excel's quote prefix. `export_csv` prefixes text cells that start with
   those characters (or a tab or carriage return) with `'` by default, so a spreadsheet that
   opens the file does not run them (CSV injection); numbers are never prefixed.
-- **Uploads**: `import_workbook` scans every XML part of the package, found by content and not
-  by name, in constant memory, including defined names, conditional formats, data validation,
-  tables and chart references. It rejects packages with duplicate or traversing part names,
-  data connections, query tables, external workbook links, linked OLE objects and any other
-  external relationship that is not a hyperlink, and packages that expand beyond
+- **Uploads**: `import_workbook` parses every part of the package as XML, whatever its name and
+  however its content starts, in constant memory, including defined names, conditional formats,
+  data validation, tables and chart references. It rejects packages with duplicate or traversing
+  part names, data connections, query tables, Power Query queries (`DataMashup` parts), external
+  workbook links, linked OLE objects and any other external relationship that is not a
+  hyperlink, and packages that expand beyond
   `max_unpack_factor` times the file size limit or compress more densely than
   `max_compression_ratio`, both checked while reading. The same limits apply to every
   workbook the server opens, so a zip bomb already on disk is refused before it is read.

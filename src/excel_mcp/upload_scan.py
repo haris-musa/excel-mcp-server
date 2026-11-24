@@ -1,11 +1,12 @@
 """Streaming safety scan of uploaded workbook packages.
 
 An uploaded file is stored unchanged, so everything in its zip is checked here
-rather than only what openpyxl would load: every entry that holds XML is found
-by its content (not its name), parsed in constant memory, and searched for
-formulas. Packages are refused when their entries could escape a folder or
+rather than only what openpyxl would load: every entry is parsed as XML in
+constant memory, whatever its name and however its content starts, and searched
+for formulas. Packages are refused when their entries could escape a folder or
 shadow each other, when they expand beyond the limits, or when they declare
-data connections, query tables or external links, which fetch remote data.
+data connections, query tables, Power Query queries or external links, which
+fetch remote data.
 """
 
 import io
@@ -53,8 +54,10 @@ _MAX_LINK = 4096
 _MAX_ENTRIES = 10_000
 _MAX_XML_DEPTH = 100
 _CHUNK = 64 * 1024
-_REMOTE_DATA = ("connections", "querytable", "externallink")
-_REMOTE_DATA_ROOTS = frozenset({"connections", "queryTable", "externalLink"})
+_REMOTE_DATA = ("connections", "querytable", "externallink", "datamashup")
+_REMOTE_DATA_ROOTS = frozenset({"connections", "queryTable", "externalLink", "DataMashup"})
+# Power Query keeps its queries in a part of this name, which is binary in some files.
+_DATA_MASHUP = "datamashup"
 
 
 class Formula(NamedTuple):
@@ -83,7 +86,7 @@ def scan_package(content: bytes, limits: Limits, *, check_links: bool = True) ->
                     entry = _Entry(source, info, limits, remaining)
                     if info.filename.casefold().endswith(".vml"):
                         _scan_vml(entry, check_links)
-                    elif entry.is_xml:
+                    else:
                         yield from _scan_xml(entry, info.filename, types)
                     entry.drain()
                     remaining = entry.remaining
@@ -112,6 +115,8 @@ def _check_entries(infos: list[zipfile.ZipInfo], limits: Limits) -> None:
         if name.casefold() in names:
             raise InvalidArgumentError(f"The workbook has more than one part named {name!r}.")
         names.add(name.casefold())
+        if segments[-1].casefold() == _DATA_MASHUP:
+            _refuse_remote_data()
 
 
 class _Entry:
@@ -125,20 +130,12 @@ class _Entry:
         self._limits = limits
         self._read = 0
         self.remaining = remaining
-        self._head = self._read_counted(64)
-        self.is_xml = _looks_like_xml(self._head)
-
-    def read(self, size: int = _CHUNK) -> bytes:
-        if self._head:
-            head, self._head = self._head, b""
-            return head
-        return self._read_counted(size)
 
     def drain(self) -> None:
         while self.read():
             pass
 
-    def _read_counted(self, size: int) -> bytes:
+    def read(self, size: int = _CHUNK) -> bytes:
         data = self._source.read(size)
         self._read += len(data)
         self.remaining -= len(data)
@@ -146,12 +143,6 @@ class _Entry:
             raise too_large(self._limits)
         check_ratio(self._read, self._compressed, self._limits)
         return data
-
-
-def _looks_like_xml(head: bytes) -> bool:
-    if head.startswith((b"\xff\xfe", b"\xfe\xff", b"<\x00", b"\x00<")):
-        return True
-    return head.removeprefix(b"\xef\xbb\xbf").lstrip().startswith(b"<")
 
 
 class _Types:
@@ -163,10 +154,16 @@ class _Types:
         self.defaults: dict[str, str] = {}
 
     def claims_excel(self, part: str) -> bool:
+        return any(kind in self._declared(part) for kind in _EXCEL_TYPES)
+
+    def claims_xml(self, part: str) -> bool:
+        return part.casefold().endswith((".xml", ".rels")) or self._declared(part).endswith("xml")
+
+    def _declared(self, part: str) -> str:
         declared = self.overrides.get(part.casefold()) or self.defaults.get(
             part.rpartition(".")[2].casefold(), ""
         )
-        return any(kind in declared.casefold() for kind in _EXCEL_TYPES)
+        return declared.casefold()
 
 
 def _reads_formulas(namespace: str, claims_excel: bool) -> bool:
@@ -212,8 +209,8 @@ def _scan_xml(source: _Entry, part: str, types: _Types) -> Iterator[Formula]:
             if stack:
                 stack[-1].remove(element)
     except ElementTree.ParseError:
-        # Excel reads legacy drawings (.vml) as lenient HTML, so those may not be well-formed.
-        if part.casefold().endswith((".xml", ".rels")):
+        # Binary parts are not XML; a part named or declared as XML must parse, as in Excel.
+        if types.claims_xml(part):
             raise InvalidArgumentError(
                 f"The uploaded workbook part {part} is not valid XML."
             ) from None

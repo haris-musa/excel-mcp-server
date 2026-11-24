@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.3.5] - 2026-11-24
+
+### Security
+
+- `import_workbook` stored two kinds of external-data content that it should refuse: Power Query
+  queries (`DataMashup` parts, which can be binary) and XML parts that start with more than 64
+  bytes of whitespace, which the upload scan took for binary data and did not check, so a
+  padded data connection was stored. The scan now parses every part and refuses Power Query
+  parts (GHSA-rqj5-pgwc-mwjx, reported by @nikhilagrawalsf).
+
 ### Fixed
 
 - Text that Excel reads as a time of day, such as `5 PM`, `5 a` or `5:30 p`, is no longer
@@ -823,7 +833,8 @@ Ideas and fixes from these pull requests were reimplemented in this release: #78
 
 See the [GitHub releases](https://github.com/haris-musa/excel-mcp-server/releases).
 
-[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.4...HEAD
+[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.5...HEAD
+[2.3.5]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.4...v2.3.5
 [2.3.4]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.3...v2.3.4
 [2.3.3]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.2...v2.3.3
 [2.3.2]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.1...v2.3.2

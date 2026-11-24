@@ -595,3 +595,65 @@ async def test_import_lists_removed_links_in_sheet_row_column_order(call: ToolCa
     shown = re.findall(r"([A-Z]\d) \(", result["note"])
     assert shown == ["B2", "B3", "B7"]
     assert result["note"].endswith("and 1 more.")
+
+
+_PADDING = b" " * 200
+
+
+def test_parts_are_scanned_however_much_whitespace_comes_first() -> None:
+    padded = _PADDING + b'<connections xmlns="urn:x"/>'
+    assert "reach outside the file" in _rejected(_package([("elsewhere/c.bin", padded)]))
+    sheet = f"<worksheet {MAIN}><f>{ATTACK}</f></worksheet>".encode()
+    assert "not allowed" in _rejected(_package([("docs/s.dat", _PADDING + sheet)]))
+
+
+def test_a_connection_with_every_declaring_part_padded_is_rejected() -> None:
+    base = _base()
+    types = base["[Content_Types].xml"].replace(
+        b"</Types>",
+        b'<Override PartName="/xl/connections.xml" ContentType="application/vnd.openxmlformats-'
+        b'officedocument.spreadsheetml.connections+xml"/></Types>',
+    )
+    relationships = (
+        b'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        b'<Relationship Id="r1" Type="http://x/relationships/externalLinkPath" '
+        b'Target="http://127.0.0.1/" TargetMode="External"/></Relationships>'
+    )
+    parts = {
+        "[Content_Types].xml": types,
+        "xl/connections.xml": b'<connections xmlns="urn:x"/>',
+        "xl/_rels/connections.xml.rels": relationships,
+    }
+    padded = {name: _PADDING + content.split(b"?>", 1)[-1] for name, content in parts.items()}
+    assert "reach outside the file" in _rejected(_package(replace=padded))
+
+
+@pytest.mark.parametrize("name", ["xl/metadata/DataMashup", "elsewhere/datamashup"])
+def test_binary_power_query_parts_are_rejected(name: str) -> None:
+    mashup = b"PK\x03\x04" + bytes(range(256))
+    assert "reach outside the file" in _rejected(_package([(name, mashup)]))
+
+
+def test_power_query_parts_are_rejected_by_content_type_and_root() -> None:
+    types = _base()["[Content_Types].xml"].replace(
+        b"</Types>",
+        b'<Override PartName="/x/q.bin" ContentType="application/vnd.ms-excel.DataMashup"/>'
+        b"</Types>",
+    )
+    assert "reach outside the file" in _rejected(_package(replace={"[Content_Types].xml": types}))
+    # Excel itself writes the queries as a UTF-16 custom XML part.
+    mashup = '<DataMashup xmlns="http://schemas.microsoft.com/DataMashup">UEs=</DataMashup>'
+    assert "reach outside the file" in _rejected(
+        _package([("customXml/item9.xml", mashup.encode("utf-16"))])
+    )
+
+
+def test_binary_parts_are_accepted_unless_declared_as_xml() -> None:
+    binary = b"\x89PNG\r\n\x1a\n" + bytes(range(256)) * 4
+    _decode(_package([("xl/media/image1.png", binary)]))
+    types = _base()["[Content_Types].xml"].replace(
+        b"</Types>",
+        b'<Override PartName="/xl/media/image1.png" ContentType="application/x+xml"/></Types>',
+    )
+    content = _package([("xl/media/image1.png", binary)], {"[Content_Types].xml": types})
+    assert "not valid XML" in _rejected(content)
