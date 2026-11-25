@@ -1,10 +1,11 @@
 """Applying the criteria a file already stores, as Excel's Reapply does."""
 
-from typing import cast
+import re
 
 from openpyxl.worksheet import filters as xl
 from openpyxl.worksheet.worksheet import Worksheet
 
+from excel_mcp.calc.wildcard import Wildcard
 from excel_mcp.errors import InvalidArgumentError
 from excel_mcp.operations.comparison import FormulaResults, as_number, cell_value
 from excel_mcp.operations.filter_criteria import (
@@ -42,9 +43,9 @@ def stored_test(
     if column.filters is not None:
         return _values(column.filters)
     if column.customFilters is not None:
-        conditions = [_condition(item) for item in column.customFilters.customFilter]
-        combine = "and" if column.customFilters._and else "or"
-        return compare_filter(conditions, combine)[1]
+        tests = [_custom(item) for item in column.customFilters.customFilter]
+        combine = all if column.customFilters._and else any
+        return lambda cell, value: combine(test(cell, value) for test in tests)
     if column.top10 is not None:
         top = column.top10.top is not False
         item = FilterColumn(
@@ -76,38 +77,25 @@ def _values(stored: xl.Filters) -> Test:
     return values_filter(wanted)[1]
 
 
-def _pattern(text: str) -> list[tuple[str, bool]]:
-    """Wildcard text as (character, is a * wildcard) pairs; ~ makes the next * ? ~ literal."""
-    pairs: list[tuple[str, bool]] = []
-    index = 0
-    while index < len(text):
-        char = text[index]
-        if char == "~" and text[index + 1 : index + 2] in ("*", "?", "~"):
-            pairs.append((text[index + 1], False))
-            index += 2
-        else:
-            pairs.append((char, char == "*"))
-            index += 1
-    return pairs
-
-
-def _condition(item: xl.CustomFilter) -> FilterCondition:
-    name, pairs = _NAMES[item.operator or "equal"], _pattern(str(item.val))
-    text = "".join(char for char, _ in pairs)
-    if name in ("equals", "not_equals") and any(wild for _, wild in pairs):
-        negate = name == "not_equals"
-        starts, ends = pairs[0][1], pairs[-1][1]
-        first = next((i for i, (_, wild) in enumerate(pairs) if not wild), len(pairs))
-        last = next((i for i in range(len(pairs) - 1, -1, -1) if not pairs[i][1]), -1)
-        body = "".join(char for char, _ in pairs[first : last + 1])
-        kind = "contains" if starts and ends else "ends_with" if starts else "begins_with"
-        return FilterCondition(
-            operator=cast(Operator, f"not_{kind}" if negate else kind), value=body
-        )
+def _custom(item: xl.CustomFilter) -> Test:
+    """Excel's test for a stored criterion: ~ escapes and * ? wildcards count only in criteria
+    that have * or ?, and an equality with them matches text cells against the whole pattern."""
+    name, text = _NAMES[item.operator or "equal"], str(item.val)
+    if "*" in text or "?" in text:
+        # Excel ignores a ~ with nothing after it.
+        if (len(text) - len(text.rstrip("~"))) % 2:
+            text = text[:-1]
+        if name in ("equals", "not_equals"):
+            pattern, negate = Wildcard(text), name == "not_equals"
+            return lambda cell, value: (
+                (isinstance(value, str) and pattern.fullmatch(value)) != negate
+            )
+        text = re.sub("~(.)", r"\1", text)
     try:
-        return FilterCondition(operator=name, value=float(text))
+        condition = FilterCondition(operator=name, value=float(text))
     except ValueError:
-        return FilterCondition(operator=name, value=text)
+        condition = FilterCondition(operator=name, value=text)
+    return compare_filter([condition], "and")[1]
 
 
 def _color(sheet: Worksheet, stored: xl.ColorFilter) -> Test:

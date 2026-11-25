@@ -2,7 +2,7 @@
 
 import datetime as dt
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 from openpyxl import Workbook, load_workbook
@@ -415,3 +415,52 @@ async def test_describe_sheet_reports_the_filter_and_hidden_rows(
     details = await call("describe_sheet", path="filter.xlsx", sheet="Data")
     assert details["auto_filter"] == RANGE
     assert details["hidden_rows"] == ["2:16", "21:21"]
+
+
+# Which values Excel 16 shows for each stored criterion (checked with AutoFilter through COM).
+_TEXTS = ["~", "~x", "~*", "a*", "a*x", "a", "ab", "Pears*", "a*b", "axb", "aXyB", "Smith"]
+_MORE = ["Smyth", "Smiith", "x?y", "xzy", "15", 15, 150, "1*", None, True, "TRUE", "a~", "ab~"]
+_EXCEL_SHOWS: dict[tuple[Literal["equal", "notEqual"], str], list[object]] = {
+    ("equal", "*~**"): ["~*", "a*", "a*x", "Pears*", "a*b", "1*"],
+    ("equal", "a~**"): ["a*", "a*x", "a*b"],
+    ("equal", "~~*"): ["~", "~x", "~*"],
+    ("equal", "a*b"): ["ab", "a*b", "axb", "aXyB"],
+    ("equal", "Sm?th"): ["Smith", "Smyth"],
+    ("equal", "x~?y"): ["x?y"],
+    ("equal", "1*"): ["15", "1*"],
+    ("equal", "~x"): ["~x"],
+    ("equal", "~~x"): [],
+    ("equal", "~*"): [],
+    ("equal", "a?~"): ["a*", "ab", "a~"],
+    ("equal", "a*~"): ["a", "ab", "aXyB", "a~", "ab~", "a*", "a*x", "a*b", "axb"],
+    ("equal", "*~~"): ["~", "a~", "ab~"],
+    ("notEqual", "?*"): [None, True, 15, 150],
+}
+
+
+@pytest.mark.parametrize(("operator", "val"), list(_EXCEL_SHOWS))
+def test_stored_criteria_show_what_excel_shows(
+    operator: Literal["equal", "notEqual"], val: str
+) -> None:
+    from openpyxl.worksheet.filters import CustomFilter
+
+    from excel_mcp.operations.filter_stored import _custom  # pyright: ignore[reportPrivateUsage]
+
+    test = _custom(CustomFilter(operator=operator, val=val))
+    shown = [value for value in _TEXTS + _MORE if test(None, value)]  # type: ignore[arg-type]
+    expected = _EXCEL_SHOWS[operator, val]
+    assert sorted(map(repr, shown)) == sorted(map(repr, expected))
+
+
+async def test_text_filters_never_match_numbers_like_excel(call: ToolCall, book: Path) -> None:
+    contains = [{"operator": "contains", "value": "5"}]
+    await apply(call, [{"column": "Num", "type": "compare", "conditions": contains}])
+    sheet = load_workbook(book)["Data"]
+    assert all(sheet.row_dimensions[row].hidden for row in range(2, sheet.max_row + 1))
+
+
+async def test_a_tilde_is_stored_as_is_without_wildcards(call: ToolCall, book: Path) -> None:
+    conditions = [{"operator": "equals", "value": "~x"}, {"operator": "equals", "value": "a*"}]
+    await apply(call, [{"column": "Name", "type": "compare", "conditions": conditions}])
+    custom = load_workbook(book)["Data"].auto_filter.filterColumn[0].customFilters
+    assert [c.val for c in custom.customFilter] == ["~x", "a~*"]
