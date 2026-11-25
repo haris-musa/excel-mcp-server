@@ -177,11 +177,11 @@ def _condition(condition: FilterCondition) -> tuple[xl.CustomFilter, Callable[[o
     if name in _TEXT_OPERATORS:
         stored, pattern, match = _TEXT_OPERATORS[name]
         text = _text(condition.value).casefold()
-        escaped = _text(condition.value).replace("~", "~~").replace("*", "~*").replace("?", "~?")
         negate = stored == "notEqual"
+        # Excel matches wildcard patterns against text cells only, never numbers or booleans.
         return xl.CustomFilter(
-            operator=stored, val=pattern.format(escaped)
-        ), lambda value: match(_text(value).casefold(), text) != negate
+            operator=stored, val=pattern.format(_escape(_text(condition.value)))
+        ), lambda value: (isinstance(value, str) and match(value.casefold(), text)) != negate
     stored, compare = _COMPARISONS[name]
     wanted = _wanted(condition.value)
     if wanted == "":
@@ -189,11 +189,16 @@ def _condition(condition: FilterCondition) -> tuple[xl.CustomFilter, Callable[[o
             raise InvalidArgumentError("To match blanks, use a values filter with ''.")
         return xl.CustomFilter(operator=stored, val=" "), lambda value: value not in (None, "")
     if isinstance(wanted, str):
-        val = wanted.replace("~", "~~").replace("*", "~*").replace("?", "~?")
+        # Excel reads ~ as an escape only in criteria with * or ?; elsewhere it is plain text.
+        val = _escape(wanted) if "*" in wanted or "?" in wanted else wanted
         check = _text_check(compare, wanted.casefold(), name)
     else:
         val, check = _stored(wanted), _numeric_check(compare, wanted, name)
     return xl.CustomFilter(operator=stored, val=val), check
+
+
+def _escape(text: str) -> str:
+    return text.replace("~", "~~").replace("*", "~*").replace("?", "~?")
 
 
 def _wanted(value: str | float) -> float | str:

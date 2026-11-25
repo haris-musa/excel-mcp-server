@@ -8,10 +8,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
-- Applying a stored filter again, which happens when a column with its own criteria is deleted,
-  read an escaped `*` at the start or end of a text pattern as a wildcard. A filter that
-  excludes cells containing `*` (stored as `*~**`) then matched nothing, and the rows it hides
-  were shown. A literal `~` before a `*` was read the same way.
+- Filters match the way Excel does. Applying a stored filter again, which happens when a column
+  with its own criteria is deleted, read an escaped `*` at the start or end of a text pattern as a
+  wildcard, so a filter that excludes cells containing `*` (stored as `*~**`) showed the rows it
+  hides (#279, reported and fixed by @goranai). It also read `*` in the middle of a pattern and
+  `?` as plain text: Excel's `Sm?th` matches `Smith`, and `a*b` matches `axb`. Text filters such
+  as `contains` no longer match numbers, booleans or blanks, which Excel never matches with a
+  pattern. Equality criteria without `*` or `?` store `~` as it is, because Excel reads `~` as an
+  escape only next to wildcards.
 
 ## [2.3.5] - 2026-11-24
 
