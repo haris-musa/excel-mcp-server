@@ -76,17 +76,34 @@ def _values(stored: xl.Filters) -> Test:
     return values_filter(wanted)[1]
 
 
+def _pattern(text: str) -> list[tuple[str, bool]]:
+    """Wildcard text as (character, is a * wildcard) pairs; ~ makes the next * ? ~ literal."""
+    pairs: list[tuple[str, bool]] = []
+    index = 0
+    while index < len(text):
+        char = text[index]
+        if char == "~" and text[index + 1 : index + 2] in ("*", "?", "~"):
+            pairs.append((text[index + 1], False))
+            index += 2
+        else:
+            pairs.append((char, char == "*"))
+            index += 1
+    return pairs
+
+
 def _condition(item: xl.CustomFilter) -> FilterCondition:
-    name, text = _NAMES[item.operator or "equal"], str(item.val)
-    if name in ("equals", "not_equals") and "*" in text.replace("~*", ""):
+    name, pairs = _NAMES[item.operator or "equal"], _pattern(str(item.val))
+    text = "".join(char for char, _ in pairs)
+    if name in ("equals", "not_equals") and any(wild for _, wild in pairs):
         negate = name == "not_equals"
-        starts, ends = text.startswith("*"), text.endswith("*")
-        body = text.strip("*").replace("~*", "*").replace("~?", "?").replace("~~", "~")
+        starts, ends = pairs[0][1], pairs[-1][1]
+        first = next((i for i, (_, wild) in enumerate(pairs) if not wild), len(pairs))
+        last = next((i for i in range(len(pairs) - 1, -1, -1) if not pairs[i][1]), -1)
+        body = "".join(char for char, _ in pairs[first : last + 1])
         kind = "contains" if starts and ends else "ends_with" if starts else "begins_with"
         return FilterCondition(
             operator=cast(Operator, f"not_{kind}" if negate else kind), value=body
         )
-    text = text.replace("~*", "*").replace("~?", "?").replace("~~", "~")
     try:
         return FilterCondition(operator=name, value=float(text))
     except ValueError:
