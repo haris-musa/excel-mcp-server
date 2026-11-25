@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.3.6] - 2026-11-25
+
 ### Fixed
 
 - Filters match the way Excel does. Applying a stored filter again, which happens when a column
@@ -844,7 +846,8 @@ Ideas and fixes from these pull requests were reimplemented in this release: #78
 
 See the [GitHub releases](https://github.com/haris-musa/excel-mcp-server/releases).
 
-[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.5...HEAD
+[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.6...HEAD
+[2.3.6]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.5...v2.3.6
 [2.3.5]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.4...v2.3.5
 [2.3.4]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.3...v2.3.4
 [2.3.3]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.2...v2.3.3
