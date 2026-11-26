@@ -143,6 +143,16 @@ async def test_defined_names_roundtrip(call: ToolCall, sample: Path) -> None:
     assert not workbook["Report"].defined_names
 
 
+async def test_defined_names_are_not_case_sensitive(call: ToolCall, sample: Path) -> None:
+    await call("set_defined_name", path="sales.xlsx", name="TaxRate", refers_to="0.075")
+    result = await call("set_defined_name", path="sales.xlsx", name="TAXRATE", refers_to="0.1")
+    assert result == {"name": "TAXRATE", "note": "Replaced the earlier definition."}
+    names = (await call("describe_workbook", path="sales.xlsx"))["defined_names"]
+    assert names == [{"name": "TAXRATE", "refers_to": "0.1"}]
+    await call("delete_defined_name", path="sales.xlsx", name="taxrate")
+    assert list(load_workbook(sample).defined_names) == []
+
+
 @pytest.mark.parametrize(
     ("name", "refers_to", "expected"),
     [
