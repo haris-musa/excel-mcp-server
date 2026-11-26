@@ -47,20 +47,28 @@ def set_defined_name(
         raise InvalidArgumentError("refers_to cannot be empty.")
     reference = storable_operand(reference, workbook.sheetnames)
     names = _scope(workbook, sheet)
-    replaced = name in names
+    existing = _spelled(names, name)
+    if existing is not None:
+        del names[existing]  # Excel names are not case sensitive: the new spelling replaces it
     names[name] = DefinedName(name, attr_text=reference)
-    return replaced
+    return existing is not None
 
 
 def delete_defined_name(workbook: Workbook, name: str, sheet: Worksheet | None) -> None:
     names = _scope(workbook, sheet)
-    if name not in names:
+    existing = _spelled(names, name)
+    if existing is None:
         where = f"sheet {sheet.title!r}" if sheet else "the workbook"
         raise InvalidArgumentError(
             f"No name {name!r} is defined for {where}. "
             "describe_workbook lists defined names with their scope."
         )
-    del names[name]
+    del names[existing]
+
+
+def _spelled(names: DefinedNameDict, name: str) -> str | None:
+    """The name as it is stored, which Excel finds whatever the case of ``name``."""
+    return next((key for key in names if key.casefold() == name.casefold()), None)
 
 
 def _scope(workbook: Workbook, sheet: Worksheet | None) -> DefinedNameDict:
