@@ -92,4 +92,5 @@ def _place(workbook: Workbook, place: str) -> str:
 
 def _is_defined_name(workbook: Workbook, name: str) -> bool:
     scopes = [workbook.defined_names, *(sheet.defined_names for sheet in workbook.worksheets)]
-    return any(name in scope for scope in scopes)
+    # Excel finds a name whatever its case.
+    return any(key.casefold() == name.casefold() for scope in scopes for key in scope)

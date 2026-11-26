@@ -11,6 +11,8 @@ All notable changes to this project are documented here. The format follows
 - Defined names are not case sensitive in Excel, so `set_defined_name` with `TAXRATE` now
   replaces `TaxRate` instead of writing both names, and `delete_defined_name` finds a name
   whatever its case.
+- A hyperlink to a defined name is accepted whatever the case of the name, as Excel follows it
+  (following #283).
 
 ## [2.3.6] - 2026-11-25
 
