@@ -6,11 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.3.7] - 2026-11-26
+
 ### Fixed
 
 - Defined names are not case sensitive in Excel, so `set_defined_name` with `TAXRATE` now
   replaces `TaxRate` instead of writing both names, and `delete_defined_name` finds a name
-  whatever its case.
+  whatever its case (#283, reported and fixed by @goranai).
 - A hyperlink to a defined name is accepted whatever the case of the name, as Excel follows it
   (following #283).
 
@@ -854,7 +856,8 @@ Ideas and fixes from these pull requests were reimplemented in this release: #78
 
 See the [GitHub releases](https://github.com/haris-musa/excel-mcp-server/releases).
 
-[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.6...HEAD
+[Unreleased]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.7...HEAD
+[2.3.7]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.6...v2.3.7
 [2.3.6]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.5...v2.3.6
 [2.3.5]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.4...v2.3.5
 [2.3.4]: https://github.com/haris-musa/excel-mcp-server/compare/v2.3.3...v2.3.4
