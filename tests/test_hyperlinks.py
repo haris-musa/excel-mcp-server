@@ -58,10 +58,18 @@ async def test_internal_links_to_cells_and_names(call: ToolCall, sample: Path) -
         path="sales.xlsx",
         sheet="Data",
         at="F1",
-        rows=[["Go", "Totals"]],
-        links=[{"cell": "F1", "target": "#'Sheet 2'!b2"}, {"cell": "G1", "target": "#Totals"}],
+        rows=[["Go", "Totals", "totals"]],
+        links=[
+            {"cell": "F1", "target": "#'Sheet 2'!b2"},
+            {"cell": "G1", "target": "#Totals"},
+            {"cell": "H1", "target": "#TOTALS"},
+        ],
     )
-    assert stored_links(sample) == {"F1": (None, "'Sheet 2'!B2"), "G1": (None, "Totals")}
+    assert stored_links(sample) == {
+        "F1": (None, "'Sheet 2'!B2"),
+        "G1": (None, "Totals"),
+        "H1": (None, "TOTALS"),
+    }
     details = await call("describe_sheet", path="sales.xlsx", sheet="Data")
     assert details["hyperlinks"][0] == {"cell": "F1", "target": "#'Sheet 2'!B2"}
 
